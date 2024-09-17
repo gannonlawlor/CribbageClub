@@ -3,12 +3,16 @@ package com.jackabee.cribbageclubserver.model.game
 import com.jackabee.cribbageclubserver.model.action.ActionType
 import com.jackabee.cribbageclubserver.model.action.GameAction
 import com.jackabee.cribbageclubserver.model.card.Card
+import com.jackabee.cribbageclubserver.model.card.Deck
 import com.jackabee.cribbageclubserver.model.card.Rank
 import com.jackabee.cribbageclubserver.model.card.Suit
 import com.jackabee.cribbageclubserver.model.player.Player
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import org.mockito.Mockito.mock
+import org.mockito.kotlin.clearInvocations
+import org.mockito.kotlin.whenever
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -99,6 +103,72 @@ class GameTest {
         assertThrows<Exception> {
             game.applyAction(GameAction(player.id, ActionType.CUT_DECK))
         }
+    }
+
+    @Test
+    fun `Cutting the deck should transition game to pegging stage`() {
+        // Arrange
+        val mockDeck = mock<Deck>()
+        game = Game("1", players, mockDeck)
+        setupGameForCutting(mockDeck)
+
+        // Act
+        game.applyAction(GameAction(players[0].id, ActionType.CUT_DECK))
+
+        // Assert
+        val currentState = game.getCurrentState()
+        assertEquals(GameStage.PEGGING, currentState.stage)
+//        assertNotNull(currentState.cutCard)
+        assertEquals(players[0].id, currentState.currentPlayerId)
+//        verify(mockDeck).cut()
+    }
+
+    @Test
+    fun `Cutting a Jack should award 2 points to the dealer`() {
+        // Arrange
+        val mockDeck = mock<Deck>()
+        setupGameForCutting(mockDeck)
+        whenever(mockDeck.cut()).thenReturn(Card(Rank.JACK, Suit.SPADES))
+
+        // Act
+        game.applyAction(GameAction(players[0].id, ActionType.CUT_DECK))
+
+        // Assert
+        val currentState = game.getCurrentState()
+        assertEquals(2, currentState.players[1].score) // Dealer (second player) gets 2 points
+        assertEquals(Card(Rank.JACK, Suit.SPADES), currentState.cutCard)
+    }
+
+    @Test
+    fun `Cutting a non-Jack should not award any points`() {
+        // Arrange
+        val mockDeck = mock<Deck>()
+        setupGameForCutting(mockDeck)
+        whenever(mockDeck.cut()).thenReturn(Card(Rank.QUEEN, Suit.HEARTS))
+
+        // Act
+        game.applyAction(GameAction(players[0].id, ActionType.CUT_DECK))
+
+        // Assert
+        val currentState = game.getCurrentState()
+        assertEquals(0, currentState.players[0].score)
+        assertEquals(0, currentState.players[1].score)
+        assertEquals(Card(Rank.QUEEN, Suit.HEARTS), currentState.cutCard)
+    }
+
+    private fun setupGameForCutting(mockDeck: Deck) {
+        // Mock the initial deal
+        whenever(mockDeck.draw()).thenReturn(Card(Rank.ACE, Suit.HEARTS))
+
+        // Discard phase
+        players.forEach { player ->
+            repeat(2) {
+                   game.applyAction(GameAction(player.id, ActionType.DISCARD_TO_CRIB, Card(Rank.ACE, Suit.HEARTS)))
+            }
+        }
+
+        // Reset the mock to prepare for cutting
+        clearInvocations(mockDeck)
     }
 
     private fun discardAllPlayersToCrib(gameInstance: Game = game) {

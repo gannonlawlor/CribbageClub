@@ -4,12 +4,13 @@ import com.jackabee.cribbageclubserver.model.action.ActionType
 import com.jackabee.cribbageclubserver.model.action.GameAction
 import com.jackabee.cribbageclubserver.model.card.Card
 import com.jackabee.cribbageclubserver.model.card.Deck
+import com.jackabee.cribbageclubserver.model.card.Rank
 import com.jackabee.cribbageclubserver.model.player.Player
 import java.time.Instant
 
 class Game(
     val id: String,
-    val players: List<Player>,
+    private val players: List<Player>,
     private val deck: Deck = Deck(),
     val creationTime: Instant = Instant.now()
 ) {
@@ -27,7 +28,7 @@ class Game(
     fun applyAction(action: GameAction): GameState {
         when (action.actionType) {
             ActionType.DISCARD_TO_CRIB -> discardToCrib(action.playerId, action.card!!)
-            ActionType.CUT_DECK, // cutDeck(action.playerId)
+            ActionType.CUT_DECK -> cutDeck(action.playerId)
             ActionType.PLAY_CARD, //playCard(action.playerId, action.card!!)
             ActionType.GO,  //announceGo(action.playerId)
             ActionType.COUNT_HAND -> //countHand(action.playerId)
@@ -89,6 +90,27 @@ class Game(
 
         if (state.crib.size == players.size * 2) {
             transitionToCutting()
+        }
+    }
+
+    private fun cutDeck(playerId: String) {
+        require(state.stage == GameStage.CUTTING) { "Not in cutting phase" }
+        require(playerId == state.currentPlayerId) { "Not this player's turn to cut" }
+
+        val cutCard = deck.cut()
+        state = state.copy(
+            cutCard = cutCard,
+            stage = GameStage.PEGGING,
+            currentPlayerId = playerId
+        )
+
+        // If Jack is cut, dealer scores 2 points ("His Nobs")
+        if (cutCard.rank == Rank.JACK) {
+            val dealerIndex = (players.indexOfFirst { it.id == state.currentPlayerId } - 1 + players.size) % players.size
+            val updatedPlayers = state.players.toMutableList()
+            val dealer = updatedPlayers[dealerIndex]
+            updatedPlayers[dealerIndex] = dealer.copy(score = dealer.score + 2)
+            state = state.copy(players = updatedPlayers)
         }
     }
 
