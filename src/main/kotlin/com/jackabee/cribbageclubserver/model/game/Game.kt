@@ -29,7 +29,7 @@ class Game(
         when (action.actionType) {
             ActionType.DISCARD_TO_CRIB -> discardToCrib(action.playerId, action.card!!)
             ActionType.CUT_DECK -> cutDeck(action.playerId)
-            ActionType.PLAY_CARD, //playCard(action.playerId, action.card!!)
+            ActionType.PLAY_CARD -> playCard(action.playerId, action.card!!)
             ActionType.GO,  //announceGo(action.playerId)
             ActionType.COUNT_HAND -> //countHand(action.playerId)
                 throw Exception("Not yet implemented")
@@ -119,5 +119,120 @@ class Game(
             stage = GameStage.CUTTING,
             currentPlayerId = state.players.first().id
         )
+    }
+
+    private fun playCard(playerId: String, card: Card) {
+        require(state.stage == GameStage.PEGGING) { "Not in pegging phase" }
+        require(playerId == state.currentPlayerId) { "Not this player's turn" }
+
+        val playerIndex = state.players.indexOfFirst { it.id == playerId }
+        val player = state.players[playerIndex]
+        require(card in player.hand) { "Card not in player's hand" }
+
+        val newCount = state.peggingCount + card.peggingValue()
+        require(newCount <= 31) { "Playing this card would exceed 31" }
+
+        // Update player's hand and played cards
+        val updatedPlayer = player.copy(hand = player.hand - card)
+        val updatedPlayers = state.players.toMutableList().apply { set(playerIndex, updatedPlayer) }
+        val updatedPlayedCards = state.playedCards + card
+
+        // Calculate score for this play
+        val scoreEarned = calculatePeggingScore(updatedPlayedCards, newCount)
+        val playerWithUpdatedScore = updatedPlayer.copy(score = updatedPlayer.score + scoreEarned)
+        updatedPlayers[playerIndex] = playerWithUpdatedScore
+
+        // Move to next player
+        val nextPlayerIndex = (playerIndex + 1) % players.size
+        val nextPlayerId = players[nextPlayerIndex].id
+
+        state = state.copy(
+            players = updatedPlayers,
+            playedCards = updatedPlayedCards,
+            peggingCount = newCount,
+            currentPlayerId = nextPlayerId,
+            lastPlayWasGo = false
+        )
+
+        // Check if pegging round is over
+        if (state.players.all { it.hand.isEmpty() }) {
+            transitionToHandCounting()
+        }
+    }
+
+    private fun announceGo(playerId: String) {
+        require(state.stage == GameStage.PEGGING) { "Not in pegging phase" }
+        require(playerId == state.currentPlayerId) { "Not this player's turn" }
+
+        val playerIndex = state.players.indexOfFirst { it.id == playerId }
+        val nextPlayerIndex = (playerIndex + 1) % players.size
+        val nextPlayerId = players[nextPlayerIndex].id
+
+        // If this is the second consecutive "Go", reset the count and award a point
+        if (state.lastPlayWasGo) {
+            val currentPlayer = state.players[playerIndex]
+            val updatedPlayer = currentPlayer.copy(score = currentPlayer.score + 1)
+            val updatedPlayers = state.players.toMutableList().apply { set(playerIndex, updatedPlayer) }
+
+            state = state.copy(
+                players = updatedPlayers,
+                peggingCount = 0,
+                playedCards = emptyList(),
+                currentPlayerId = nextPlayerId,
+                lastPlayWasGo = false
+            )
+        } else {
+            state = state.copy(
+                currentPlayerId = nextPlayerId,
+                lastPlayWasGo = true
+            )
+        }
+    }
+
+    private fun calculatePeggingScore(playedCards: List<Card>, count: Int): Int {
+        var score = 0
+
+        // Check for 15 or 31
+        if (count == 15 || count == 31) score += 2
+
+        // Check for pairs, trips, quads
+        val lastCard = playedCards.last()
+        val sameFaceCards = playedCards.reversed().takeWhile { it.rank == lastCard.rank }
+        when (sameFaceCards.size) {
+            2 -> score += 2  // Pair
+            3 -> score += 6  // Trip
+            4 -> score += 12 // Quad
+        }
+
+        // Check for runs
+        for (runLength in 7 downTo 3) {
+            if (playedCards.takeLast(runLength).isRun()) {
+                score += runLength
+                break
+            }
+        }
+
+        return score
+    }
+
+    private fun transitionToHandCounting() {
+        state = state.copy(
+            stage = GameStage.COUNTING,
+            currentPlayerId = players.first().id,
+            peggingCount = 0,
+            playedCards = emptyList()
+        )
+    }
+
+    private fun List<Card>.isRun(): Boolean {
+        if (this.size < 3) return false
+        val sortedRanks = this.map { it.rank.ordinal }.sorted()
+        return sortedRanks.zipWithNext().all { (a, b) -> b - a == 1 }
+    }
+
+    private fun Card.peggingValue(): Int = when (rank) {
+        Rank.ACE -> 1
+        Rank.JACK, Rank.QUEEN, Rank.KING -> 10
+        else -> rank.ordinal + 1
     }
 }

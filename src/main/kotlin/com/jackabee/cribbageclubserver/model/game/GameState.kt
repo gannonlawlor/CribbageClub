@@ -10,6 +10,6 @@ data class GameState(
     val currentPlayerId: String? = null,
     val stage: GameStage = GameStage.DEALING,
     val playedCards: List<Card> = emptyList(),
-    val currentCount: Int = 0,
-    val isGoSituation: Boolean = false
+    val peggingCount: Int = 0,
+    val lastPlayWasGo: Boolean = false
 )
