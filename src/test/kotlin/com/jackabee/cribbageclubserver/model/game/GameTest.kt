@@ -59,10 +59,10 @@ class GameTest {
         val cardToDiscard3 = player2.hand[0]
         val cardToDiscard4 = player2.hand[1]
 
-        game.applyAction(GameAction(player1.id, ActionType.DISCARD_TO_CRIB, cardToDiscard1))
-        game.applyAction(GameAction(player1.id, ActionType.DISCARD_TO_CRIB, cardToDiscard2))
-        game.applyAction(GameAction(player2.id, ActionType.DISCARD_TO_CRIB, cardToDiscard3))
-        val finalState = game.applyAction(GameAction(player2.id, ActionType.DISCARD_TO_CRIB, cardToDiscard4))
+        game.applyAction(GameAction.DiscardToCrib(player1.id, cardToDiscard1))
+        game.applyAction(GameAction.DiscardToCrib(player1.id, cardToDiscard2))
+        game.applyAction(GameAction.DiscardToCrib(player2.id, cardToDiscard3))
+        val finalState = game.applyAction(GameAction.DiscardToCrib(player2.id, cardToDiscard4))
 
         assertEquals(4, finalState.crib.size)
         assertEquals(4, finalState.players[0].hand.size)
@@ -84,7 +84,7 @@ class GameTest {
         val player = game.getCurrentState().players[0]
         val invalidCard = Card(Rank.ACE, Suit.SPADES) // Assuming this card is not in the player's hand
         assertThrows<IllegalArgumentException> {
-            game.applyAction(GameAction(player.id, ActionType.DISCARD_TO_CRIB, invalidCard))
+            game.applyAction(GameAction.DiscardToCrib(player.id, invalidCard))
         }
     }
 
@@ -92,7 +92,7 @@ class GameTest {
     fun `Game should allow cutting the deck`() {
         discardAllPlayersToCrib()
         val player = game.getCurrentState().players[0]
-        val newState = game.applyAction(GameAction(player.id, ActionType.CUT_DECK))
+        val newState = game.applyAction(GameAction.CutDeck(player.id))
         assertEquals(GameStage.PEGGING, newState.stage)
         assertTrue(newState.cutCard != null)
     }
@@ -101,7 +101,7 @@ class GameTest {
     fun `Game should not allow invalid actions for current stage`() {
         val player = game.getCurrentState().players[0]
         assertThrows<Exception> {
-            game.applyAction(GameAction(player.id, ActionType.CUT_DECK))
+            game.applyAction(GameAction.CutDeck(player.id))
         }
     }
 
@@ -113,7 +113,7 @@ class GameTest {
         setupGameForCutting(mockDeck)
 
         // Act
-        game.applyAction(GameAction(players[0].id, ActionType.CUT_DECK))
+        game.applyAction(GameAction.CutDeck(players[0].id))
 
         // Assert
         val currentState = game.getCurrentState()
@@ -131,7 +131,7 @@ class GameTest {
         whenever(mockDeck.cut()).thenReturn(Card(Rank.JACK, Suit.SPADES))
 
         // Act
-        game.applyAction(GameAction(players[0].id, ActionType.CUT_DECK))
+        game.applyAction(GameAction.CutDeck(players[0].id))
 
         // Assert
         val currentState = game.getCurrentState()
@@ -147,7 +147,7 @@ class GameTest {
         whenever(mockDeck.cut()).thenReturn(Card(Rank.QUEEN, Suit.HEARTS))
 
         // Act
-        game.applyAction(GameAction(players[0].id, ActionType.CUT_DECK))
+        game.applyAction(GameAction.CutDeck(players[0].id))
 
         // Assert
         val currentState = game.getCurrentState()
@@ -157,25 +157,48 @@ class GameTest {
     }
 
     private fun setupGameForCutting(mockDeck: Deck) {
-        // Mock the initial deal
-        whenever(mockDeck.draw()).thenReturn(Card(Rank.ACE, Suit.HEARTS))
+        // Create a set of unique cards for initial dealing
+        val dealCards = listOf(
+            Card(Rank.ACE, Suit.HEARTS),
+            Card(Rank.TWO, Suit.HEARTS),
+            Card(Rank.THREE, Suit.HEARTS),
+            Card(Rank.FOUR, Suit.HEARTS),
+            Card(Rank.FIVE, Suit.HEARTS),
+            Card(Rank.SIX, Suit.HEARTS)
+        )
 
-        // Discard phase
+        // Set up the mock to return cards in sequence
+        dealCards.forEach { card ->
+            whenever(mockDeck.draw()).thenReturn(card)
+        }
+
+        println("Player 1 cards: " + players[0].hand)
+        println("Player 2 cards: " + players[1].hand)
+
+        // Discard phase - each player discards two unique cards
+        val discardCards = mapOf(
+            players[0].id to listOf(Card(Rank.ACE, Suit.HEARTS), Card(Rank.TWO, Suit.HEARTS)),
+            players[1].id to listOf(Card(Rank.THREE, Suit.HEARTS), Card(Rank.FOUR, Suit.HEARTS))
+        )
+
         players.forEach { player ->
-            repeat(2) {
-                   game.applyAction(GameAction(player.id, ActionType.DISCARD_TO_CRIB, Card(Rank.ACE, Suit.HEARTS)))
+            discardCards[player.id]?.forEach { card ->
+                game.applyAction(GameAction.DiscardToCrib(player.id, card))
             }
         }
 
         // Reset the mock to prepare for cutting
         clearInvocations(mockDeck)
+
+        // Set up the cut card
+        whenever(mockDeck.draw()).thenReturn(Card(Rank.JACK, Suit.DIAMONDS))
     }
 
     private fun discardAllPlayersToCrib(gameInstance: Game = game) {
         val state = gameInstance.getCurrentState()
         state.players.forEach { player ->
-            gameInstance.applyAction(GameAction(player.id, ActionType.DISCARD_TO_CRIB, player.hand[0]))
-            gameInstance.applyAction(GameAction(player.id, ActionType.DISCARD_TO_CRIB, player.hand[1]))
+            gameInstance.applyAction(GameAction.DiscardToCrib(player.id, player.hand[0]))
+            gameInstance.applyAction(GameAction.DiscardToCrib(player.id, player.hand[1]))
         }
     }
 }

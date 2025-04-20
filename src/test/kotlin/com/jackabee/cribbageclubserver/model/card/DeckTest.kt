@@ -4,7 +4,6 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import kotlin.test.assertEquals
-import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 
@@ -64,7 +63,7 @@ class DeckTest {
         deck = Deck() // Reset deck
         deck.shuffle()
         val newOrder = List(52) { deck.draw() }
-        assertFalse(originalOrder == newOrder)
+        assertNotEquals(originalOrder, newOrder)
     }
 
     @Test

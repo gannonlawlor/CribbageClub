@@ -26,13 +26,12 @@ class Game(
     fun getCurrentState(): GameState = state.copy()
 
     fun applyAction(action: GameAction): GameState {
-        when (action.actionType) {
-            ActionType.DISCARD_TO_CRIB -> discardToCrib(action.playerId, action.card!!)
-            ActionType.CUT_DECK -> cutDeck(action.playerId)
-            ActionType.PLAY_CARD -> playCard(action.playerId, action.card!!)
-            ActionType.GO,  //announceGo(action.playerId)
-            ActionType.COUNT_HAND -> //countHand(action.playerId)
-                throw Exception("Not yet implemented")
+        when (action) {
+            is GameAction.DiscardToCrib -> discardToCrib(action.playerId, action.card)
+            is GameAction.CutDeck -> cutDeck(action.playerId)
+            is GameAction.PlayCard -> playCard(action.playerId, action.card)
+            is GameAction.Go -> throw Exception("Not yet implemented") // announceGo(action.playerId)
+            is GameAction.CountHand -> throw Exception("Not yet implemented") // countHand(action.playerId)
         }
         return getCurrentState()
     }
