@@ -118,9 +118,7 @@ class GameTest {
         // Assert
         val currentState = game.getCurrentState()
         assertEquals(GameStage.PEGGING, currentState.stage)
-//        assertNotNull(currentState.cutCard)
         assertEquals(players[0].id, currentState.currentPlayerId)
-//        verify(mockDeck).cut()
     }
 
     @Test
@@ -157,8 +155,11 @@ class GameTest {
     }
 
     private fun setupGameForCutting(mockDeck: Deck) {
-        // Create a set of unique cards for initial dealing
-        val dealCards = listOf(
+        // Clear any previous interactions with the mock
+        clearInvocations(mockDeck)
+
+        // Define cards for both players (12 cards total for initial deal)
+        val player1Cards = listOf(
             Card(Rank.ACE, Suit.HEARTS),
             Card(Rank.TWO, Suit.HEARTS),
             Card(Rank.THREE, Suit.HEARTS),
@@ -167,31 +168,35 @@ class GameTest {
             Card(Rank.SIX, Suit.HEARTS)
         )
 
-        // Set up the mock to return cards in sequence
-        dealCards.forEach { card ->
-            whenever(mockDeck.draw()).thenReturn(card)
-        }
-
-        println("Player 1 cards: " + players[0].hand)
-        println("Player 2 cards: " + players[1].hand)
-
-        // Discard phase - each player discards two unique cards
-        val discardCards = mapOf(
-            players[0].id to listOf(Card(Rank.ACE, Suit.HEARTS), Card(Rank.TWO, Suit.HEARTS)),
-            players[1].id to listOf(Card(Rank.THREE, Suit.HEARTS), Card(Rank.FOUR, Suit.HEARTS))
+        val player2Cards = listOf(
+            Card(Rank.SEVEN, Suit.HEARTS),
+            Card(Rank.EIGHT, Suit.HEARTS),
+            Card(Rank.NINE, Suit.HEARTS),
+            Card(Rank.TEN, Suit.HEARTS),
+            Card(Rank.JACK, Suit.HEARTS),
+            Card(Rank.QUEEN, Suit.HEARTS)
         )
 
-        players.forEach { player ->
-            discardCards[player.id]?.forEach { card ->
-                game.applyAction(GameAction.DiscardToCrib(player.id, card))
-            }
-        }
+        // Set up draw(n) method to return the correct sequence of cards
+        whenever(mockDeck.draw(6)).thenReturn(player1Cards, player2Cards)
 
-        // Reset the mock to prepare for cutting
-        clearInvocations(mockDeck)
+        // Create the game with the mock deck
+        game = Game("testGame", players, mockDeck)
+
+        // Now let's discard cards to crib
+        // We need to use the actual cards from players' hands
+        val state = game.getCurrentState()
+        val player1 = state.players[0]
+        val player2 = state.players[1]
+
+        // Each player discards two cards
+        game.applyAction(GameAction.DiscardToCrib(player1.id, player1.hand[0]))
+        game.applyAction(GameAction.DiscardToCrib(player1.id, player1.hand[1]))
+        game.applyAction(GameAction.DiscardToCrib(player2.id, player2.hand[0]))
+        game.applyAction(GameAction.DiscardToCrib(player2.id, player2.hand[1]))
 
         // Set up the cut card
-        whenever(mockDeck.draw()).thenReturn(Card(Rank.JACK, Suit.DIAMONDS))
+        whenever(mockDeck.cut()).thenReturn(Card(Rank.JACK, Suit.DIAMONDS))
     }
 
     private fun discardAllPlayersToCrib(gameInstance: Game = game) {
