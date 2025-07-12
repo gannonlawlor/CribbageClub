@@ -21,6 +21,7 @@ class BasicAIPlayerTest {
     @Test
     fun `AI should not act when not its turn`() {
         val gameState = GameState(
+            gameId = "test-game-1",
             players = listOf(
                 Player("human1", "Human"),
                 Player("ai1", "AI")
@@ -45,6 +46,7 @@ class BasicAIPlayerTest {
         )
 
         val gameState = GameState(
+            gameId = "test-game-2",
             players = listOf(
                 Player("human1", "Human"),
                 Player("ai1", "AI", hand = hand)
@@ -62,6 +64,7 @@ class BasicAIPlayerTest {
     @Test
     fun `AI should cut deck during cutting phase`() {
         val gameState = GameState(
+            gameId = "test-game-3",
             players = listOf(
                 Player("human1", "Human"),
                 Player("ai1", "AI")
@@ -78,6 +81,7 @@ class BasicAIPlayerTest {
     @Test
     fun `AI should count hand during counting phase`() {
         val gameState = GameState(
+            gameId = "test-game-4",
             players = listOf(
                 Player("human1", "Human"),
                 Player("ai1", "AI")
@@ -186,6 +190,7 @@ class BasicAIPlayerTest {
         )
 
         val gameState = GameState(
+            gameId = "test-game-5",
             players = listOf(
                 Player("human1", "Human"),
                 Player("ai1", "AI", hand = hand)
