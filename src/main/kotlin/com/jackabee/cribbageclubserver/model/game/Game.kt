@@ -30,8 +30,8 @@ class Game(
             is GameAction.DiscardToCrib -> discardToCrib(action.playerId, action.card)
             is GameAction.CutDeck -> cutDeck(action.playerId)
             is GameAction.PlayCard -> playCard(action.playerId, action.card)
-            is GameAction.Go -> throw Exception("Not yet implemented") // announceGo(action.playerId)
-            is GameAction.CountHand -> throw Exception("Not yet implemented") // countHand(action.playerId)
+            is GameAction.Go -> announceGo(action.playerId)
+            is GameAction.CountHand -> countHand(action.playerId)
         }
         return getCurrentState()
     }
@@ -97,10 +97,15 @@ class Game(
         require(playerId == state.currentPlayerId) { "Not this player's turn to cut" }
 
         val cutCard = deck.cut()
+        
+        // Store hands for counting before transitioning to pegging
+        val handsForCounting = state.players.associate { it.id to it.hand }
+        
         state = state.copy(
             cutCard = cutCard,
             stage = GameStage.PEGGING,
-            currentPlayerId = playerId
+            currentPlayerId = playerId,
+            handsForCounting = handsForCounting
         )
 
         // If Jack is cut, dealer scores 2 points ("His Nobs")
@@ -229,7 +234,195 @@ class Game(
         return sortedRanks.zipWithNext().all { (a, b) -> b - a == 1 }
     }
 
-    private fun Card.peggingValue(): Int = when (rank) {
+    private fun countHand(playerId: String) {
+        require(state.stage == GameStage.COUNTING) { "Not in counting phase" }
+        require(playerId == state.currentPlayerId) { "Not this player's turn to count" }
+
+        val playerIndex = state.players.indexOfFirst { it.id == playerId }
+        val player = state.players[playerIndex]
+        
+        // Use the stored hand for counting
+        val handToCount = state.handsForCounting[playerId] ?: emptyList()
+        require(handToCount.isNotEmpty()) { "No hand to count for player $playerId" }
+
+        // Count hand score
+        val handScore = calculateHandScore(handToCount, state.cutCard!!)
+        val updatedPlayer = player.copy(score = player.score + handScore)
+        val updatedPlayers = state.players.toMutableList().apply { set(playerIndex, updatedPlayer) }
+
+        // Check if game is over
+        if (updatedPlayer.score >= 121) {
+            state = state.copy(
+                players = updatedPlayers,
+                stage = GameStage.GAME_OVER
+            )
+            return
+        }
+
+        // Move to next player or handle crib counting
+        val nextPlayerIndex = (playerIndex + 1) % players.size
+        if (nextPlayerIndex == 0) {
+            // All players have counted, now dealer counts crib
+            val dealerIndex = getDealerIndex()
+            val dealer = updatedPlayers[dealerIndex]
+            val cribScore = calculateHandScore(state.crib, state.cutCard!!, isCrib = true)
+            val updatedDealer = dealer.copy(score = dealer.score + cribScore)
+            updatedPlayers[dealerIndex] = updatedDealer
+
+            // Check if dealer wins after crib
+            if (updatedDealer.score >= 121) {
+                state = state.copy(
+                    players = updatedPlayers,
+                    stage = GameStage.GAME_OVER
+                )
+                return
+            }
+
+            // Start new round
+            startNewRound(updatedPlayers)
+        } else {
+            // Move to next player
+            state = state.copy(
+                players = updatedPlayers,
+                currentPlayerId = players[nextPlayerIndex].id
+            )
+        }
+    }
+
+    private fun calculateHandScore(hand: List<Card>, cutCard: Card, isCrib: Boolean = false): Int {
+        val allCards = hand + cutCard
+        var score = 0
+
+        // Count 15s
+        score += count15s(allCards)
+
+        // Count pairs
+        score += countPairs(allCards)
+
+        // Count runs
+        score += countRuns(allCards)
+
+        // Count flushes
+        score += countFlushes(hand, cutCard, isCrib)
+
+        // Count nobs (Jack of same suit as cut card in hand)
+        score += countNobs(hand, cutCard)
+
+        return score
+    }
+
+    private fun count15s(cards: List<Card>): Int {
+        var count = 0
+        val values = cards.map { it.countingValue() }
+        
+        // Check all possible combinations
+        for (i in 1 until (1 shl cards.size)) {
+            var sum = 0
+            for (j in cards.indices) {
+                if ((i shr j) and 1 == 1) {
+                    sum += values[j]
+                }
+            }
+            if (sum == 15) count++
+        }
+        return count * 2 // Each 15 is worth 2 points
+    }
+
+    private fun countPairs(cards: List<Card>): Int {
+        val rankCounts = cards.groupingBy { it.rank }.eachCount()
+        var score = 0
+        for (count in rankCounts.values) {
+            if (count >= 2) {
+                score += count * (count - 1) // n choose 2 pairs
+            }
+        }
+        return score
+    }
+
+    private fun countRuns(cards: List<Card>): Int {
+        val rankCounts = cards.groupingBy { it.rank }.eachCount()
+        val sortedRanks = rankCounts.keys.sortedBy { it.ordinal }
+        
+        if (sortedRanks.size < 3) return 0
+        
+        // Find longest consecutive sequence
+        var longestRunLength = 1
+        var currentRunLength = 1
+        var runStart = 0
+        
+        for (i in 1 until sortedRanks.size) {
+            if (sortedRanks[i].ordinal == sortedRanks[i-1].ordinal + 1) {
+                currentRunLength++
+            } else {
+                if (currentRunLength > longestRunLength) {
+                    longestRunLength = currentRunLength
+                    runStart = i - currentRunLength
+                }
+                currentRunLength = 1
+            }
+        }
+        
+        // Check final run
+        if (currentRunLength > longestRunLength) {
+            longestRunLength = currentRunLength
+            runStart = sortedRanks.size - currentRunLength
+        }
+        
+        if (longestRunLength >= 3) {
+            // Calculate score: run length * product of counts for each rank in run
+            var multiplier = 1
+            for (i in runStart until runStart + longestRunLength) {
+                multiplier *= rankCounts[sortedRanks[i]]!!
+            }
+            return longestRunLength * multiplier
+        }
+        return 0
+    }
+
+    private fun countFlushes(hand: List<Card>, cutCard: Card, isCrib: Boolean): Int {
+        val handSuits = hand.map { it.suit }
+        val handFlush = handSuits.all { it == handSuits[0] }
+        
+        if (handFlush && cutCard.suit == handSuits[0]) {
+            return 5 // All cards same suit
+        } else if (handFlush && !isCrib) {
+            return 4 // Hand flush but not crib
+        }
+        return 0
+    }
+
+    private fun countNobs(hand: List<Card>, cutCard: Card): Int {
+        return if (hand.any { it.rank == Rank.JACK && it.suit == cutCard.suit }) 1 else 0
+    }
+
+    private fun getDealerIndex(): Int {
+        // For now, assume first player is always dealer
+        // In a full implementation, this would track dealer rotation
+        return 0
+    }
+
+    private fun startNewRound(players: List<Player>) {
+        // Reset deck and deal new cards
+        deck.shuffle()
+        state = state.copy(
+            players = players.map { player ->
+                player.copy(hand = deck.draw(cardsPerHand))
+            },
+            crib = emptyList(),
+            cutCard = null,
+            currentPlayerId = players.first().id,
+            stage = GameStage.DEALING,
+            playedCards = emptyList(),
+            peggingCount = 0,
+            lastPlayWasGo = false,
+            handsForCounting = emptyMap()
+        )
+        transitionToDiscarding()
+    }
+
+    private fun Card.peggingValue(): Int = this.countingValue()
+
+    private fun Card.countingValue(): Int = when (rank) {
         Rank.ACE -> 1
         Rank.JACK, Rank.QUEEN, Rank.KING -> 10
         else -> rank.ordinal + 1
