@@ -17,7 +17,7 @@ class Game(
     val creationTime: Instant = Instant.now(),
     private val historyTracker: GameHistoryTracker = ListGameHistoryTracker()
 ) {
-    private var state: GameState = GameState(players)
+    private var state: GameState = GameState(id, players)
     private val cardsPerHand = 6
     private var currentRound = 1
 
