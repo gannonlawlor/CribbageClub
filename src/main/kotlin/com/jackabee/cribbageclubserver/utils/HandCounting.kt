@@ -35,7 +35,7 @@ object HandCounting {
         return score
     }
 
-    private fun count15s(cards: List<Card>): Int {
+    internal fun count15s(cards: List<Card>): Int {
         var count = 0
         val values = cards.map { card: Card -> card.countingValue() }
 
@@ -52,7 +52,7 @@ object HandCounting {
         return count * 2 // Each 15 is worth 2 points
     }
 
-    private fun countPairs(cards: List<Card>): Int {
+    internal fun countPairs(cards: List<Card>): Int {
         val rankCounts = cards.groupingBy { it.rank }.eachCount()
         var score = 0
         for (count in rankCounts.values) {
@@ -63,7 +63,7 @@ object HandCounting {
         return score
     }
 
-    private fun countRuns(cards: List<Card>): Int {
+    internal fun countRuns(cards: List<Card>): Int {
         val rankCounts = cards.groupingBy { it.rank }.eachCount()
         val sortedRanks = rankCounts.keys.sortedBy { it.ordinal }
 
@@ -103,7 +103,7 @@ object HandCounting {
         return 0
     }
 
-    private fun countFlushes(hand: List<Card>, cutCard: Card, isCrib: Boolean): Int {
+    internal fun countFlushes(hand: List<Card>, cutCard: Card, isCrib: Boolean): Int {
         val handSuits = hand.map { it.suit }
         val handFlush = handSuits.all { it == handSuits[0] }
 
@@ -115,7 +115,7 @@ object HandCounting {
         return 0
     }
 
-    private fun countNobs(hand: List<Card>, cutCard: Card): Int {
+    internal fun countNobs(hand: List<Card>, cutCard: Card): Int {
         return if (hand.any { it.rank == Rank.JACK && it.suit == cutCard.suit }) 1 else 0
     }
 }
