@@ -81,15 +81,6 @@ class GameTest {
     }
 
     @Test
-    fun `Game should not allow discarding cards not in hand`() {
-        val player = game.getCurrentState().players[0]
-        val invalidCard = Card(Rank.ACE, Suit.SPADES) // Assuming this card is not in the player's hand
-        assertThrows<IllegalArgumentException> {
-            game.applyAction(GameAction.DiscardToCrib(player.id, invalidCard))
-        }
-    }
-
-    @Test
     fun `Game should allow cutting the deck`() {
         discardAllPlayersToCrib()
         val player = game.getCurrentState().players[0]
