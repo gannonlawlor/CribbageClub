@@ -7,16 +7,19 @@ import com.jackabee.cribbageclubserver.model.card.Rank
 import com.jackabee.cribbageclubserver.model.player.Player
 import com.jackabee.cribbageclubserver.utils.HandCounting.calculateHandScore
 import com.jackabee.cribbageclubserver.utils.HandCounting.peggingValue
+import com.jackabee.cribbageclubserver.utils.ScoreBreakdownCalculator
 import java.time.Instant
 
 class Game(
     val id: String,
     private val players: List<Player>,
     private val deck: Deck = Deck(),
-    val creationTime: Instant = Instant.now()
+    val creationTime: Instant = Instant.now(),
+    private val historyTracker: GameHistoryTracker = ListGameHistoryTracker()
 ) {
     private var state: GameState = GameState(players)
     private val cardsPerHand = 6
+    private var currentRound = 1
 
 
     init {
@@ -24,7 +27,7 @@ class Game(
         dealCards()
     }
 
-    fun getCurrentState(): GameState = state.copy()
+    fun getCurrentState(): GameState = state.copy(history = historyTracker.getHistory())
 
     fun applyAction(action: GameAction): GameState {
         when (action) {
@@ -44,6 +47,8 @@ class Game(
      * @see transitionToDiscarding
      */
     private fun dealCards() {
+        historyTracker.addEvent(GameHistoryEvent.RoundStarted(roundNumber = currentRound))
+        
         state = state.copy(
             stage = GameStage.DEALING,
             players = state.players.map { player ->
@@ -51,6 +56,8 @@ class Game(
             },
             currentPlayerId = state.players.first().id
         )
+        
+        historyTracker.addEvent(GameHistoryEvent.CardsDealt())
         transitionToDiscarding()
     }
 
@@ -102,6 +109,9 @@ class Game(
         // Store hands for counting before transitioning to pegging
         val handsForCounting = state.players.associate { it.id to it.hand }
         
+        // Check if Jack is cut for dealer scoring
+        val dealerScoredNobs = cutCard.rank == Rank.JACK
+        
         state = state.copy(
             cutCard = cutCard,
             stage = GameStage.PEGGING,
@@ -110,13 +120,19 @@ class Game(
         )
 
         // If Jack is cut, dealer scores 2 points ("His Nobs")
-        if (cutCard.rank == Rank.JACK) {
+        if (dealerScoredNobs) {
             val dealerIndex = (players.indexOfFirst { it.id == state.currentPlayerId } - 1 + players.size) % players.size
             val updatedPlayers = state.players.toMutableList()
             val dealer = updatedPlayers[dealerIndex]
             updatedPlayers[dealerIndex] = dealer.copy(score = dealer.score + 2)
             state = state.copy(players = updatedPlayers)
         }
+        
+        historyTracker.addEvent(GameHistoryEvent.DeckCut(
+            cutCard = cutCard,
+            cuttingPlayerId = playerId,
+            dealerScoredNobs = dealerScoredNobs
+        ))
     }
 
     private fun transitionToCutting() {
@@ -147,6 +163,33 @@ class Game(
         val playerWithUpdatedScore = updatedPlayer.copy(score = updatedPlayer.score + scoreEarned)
         updatedPlayers[playerIndex] = playerWithUpdatedScore
 
+        // Create scoring reason for history
+        val scoringReason = when {
+            newCount == 31 -> "Thirty-one"
+            newCount == 15 -> "Fifteen"
+            scoreEarned > 0 && updatedPlayedCards.size >= 2 -> {
+                val lastCard = updatedPlayedCards.last()
+                val sameFaceCards = updatedPlayedCards.reversed().takeWhile { it.rank == lastCard.rank }
+                when (sameFaceCards.size) {
+                    2 -> "Pair"
+                    3 -> "Three of a kind"
+                    4 -> "Four of a kind"
+                    else -> {
+                        // Check for run
+                        var runReason: String? = null
+                        for (runLength in 7 downTo 3) {
+                            if (updatedPlayedCards.takeLast(runLength).isRun()) {
+                                runReason = "Run of $runLength"
+                                break
+                            }
+                        }
+                        runReason
+                    }
+                }
+            }
+            else -> null
+        }
+
         // Move to next player
         val nextPlayerIndex = (playerIndex + 1) % players.size
         val nextPlayerId = players[nextPlayerIndex].id
@@ -159,8 +202,18 @@ class Game(
             lastPlayWasGo = false
         )
 
+        // Add to history
+        historyTracker.addEvent(GameHistoryEvent.CardPlayed(
+            playerId = playerId,
+            card = card,
+            newCount = newCount,
+            pointsScored = scoreEarned,
+            scoringReason = scoringReason
+        ))
+
         // Check if pegging round is over
         if (state.players.all { it.hand.isEmpty() }) {
+            historyTracker.addEvent(GameHistoryEvent.PeggingEnded())
             transitionToHandCounting()
         }
     }
@@ -186,11 +239,21 @@ class Game(
                 currentPlayerId = nextPlayerId,
                 lastPlayWasGo = false
             )
+
+            historyTracker.addEvent(GameHistoryEvent.GoAnnounced(
+                playerId = playerId,
+                pointsScored = 1
+            ))
         } else {
             state = state.copy(
                 currentPlayerId = nextPlayerId,
                 lastPlayWasGo = true
             )
+
+            historyTracker.addEvent(GameHistoryEvent.GoAnnounced(
+                playerId = playerId,
+                pointsScored = 0
+            ))
         }
     }
 
@@ -248,8 +311,16 @@ class Game(
 
         // Count hand score
         val handScore = calculateHandScore(handToCount, state.cutCard!!)
+        val scoreBreakdown = ScoreBreakdownCalculator.calculateHandScoreBreakdown(handToCount, state.cutCard!!)
         val updatedPlayer = player.copy(score = player.score + handScore)
         val updatedPlayers = state.players.toMutableList().apply { set(playerIndex, updatedPlayer) }
+
+        // Add to history
+        historyTracker.addEvent(GameHistoryEvent.HandCounted(
+            playerId = playerId,
+            totalPoints = handScore,
+            scoreBreakdown = scoreBreakdown
+        ))
 
         // Check if game is over
         if (updatedPlayer.score >= 121) {
@@ -257,6 +328,11 @@ class Game(
                 players = updatedPlayers,
                 stage = GameStage.GAME_OVER
             )
+            
+            historyTracker.addEvent(GameHistoryEvent.GameEnded(
+                winnerPlayerId = playerId,
+                finalScore = updatedPlayer.score
+            ))
             return
         }
 
@@ -267,8 +343,16 @@ class Game(
             val dealerIndex = getDealerIndex()
             val dealer = updatedPlayers[dealerIndex]
             val cribScore = calculateHandScore(state.crib, state.cutCard!!, isCrib = true)
+            val cribScoreBreakdown = ScoreBreakdownCalculator.calculateHandScoreBreakdown(state.crib, state.cutCard!!, isCrib = true)
             val updatedDealer = dealer.copy(score = dealer.score + cribScore)
             updatedPlayers[dealerIndex] = updatedDealer
+
+            // Add crib to history
+            historyTracker.addEvent(GameHistoryEvent.CribCounted(
+                dealerPlayerId = dealer.id,
+                totalPoints = cribScore,
+                scoreBreakdown = cribScoreBreakdown
+            ))
 
             // Check if dealer wins after crib
             if (updatedDealer.score >= 121) {
@@ -276,6 +360,11 @@ class Game(
                     players = updatedPlayers,
                     stage = GameStage.GAME_OVER
                 )
+                
+                historyTracker.addEvent(GameHistoryEvent.GameEnded(
+                    winnerPlayerId = dealer.id,
+                    finalScore = updatedDealer.score
+                ))
                 return
             }
 
@@ -299,6 +388,7 @@ class Game(
     private fun startNewRound(players: List<Player>) {
         // Reset deck and deal new cards
         deck.shuffle()
+        currentRound++
         state = state.copy(
             players = players.map { player ->
                 player.copy(hand = deck.draw(cardsPerHand))
