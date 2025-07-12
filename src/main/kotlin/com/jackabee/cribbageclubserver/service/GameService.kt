@@ -5,6 +5,8 @@ import com.jackabee.cribbageclubserver.model.ai.BasicAIPlayer
 import com.jackabee.cribbageclubserver.model.game.Game
 import com.jackabee.cribbageclubserver.model.game.GameState
 import com.jackabee.cribbageclubserver.model.player.Player
+import com.jackabee.cribbageclubserver.websocket.GameWebSocketService
+import org.springframework.beans.factory.annotation.Autowired
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.random.Random
 
@@ -12,13 +14,16 @@ import kotlin.random.Random
  * Service for managing cribbage games with AI players and human players.
  */
 @org.springframework.stereotype.Service
-class GameService {
+class GameService(
+    @Autowired(required = false) private val webSocketService: GameWebSocketService? = null
+) {
     
     private val games = ConcurrentHashMap<String, Game>()
     private val aiPlayers = ConcurrentHashMap<String, AIPlayer>()
     
     /**
      * Creates a new game with the provided players.
+     * Broadcasts the initial game state via WebSocket.
      * 
      * @param players The list of players for the game
      * @return The initial game state
@@ -31,11 +36,17 @@ class GameService {
         games[gameId] = game
         
         // Process any immediate AI actions if any players are AI
-        return processAIActions(game)
+        val initialState = processAIActions(game)
+        
+        // Broadcast the initial game state via WebSocket if available
+        webSocketService?.broadcastGameStateUpdate(gameId, initialState)
+        
+        return initialState
     }
     
     /**
      * Creates a new game with a human player and an AI opponent.
+     * Broadcasts the initial game state via WebSocket.
      * 
      * @param humanPlayerId The ID of the human player
      * @param humanPlayerName The name of the human player
@@ -70,11 +81,17 @@ class GameService {
         games[gameId] = game
         
         // Process any immediate AI actions
-        return processAIActions(game)
+        val initialState = processAIActions(game)
+        
+        // Broadcast the initial game state via WebSocket if available
+        webSocketService?.broadcastGameStateUpdate(gameId, initialState)
+        
+        return initialState
     }
     
     /**
      * Applies a human player's action to the game and processes any subsequent AI actions.
+     * Broadcasts the updated game state via WebSocket.
      * 
      * @param gameId The ID of the game
      * @param action The action to apply
@@ -87,7 +104,12 @@ class GameService {
         game.applyAction(action)
         
         // Process any AI actions that should follow
-        return processAIActions(game)
+        val finalState = processAIActions(game)
+        
+        // Broadcast the updated game state via WebSocket if available
+        webSocketService?.broadcastGameStateUpdate(gameId, finalState)
+        
+        return finalState
     }
     
     /**
