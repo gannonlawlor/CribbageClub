@@ -11,5 +11,6 @@ data class GameState(
     val stage: GameStage = GameStage.DEALING,
     val playedCards: List<Card> = emptyList(),
     val peggingCount: Int = 0,
-    val lastPlayWasGo: Boolean = false
+    val lastPlayWasGo: Boolean = false,
+    val handsForCounting: Map<String, List<Card>> = emptyMap()
 )
