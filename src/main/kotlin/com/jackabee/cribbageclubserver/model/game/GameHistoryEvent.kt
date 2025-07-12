@@ -100,7 +100,8 @@ sealed class GameHistoryEvent {
         val pairs: Int = 0,
         val runs: Int = 0,
         val flushes: Int = 0,
-        val nobs: Int = 0
+        val nobs: Int = 0,
+        val totalScore: Int = 0
     ) {
         fun total(): Int = fifteens + pairs + runs + flushes + nobs
     }
