@@ -4,6 +4,7 @@ import com.jackabee.cribbageclubserver.model.card.Card
 import com.jackabee.cribbageclubserver.model.player.Player
 
 data class GameState(
+    val gameId: String,
     val players: List<Player>,
     val crib: List<Card> = emptyList(),
     val cutCard: Card? = null,

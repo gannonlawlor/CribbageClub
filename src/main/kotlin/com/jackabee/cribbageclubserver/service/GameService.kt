@@ -9,12 +9,30 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.random.Random
 
 /**
- * Service for managing cribbage games with AI players.
+ * Service for managing cribbage games with AI players and human players.
  */
+@org.springframework.stereotype.Service
 class GameService {
     
     private val games = ConcurrentHashMap<String, Game>()
     private val aiPlayers = ConcurrentHashMap<String, AIPlayer>()
+    
+    /**
+     * Creates a new game with the provided players.
+     * 
+     * @param players The list of players for the game
+     * @return The initial game state
+     */
+    fun createGame(players: List<Player>): GameState {
+        require(players.size == 2) { "Game must have exactly 2 players" }
+        
+        val gameId = generateGameId()
+        val game = Game(gameId, players)
+        games[gameId] = game
+        
+        // Process any immediate AI actions if any players are AI
+        return processAIActions(game)
+    }
     
     /**
      * Creates a new game with a human player and an AI opponent.
