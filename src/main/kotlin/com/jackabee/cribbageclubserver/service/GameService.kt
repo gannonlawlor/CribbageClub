@@ -34,6 +34,7 @@ class GameService(
     // Active games in memory (Game objects hold mutable deck/round state)
     private val games = ConcurrentHashMap<String, Game>()
     private val aiPlayers = ConcurrentHashMap<String, AIPlayer>()
+    private val gameLastActivity = ConcurrentHashMap<String, Instant>()
 
     /**
      * Creates a new game with the provided players.
@@ -48,6 +49,7 @@ class GameService(
         val gameId = generateGameId()
         val game = Game(gameId, players)
         games[gameId] = game
+        gameLastActivity[gameId] = Instant.now()
 
         // Process any immediate AI actions if any players are AI
         val initialState = processAIActions(game)
@@ -99,6 +101,7 @@ class GameService(
 
         val game = Game(gameId, players)
         games[gameId] = game
+        gameLastActivity[gameId] = Instant.now()
 
         // Process any immediate AI actions
         val initialState = processAIActions(game)
@@ -126,6 +129,7 @@ class GameService(
      */
     fun applyHumanAction(gameId: String, action: com.jackabee.cribbageclubserver.model.action.GameAction): GameState {
         val game = games[gameId] ?: throw IllegalArgumentException("Game not found: $gameId")
+        gameLastActivity[gameId] = Instant.now()
 
         // Apply human action
         game.applyAction(action)
@@ -176,6 +180,7 @@ class GameService(
             aiPlayers.remove(player.id)
         }
         games.remove(gameId)
+        gameLastActivity.remove(gameId)
 
         // Remove from database
         gameRepository?.deleteById(gameId)
@@ -203,6 +208,25 @@ class GameService(
      */
     fun findGamesByPlayer(playerId: String): List<GameEntity> {
         return gameRepository?.findByPlayer1IdOrPlayer2Id(playerId, playerId) ?: emptyList()
+    }
+
+    /**
+     * Removes games that have been inactive for longer than the given duration.
+     * Finished games (GAME_OVER) are always eligible for removal.
+     *
+     * @return The list of removed game IDs
+     */
+    fun removeInactiveGames(inactiveThreshold: Instant): List<String> {
+        val removed = mutableListOf<String>()
+        for ((gameId, lastActivity) in gameLastActivity) {
+            val game = games[gameId] ?: continue
+            val state = game.getCurrentState()
+            if (lastActivity.isBefore(inactiveThreshold) || state.stage == GameStage.GAME_OVER) {
+                removeGame(gameId)
+                removed.add(gameId)
+            }
+        }
+        return removed
     }
 
     /**
