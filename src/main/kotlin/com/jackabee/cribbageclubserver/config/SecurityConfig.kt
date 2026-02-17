@@ -25,9 +25,11 @@ class SecurityConfig(
                 auth
                     // Public auth endpoints (register, login)
                     .requestMatchers("/api/auth/register", "/api/auth/login").permitAll()
+                    .requestMatchers("/api/stats/leaderboard").permitAll()
                     .requestMatchers("/ws/**").permitAll()
                     .requestMatchers("/h2-console/**").permitAll()
                     .requestMatchers("/actuator/**").permitAll()
+                    .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                     // All other API endpoints require authentication
                     .requestMatchers("/api/**").authenticated()
                     .anyRequest().permitAll()
