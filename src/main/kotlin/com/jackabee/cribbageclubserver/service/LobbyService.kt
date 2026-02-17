@@ -9,24 +9,17 @@ import com.jackabee.cribbageclubserver.repository.LobbyRepository
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.time.Instant
-import java.util.concurrent.ConcurrentHashMap
 import kotlin.random.Random
 
 @Service
 class LobbyService(
     private val gameService: GameService,
-    @Autowired(required = false) private val lobbyRepository: LobbyRepository? = null,
-    @Autowired(required = false) private val objectMapper: ObjectMapper? = null
+    private val lobbyRepository: LobbyRepository,
+    private val objectMapper: ObjectMapper
 ) {
     private val logger = LoggerFactory.getLogger(LobbyService::class.java)
-
-    // Fallback in-memory store when no repository is available
-    private val lobbies = ConcurrentHashMap<String, Lobby>()
-
-    private val useDb: Boolean get() = lobbyRepository != null && objectMapper != null
 
     /**
      * Creates a new lobby.
@@ -41,11 +34,7 @@ class LobbyService(
         val creator = LobbyPlayer(creatorId, creatorName)
         val lobby = Lobby(id = lobbyId, name = name, players = listOf(creator))
 
-        if (useDb) {
-            saveLobbyEntity(lobby)
-        } else {
-            lobbies[lobbyId] = lobby
-        }
+        saveLobbyEntity(lobby)
         logger.info("Created lobby {} by {}", lobbyId, creatorName)
         return lobby
     }
@@ -57,11 +46,8 @@ class LobbyService(
      * @return The lobby if found
      */
     fun getLobby(lobbyId: String): Lobby? {
-        if (useDb) {
-            val entity = lobbyRepository!!.findById(lobbyId).orElse(null) ?: return null
-            return toLobby(entity)
-        }
-        return lobbies[lobbyId]
+        val entity = lobbyRepository.findById(lobbyId).orElse(null) ?: return null
+        return toLobby(entity)
     }
 
     /**
@@ -70,10 +56,7 @@ class LobbyService(
      * @return List of all lobbies
      */
     fun listLobbies(): List<Lobby> {
-        if (useDb) {
-            return lobbyRepository!!.findAll().map { toLobby(it) }
-        }
-        return lobbies.values.toList()
+        return lobbyRepository.findAll().map { toLobby(it) }
     }
 
     /**
@@ -82,10 +65,7 @@ class LobbyService(
      * @return List of lobbies in WAITING status
      */
     fun listWaitingLobbies(): List<Lobby> {
-        if (useDb) {
-            return lobbyRepository!!.findByStatus(LobbyStatus.WAITING.name).map { toLobby(it) }
-        }
-        return lobbies.values.filter { it.status == LobbyStatus.WAITING }
+        return lobbyRepository.findByStatus(LobbyStatus.WAITING.name).map { toLobby(it) }
     }
 
     /**
@@ -103,11 +83,7 @@ class LobbyService(
         val player = LobbyPlayer(playerId, playerName)
         val updatedLobby = lobby.addPlayer(player)
 
-        if (useDb) {
-            saveLobbyEntity(updatedLobby)
-        } else {
-            lobbies[lobbyId] = updatedLobby
-        }
+        saveLobbyEntity(updatedLobby)
         logger.info("Player {} joined lobby {}", playerName, lobbyId)
         return updatedLobby
     }
@@ -133,11 +109,7 @@ class LobbyService(
 
         // Update lobby status
         val updatedLobby = lobby.startGame(gameState.gameId)
-        if (useDb) {
-            saveLobbyEntity(updatedLobby)
-        } else {
-            lobbies[lobbyId] = updatedLobby
-        }
+        saveLobbyEntity(updatedLobby)
         logger.info("Started game {} from lobby {}", gameState.gameId, lobbyId)
 
         return gameState
@@ -158,18 +130,10 @@ class LobbyService(
 
         // Remove lobby if empty
         if (updatedLobby.players.isEmpty()) {
-            if (useDb) {
-                lobbyRepository!!.deleteById(lobbyId)
-            } else {
-                lobbies.remove(lobbyId)
-            }
+            lobbyRepository.deleteById(lobbyId)
             logger.info("Lobby {} removed (empty)", lobbyId)
         } else {
-            if (useDb) {
-                saveLobbyEntity(updatedLobby)
-            } else {
-                lobbies[lobbyId] = updatedLobby
-            }
+            saveLobbyEntity(updatedLobby)
         }
 
         return updatedLobby
@@ -184,20 +148,11 @@ class LobbyService(
     fun removeInactiveLobbies(inactiveThreshold: Instant): List<String> {
         val removed = mutableListOf<String>()
 
-        if (useDb) {
-            val allLobbies = lobbyRepository!!.findAll()
-            for (entity in allLobbies) {
-                if (entity.updatedAt.isBefore(inactiveThreshold)) {
-                    lobbyRepository.deleteById(entity.id)
-                    removed.add(entity.id)
-                }
-            }
-        } else {
-            for ((lobbyId, lobby) in lobbies) {
-                if (lobby.createdAt.isBefore(inactiveThreshold)) {
-                    lobbies.remove(lobbyId)
-                    removed.add(lobbyId)
-                }
+        val allLobbies = lobbyRepository.findAll()
+        for (entity in allLobbies) {
+            if (entity.updatedAt.isBefore(inactiveThreshold)) {
+                lobbyRepository.deleteById(entity.id)
+                removed.add(entity.id)
             }
         }
 
@@ -213,18 +168,11 @@ class LobbyService(
      * @param lobbyId The ID of the lobby to remove
      */
     fun removeLobby(lobbyId: String) {
-        if (useDb) {
-            lobbyRepository!!.deleteById(lobbyId)
-        } else {
-            lobbies.remove(lobbyId)
-        }
+        lobbyRepository.deleteById(lobbyId)
         logger.info("Removed lobby {}", lobbyId)
     }
 
     private fun saveLobbyEntity(lobby: Lobby) {
-        val mapper = objectMapper ?: return
-        val repo = lobbyRepository ?: return
-
         val entity = LobbyEntity(
             id = lobby.id,
             name = lobby.name,
@@ -233,14 +181,13 @@ class LobbyService(
             gameId = lobby.gameId,
             createdAt = lobby.createdAt,
             updatedAt = Instant.now(),
-            playersJson = mapper.writeValueAsString(lobby.players)
+            playersJson = objectMapper.writeValueAsString(lobby.players)
         )
-        repo.save(entity)
+        lobbyRepository.save(entity)
     }
 
     private fun toLobby(entity: LobbyEntity): Lobby {
-        val mapper = objectMapper!!
-        val players: List<LobbyPlayer> = mapper.readValue(entity.playersJson)
+        val players: List<LobbyPlayer> = objectMapper.readValue(entity.playersJson)
         return Lobby(
             id = entity.id,
             name = entity.name,

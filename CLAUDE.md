@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-CribbageClubServer is a Spring Boot backend for a multiplayer Cribbage card game. It supports human-vs-human and human-vs-AI play over REST and WebSocket (STOMP/SockJS). Game state is held in-memory (`ConcurrentHashMap`); H2 is configured but no JPA entities exist yet.
+CribbageClubServer is a Spring Boot backend for a multiplayer Cribbage card game. It supports human-vs-human and human-vs-AI play over REST and WebSocket (STOMP/SockJS). The database is the source of truth for game state; in-memory `Game` objects serve as a cache for active play and are reconstructed from the DB on cache miss (e.g., after server restart).
 
 ## Tech Stack
 
@@ -10,7 +10,7 @@ CribbageClubServer is a Spring Boot backend for a multiplayer Cribbage card game
 - **Framework:** Spring Boot 3.3.3
 - **JDK:** 21 (Amazon Corretto in CI)
 - **Build:** Gradle 8.10 with Kotlin DSL
-- **Database:** H2 in-memory (configured in application.properties, game state still in ConcurrentHashMap)
+- **Database:** PostgreSQL (source of truth for game/lobby state; in-memory Game objects serve as cache)
 - **Real-time:** STOMP over WebSocket with SockJS fallback
 - **Testing:** JUnit 5, Mockito, Spring Boot Test
 
@@ -91,9 +91,10 @@ Dealer rotates each round via `GameState.dealerIndex`.
 
 ## Architecture Notes
 
-- `Game.kt` is the core engine. It enforces rules, validates actions, and tracks history.
-- `GameState.dealerIndex` tracks dealer rotation; non-dealer cuts and counts first.
-- `GameService` wraps `Game` in a `ConcurrentHashMap`, handles AI turn loops (max 10 iterations), and broadcasts state via WebSocket.
+- `Game.kt` is the core engine. It enforces rules, validates actions, and tracks history. `Game.restore(state)` reconstructs a `Game` from a persisted `GameState` (including deck state via `remainingDeck`).
+- `GameState.dealerIndex` tracks dealer rotation; non-dealer cuts and counts first. `GameState.remainingDeck` captures deck state for persistence/restoration.
+- `GameService` uses the database as source of truth with an in-memory `ConcurrentHashMap` cache. On cache miss (e.g., after restart), it calls `loadGame()` to restore from DB. Handles AI turn loops (max 10 iterations) and broadcasts state via WebSocket.
+- `LobbyService` uses the database directly (no in-memory fallback).
 - `BasicAIPlayer` uses heuristic strategies for discard and pegging decisions.
 - `GameHistoryTracker` records all visible events as a sealed-class hierarchy included in `GameState`.
 - `GlobalExceptionHandler` provides structured `ErrorResponse` JSON for all REST errors.
@@ -110,7 +111,6 @@ Dealer rotates each round via `GameState.dealerIndex`.
 ## Remaining Work
 
 See the plan in the PR description or conversation for full details. Key remaining areas:
-- JPA entities and database persistence (replace ConcurrentHashMap)
 - User accounts, authentication (JWT), and authorization
 - AI difficulty levels (medium/hard implementations)
 - WebSocket session cleanup on disconnect

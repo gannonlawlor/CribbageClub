@@ -20,8 +20,9 @@ import kotlin.random.Random
 
 /**
  * Service for managing cribbage games with AI players and human players.
- * Active games live in memory (Game objects hold mutable deck state).
- * Game snapshots are persisted to the database after each action.
+ * The database is the source of truth; in-memory Game objects serve as a cache
+ * for active play. On cache miss (e.g., after server restart), games are
+ * reconstructed from the persisted GameState.
  */
 @org.springframework.stereotype.Service
 class GameService(
@@ -32,10 +33,9 @@ class GameService(
 ) {
     private val logger = LoggerFactory.getLogger(GameService::class.java)
 
-    // Active games in memory (Game objects hold mutable deck/round state)
+    // In-memory cache of active Game objects (rebuilt from DB on cache miss)
     private val games = ConcurrentHashMap<String, Game>()
     private val aiPlayers = ConcurrentHashMap<String, AIPlayer>()
-    private val gameLastActivity = ConcurrentHashMap<String, Instant>()
 
     /**
      * Creates a new game with the provided players.
@@ -50,7 +50,6 @@ class GameService(
         val gameId = generateGameId()
         val game = Game(gameId, players)
         games[gameId] = game
-        gameLastActivity[gameId] = Instant.now()
 
         // Process any immediate AI actions if any players are AI
         val initialState = processAIActions(game)
@@ -102,7 +101,6 @@ class GameService(
 
         val game = Game(gameId, players)
         games[gameId] = game
-        gameLastActivity[gameId] = Instant.now()
 
         // Process any immediate AI actions
         val initialState = processAIActions(game)
@@ -129,8 +127,8 @@ class GameService(
      * @return The updated game state after all actions are processed
      */
     fun applyHumanAction(gameId: String, action: com.jackabee.cribbageclubserver.model.action.GameAction): GameState {
-        val game = games[gameId] ?: throw IllegalArgumentException("Game not found: $gameId")
-        gameLastActivity[gameId] = Instant.now()
+        val game = games[gameId] ?: loadGame(gameId)
+            ?: throw IllegalArgumentException("Game not found: $gameId")
 
         // Apply human action
         game.applyAction(action)
@@ -154,13 +152,19 @@ class GameService(
      * @return The current game state
      */
     fun getGameState(gameId: String): GameState {
-        // Try in-memory first (active games)
-        val game = games[gameId]
-        if (game != null) {
-            return game.getCurrentState()
+        // Try in-memory cache first
+        val cachedGame = games[gameId]
+        if (cachedGame != null) {
+            return cachedGame.getCurrentState()
         }
 
-        // Fall back to database for completed/inactive games
+        // Try to restore active game from database
+        val restoredGame = loadGame(gameId)
+        if (restoredGame != null) {
+            return restoredGame.getCurrentState()
+        }
+
+        // Fall back to raw DB state (for finished games)
         val entity = gameRepository?.findById(gameId)?.orElse(null)
         if (entity != null) {
             return deserializeGameState(entity)
@@ -181,7 +185,6 @@ class GameService(
             aiPlayers.remove(player.id)
         }
         games.remove(gameId)
-        gameLastActivity.remove(gameId)
 
         // Remove from database
         gameRepository?.deleteById(gameId)
@@ -189,11 +192,19 @@ class GameService(
     }
 
     /**
-     * Lists all active games.
+     * Lists all active (non-finished) games.
      *
      * @return Map of game IDs to their current states
      */
     fun listGames(): Map<String, GameState> {
+        val repo = gameRepository
+        val mapper = objectMapper
+        if (repo != null && mapper != null) {
+            return repo.findByWinnerIdIsNull().associate { entity ->
+                entity.id to deserializeGameState(entity)
+            }
+        }
+        // Fallback to in-memory cache when no DB is available
         return games.mapValues { it.value.getCurrentState() }
     }
 
@@ -219,15 +230,63 @@ class GameService(
      */
     fun removeInactiveGames(inactiveThreshold: Instant): List<String> {
         val removed = mutableListOf<String>()
-        for ((gameId, lastActivity) in gameLastActivity) {
-            val game = games[gameId] ?: continue
-            val state = game.getCurrentState()
-            if (lastActivity.isBefore(inactiveThreshold) || state.stage == GameStage.GAME_OVER) {
-                removeGame(gameId)
-                removed.add(gameId)
+        val repo = gameRepository
+        if (repo != null) {
+            val allGames = repo.findAll()
+            for (entity in allGames) {
+                if (entity.updatedAt.isBefore(inactiveThreshold) || entity.stage == GameStage.GAME_OVER.name) {
+                    removeGame(entity.id)
+                    removed.add(entity.id)
+                }
+            }
+        } else {
+            // Fallback: clean up only cached games (no activity tracking without DB)
+            for ((gameId, game) in games) {
+                val state = game.getCurrentState()
+                if (state.stage == GameStage.GAME_OVER) {
+                    removeGame(gameId)
+                    removed.add(gameId)
+                }
             }
         }
         return removed
+    }
+
+    /**
+     * Loads a game from the database, restores the Game object, and caches it.
+     * For AI games, also recreates the AIPlayer instance.
+     *
+     * @return The restored Game, or null if not found in DB
+     */
+    private fun loadGame(gameId: String): Game? {
+        val repo = gameRepository ?: return null
+        objectMapper ?: return null
+
+        val entity = repo.findById(gameId).orElse(null) ?: return null
+        val state = deserializeGameState(entity)
+
+        // Don't restore finished games as playable Game objects
+        if (state.stage == GameStage.GAME_OVER) return null
+
+        val game = Game.restore(state)
+        games[gameId] = game
+
+        // Recreate AI player if this is an AI game
+        if (entity.isAIGame && entity.aiPlayerId != null) {
+            val aiPlayerId = entity.aiPlayerId!!
+            val difficulty = entity.aiDifficulty ?: "basic"
+            val aiPlayerName = state.players.find { it.id == aiPlayerId }?.name ?: "AI Opponent"
+            val aiPlayer = when (difficulty.lowercase()) {
+                "basic" -> BasicAIPlayer(aiPlayerId, aiPlayerName)
+                "medium" -> MediumAIPlayer(aiPlayerId, aiPlayerName)
+                "hard" -> HardAIPlayer(aiPlayerId, aiPlayerName)
+                else -> BasicAIPlayer(aiPlayerId, aiPlayerName)
+            }
+            aiPlayers[aiPlayerId] = aiPlayer
+        }
+
+        logger.info("Restored game {} from database", gameId)
+        return game
     }
 
     /**
