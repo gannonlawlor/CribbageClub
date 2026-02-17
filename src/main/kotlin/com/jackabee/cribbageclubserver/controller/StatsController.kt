@@ -1,13 +1,17 @@
 package com.jackabee.cribbageclubserver.controller
 
 import com.jackabee.cribbageclubserver.service.PlayerStatsService
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("/api/stats")
+@Tag(name = "Player Stats", description = "Player statistics and leaderboard")
 class StatsController(
     private val playerStatsService: PlayerStatsService
 ) {
+    @Operation(summary = "Get stats for the authenticated user")
     @GetMapping("/me")
     fun getMyStats(@RequestAttribute("userId") userId: String): StatsResponse {
         val stats = playerStatsService.getStats(userId)
@@ -24,6 +28,7 @@ class StatsController(
         )
     }
 
+    @Operation(summary = "Get stats for a specific player")
     @GetMapping("/{playerId}")
     fun getPlayerStats(@PathVariable playerId: String): StatsResponse {
         val stats = playerStatsService.getStats(playerId)
@@ -40,6 +45,7 @@ class StatsController(
         )
     }
 
+    @Operation(summary = "Get top 10 leaderboard (public)")
     @GetMapping("/leaderboard")
     fun getLeaderboard(): List<StatsResponse> {
         return playerStatsService.getLeaderboard().map { stats ->

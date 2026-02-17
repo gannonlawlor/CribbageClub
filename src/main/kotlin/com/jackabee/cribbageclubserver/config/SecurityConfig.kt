@@ -29,6 +29,7 @@ class SecurityConfig(
                     .requestMatchers("/ws/**").permitAll()
                     .requestMatchers("/h2-console/**").permitAll()
                     .requestMatchers("/actuator/**").permitAll()
+                    .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                     // All other API endpoints require authentication
                     .requestMatchers("/api/**").authenticated()
                     .anyRequest().permitAll()
