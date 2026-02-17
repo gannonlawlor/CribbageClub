@@ -10,24 +10,53 @@ import com.jackabee.cribbageclubserver.utils.HandCounting.peggingValue
 import com.jackabee.cribbageclubserver.utils.ScoreBreakdownCalculator
 import java.time.Instant
 
-class Game(
+class Game private constructor(
     val id: String,
     private val players: List<Player>,
-    private val deck: Deck = Deck(),
-    val creationTime: Instant = Instant.now(),
-    private val historyTracker: GameHistoryTracker = ListGameHistoryTracker()
+    private val deck: Deck,
+    val creationTime: Instant,
+    private val historyTracker: GameHistoryTracker,
+    initialState: GameState?,
+    initialRound: Int
 ) {
-    private var state: GameState = GameState(id, players)
+    private var state: GameState = initialState ?: GameState(id, players)
     private val cardsPerHand = 6
-    private var currentRound = 1
+    private var currentRound = initialRound
 
-
-    init {
+    constructor(
+        id: String,
+        players: List<Player>,
+        deck: Deck = Deck(),
+        creationTime: Instant = Instant.now(),
+        historyTracker: GameHistoryTracker = ListGameHistoryTracker()
+    ) : this(id, players, deck, creationTime, historyTracker, initialState = null, initialRound = 1) {
         require(players.size == 2) { "This cribbage can only be played with 2 players" }
         dealCards()
     }
 
-    fun getCurrentState(): GameState = state.copy(history = historyTracker.getHistory())
+    companion object {
+        fun restore(state: GameState): Game {
+            val deck = Deck(state.remainingDeck)
+            val historyTracker = ListGameHistoryTracker()
+            state.history.forEach { historyTracker.addEvent(it) }
+            val currentRound = state.history.count { it is GameHistoryEvent.RoundStarted }
+                .coerceAtLeast(1)
+            return Game(
+                id = state.gameId,
+                players = state.players,
+                deck = deck,
+                creationTime = Instant.now(),
+                historyTracker = historyTracker,
+                initialState = state.copy(history = emptyList(), remainingDeck = emptyList()),
+                initialRound = currentRound
+            )
+        }
+    }
+
+    fun getCurrentState(): GameState = state.copy(
+        history = historyTracker.getHistory(),
+        remainingDeck = deck.remainingCards()
+    )
 
     fun applyAction(action: GameAction): GameState {
         when (action) {

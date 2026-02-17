@@ -15,5 +15,6 @@ data class GameState(
     val lastPlayWasGo: Boolean = false,
     val handsForCounting: Map<String, List<Card>> = emptyMap(),
     val history: List<GameHistoryEvent> = emptyList(),
-    val dealerIndex: Int = 0
+    val dealerIndex: Int = 0,
+    val remainingDeck: List<Card> = emptyList()
 )

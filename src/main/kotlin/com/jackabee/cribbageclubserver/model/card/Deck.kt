@@ -1,7 +1,7 @@
 package com.jackabee.cribbageclubserver.model.card
 
-class Deck {
-    private val cards: MutableList<Card> = createShuffledDeck()
+class Deck(existingCards: List<Card>? = null) {
+    private val cards: MutableList<Card> = existingCards?.toMutableList() ?: createShuffledDeck()
 
     /**
      * Draws the top card from the deck.
@@ -26,6 +26,11 @@ class Deck {
      * @return The middle card of the deck.
      */
     fun cut(): Card = cards[cards.size / 2]
+
+    /**
+     * Returns a copy of the remaining cards in the deck.
+     */
+    fun remainingCards(): List<Card> = cards.toList()
 
     /**
      * Shuffles the deck in-place, so that the order of the cards
