@@ -1,6 +1,7 @@
 package com.jackabee.cribbageclubserver.websocket
 
 import com.jackabee.cribbageclubserver.service.GameService
+import org.slf4j.LoggerFactory
 import org.springframework.messaging.handler.annotation.MessageMapping
 import org.springframework.messaging.handler.annotation.Payload
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor
@@ -15,6 +16,7 @@ class GameWebSocketController(
     private val gameService: GameService,
     private val messagingTemplate: SimpMessagingTemplate
 ) {
+    private val logger = LoggerFactory.getLogger(GameWebSocketController::class.java)
 
     /**
      * Handle game actions sent via WebSocket
@@ -120,7 +122,7 @@ class GameWebSocketController(
             
         } catch (e: Exception) {
             // Log error but don't send back to client since they're leaving
-            println("Error handling leave game: ${e.message}")
+            logger.warn("Error handling leave game: {}", e.message)
         }
     }
 

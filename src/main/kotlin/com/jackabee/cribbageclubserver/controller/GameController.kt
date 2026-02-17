@@ -11,20 +11,15 @@ import org.springframework.web.bind.annotation.*
 class GameController(
     private val gameService: GameService
 ) {
-    
+
     /**
      * Gets the current state of a game.
      */
     @GetMapping("/{gameId}")
-    fun getGameState(@PathVariable gameId: String): ResponseEntity<GameState> {
-        return try {
-            val gameState = gameService.getGameState(gameId)
-            ResponseEntity.ok(gameState)
-        } catch (e: IllegalArgumentException) {
-            ResponseEntity.notFound().build()
-        }
+    fun getGameState(@PathVariable gameId: String): GameState {
+        return gameService.getGameState(gameId)
     }
-    
+
     /**
      * Applies an action to a game.
      */
@@ -32,21 +27,43 @@ class GameController(
     fun applyAction(
         @PathVariable gameId: String,
         @RequestBody action: GameAction
-    ): ResponseEntity<GameState> {
-        return try {
-            val gameState = gameService.applyHumanAction(gameId, action)
-            ResponseEntity.ok(gameState)
-        } catch (e: IllegalArgumentException) {
-            ResponseEntity.badRequest().build()
-        }
+    ): GameState {
+        return gameService.applyHumanAction(gameId, action)
     }
-    
+
+    /**
+     * Creates a new game against an AI opponent.
+     */
+    @PostMapping("/ai")
+    fun createGameWithAI(@RequestBody request: CreateAIGameRequest): GameState {
+        return gameService.createGameWithAI(
+            humanPlayerId = request.playerId,
+            humanPlayerName = request.playerName,
+            aiDifficulty = request.difficulty ?: "basic"
+        )
+    }
+
+    /**
+     * Deletes a game.
+     */
+    @DeleteMapping("/{gameId}")
+    fun deleteGame(@PathVariable gameId: String): ResponseEntity<Void> {
+        gameService.getGameState(gameId) // verify it exists, throws if not found
+        gameService.removeGame(gameId)
+        return ResponseEntity.noContent().build()
+    }
+
     /**
      * Lists all active games.
      */
     @GetMapping
-    fun listGames(): ResponseEntity<Map<String, GameState>> {
-        val games = gameService.listGames()
-        return ResponseEntity.ok(games)
+    fun listGames(): Map<String, GameState> {
+        return gameService.listGames()
     }
 }
+
+data class CreateAIGameRequest(
+    val playerId: String,
+    val playerName: String,
+    val difficulty: String? = null
+)

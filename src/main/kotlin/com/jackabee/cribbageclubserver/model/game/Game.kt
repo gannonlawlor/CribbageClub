@@ -121,10 +121,10 @@ class Game(
 
         // If Jack is cut, dealer scores 2 points ("His Nobs")
         if (dealerScoredNobs) {
-            val dealerIndex = (players.indexOfFirst { it.id == state.currentPlayerId } - 1 + players.size) % players.size
+            val dealerIdx = getDealerIndex()
             val updatedPlayers = state.players.toMutableList()
-            val dealer = updatedPlayers[dealerIndex]
-            updatedPlayers[dealerIndex] = dealer.copy(score = dealer.score + 2)
+            val dealer = updatedPlayers[dealerIdx]
+            updatedPlayers[dealerIdx] = dealer.copy(score = dealer.score + 2)
             state = state.copy(players = updatedPlayers)
         }
         
@@ -136,9 +136,10 @@ class Game(
     }
 
     private fun transitionToCutting() {
+        val nonDealerIndex = getNonDealerIndex()
         state = state.copy(
             stage = GameStage.CUTTING,
-            currentPlayerId = state.players.first().id
+            currentPlayerId = state.players[nonDealerIndex].id
         )
     }
 
@@ -284,9 +285,10 @@ class Game(
     }
 
     private fun transitionToHandCounting() {
+        val nonDealerIndex = getNonDealerIndex()
         state = state.copy(
             stage = GameStage.COUNTING,
-            currentPlayerId = players.first().id,
+            currentPlayerId = players[nonDealerIndex].id,
             peggingCount = 0,
             playedCards = emptyList()
         )
@@ -337,9 +339,9 @@ class Game(
         }
 
         // Move to next player or handle crib counting
-        val nextPlayerIndex = (playerIndex + 1) % players.size
-        if (nextPlayerIndex == 0) {
-            // All players have counted, now dealer counts crib
+        // Dealer counts last, then crib is scored
+        if (playerIndex == getDealerIndex()) {
+            // Dealer has counted their hand, now count the crib
             val dealerIndex = getDealerIndex()
             val dealer = updatedPlayers[dealerIndex]
             val cribScore = calculateHandScore(state.crib, state.cutCard!!, isCrib = true)
@@ -371,37 +373,48 @@ class Game(
             // Start new round
             startNewRound(updatedPlayers)
         } else {
-            // Move to next player
+            // Non-dealer counted, now dealer counts
+            val dealerIdx = getDealerIndex()
             state = state.copy(
                 players = updatedPlayers,
-                currentPlayerId = players[nextPlayerIndex].id
+                currentPlayerId = players[dealerIdx].id
             )
         }
     }
 
     private fun getDealerIndex(): Int {
-        // For now, assume first player is always dealer
-        // In a full implementation, this would track dealer rotation
-        return 0
+        return state.dealerIndex
     }
 
-    private fun startNewRound(players: List<Player>) {
+    private fun getNonDealerIndex(): Int {
+        return (state.dealerIndex + 1) % players.size
+    }
+
+    private fun startNewRound(updatedPlayers: List<Player>) {
         // Reset deck and deal new cards
         deck.shuffle()
         currentRound++
+
+        // Rotate dealer for the new round
+        val newDealerIndex = (state.dealerIndex + 1) % players.size
+
         state = state.copy(
-            players = players.map { player ->
+            players = updatedPlayers.map { player ->
                 player.copy(hand = deck.draw(cardsPerHand))
             },
             crib = emptyList(),
             cutCard = null,
-            currentPlayerId = players.first().id,
+            currentPlayerId = updatedPlayers.first().id,
             stage = GameStage.DEALING,
             playedCards = emptyList(),
             peggingCount = 0,
             lastPlayWasGo = false,
-            handsForCounting = emptyMap()
+            handsForCounting = emptyMap(),
+            dealerIndex = newDealerIndex
         )
+
+        historyTracker.addEvent(GameHistoryEvent.RoundStarted(roundNumber = currentRound))
+        historyTracker.addEvent(GameHistoryEvent.CardsDealt())
         transitionToDiscarding()
     }
 }
