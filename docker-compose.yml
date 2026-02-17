@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: cribbage-postgres
+    environment:
+      POSTGRES_DB: cribbagedb
+      POSTGRES_USER: cribbage
+      POSTGRES_PASSWORD: cribbage
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:

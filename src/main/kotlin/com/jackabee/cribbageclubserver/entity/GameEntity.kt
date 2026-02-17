@@ -57,7 +57,6 @@ class GameEntity(
     @Column(nullable = false)
     var updatedAt: Instant = Instant.now(),
 
-    @Lob
-    @Column(columnDefinition = "CLOB")
+    @Column(columnDefinition = "TEXT")
     var stateJson: String? = null
 )
