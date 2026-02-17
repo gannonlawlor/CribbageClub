@@ -59,27 +59,26 @@ class GameHistoryDemoTest {
         game.applyAction(GameAction.DiscardToCrib("bob", bobCards[0])) // 5S
         game.applyAction(GameAction.DiscardToCrib("bob", bobCards[1])) // 6S
         
-        // Cut the deck
+        // Cut the deck - non-dealer (Bob) cuts
         println("\n=== CUTTING THE DECK ===")
-        game.applyAction(GameAction.CutDeck("alice"))
+        game.applyAction(GameAction.CutDeck("bob"))
         printGameHistory(game)
-        
-        // Play some cards in pegging
+
+        // Play some cards in pegging - non-dealer (Bob) plays first
         println("\n=== PEGGING PHASE ===")
         val peggingState = game.getCurrentState()
-        val aliceHand = peggingState.players.first { it.id == "alice" }.hand
         val bobHand = peggingState.players.first { it.id == "bob" }.hand
-        
-        // Alice plays first card
+
+        // Bob plays first card
+        game.applyAction(GameAction.PlayCard("bob", bobHand[0]))
+
+        // Alice plays a card
+        val aliceState = game.getCurrentState()
+        val aliceHand = aliceState.players.first { it.id == "alice" }.hand
         game.applyAction(GameAction.PlayCard("alice", aliceHand[0]))
-        
-        // Bob plays a card
-        val bobState = game.getCurrentState()
-        val bobHandAfterAlice = bobState.players.first { it.id == "bob" }.hand
-        game.applyAction(GameAction.PlayCard("bob", bobHandAfterAlice[0]))
-        
-        // Alice announces go
-        game.applyAction(GameAction.Go("alice"))
+
+        // Bob announces go
+        game.applyAction(GameAction.Go("bob"))
         
         printGameHistory(game)
         

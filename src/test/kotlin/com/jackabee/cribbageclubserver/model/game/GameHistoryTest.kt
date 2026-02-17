@@ -73,10 +73,10 @@ class GameHistoryTest {
     fun `Game should track deck cutting in history`() {
         // Setup game to cutting phase
         discardAllPlayersToCrib()
-        
-        // Cut the deck
-        game.applyAction(GameAction.CutDeck(players[0].id))
-        
+
+        // Cut the deck - non-dealer cuts (dealer is players[0], so non-dealer is players[1])
+        game.applyAction(GameAction.CutDeck(players[1].id))
+
         val state = game.getCurrentState()
         val history = state.history
 
@@ -85,19 +85,19 @@ class GameHistoryTest {
 
         val deckCut = history.first { it is GameHistoryEvent.DeckCut } as GameHistoryEvent.DeckCut
         assertEquals(Card(Rank.FIVE, Suit.DIAMONDS), deckCut.cutCard)
-        assertEquals(players[0].id, deckCut.cuttingPlayerId)
+        assertEquals(players[1].id, deckCut.cuttingPlayerId)
     }
 
     @Test
     fun `Game should track Jack cut with nobs scoring in history`() {
         // Setup for Jack cut
         whenever(mockDeck.cut()).thenReturn(Card(Rank.JACK, Suit.HEARTS))
-        
+
         // Setup game to cutting phase
         discardAllPlayersToCrib()
-        
-        // Cut the deck
-        game.applyAction(GameAction.CutDeck(players[0].id))
+
+        // Cut the deck - non-dealer cuts
+        game.applyAction(GameAction.CutDeck(players[1].id))
         
         val state = game.getCurrentState()
         val history = state.history
@@ -111,16 +111,16 @@ class GameHistoryTest {
     fun `Game should track pegging card plays in history`() {
         // Setup game to pegging phase
         discardAllPlayersToCrib()
-        game.applyAction(GameAction.CutDeck(players[0].id))
-        
-        // Get current state to see available cards
+        game.applyAction(GameAction.CutDeck(players[1].id))
+
+        // Get current state to see available cards - non-dealer plays first
         val peggingState = game.getCurrentState()
-        val player1 = peggingState.players[0]
-        val cardToPlay = player1.hand.first()
-        
+        val nonDealer = peggingState.players[1]
+        val cardToPlay = nonDealer.hand.first()
+
         // Play a card
-        game.applyAction(GameAction.PlayCard(player1.id, cardToPlay))
-        
+        game.applyAction(GameAction.PlayCard(nonDealer.id, cardToPlay))
+
         val state = game.getCurrentState()
         val history = state.history
 
@@ -128,7 +128,7 @@ class GameHistoryTest {
         assertTrue(history.any { it is GameHistoryEvent.CardPlayed })
 
         val cardPlayed = history.first { it is GameHistoryEvent.CardPlayed } as GameHistoryEvent.CardPlayed
-        assertEquals(player1.id, cardPlayed.playerId)
+        assertEquals(nonDealer.id, cardPlayed.playerId)
         assertEquals(cardToPlay, cardPlayed.card)
         assertTrue(cardPlayed.newCount >= 1)
     }
@@ -137,11 +137,11 @@ class GameHistoryTest {
     fun `Game should track go announcements in history`() {
         // Setup game to pegging phase
         discardAllPlayersToCrib()
-        game.applyAction(GameAction.CutDeck(players[0].id))
-        
-        // Announce go
-        game.applyAction(GameAction.Go(players[0].id))
-        
+        game.applyAction(GameAction.CutDeck(players[1].id))
+
+        // Announce go - non-dealer plays first in pegging
+        game.applyAction(GameAction.Go(players[1].id))
+
         val state = game.getCurrentState()
         val history = state.history
 
@@ -149,7 +149,7 @@ class GameHistoryTest {
         assertTrue(history.any { it is GameHistoryEvent.GoAnnounced })
 
         val goAnnounced = history.first { it is GameHistoryEvent.GoAnnounced } as GameHistoryEvent.GoAnnounced
-        assertEquals(players[0].id, goAnnounced.playerId)
+        assertEquals(players[1].id, goAnnounced.playerId)
         assertEquals(0, goAnnounced.pointsScored) // First go doesn't score
     }
 
@@ -170,21 +170,21 @@ class GameHistoryTest {
         whenever(mockDeck.cut()).thenReturn(Card(Rank.FIVE, Suit.SPADES))
         
         val testGame = Game("testId", players, mockDeck)
-        
+
         // Play through to counting phase
         discardAllPlayersToCrib(testGame)
-        testGame.applyAction(GameAction.CutDeck(players[0].id))
-        
+        testGame.applyAction(GameAction.CutDeck(players[1].id))
+
         // Skip pegging by manually transitioning to counting
         // This is a simplified test - in a real game we'd play through pegging
         val field = testGame.javaClass.getDeclaredField("state")
         field.isAccessible = true
         val currentState = testGame.getCurrentState()
         field.set(testGame, currentState.copy(stage = GameStage.COUNTING))
-        
-        // Count hand
-        testGame.applyAction(GameAction.CountHand(players[0].id))
-        
+
+        // Count hand - non-dealer counts first (players[1] is current after cutting)
+        testGame.applyAction(GameAction.CountHand(players[1].id))
+
         val state = testGame.getCurrentState()
         val history = state.history
 
@@ -192,7 +192,7 @@ class GameHistoryTest {
         assertTrue(history.any { it is GameHistoryEvent.HandCounted })
 
         val handCounted = history.first { it is GameHistoryEvent.HandCounted } as GameHistoryEvent.HandCounted
-        assertEquals(players[0].id, handCounted.playerId)
+        assertEquals(players[1].id, handCounted.playerId)
         assertTrue(handCounted.totalPoints >= 0)
         assertNotNull(handCounted.scoreBreakdown)
     }
