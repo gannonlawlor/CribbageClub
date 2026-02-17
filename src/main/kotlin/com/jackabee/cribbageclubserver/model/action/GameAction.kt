@@ -1,8 +1,17 @@
 package com.jackabee.cribbageclubserver.model.action
 
+import com.fasterxml.jackson.annotation.JsonSubTypes
+import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.jackabee.cribbageclubserver.model.card.Card
 
-
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
+@JsonSubTypes(
+    JsonSubTypes.Type(value = GameAction.DiscardToCrib::class, name = "DiscardToCrib"),
+    JsonSubTypes.Type(value = GameAction.PlayCard::class, name = "PlayCard"),
+    JsonSubTypes.Type(value = GameAction.CutDeck::class, name = "CutDeck"),
+    JsonSubTypes.Type(value = GameAction.Go::class, name = "Go"),
+    JsonSubTypes.Type(value = GameAction.CountHand::class, name = "CountHand")
+)
 sealed class GameAction {
     abstract val playerId: String
 
