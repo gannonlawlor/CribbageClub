@@ -11,25 +11,23 @@ import org.springframework.web.bind.annotation.*
 class LobbyController(
     private val lobbyService: LobbyService
 ) {
-    
+
     /**
      * Gets a list of all lobbies.
      */
     @GetMapping
-    fun getLobbies(): ResponseEntity<List<Lobby>> {
-        val lobbies = lobbyService.listLobbies()
-        return ResponseEntity.ok(lobbies)
+    fun getLobbies(): List<Lobby> {
+        return lobbyService.listLobbies()
     }
-    
+
     /**
      * Gets a list of lobbies that are waiting for players.
      */
     @GetMapping("/waiting")
-    fun getWaitingLobbies(): ResponseEntity<List<Lobby>> {
-        val lobbies = lobbyService.listWaitingLobbies()
-        return ResponseEntity.ok(lobbies)
+    fun getWaitingLobbies(): List<Lobby> {
+        return lobbyService.listWaitingLobbies()
     }
-    
+
     /**
      * Gets a specific lobby by ID.
      */
@@ -42,20 +40,19 @@ class LobbyController(
             ResponseEntity.notFound().build()
         }
     }
-    
+
     /**
      * Creates a new lobby.
      */
     @PostMapping
-    fun createLobby(@RequestBody request: CreateLobbyRequest): ResponseEntity<Lobby> {
-        val lobby = lobbyService.createLobby(
+    fun createLobby(@RequestBody request: CreateLobbyRequest): Lobby {
+        return lobbyService.createLobby(
             name = request.name,
             creatorId = request.creatorId,
             creatorName = request.creatorName
         )
-        return ResponseEntity.ok(lobby)
     }
-    
+
     /**
      * Joins a lobby.
      */
@@ -63,19 +60,14 @@ class LobbyController(
     fun joinLobby(
         @PathVariable lobbyId: String,
         @RequestBody request: JoinLobbyRequest
-    ): ResponseEntity<Lobby> {
-        return try {
-            val lobby = lobbyService.joinLobby(
-                lobbyId = lobbyId,
-                playerId = request.playerId,
-                playerName = request.playerName
-            )
-            ResponseEntity.ok(lobby)
-        } catch (e: IllegalArgumentException) {
-            ResponseEntity.badRequest().build()
-        }
+    ): Lobby {
+        return lobbyService.joinLobby(
+            lobbyId = lobbyId,
+            playerId = request.playerId,
+            playerName = request.playerName
+        )
     }
-    
+
     /**
      * Leaves a lobby.
      */
@@ -83,29 +75,19 @@ class LobbyController(
     fun leaveLobby(
         @PathVariable lobbyId: String,
         @RequestBody request: LeaveLobbyRequest
-    ): ResponseEntity<Lobby> {
-        return try {
-            val lobby = lobbyService.leaveLobby(
-                lobbyId = lobbyId,
-                playerId = request.playerId
-            )
-            ResponseEntity.ok(lobby)
-        } catch (e: IllegalArgumentException) {
-            ResponseEntity.badRequest().build()
-        }
+    ): Lobby {
+        return lobbyService.leaveLobby(
+            lobbyId = lobbyId,
+            playerId = request.playerId
+        )
     }
-    
+
     /**
      * Starts a game from a lobby.
      */
     @PostMapping("/{lobbyId}/start")
-    fun startGame(@PathVariable lobbyId: String): ResponseEntity<GameState> {
-        return try {
-            val gameState = lobbyService.startGame(lobbyId)
-            ResponseEntity.ok(gameState)
-        } catch (e: IllegalArgumentException) {
-            ResponseEntity.badRequest().build()
-        }
+    fun startGame(@PathVariable lobbyId: String): GameState {
+        return lobbyService.startGame(lobbyId)
     }
 }
 

@@ -177,9 +177,7 @@ class BasicAIPlayer(
     }
     
     private fun isDealer(gameState: GameState): Boolean {
-        // Simple heuristic: assume first player is dealer
-        // In a full implementation, this would track dealer rotation
-        return gameState.players.firstOrNull()?.id == playerId
+        return gameState.players.getOrNull(gameState.dealerIndex)?.id == playerId
     }
     
     private fun findFifteenCombinations(cards: List<Card>): List<List<Card>> {
