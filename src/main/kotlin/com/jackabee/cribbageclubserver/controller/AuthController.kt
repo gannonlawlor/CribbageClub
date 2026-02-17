@@ -1,14 +1,18 @@
 package com.jackabee.cribbageclubserver.controller
 
 import com.jackabee.cribbageclubserver.service.UserService
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("/api/auth")
+@Tag(name = "Authentication", description = "User registration, login, and profile")
 class AuthController(
     private val userService: UserService
 ) {
 
+    @Operation(summary = "Register a new user account")
     @PostMapping("/register")
     fun register(@RequestBody request: RegisterRequest): UserService.AuthResponse {
         return userService.register(
@@ -18,6 +22,7 @@ class AuthController(
         )
     }
 
+    @Operation(summary = "Login and receive a JWT token")
     @PostMapping("/login")
     fun login(@RequestBody request: LoginRequest): UserService.AuthResponse {
         return userService.login(
@@ -26,6 +31,7 @@ class AuthController(
         )
     }
 
+    @Operation(summary = "Get current authenticated user info")
     @GetMapping("/me")
     fun me(@RequestAttribute("userId") userId: String): UserInfoResponse {
         val user = userService.getUserById(userId)
