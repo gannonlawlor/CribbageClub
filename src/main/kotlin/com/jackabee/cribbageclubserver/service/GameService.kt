@@ -3,6 +3,8 @@ package com.jackabee.cribbageclubserver.service
 import com.jackabee.cribbageclubserver.entity.GameEntity
 import com.jackabee.cribbageclubserver.model.ai.AIPlayer
 import com.jackabee.cribbageclubserver.model.ai.BasicAIPlayer
+import com.jackabee.cribbageclubserver.model.ai.HardAIPlayer
+import com.jackabee.cribbageclubserver.model.ai.MediumAIPlayer
 import com.jackabee.cribbageclubserver.model.game.Game
 import com.jackabee.cribbageclubserver.model.game.GameState
 import com.jackabee.cribbageclubserver.model.game.GameStage
@@ -78,9 +80,11 @@ class GameService(
         val aiPlayerId = "ai_${Random.nextInt(1000, 9999)}"
         val aiPlayerName = "AI Opponent"
 
-        // Create AI player
+        // Create AI player based on difficulty
         val aiPlayer = when (aiDifficulty.lowercase()) {
             "basic" -> BasicAIPlayer(aiPlayerId, aiPlayerName)
+            "medium" -> MediumAIPlayer(aiPlayerId, "$aiPlayerName (Medium)")
+            "hard" -> HardAIPlayer(aiPlayerId, "$aiPlayerName (Hard)")
             else -> BasicAIPlayer(aiPlayerId, aiPlayerName)
         }
 
