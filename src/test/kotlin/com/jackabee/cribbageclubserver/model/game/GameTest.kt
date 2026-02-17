@@ -83,8 +83,11 @@ class GameTest {
     @Test
     fun `Game should allow cutting the deck`() {
         discardAllPlayersToCrib()
-        val player = game.getCurrentState().players[0]
-        val newState = game.applyAction(GameAction.CutDeck(player.id))
+        // Non-dealer (player 1) should cut; dealerIndex defaults to 0
+        val cuttingPlayer = game.getCurrentState().let { state ->
+            state.players[(state.dealerIndex + 1) % state.players.size]
+        }
+        val newState = game.applyAction(GameAction.CutDeck(cuttingPlayer.id))
         assertEquals(GameStage.PEGGING, newState.stage)
         assertTrue(newState.cutCard != null)
     }
@@ -104,13 +107,13 @@ class GameTest {
         game = Game("1", players, mockDeck)
         setupGameForCutting(mockDeck)
 
-        // Act
-        game.applyAction(GameAction.CutDeck(players[0].id))
+        // Non-dealer (player 1) cuts
+        game.applyAction(GameAction.CutDeck(players[1].id))
 
         // Assert
         val currentState = game.getCurrentState()
         assertEquals(GameStage.PEGGING, currentState.stage)
-        assertEquals(players[0].id, currentState.currentPlayerId)
+        assertEquals(players[1].id, currentState.currentPlayerId)
     }
 
     @Test
@@ -120,12 +123,12 @@ class GameTest {
         setupGameForCutting(mockDeck)
         whenever(mockDeck.cut()).thenReturn(Card(Rank.JACK, Suit.SPADES))
 
-        // Act
-        game.applyAction(GameAction.CutDeck(players[0].id))
+        // Non-dealer (player 1) cuts
+        game.applyAction(GameAction.CutDeck(players[1].id))
 
-        // Assert
+        // Assert - dealer (player 0) gets 2 points for His Nobs
         val currentState = game.getCurrentState()
-        assertEquals(2, currentState.players[1].score) // Dealer (second player) gets 2 points
+        assertEquals(2, currentState.players[0].score) // Dealer (first player) gets 2 points
         assertEquals(Card(Rank.JACK, Suit.SPADES), currentState.cutCard)
     }
 
@@ -136,8 +139,8 @@ class GameTest {
         setupGameForCutting(mockDeck)
         whenever(mockDeck.cut()).thenReturn(Card(Rank.QUEEN, Suit.HEARTS))
 
-        // Act
-        game.applyAction(GameAction.CutDeck(players[0].id))
+        // Non-dealer (player 1) cuts
+        game.applyAction(GameAction.CutDeck(players[1].id))
 
         // Assert
         val currentState = game.getCurrentState()
@@ -197,17 +200,17 @@ class GameTest {
         val mockDeck = mock<Deck>()
         setupGameForCutting(mockDeck)
         whenever(mockDeck.cut()).thenReturn(Card(Rank.FIVE, Suit.HEARTS))
-        
-        // Move to pegging phase
-        game.applyAction(GameAction.CutDeck(players[0].id))
-        
+
+        // Non-dealer (player 1) cuts
+        game.applyAction(GameAction.CutDeck(players[1].id))
+
         // Get the current state to verify hands are stored
         val currentState = game.getCurrentState()
-        
+
         // Assert that hands are stored for counting
         assertTrue(currentState.handsForCounting.isNotEmpty())
         assertEquals(2, currentState.handsForCounting.size)
-        
+
         // Check that stored hands contain the expected number of cards
         currentState.handsForCounting.values.forEach { hand ->
             assertEquals(4, hand.size) // 4 cards after discarding 2 to crib
@@ -220,17 +223,17 @@ class GameTest {
         val mockDeck = mock<Deck>()
         setupGameForCutting(mockDeck)
         whenever(mockDeck.cut()).thenReturn(Card(Rank.QUEEN, Suit.HEARTS))
-        
-        // Move to pegging phase
-        game.applyAction(GameAction.CutDeck(players[0].id))
-        
-        // Act
-        val newState = game.applyAction(GameAction.Go(players[0].id))
-        
+
+        // Non-dealer (player 1) cuts, then player 1 starts pegging
+        game.applyAction(GameAction.CutDeck(players[1].id))
+
+        // Player 1 (non-dealer / cutter) is current player after cut
+        val newState = game.applyAction(GameAction.Go(players[1].id))
+
         // Assert
         assertEquals(GameStage.PEGGING, newState.stage)
         assertTrue(newState.lastPlayWasGo)
-        assertEquals(players[1].id, newState.currentPlayerId)
+        assertEquals(players[0].id, newState.currentPlayerId)
     }
 
     @Test
@@ -239,19 +242,19 @@ class GameTest {
         val mockDeck = mock<Deck>()
         setupGameForCutting(mockDeck)
         whenever(mockDeck.cut()).thenReturn(Card(Rank.QUEEN, Suit.HEARTS))
-        
-        // Move to pegging phase
-        game.applyAction(GameAction.CutDeck(players[0].id))
-        
-        // First go
-        game.applyAction(GameAction.Go(players[0].id))
-        val initialScore = game.getCurrentState().players[1].score
-        
-        // Second go (should award point)
-        val newState = game.applyAction(GameAction.Go(players[1].id))
-        
+
+        // Non-dealer (player 1) cuts, then player 1 starts pegging
+        game.applyAction(GameAction.CutDeck(players[1].id))
+
+        // First go from player 1 (current player after cut)
+        game.applyAction(GameAction.Go(players[1].id))
+        val initialScore = game.getCurrentState().players[0].score
+
+        // Second go from player 0 (should award point)
+        val newState = game.applyAction(GameAction.Go(players[0].id))
+
         // Assert
-        assertEquals(initialScore + 1, newState.players[1].score)
+        assertEquals(initialScore + 1, newState.players[0].score)
         assertEquals(0, newState.peggingCount)
         assertFalse(newState.lastPlayWasGo)
     }
@@ -260,40 +263,41 @@ class GameTest {
     fun `Game should count hand scoring correctly`() {
         // Test basic hand scoring functionality
         val mockDeck = mock<Deck>()
-        
+
         // Create test cards that make specific scoring combinations
         val player1Cards = listOf(
             Card(Rank.FIVE, Suit.HEARTS),
-            Card(Rank.FIVE, Suit.DIAMONDS), 
+            Card(Rank.FIVE, Suit.DIAMONDS),
             Card(Rank.TEN, Suit.HEARTS),
             Card(Rank.JACK, Suit.HEARTS) // This will be discarded
         )
-        
+
         val player2Cards = listOf(
             Card(Rank.ACE, Suit.SPADES),
             Card(Rank.TWO, Suit.SPADES),
             Card(Rank.THREE, Suit.SPADES),
             Card(Rank.FOUR, Suit.SPADES)
         )
-        
+
         // Setup mock deck
         whenever(mockDeck.draw(6)).thenReturn(
-            player1Cards + player1Cards.take(2), 
+            player1Cards + player1Cards.take(2),
             player2Cards + player2Cards.take(2)
         )
         whenever(mockDeck.cut()).thenReturn(Card(Rank.FIVE, Suit.SPADES)) // Cut card that makes 15s
-        
+
         val testGame = Game("testId", players, mockDeck)
-        
+
         // Play through to counting phase
         discardAllPlayersToCrib(testGame)
-        testGame.applyAction(GameAction.CutDeck(players[0].id))
-        
+        // Non-dealer (player 1) cuts
+        testGame.applyAction(GameAction.CutDeck(players[1].id))
+
         // Verify that hands are stored for counting
         val peggingState = testGame.getCurrentState()
         assertTrue(peggingState.handsForCounting.isNotEmpty())
         assertEquals(4, peggingState.handsForCounting[players[0].id]?.size)
-        
+
         // Now we need to transition to counting phase by completing pegging
         // For simplicity, let's check that the mechanism is in place
         assertTrue(peggingState.stage == GameStage.PEGGING)
@@ -302,7 +306,7 @@ class GameTest {
     @Test
     fun `Game should handle game over condition`() {
         val mockDeck = mock<Deck>()
-        
+
         // Create a scenario where a player can win
         val winningCards = listOf(
             Card(Rank.FIVE, Suit.HEARTS),
@@ -310,25 +314,39 @@ class GameTest {
             Card(Rank.JACK, Suit.HEARTS),
             Card(Rank.QUEEN, Suit.HEARTS)
         )
-        
+
         whenever(mockDeck.draw(6)).thenReturn(winningCards + winningCards.take(2), winningCards + winningCards.take(2))
         whenever(mockDeck.cut()).thenReturn(Card(Rank.FIVE, Suit.DIAMONDS))
-        
+
         val testGame = Game("testId", players, mockDeck)
-        
+
         // Set up one player to be close to winning
         val currentState = testGame.getCurrentState()
         val nearWinnerPlayer = currentState.players[0].copy(score = 115)
         val updatedPlayers = listOf(nearWinnerPlayer, currentState.players[1])
-        
+
         // Use reflection to set the state for testing
         val field = testGame.javaClass.getDeclaredField("state")
         field.isAccessible = true
         field.set(testGame, currentState.copy(players = updatedPlayers))
-        
+
         // Verify state was updated
         val updatedState = testGame.getCurrentState()
         assertTrue(updatedState.players[0].score >= 115)
+    }
+
+    @Test
+    fun `Game should initialize dealer at index 0`() {
+        val state = game.getCurrentState()
+        assertEquals(0, state.dealerIndex)
+    }
+
+    @Test
+    fun `Non-dealer should be the one to cut`() {
+        discardAllPlayersToCrib()
+        val state = game.getCurrentState()
+        // dealerIndex = 0, so non-dealer (index 1) should be currentPlayer for cutting
+        assertEquals(players[1].id, state.currentPlayerId)
     }
 
     private fun discardAllPlayersToCrib(gameInstance: Game = game) {

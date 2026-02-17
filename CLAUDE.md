@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-CribbageClubServer is a Spring Boot backend for a multiplayer Cribbage card game. It supports human-vs-human and human-vs-AI play over REST and WebSocket (STOMP/SockJS). Game state is held in-memory; there is no persistent database layer yet.
+CribbageClubServer is a Spring Boot backend for a multiplayer Cribbage card game. It supports human-vs-human and human-vs-AI play over REST and WebSocket (STOMP/SockJS). Game state is held in-memory (`ConcurrentHashMap`); H2 is configured but no JPA entities exist yet.
 
 ## Tech Stack
 
@@ -10,7 +10,7 @@ CribbageClubServer is a Spring Boot backend for a multiplayer Cribbage card game
 - **Framework:** Spring Boot 3.3.3
 - **JDK:** 21 (Amazon Corretto in CI)
 - **Build:** Gradle 8.10 with Kotlin DSL
-- **Database:** H2 (dependency present, not wired up — all state lives in `ConcurrentHashMap`)
+- **Database:** H2 in-memory (configured in application.properties, game state still in ConcurrentHashMap)
 - **Real-time:** STOMP over WebSocket with SockJS fallback
 - **Testing:** JUnit 5, Mockito, Spring Boot Test
 
@@ -29,10 +29,11 @@ CI runs both on ubuntu-latest with JDK 21 (see `.github/workflows/copilot-setup-
 src/main/kotlin/com/jackabee/cribbageclubserver/
 ├── CribbageClubServerApplication.kt   # Entry point
 ├── config/
+│   ├── GlobalExceptionHandler.kt      # @ControllerAdvice with structured ErrorResponse
 │   ├── SecurityConfig.kt              # Spring Security (permits all, CSRF off)
 │   └── WebSocketConfig.kt             # STOMP broker at /ws
 ├── controller/
-│   ├── GameController.kt              # REST: /api/games
+│   ├── GameController.kt              # REST: /api/games (CRUD + AI game creation)
 │   └── LobbyController.kt            # REST: /api/lobbies
 ├── model/
 │   ├── action/                        # GameAction sealed class, ActionType enum
@@ -62,7 +63,9 @@ src/main/kotlin/com/jackabee/cribbageclubserver/
 |--------|------|-------------|
 | GET | `/api/games` | List all active games |
 | GET | `/api/games/{gameId}` | Get game state |
+| POST | `/api/games/ai` | Create a game against AI |
 | POST | `/api/games/{gameId}/actions` | Apply a game action |
+| DELETE | `/api/games/{gameId}` | Delete a game |
 | GET | `/api/lobbies` | List all lobbies |
 | GET | `/api/lobbies/waiting` | List lobbies waiting for players |
 | POST | `/api/lobbies` | Create a lobby |
@@ -81,20 +84,37 @@ src/main/kotlin/com/jackabee/cribbageclubserver/
 2. **DISCARDING_TO_CRIB** — Each player discards 2 cards to the crib
 3. **CUTTING** — Non-dealer cuts deck; Jack ("His Nobs") scores 2 for dealer
 4. **PEGGING** — Alternating card play to 31; scoring for 15s, 31s, pairs, runs
-5. **COUNTING** — Hands and crib scored (15s, pairs, runs, flushes, nobs)
+5. **COUNTING** — Non-dealer counts first, then dealer, then crib scored
 6. **GAME_OVER** — First player to 121 wins
+
+Dealer rotates each round via `GameState.dealerIndex`.
 
 ## Architecture Notes
 
-- `Game.kt` is the core engine (~407 lines). It enforces rules, validates actions, and tracks history.
+- `Game.kt` is the core engine. It enforces rules, validates actions, and tracks history.
+- `GameState.dealerIndex` tracks dealer rotation; non-dealer cuts and counts first.
 - `GameService` wraps `Game` in a `ConcurrentHashMap`, handles AI turn loops (max 10 iterations), and broadcasts state via WebSocket.
 - `BasicAIPlayer` uses heuristic strategies for discard and pegging decisions.
 - `GameHistoryTracker` records all visible events as a sealed-class hierarchy included in `GameState`.
+- `GlobalExceptionHandler` provides structured `ErrorResponse` JSON for all REST errors.
 - Security is currently wide open (`permitAll`); suitable for development only.
 
 ## Coding Conventions
 
 - Kotlin data classes for models, sealed classes for actions and history events
 - Spring `@Service` / `@RestController` / `@Configuration` annotations
-- Error handling: `require()` in game logic, `try-catch` returning `ResponseEntity` in controllers, error messages sent to `/queue/errors` via WebSocket
+- Error handling: `require()` in game logic, `GlobalExceptionHandler` catches exceptions for REST, error messages sent to `/queue/errors` via WebSocket
+- SLF4J logging in server code (examples use println for demo output)
 - Tests use JUnit 5 assertions and Mockito for mocking services
+
+## Remaining Work
+
+See the plan in the PR description or conversation for full details. Key remaining areas:
+- JPA entities and database persistence (replace ConcurrentHashMap)
+- User accounts, authentication (JWT), and authorization
+- AI difficulty levels (medium/hard implementations)
+- WebSocket session cleanup on disconnect
+- Game/lobby timeout and scheduled cleanup
+- Player stats tracking
+- API documentation (OpenAPI/Swagger)
+- Dockerfile for deployment
