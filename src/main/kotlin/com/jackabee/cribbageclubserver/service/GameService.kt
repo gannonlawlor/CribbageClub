@@ -129,14 +129,12 @@ class GameService(
      * @param gameId The ID of the game to remove
      */
     fun removeGame(gameId: String) {
-        games.remove(gameId)
-        // Clean up AI players associated with this game
-        val gameState = games[gameId]?.getCurrentState()
-        gameState?.players?.forEach { player ->
-            if (aiPlayers.containsKey(player.id)) {
-                aiPlayers.remove(player.id)
-            }
+        // Clean up AI players associated with this game before removing it
+        val game = games[gameId]
+        game?.getCurrentState()?.players?.forEach { player ->
+            aiPlayers.remove(player.id)
         }
+        games.remove(gameId)
     }
     
     /**
