@@ -14,7 +14,8 @@ import org.springframework.web.bind.annotation.CrossOrigin
 @CrossOrigin
 class GameWebSocketController(
     private val gameService: GameService,
-    private val messagingTemplate: SimpMessagingTemplate
+    private val messagingTemplate: SimpMessagingTemplate,
+    private val sessionRegistry: WebSocketSessionRegistry
 ) {
     private val logger = LoggerFactory.getLogger(GameWebSocketController::class.java)
 
@@ -59,11 +60,13 @@ class GameWebSocketController(
             // Get current game state
             val gameState = gameService.getGameState(message.gameId)
             
-            // Store player connection in session attributes
-            val sessionAttributes = headerAccessor.sessionAttributes
-            sessionAttributes?.put("gameId", message.gameId)
-            sessionAttributes?.put("playerId", message.playerId)
-            sessionAttributes?.put("playerName", message.playerName)
+            // Register session for disconnect cleanup
+            sessionRegistry.register(
+                headerAccessor.sessionId!!,
+                message.playerId,
+                message.playerName,
+                message.gameId
+            )
             
             // Send current game state to the joining player
             val updateMessage = GameStateUpdateMessage(
@@ -106,11 +109,8 @@ class GameWebSocketController(
     @MessageMapping("/game/leave")
     fun handleLeaveGame(@Payload message: LeaveGameMessage, headerAccessor: SimpMessageHeaderAccessor) {
         try {
-            // Remove player connection from session attributes
-            val sessionAttributes = headerAccessor.sessionAttributes
-            sessionAttributes?.remove("gameId")
-            sessionAttributes?.remove("playerId")
-            sessionAttributes?.remove("playerName")
+            // Unregister session from registry
+            sessionRegistry.unregister(headerAccessor.sessionId!!)
             
             // Notify other players about the disconnection
             val leaveMessage = PlayerLeftMessage(
