@@ -1,7 +1,7 @@
 package com.jackabee.cribbageclubserver.websocket
 
+import com.jackabee.cribbageclubserver.model.game.GameState
 import com.jackabee.cribbageclubserver.model.player.Player
-import com.jackabee.cribbageclubserver.service.GameService
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
 import org.mockito.kotlin.eq
@@ -18,12 +18,13 @@ class GameWebSocketServiceTest {
     fun `should broadcast game state update`() {
         // Given
         val gameId = "test-game"
-        val players = listOf(
-            Player("player1", "Player 1"),
-            Player("player2", "Player 2")
+        val gameState = GameState(
+            gameId = gameId,
+            players = listOf(
+                Player("player1", "Player 1"),
+                Player("player2", "Player 2")
+            )
         )
-        val gameService = GameService()
-        val gameState = gameService.createGame(players)
 
         // When
         webSocketService.broadcastGameStateUpdate(gameId, gameState)
