@@ -1,5 +1,7 @@
 package com.jackabee.cribbageclubserver.model.game
 
+import com.fasterxml.jackson.annotation.JsonSubTypes
+import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.jackabee.cribbageclubserver.model.card.Card
 import java.time.Instant
 
@@ -7,6 +9,18 @@ import java.time.Instant
  * Represents different types of events that occur during a cribbage game.
  * Only tracks information that would be visible to both players.
  */
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
+@JsonSubTypes(
+    JsonSubTypes.Type(value = GameHistoryEvent.RoundStarted::class, name = "RoundStarted"),
+    JsonSubTypes.Type(value = GameHistoryEvent.CardsDealt::class, name = "CardsDealt"),
+    JsonSubTypes.Type(value = GameHistoryEvent.DeckCut::class, name = "DeckCut"),
+    JsonSubTypes.Type(value = GameHistoryEvent.CardPlayed::class, name = "CardPlayed"),
+    JsonSubTypes.Type(value = GameHistoryEvent.GoAnnounced::class, name = "GoAnnounced"),
+    JsonSubTypes.Type(value = GameHistoryEvent.PeggingEnded::class, name = "PeggingEnded"),
+    JsonSubTypes.Type(value = GameHistoryEvent.HandCounted::class, name = "HandCounted"),
+    JsonSubTypes.Type(value = GameHistoryEvent.CribCounted::class, name = "CribCounted"),
+    JsonSubTypes.Type(value = GameHistoryEvent.GameEnded::class, name = "GameEnded")
+)
 sealed class GameHistoryEvent {
     abstract val timestamp: Instant
 
