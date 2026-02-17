@@ -42,43 +42,49 @@ class LobbyController(
     }
 
     /**
-     * Creates a new lobby.
+     * Creates a new lobby. Uses authenticated user as the creator.
      */
     @PostMapping
-    fun createLobby(@RequestBody request: CreateLobbyRequest): Lobby {
+    fun createLobby(
+        @RequestBody request: CreateLobbyRequest,
+        @RequestAttribute("userId") userId: String,
+        @RequestAttribute("username") username: String
+    ): Lobby {
         return lobbyService.createLobby(
             name = request.name,
-            creatorId = request.creatorId,
-            creatorName = request.creatorName
+            creatorId = userId,
+            creatorName = request.creatorName ?: username
         )
     }
 
     /**
-     * Joins a lobby.
+     * Joins a lobby. Uses authenticated user.
      */
     @PostMapping("/{lobbyId}/join")
     fun joinLobby(
         @PathVariable lobbyId: String,
-        @RequestBody request: JoinLobbyRequest
+        @RequestAttribute("userId") userId: String,
+        @RequestAttribute("username") username: String,
+        @RequestBody(required = false) request: JoinLobbyRequest?
     ): Lobby {
         return lobbyService.joinLobby(
             lobbyId = lobbyId,
-            playerId = request.playerId,
-            playerName = request.playerName
+            playerId = userId,
+            playerName = request?.playerName ?: username
         )
     }
 
     /**
-     * Leaves a lobby.
+     * Leaves a lobby. Uses authenticated user.
      */
     @PostMapping("/{lobbyId}/leave")
     fun leaveLobby(
         @PathVariable lobbyId: String,
-        @RequestBody request: LeaveLobbyRequest
+        @RequestAttribute("userId") userId: String
     ): Lobby {
         return lobbyService.leaveLobby(
             lobbyId = lobbyId,
-            playerId = request.playerId
+            playerId = userId
         )
     }
 
@@ -94,15 +100,9 @@ class LobbyController(
 // Request DTOs
 data class CreateLobbyRequest(
     val name: String,
-    val creatorId: String,
-    val creatorName: String
+    val creatorName: String? = null
 )
 
 data class JoinLobbyRequest(
-    val playerId: String,
-    val playerName: String
-)
-
-data class LeaveLobbyRequest(
-    val playerId: String
+    val playerName: String? = null
 )

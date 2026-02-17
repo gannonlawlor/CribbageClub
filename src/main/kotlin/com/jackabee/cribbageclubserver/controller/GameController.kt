@@ -26,19 +26,25 @@ class GameController(
     @PostMapping("/{gameId}/actions")
     fun applyAction(
         @PathVariable gameId: String,
-        @RequestBody action: GameAction
+        @RequestBody action: GameAction,
+        @RequestAttribute("userId") userId: String
     ): GameState {
         return gameService.applyHumanAction(gameId, action)
     }
 
     /**
      * Creates a new game against an AI opponent.
+     * Uses the authenticated user as the human player.
      */
     @PostMapping("/ai")
-    fun createGameWithAI(@RequestBody request: CreateAIGameRequest): GameState {
+    fun createGameWithAI(
+        @RequestBody request: CreateAIGameRequest,
+        @RequestAttribute("userId") userId: String,
+        @RequestAttribute("username") username: String
+    ): GameState {
         return gameService.createGameWithAI(
-            humanPlayerId = request.playerId,
-            humanPlayerName = request.playerName,
+            humanPlayerId = userId,
+            humanPlayerName = request.playerName ?: username,
             aiDifficulty = request.difficulty ?: "basic"
         )
     }
@@ -63,7 +69,6 @@ class GameController(
 }
 
 data class CreateAIGameRequest(
-    val playerId: String,
-    val playerName: String,
+    val playerName: String? = null,
     val difficulty: String? = null
 )
