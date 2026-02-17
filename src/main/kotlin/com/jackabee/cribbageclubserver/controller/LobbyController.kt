@@ -3,34 +3,31 @@ package com.jackabee.cribbageclubserver.controller
 import com.jackabee.cribbageclubserver.model.lobby.Lobby
 import com.jackabee.cribbageclubserver.model.game.GameState
 import com.jackabee.cribbageclubserver.service.LobbyService
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("/api/lobbies")
+@Tag(name = "Lobbies", description = "Lobby management and matchmaking")
 class LobbyController(
     private val lobbyService: LobbyService
 ) {
 
-    /**
-     * Gets a list of all lobbies.
-     */
+    @Operation(summary = "List all lobbies")
     @GetMapping
     fun getLobbies(): List<Lobby> {
         return lobbyService.listLobbies()
     }
 
-    /**
-     * Gets a list of lobbies that are waiting for players.
-     */
+    @Operation(summary = "List lobbies waiting for players")
     @GetMapping("/waiting")
     fun getWaitingLobbies(): List<Lobby> {
         return lobbyService.listWaitingLobbies()
     }
 
-    /**
-     * Gets a specific lobby by ID.
-     */
+    @Operation(summary = "Get a lobby by ID")
     @GetMapping("/{lobbyId}")
     fun getLobby(@PathVariable lobbyId: String): ResponseEntity<Lobby> {
         val lobby = lobbyService.getLobby(lobbyId)
@@ -41,9 +38,7 @@ class LobbyController(
         }
     }
 
-    /**
-     * Creates a new lobby. Uses authenticated user as the creator.
-     */
+    @Operation(summary = "Create a new lobby")
     @PostMapping
     fun createLobby(
         @RequestBody request: CreateLobbyRequest,
@@ -57,9 +52,7 @@ class LobbyController(
         )
     }
 
-    /**
-     * Joins a lobby. Uses authenticated user.
-     */
+    @Operation(summary = "Join a lobby")
     @PostMapping("/{lobbyId}/join")
     fun joinLobby(
         @PathVariable lobbyId: String,
@@ -74,9 +67,7 @@ class LobbyController(
         )
     }
 
-    /**
-     * Leaves a lobby. Uses authenticated user.
-     */
+    @Operation(summary = "Leave a lobby")
     @PostMapping("/{lobbyId}/leave")
     fun leaveLobby(
         @PathVariable lobbyId: String,
@@ -88,9 +79,7 @@ class LobbyController(
         )
     }
 
-    /**
-     * Starts a game from a lobby.
-     */
+    @Operation(summary = "Start a game from a full lobby")
     @PostMapping("/{lobbyId}/start")
     fun startGame(@PathVariable lobbyId: String): GameState {
         return lobbyService.startGame(lobbyId)

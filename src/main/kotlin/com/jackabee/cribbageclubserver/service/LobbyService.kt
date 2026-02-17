@@ -176,6 +176,38 @@ class LobbyService(
     }
 
     /**
+     * Removes lobbies that have been inactive (still WAITING) since before the threshold.
+     * Started lobbies (IN_GAME) are also removed if stale.
+     *
+     * @return The list of removed lobby IDs
+     */
+    fun removeInactiveLobbies(inactiveThreshold: Instant): List<String> {
+        val removed = mutableListOf<String>()
+
+        if (useDb) {
+            val allLobbies = lobbyRepository!!.findAll()
+            for (entity in allLobbies) {
+                if (entity.updatedAt.isBefore(inactiveThreshold)) {
+                    lobbyRepository.deleteById(entity.id)
+                    removed.add(entity.id)
+                }
+            }
+        } else {
+            for ((lobbyId, lobby) in lobbies) {
+                if (lobby.createdAt.isBefore(inactiveThreshold)) {
+                    lobbies.remove(lobbyId)
+                    removed.add(lobbyId)
+                }
+            }
+        }
+
+        if (removed.isNotEmpty()) {
+            logger.info("Cleaned up {} inactive lobbies", removed.size)
+        }
+        return removed
+    }
+
+    /**
      * Removes a lobby.
      *
      * @param lobbyId The ID of the lobby to remove

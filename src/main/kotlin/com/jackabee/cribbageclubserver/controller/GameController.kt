@@ -3,26 +3,25 @@ package com.jackabee.cribbageclubserver.controller
 import com.jackabee.cribbageclubserver.model.game.GameState
 import com.jackabee.cribbageclubserver.model.action.GameAction
 import com.jackabee.cribbageclubserver.service.GameService
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("/api/games")
+@Tag(name = "Games", description = "Game CRUD and gameplay actions")
 class GameController(
     private val gameService: GameService
 ) {
 
-    /**
-     * Gets the current state of a game.
-     */
+    @Operation(summary = "Get current game state")
     @GetMapping("/{gameId}")
     fun getGameState(@PathVariable gameId: String): GameState {
         return gameService.getGameState(gameId)
     }
 
-    /**
-     * Applies an action to a game.
-     */
+    @Operation(summary = "Apply a game action (discard, play card, cut, count, go)")
     @PostMapping("/{gameId}/actions")
     fun applyAction(
         @PathVariable gameId: String,
@@ -32,10 +31,7 @@ class GameController(
         return gameService.applyHumanAction(gameId, action)
     }
 
-    /**
-     * Creates a new game against an AI opponent.
-     * Uses the authenticated user as the human player.
-     */
+    @Operation(summary = "Create a game against an AI opponent", description = "Difficulty: basic, medium, or hard")
     @PostMapping("/ai")
     fun createGameWithAI(
         @RequestBody request: CreateAIGameRequest,
@@ -49,9 +45,7 @@ class GameController(
         )
     }
 
-    /**
-     * Deletes a game.
-     */
+    @Operation(summary = "Delete a game")
     @DeleteMapping("/{gameId}")
     fun deleteGame(@PathVariable gameId: String): ResponseEntity<Void> {
         gameService.getGameState(gameId) // verify it exists, throws if not found
@@ -59,9 +53,7 @@ class GameController(
         return ResponseEntity.noContent().build()
     }
 
-    /**
-     * Lists all active games.
-     */
+    @Operation(summary = "List all active games")
     @GetMapping
     fun listGames(): Map<String, GameState> {
         return gameService.listGames()
