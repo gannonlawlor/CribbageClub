@@ -25,6 +25,7 @@ class SecurityConfig(
                 auth
                     // Public auth endpoints (register, login)
                     .requestMatchers("/api/auth/register", "/api/auth/login").permitAll()
+                    .requestMatchers("/api/stats/leaderboard").permitAll()
                     .requestMatchers("/ws/**").permitAll()
                     .requestMatchers("/h2-console/**").permitAll()
                     .requestMatchers("/actuator/**").permitAll()

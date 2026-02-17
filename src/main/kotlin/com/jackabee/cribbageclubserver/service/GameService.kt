@@ -27,7 +27,8 @@ import kotlin.random.Random
 class GameService(
     @Autowired(required = false) private val webSocketService: GameWebSocketService? = null,
     @Autowired(required = false) private val gameRepository: GameRepository? = null,
-    @Autowired(required = false) private val objectMapper: ObjectMapper? = null
+    @Autowired(required = false) private val objectMapper: ObjectMapper? = null,
+    @Autowired(required = false) private val playerStatsService: PlayerStatsService? = null
 ) {
     private val logger = LoggerFactory.getLogger(GameService::class.java)
 
@@ -311,6 +312,17 @@ class GameService(
         if (state.stage == GameStage.GAME_OVER) {
             val winner = state.players.maxByOrNull { it.score }
             entity.winnerId = winner?.id
+
+            // Record stats for both players
+            if (winner != null && state.players.size == 2) {
+                val loser = state.players.first { it.id != winner.id }
+                playerStatsService?.recordGameResult(
+                    winnerId = winner.id,
+                    loserId = loser.id,
+                    winnerScore = winner.score,
+                    loserScore = loser.score
+                )
+            }
         }
 
         repo.save(entity)
