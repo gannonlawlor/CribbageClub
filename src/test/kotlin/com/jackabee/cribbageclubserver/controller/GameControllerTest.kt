@@ -177,4 +177,92 @@ class GameControllerTest {
         val humanPlayer = response.get("players").get(0)
         kotlin.test.assertEquals("Custom Name", humanPlayer.get("name").asText())
     }
+
+    @Test
+    fun `should get my active games`() {
+        val token = registerAndGetToken("gametest8")
+
+        // Create a game
+        val createReq = mapOf("difficulty" to "basic")
+        mockMvc.perform(
+            post("/api/games/ai")
+                .header("Authorization", "Bearer $token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createReq))
+        ).andExpect(status().isOk)
+
+        // Get my active games
+        mockMvc.perform(
+            get("/api/games/me")
+                .header("Authorization", "Bearer $token")
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$").isArray)
+            .andExpect(jsonPath("$.length()").value(org.hamcrest.Matchers.greaterThanOrEqualTo(1)))
+    }
+
+    @Test
+    fun `should get my game history as empty initially`() {
+        val token = registerAndGetToken("gametest9")
+
+        mockMvc.perform(
+            get("/api/games/me/history")
+                .header("Authorization", "Bearer $token")
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$").isArray)
+    }
+
+    @Test
+    fun `should return 403 for me endpoint without auth`() {
+        mockMvc.perform(get("/api/games/me"))
+            .andExpect(status().isForbidden)
+    }
+
+    @Test
+    fun `should return 403 for history endpoint without auth`() {
+        mockMvc.perform(get("/api/games/me/history"))
+            .andExpect(status().isForbidden)
+    }
+
+    @Test
+    fun `guest should be able to create AI game`() {
+        val guestResult = mockMvc.perform(post("/api/auth/guest"))
+            .andExpect(status().isOk).andReturn()
+        val guestToken = objectMapper.readTree(guestResult.response.contentAsString).get("token").asText()
+
+        val createReq = mapOf("difficulty" to "basic")
+        mockMvc.perform(
+            post("/api/games/ai")
+                .header("Authorization", "Bearer $guestToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createReq))
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.gameId").isNotEmpty)
+    }
+
+    @Test
+    fun `guest should see their active games`() {
+        val guestResult = mockMvc.perform(post("/api/auth/guest"))
+            .andExpect(status().isOk).andReturn()
+        val guestToken = objectMapper.readTree(guestResult.response.contentAsString).get("token").asText()
+
+        // Create a game
+        val createReq = mapOf("difficulty" to "basic")
+        mockMvc.perform(
+            post("/api/games/ai")
+                .header("Authorization", "Bearer $guestToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createReq))
+        ).andExpect(status().isOk)
+
+        // Get active games
+        mockMvc.perform(
+            get("/api/games/me")
+                .header("Authorization", "Bearer $guestToken")
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.length()").value(org.hamcrest.Matchers.greaterThanOrEqualTo(1)))
+    }
 }

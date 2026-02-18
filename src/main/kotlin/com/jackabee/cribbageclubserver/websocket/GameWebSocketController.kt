@@ -22,7 +22,29 @@ class GameWebSocketController(
      */
     @MessageMapping("/game/action")
     fun handleGameAction(@Payload message: GameActionMessage, headerAccessor: SimpMessageHeaderAccessor) {
+        val playerId = headerAccessor.sessionAttributes?.get("userId") as? String
+        if (playerId == null) {
+            webSocketService.sendErrorToPlayer(
+                headerAccessor.sessionId!!,
+                message.gameId,
+                "Not authenticated"
+            )
+            return
+        }
+
         try {
+            // Verify sender is a participant in the game
+            val currentState = gameService.getGameState(message.gameId)
+            val isParticipant = currentState.players.any { it.id == playerId }
+            if (!isParticipant) {
+                webSocketService.sendErrorToPlayer(
+                    headerAccessor.sessionId!!,
+                    message.gameId,
+                    "You are not a participant in this game"
+                )
+                return
+            }
+
             // Apply the action to the game
             val updatedGameState = gameService.applyHumanAction(message.gameId, message.action)
 

@@ -32,6 +32,7 @@ class UserService(
         require(!userRepository.existsByUsername(username)) { "Username already taken" }
 
         val user = UserEntity(
+            id = UUID.randomUUID().toString(),
             username = username,
             passwordHash = passwordEncoder.encode(password),
             displayName = displayName ?: username

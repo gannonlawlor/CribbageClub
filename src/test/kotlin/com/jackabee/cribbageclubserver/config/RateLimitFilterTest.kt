@@ -132,4 +132,23 @@ class RateLimitFilterTest {
         assertEquals("application/json", response.contentType)
         assert(response.contentAsString.contains("Too many requests"))
     }
+
+    @Test
+    fun `rate limits guest endpoint`() {
+        val filter = createFilter(maxRequests = 2)
+
+        repeat(2) {
+            val request = MockHttpServletRequest("POST", "/api/auth/guest")
+            request.remoteAddr = "10.0.0.5"
+            val response = MockHttpServletResponse()
+            filter.doFilter(request, response, MockFilterChain())
+            assertEquals(200, response.status)
+        }
+
+        val request = MockHttpServletRequest("POST", "/api/auth/guest")
+        request.remoteAddr = "10.0.0.5"
+        val response = MockHttpServletResponse()
+        filter.doFilter(request, response, MockFilterChain())
+        assertEquals(429, response.status)
+    }
 }
