@@ -8,6 +8,7 @@ import com.jackabee.cribbageclubserver.model.player.Player
 import com.jackabee.cribbageclubserver.repository.LobbyRepository
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import org.springframework.transaction.annotation.Transactional
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.time.Instant
@@ -94,6 +95,7 @@ class LobbyService(
      * @param lobbyId The ID of the lobby to start
      * @return The game state of the started game
      */
+    @Transactional
     fun startGame(lobbyId: String): com.jackabee.cribbageclubserver.model.game.GameState {
         val lobby = getLobby(lobbyId) ?: throw IllegalArgumentException("Lobby not found: $lobbyId")
         require(lobby.isReady) { "Lobby is not ready to start" }
@@ -173,17 +175,26 @@ class LobbyService(
     }
 
     private fun saveLobbyEntity(lobby: Lobby) {
-        val entity = LobbyEntity(
-            id = lobby.id,
-            name = lobby.name,
-            maxPlayers = lobby.maxPlayers,
-            status = lobby.status.name,
-            gameId = lobby.gameId,
-            createdAt = lobby.createdAt,
-            updatedAt = Instant.now(),
-            playersJson = objectMapper.writeValueAsString(lobby.players)
-        )
-        lobbyRepository.save(entity)
+        val existing = lobbyRepository.findById(lobby.id).orElse(null)
+        if (existing != null) {
+            existing.status = lobby.status.name
+            existing.gameId = lobby.gameId
+            existing.updatedAt = Instant.now()
+            existing.playersJson = objectMapper.writeValueAsString(lobby.players)
+            lobbyRepository.save(existing)
+        } else {
+            val entity = LobbyEntity(
+                id = lobby.id,
+                name = lobby.name,
+                maxPlayers = lobby.maxPlayers,
+                status = lobby.status.name,
+                gameId = lobby.gameId,
+                createdAt = lobby.createdAt,
+                updatedAt = Instant.now(),
+                playersJson = objectMapper.writeValueAsString(lobby.players)
+            )
+            lobbyRepository.save(entity)
+        }
     }
 
     private fun toLobby(entity: LobbyEntity): Lobby {

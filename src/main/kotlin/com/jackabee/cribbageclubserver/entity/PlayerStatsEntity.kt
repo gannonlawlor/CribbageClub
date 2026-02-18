@@ -37,7 +37,10 @@ class PlayerStatsEntity(
     val createdAt: Instant = Instant.now(),
 
     @Column(nullable = false)
-    var updatedAt: Instant = Instant.now()
+    var updatedAt: Instant = Instant.now(),
+
+    @Version
+    var version: Long = 0
 ) {
     val winRate: Double
         get() = if (gamesPlayed > 0) gamesWon.toDouble() / gamesPlayed else 0.0

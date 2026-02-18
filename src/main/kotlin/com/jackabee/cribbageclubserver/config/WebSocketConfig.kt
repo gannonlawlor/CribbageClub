@@ -1,6 +1,7 @@
 package com.jackabee.cribbageclubserver.config
 
 import org.springframework.context.annotation.Configuration
+import org.springframework.messaging.simp.config.ChannelRegistration
 import org.springframework.messaging.simp.config.MessageBrokerRegistry
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry
@@ -8,11 +9,13 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 
 @Configuration
 @EnableWebSocketMessageBroker
-class WebSocketConfig : WebSocketMessageBrokerConfigurer {
+class WebSocketConfig(
+    private val stompAuthChannelInterceptor: StompAuthChannelInterceptor
+) : WebSocketMessageBrokerConfigurer {
 
     override fun configureMessageBroker(config: MessageBrokerRegistry) {
-        // Enable a simple in-memory broker for subscriptions
-        config.enableSimpleBroker("/topic")
+        // Enable a simple in-memory broker for subscriptions and user queues
+        config.enableSimpleBroker("/topic", "/queue")
         // Set application destination prefix for client messages
         config.setApplicationDestinationPrefixes("/app")
     }
@@ -22,5 +25,9 @@ class WebSocketConfig : WebSocketMessageBrokerConfigurer {
         registry.addEndpoint("/ws")
             .setAllowedOriginPatterns("*")
             .withSockJS()
+    }
+
+    override fun configureClientInboundChannel(registration: ChannelRegistration) {
+        registration.interceptors(stompAuthChannelInterceptor)
     }
 }

@@ -1,0 +1,135 @@
+import 'package:dio/dio.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../api/rest_client.dart';
+import 'auth_service.dart';
+
+// Singletons
+final authServiceProvider = Provider<AuthService>((ref) => AuthService());
+
+final restClientProvider = Provider<RestClient>((ref) {
+  return RestClient(authService: ref.read(authServiceProvider));
+});
+
+// Auth state
+class AuthState {
+  final bool isLoggedIn;
+  final String? userId;
+  final String? username;
+  final bool isLoading;
+  final String? error;
+
+  const AuthState({
+    this.isLoggedIn = false,
+    this.userId,
+    this.username,
+    this.isLoading = false,
+    this.error,
+  });
+
+  AuthState copyWith({
+    bool? isLoggedIn,
+    String? userId,
+    String? username,
+    bool? isLoading,
+    String? error,
+  }) {
+    return AuthState(
+      isLoggedIn: isLoggedIn ?? this.isLoggedIn,
+      userId: userId ?? this.userId,
+      username: username ?? this.username,
+      isLoading: isLoading ?? this.isLoading,
+      error: error,
+    );
+  }
+}
+
+class AuthNotifier extends StateNotifier<AuthState> {
+  final AuthService _authService;
+  final RestClient _restClient;
+
+  AuthNotifier(this._authService, this._restClient)
+      : super(const AuthState()) {
+    _checkExistingAuth();
+  }
+
+  Future<void> _checkExistingAuth() async {
+    final isLoggedIn = await _authService.isLoggedIn();
+    if (isLoggedIn) {
+      final userId = await _authService.getUserId();
+      final username = await _authService.getUsername();
+      state = AuthState(
+        isLoggedIn: true,
+        userId: userId,
+        username: username,
+      );
+    }
+  }
+
+  Future<void> login(String username, String password) async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      final response = await _restClient.login(username, password);
+      await _authService.saveAuth(
+        token: response.token,
+        userId: response.userId,
+        username: response.username,
+      );
+      state = AuthState(
+        isLoggedIn: true,
+        userId: response.userId,
+        username: response.username,
+      );
+    } on DioException catch (e) {
+      final message = _extractError(e);
+      state = state.copyWith(isLoading: false, error: message);
+    }
+  }
+
+  Future<void> register(
+    String username,
+    String password, {
+    String? displayName,
+  }) async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      final response = await _restClient.register(
+        username,
+        password,
+        displayName: displayName,
+      );
+      await _authService.saveAuth(
+        token: response.token,
+        userId: response.userId,
+        username: response.username,
+      );
+      state = AuthState(
+        isLoggedIn: true,
+        userId: response.userId,
+        username: response.username,
+      );
+    } on DioException catch (e) {
+      final message = _extractError(e);
+      state = state.copyWith(isLoading: false, error: message);
+    }
+  }
+
+  Future<void> logout() async {
+    await _authService.clearAuth();
+    state = const AuthState();
+  }
+
+  String _extractError(DioException e) {
+    final data = e.response?.data;
+    if (data is Map<String, dynamic>) {
+      return (data['message'] ?? data['error'] ?? 'Request failed').toString();
+    }
+    return e.message ?? 'Request failed';
+  }
+}
+
+final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
+  return AuthNotifier(
+    ref.read(authServiceProvider),
+    ref.read(restClientProvider),
+  );
+});

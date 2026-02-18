@@ -4,6 +4,7 @@ import com.jackabee.cribbageclubserver.entity.PlayerStatsEntity
 import com.jackabee.cribbageclubserver.repository.PlayerStatsRepository
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
 
 @Service
@@ -17,6 +18,7 @@ class PlayerStatsService(
             .orElse(PlayerStatsEntity(playerId = playerId))
     }
 
+    @Transactional
     fun recordGameResult(
         winnerId: String,
         loserId: String,

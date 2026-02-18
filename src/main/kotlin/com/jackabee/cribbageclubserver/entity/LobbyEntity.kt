@@ -35,5 +35,8 @@ class LobbyEntity(
      * Players stored as JSON array: [{"id":"...","name":"...","joinedAt":"..."}]
      */
     @Column(columnDefinition = "TEXT")
-    var playersJson: String = "[]"
+    var playersJson: String = "[]",
+
+    @Version
+    var version: Long = 0
 )

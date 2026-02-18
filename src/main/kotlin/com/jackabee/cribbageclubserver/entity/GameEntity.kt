@@ -58,5 +58,8 @@ class GameEntity(
     var updatedAt: Instant = Instant.now(),
 
     @Column(columnDefinition = "TEXT")
-    var stateJson: String? = null
+    var stateJson: String? = null,
+
+    @Version
+    var version: Long = 0
 )
