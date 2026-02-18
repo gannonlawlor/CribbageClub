@@ -7,7 +7,7 @@ export function Layout() {
 
   function handleLogout() {
     logout()
-    navigate('/login')
+    navigate('/')
   }
 
   return (
@@ -19,12 +19,15 @@ export function Layout() {
           </Link>
 
           <div className="flex items-center gap-4 text-sm">
+            <Link to="/" className="text-white/80 hover:text-white no-underline">Home</Link>
+            <Link to="/daily-puzzle" className="text-white/80 hover:text-white no-underline">Daily Puzzle</Link>
+            <Link to="/leaderboard" className="text-white/80 hover:text-white no-underline">Leaderboard</Link>
+
             {isLoggedIn ? (
               <>
-                <Link to="/" className="text-white/80 hover:text-white no-underline">Home</Link>
-                <Link to="/daily-puzzle" className="text-white/80 hover:text-white no-underline">Daily Puzzle</Link>
-                <Link to="/leaderboard" className="text-white/80 hover:text-white no-underline">Leaderboard</Link>
-                <Link to="/friends" className="text-white/80 hover:text-white no-underline">Friends</Link>
+                {!isGuest && (
+                  <Link to="/friends" className="text-white/80 hover:text-white no-underline">Friends</Link>
+                )}
                 <span className="text-white/60">
                   {username}{isGuest && ' (guest)'}
                 </span>
@@ -42,7 +45,7 @@ export function Layout() {
               </>
             ) : (
               <Link to="/login" className="text-[var(--gold)] hover:text-[var(--gold-light)] no-underline">
-                Login
+                Sign In
               </Link>
             )}
           </div>
