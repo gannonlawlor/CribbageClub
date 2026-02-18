@@ -16,22 +16,26 @@ class GameNotifierState {
   final GameState? gameState;
   final bool isLoading;
   final String? error;
+  final ConnectionStatus connectionStatus;
 
   const GameNotifierState({
     this.gameState,
     this.isLoading = false,
     this.error,
+    this.connectionStatus = ConnectionStatus.disconnected,
   });
 
   GameNotifierState copyWith({
     GameState? gameState,
     bool? isLoading,
     String? error,
+    ConnectionStatus? connectionStatus,
   }) {
     return GameNotifierState(
       gameState: gameState ?? this.gameState,
       isLoading: isLoading ?? this.isLoading,
       error: error,
+      connectionStatus: connectionStatus ?? this.connectionStatus,
     );
   }
 }
@@ -62,14 +66,27 @@ class GameNotifier extends StateNotifier<GameNotifierState> {
   Future<void> _loadGameState() async {
     try {
       final gameState = await _restClient.getGameState(gameId);
-      state = GameNotifierState(gameState: gameState);
+      state = GameNotifierState(
+        gameState: gameState,
+        connectionStatus: state.connectionStatus,
+      );
     } catch (e) {
       state = GameNotifierState(error: 'Failed to load game: $e');
     }
   }
 
   void _connectWebSocket() {
+    // Listen to connection status changes
+    _wsClient.onStatusChange = (status) {
+      state = state.copyWith(connectionStatus: status);
+      if (status == ConnectionStatus.connected) {
+        // Re-fetch game state after reconnect to ensure consistency
+        _loadGameState();
+      }
+    };
+
     if (_wsClient.isConnected) {
+      state = state.copyWith(connectionStatus: ConnectionStatus.connected);
       _subscribeToGame();
       return;
     }
@@ -88,13 +105,19 @@ class GameNotifier extends StateNotifier<GameNotifierState> {
     _wsClient.subscribeToGame(
       gameId,
       onStateUpdate: (newState) {
-        state = GameNotifierState(gameState: newState);
+        state = GameNotifierState(
+          gameState: newState,
+          connectionStatus: state.connectionStatus,
+        );
       },
     );
     _wsClient.subscribeToUserState(
       onStateUpdate: (newState) {
         if (newState.gameId == gameId) {
-          state = GameNotifierState(gameState: newState);
+          state = GameNotifierState(
+            gameState: newState,
+            connectionStatus: state.connectionStatus,
+          );
         }
       },
     );
@@ -110,16 +133,32 @@ class GameNotifier extends StateNotifier<GameNotifierState> {
 
   // Actions - use REST for ordering guarantees
 
-  Future<void> discardCard(PlayingCard card) async {
+  bool _isDiscarding = false;
+
+  bool get isDiscarding => _isDiscarding;
+
+  Future<void> discardCards(List<PlayingCard> cards) async {
+    if (_isDiscarding) return;
+    _isDiscarding = true;
     state = state.copyWith(error: null);
     try {
-      final newState = await _restClient.applyAction(
-        gameId,
-        GameAction.discardToCrib(playerId: _playerId, card: card),
-      );
-      state = GameNotifierState(gameState: newState);
+      GameState? newState;
+      for (final card in cards) {
+        newState = await _restClient.applyAction(
+          gameId,
+          GameAction.discardToCrib(playerId: _playerId, card: card),
+        );
+      }
+      if (newState != null) {
+        state = GameNotifierState(
+          gameState: newState,
+          connectionStatus: state.connectionStatus,
+        );
+      }
     } catch (e) {
       state = state.copyWith(error: 'Discard failed: $e');
+    } finally {
+      _isDiscarding = false;
     }
   }
 
@@ -130,7 +169,10 @@ class GameNotifier extends StateNotifier<GameNotifierState> {
         gameId,
         GameAction.playCard(playerId: _playerId, card: card),
       );
-      state = GameNotifierState(gameState: newState);
+      state = GameNotifierState(
+        gameState: newState,
+        connectionStatus: state.connectionStatus,
+      );
     } catch (e) {
       state = state.copyWith(error: 'Play card failed: $e');
     }
@@ -143,7 +185,10 @@ class GameNotifier extends StateNotifier<GameNotifierState> {
         gameId,
         GameAction.cutDeck(playerId: _playerId),
       );
-      state = GameNotifierState(gameState: newState);
+      state = GameNotifierState(
+        gameState: newState,
+        connectionStatus: state.connectionStatus,
+      );
     } catch (e) {
       state = state.copyWith(error: 'Cut failed: $e');
     }
@@ -156,7 +201,10 @@ class GameNotifier extends StateNotifier<GameNotifierState> {
         gameId,
         GameAction.go(playerId: _playerId),
       );
-      state = GameNotifierState(gameState: newState);
+      state = GameNotifierState(
+        gameState: newState,
+        connectionStatus: state.connectionStatus,
+      );
     } catch (e) {
       state = state.copyWith(error: 'Go failed: $e');
     }
@@ -169,7 +217,10 @@ class GameNotifier extends StateNotifier<GameNotifierState> {
         gameId,
         GameAction.countHand(playerId: _playerId),
       );
-      state = GameNotifierState(gameState: newState);
+      state = GameNotifierState(
+        gameState: newState,
+        connectionStatus: state.connectionStatus,
+      );
     } catch (e) {
       state = state.copyWith(error: 'Count failed: $e');
     }
@@ -181,6 +232,7 @@ class GameNotifier extends StateNotifier<GameNotifierState> {
 
   @override
   void dispose() {
+    _wsClient.onStatusChange = null;
     _wsClient.leaveGame(gameId);
     _wsClient.unsubscribeFromGame(gameId);
     super.dispose();

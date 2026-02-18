@@ -6,6 +6,8 @@ class GameControls extends StatelessWidget {
   final GameStage stage;
   final bool isMyTurn;
   final int selectedCardCount;
+  final bool isDiscarding;
+  final bool canGo;
   final VoidCallback? onDiscard;
   final VoidCallback? onCut;
   final VoidCallback? onGo;
@@ -16,6 +18,8 @@ class GameControls extends StatelessWidget {
     required this.stage,
     required this.isMyTurn,
     this.selectedCardCount = 0,
+    this.isDiscarding = false,
+    this.canGo = true,
     this.onDiscard,
     this.onCut,
     this.onGo,
@@ -42,8 +46,8 @@ class GameControls extends StatelessWidget {
       case GameStage.discardingToCrib:
         return [
           _ActionButton(
-            label: 'Discard ($selectedCardCount/2)',
-            onPressed: selectedCardCount == 2 ? onDiscard : null,
+            label: isDiscarding ? 'Discarding...' : 'Discard ($selectedCardCount/2)',
+            onPressed: selectedCardCount == 2 && !isDiscarding ? onDiscard : null,
             icon: Icons.arrow_downward,
           ),
         ];
@@ -59,7 +63,7 @@ class GameControls extends StatelessWidget {
         return [
           _ActionButton(
             label: 'Go',
-            onPressed: onGo,
+            onPressed: canGo ? onGo : null,
             icon: Icons.skip_next,
           ),
         ];

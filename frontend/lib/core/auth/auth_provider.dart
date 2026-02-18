@@ -113,6 +113,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
+  void clearError() {
+    state = state.copyWith(error: null);
+  }
+
   Future<void> logout() async {
     await _authService.clearAuth();
     state = const AuthState();

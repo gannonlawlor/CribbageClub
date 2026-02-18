@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../config/theme.dart';
+import '../../../core/api/websocket_client.dart';
 import '../../../core/auth/auth_provider.dart';
+import '../../../core/models/card.dart';
 import '../../../core/models/game_history_event.dart';
 import '../../../core/models/game_state.dart';
+import '../../../core/models/score_breakdown.dart';
 import '../../../shared/utils/card_utils.dart';
 import '../state/game_providers.dart';
 import '../widgets/crib_area.dart';
@@ -56,6 +59,31 @@ class GameScreen extends ConsumerWidget {
     }
 
     final gs = gameNotifier.gameState!;
+
+    // Guard: empty players list
+    if (gs.players.isEmpty) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Game')),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text(
+                'Invalid game state: no players found.',
+                style: TextStyle(color: Colors.redAccent),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () => context.go('/'),
+                child: const Text('Back to Home'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     final playerId = auth.userId ?? '';
     final playerIndex = gs.players.indexWhere((p) => p.id == playerId);
     final player = playerIndex >= 0 ? gs.players[playerIndex] : gs.players[0];
@@ -89,6 +117,43 @@ class GameScreen extends ConsumerWidget {
       body: SafeArea(
         child: Column(
           children: [
+            // Reconnecting banner
+            if (gameNotifier.connectionStatus == ConnectionStatus.reconnecting)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                color: Colors.orange.shade800,
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    ),
+                    SizedBox(width: 8),
+                    Text(
+                      'Reconnecting...',
+                      style: TextStyle(color: Colors.white, fontSize: 13),
+                    ),
+                  ],
+                ),
+              ),
+            if (gameNotifier.connectionStatus == ConnectionStatus.failed)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                color: Colors.red.shade800,
+                child: const Text(
+                  'Connection lost. Please go back and rejoin.',
+                  style: TextStyle(color: Colors.white, fontSize: 13),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+
             // Scores
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -119,6 +184,7 @@ class GameScreen extends ConsumerWidget {
                       stage: gs.stage,
                       isMyTurn: isMyTurn,
                       currentPlayerName: opponent.name,
+                      selectedCardCount: selectedCards.length,
                     ),
                     const SizedBox(height: 8),
 
@@ -142,7 +208,7 @@ class GameScreen extends ConsumerWidget {
 
                     // Game over
                     if (gs.stage == GameStage.gameOver)
-                      _buildGameOver(context, gs, playerId),
+                      _buildGameOver(context, ref, gs, playerId),
 
                     // History
                     const SizedBox(height: 8),
@@ -162,6 +228,8 @@ class GameScreen extends ConsumerWidget {
               stage: gs.stage,
               isMyTurn: isMyTurn,
               selectedCardCount: selectedCards.length,
+              isDiscarding: ref.read(gameNotifierProvider(gameId).notifier).isDiscarding,
+              canGo: !_canPlayAnyCard(player.hand, gs.peggingCount),
               onDiscard: () => _handleDiscard(ref, gs, playerId, selectedCards),
               onCut: () =>
                   ref.read(gameNotifierProvider(gameId).notifier).cutDeck(),
@@ -179,7 +247,7 @@ class GameScreen extends ConsumerWidget {
                 selectedIndices: selectedCards,
                 enabled: isMyTurn,
                 onCardTap: (index) =>
-                    _handleCardTap(ref, gs, playerId, index, selectedCards),
+                    _handleCardTap(context, ref, gs, playerId, index, selectedCards),
               ),
             ),
           ],
@@ -189,8 +257,6 @@ class GameScreen extends ConsumerWidget {
   }
 
   int _estimateOpponentCards(GameState gs) {
-    // Opponent hand is filtered to empty by backend.
-    // Estimate based on game stage.
     switch (gs.stage) {
       case GameStage.dealing:
       case GameStage.discardingToCrib:
@@ -205,6 +271,7 @@ class GameScreen extends ConsumerWidget {
   }
 
   void _handleCardTap(
+    BuildContext context,
     WidgetRef ref,
     GameState gs,
     String playerId,
@@ -222,10 +289,25 @@ class GameScreen extends ConsumerWidget {
     } else if (gs.stage == GameStage.pegging && gs.currentPlayerId == playerId) {
       final sorted = CardUtils.sorted(
           gs.players.firstWhere((p) => p.id == playerId).hand);
-      if (index < sorted.length) {
-        ref.read(gameNotifierProvider(gameId).notifier).playCard(sorted[index]);
+      if (index >= 0 && index < sorted.length) {
+        final card = sorted[index];
+        if (card.rank.peggingValue + gs.peggingCount > 31) {
+          ScaffoldMessenger.of(context).clearSnackBars();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('That card would exceed 31. Try another or tap Go.'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        } else {
+          ref.read(gameNotifierProvider(gameId).notifier).playCard(card);
+        }
       }
     }
+  }
+
+  bool _canPlayAnyCard(List<PlayingCard> hand, int peggingCount) {
+    return hand.any((card) => card.rank.peggingValue + peggingCount <= 31);
   }
 
   Future<void> _handleDiscard(
@@ -238,21 +320,28 @@ class GameScreen extends ConsumerWidget {
 
     final sorted = CardUtils.sorted(
         gs.players.firstWhere((p) => p.id == playerId).hand);
-    final sortedIndices = selected.toList()..sort((a, b) => b.compareTo(a));
-    final notifier = ref.read(gameNotifierProvider(gameId).notifier);
+    final cardsToDiscard = selected
+        .where((idx) => idx < sorted.length)
+        .map((idx) => sorted[idx])
+        .toList();
 
-    for (final idx in sortedIndices) {
-      if (idx < sorted.length) {
-        await notifier.discardCard(sorted[idx]);
-      }
-    }
-
+    // Clear selection immediately to prevent double-tap
     ref.read(selectedCardsProvider(gameId).notifier).state = {};
+
+    await ref.read(gameNotifierProvider(gameId).notifier).discardCards(cardsToDiscard);
   }
 
-  Widget _buildGameOver(BuildContext context, GameState gs, String playerId) {
+  Widget _buildGameOver(BuildContext context, WidgetRef ref, GameState gs, String playerId) {
     final winner = gs.history.whereType<GameEnded>().firstOrNull;
     final didWin = winner?.winnerPlayerId == playerId;
+    final playerIndex = gs.players.indexWhere((p) => p.id == playerId);
+    final player = playerIndex >= 0 ? gs.players[playerIndex] : gs.players[0];
+    final opponent = gs.players[playerIndex >= 0 ? 1 - playerIndex : 1];
+    final margin = (player.score - opponent.score).abs();
+
+    // Get the last counting breakdowns from history
+    final handCounts = gs.history.whereType<HandCounted>().toList();
+    final cribCounts = gs.history.whereType<CribCounted>().toList();
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 16),
@@ -272,13 +361,81 @@ class GameScreen extends ConsumerWidget {
               fontWeight: FontWeight.bold,
             ),
           ),
+          const SizedBox(height: 8),
+          // Final scores
+          Text(
+            '${player.name}: ${player.score}  -  ${opponent.name}: ${opponent.score}',
+            style: const TextStyle(color: Colors.white, fontSize: 16),
+          ),
+          if (margin > 0)
+            Text(
+              didWin ? 'Won by $margin points' : 'Lost by $margin points',
+              style: TextStyle(
+                color: didWin ? AppTheme.goldAccent.withValues(alpha: 0.8) : Colors.white54,
+                fontSize: 14,
+              ),
+            ),
+          // Last round breakdown
+          if (handCounts.isNotEmpty || cribCounts.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            ...handCounts.reversed.take(2).map((e) => Text(
+              '${e.playerId == playerId ? "Your hand" : "Opponent hand"}: '
+              '${e.totalPoints} pts${_breakdownText(e.scoreBreakdown)}',
+              style: const TextStyle(color: Colors.white60, fontSize: 12),
+            )),
+            ...cribCounts.reversed.take(1).map((e) => Text(
+              'Crib: ${e.totalPoints} pts${_breakdownText(e.scoreBreakdown)}',
+              style: const TextStyle(color: Colors.white60, fontSize: 12),
+            )),
+          ],
           const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: () => context.go('/'),
-            child: const Text('Back to Home'),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              ElevatedButton.icon(
+                onPressed: () => _playAgain(context, ref),
+                icon: const Icon(Icons.refresh, size: 18),
+                label: const Text('Play Again'),
+              ),
+              const SizedBox(width: 12),
+              OutlinedButton(
+                onPressed: () => context.go('/'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white70,
+                  side: const BorderSide(color: Colors.white38),
+                ),
+                child: const Text('Home'),
+              ),
+            ],
           ),
         ],
       ),
     );
+  }
+
+  String _breakdownText(ScoreBreakdown b) {
+    final parts = <String>[];
+    if (b.fifteens > 0) parts.add('${b.fifteens} fifteens');
+    if (b.pairs > 0) parts.add('${b.pairs} pairs');
+    if (b.runs > 0) parts.add('${b.runs} runs');
+    if (b.flushes > 0) parts.add('${b.flushes} flush');
+    if (b.nobs > 0) parts.add('${b.nobs} nobs');
+    return parts.isEmpty ? '' : ' (${parts.join(', ')})';
+  }
+
+  Future<void> _playAgain(BuildContext context, WidgetRef ref) async {
+    try {
+      final restClient = ref.read(restClientProvider);
+      final gameState = await restClient.createAIGame();
+      if (context.mounted) {
+        context.go('/game/${gameState.gameId}');
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to create game: $e')),
+        );
+      }
+    }
   }
 }
