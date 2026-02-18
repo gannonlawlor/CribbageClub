@@ -124,14 +124,16 @@ function CardBack({ width }: { width: number }) {
 }
 
 /** Mini card for played cards area */
-export function MiniCard({ card }: { card: PlayingCard }) {
+export function MiniCard({ card, width = 40, height = 56 }: { card: PlayingCard; width?: number; height?: number }) {
   const color = isRedSuit(card.suit) ? 'var(--card-red)' : 'var(--card-black)'
+  const fontSize = Math.round(height * 0.21)
   return (
     <motion.div
       initial={{ scale: 0.5, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
       transition={{ duration: 0.2 }}
-      className="w-10 h-14 rounded border border-white/20 bg-[var(--card-white)] flex flex-col items-center justify-center text-xs"
+      className="rounded border border-white/20 bg-[var(--card-white)] flex flex-col items-center justify-center"
+      style={{ width, height, fontSize }}
     >
       <span style={{ color }}>{RANK_DISPLAY[card.rank]}</span>
       <span style={{ color }}>{SUIT_SYMBOL[card.suit]}</span>

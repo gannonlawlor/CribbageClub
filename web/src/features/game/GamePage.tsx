@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router'
 import { useGameStore, isLocalGame } from './game-store'
 import { useAuthStore } from '@/auth/auth-store'
@@ -13,6 +13,22 @@ import { GameControls } from './components/GameControls'
 import { CutCard } from './components/CutCard'
 import { ScorePopupOverlay } from './components/ScorePopup'
 import { HistoryLog } from './components/HistoryLog'
+
+function useIsDesktop(): boolean {
+  const query = '(min-width: 1024px)'
+  const [matches, setMatches] = useState(() =>
+    typeof window !== 'undefined' ? window.matchMedia(query).matches : false,
+  )
+
+  useEffect(() => {
+    const mql = window.matchMedia(query)
+    const handler = (e: MediaQueryListEvent) => setMatches(e.matches)
+    mql.addEventListener('change', handler)
+    return () => mql.removeEventListener('change', handler)
+  }, [])
+
+  return matches
+}
 
 export function GamePage() {
   const { gameId } = useParams<{ gameId: string }>()
@@ -126,12 +142,25 @@ function GameBoard({
   onClearError,
   onNavigate,
 }: GameBoardProps) {
+  const isDesktop = useIsDesktop()
   const playerIndex = gameState.players.findIndex((p) => p.id === userId)
   const player = playerIndex >= 0 ? gameState.players[playerIndex] : gameState.players[0]
   const opponent = gameState.players[playerIndex >= 0 ? 1 - playerIndex : 1]
   const isMyTurn = gameState.currentPlayerId === userId
   const isDealer = gameState.dealerIndex === playerIndex
   const stage = gameState.stage
+
+  // Desktop-scaled sizes
+  const handCardW = isDesktop ? 88 : 64
+  const handCardH = isDesktop ? 123 : 90
+  const opponentCardW = isDesktop ? 52 : 36
+  const opponentCardH = isDesktop ? 73 : 50
+  const cutW = isDesktop ? 72 : 48
+  const cutH = isDesktop ? 101 : 67
+  const miniW = isDesktop ? 56 : 40
+  const miniH = isDesktop ? 76 : 56
+  const boardPad = isDesktop ? 40 : 28
+  const handMaxWidth = isDesktop ? 600 : undefined
 
   const playerNames = useMemo(() => {
     const map: Record<string, string> = {}
@@ -141,9 +170,12 @@ function GameBoard({
     return map
   }, [gameState.players, userId])
 
-  function canPlayCard(card: PlayingCard): boolean {
-    return gameState.peggingCount + RANK_PEGGING_VALUE[card.rank] <= 31
-  }
+  const canPlayCard = useCallback(
+    (card: PlayingCard): boolean => {
+      return gameState.peggingCount + RANK_PEGGING_VALUE[card.rank] <= 31
+    },
+    [gameState.peggingCount],
+  )
 
   const hasPlayableCard = stage === GameStage.PEGGING && player.hand.some(canPlayCard)
 
@@ -164,7 +196,7 @@ function GameBoard({
   }
 
   return (
-    <div className="max-w-lg mx-auto p-2 relative">
+    <div className="max-w-lg lg:max-w-5xl mx-auto p-2 lg:p-4 relative">
       {/* Error banner */}
       {error && (
         <div className="bg-red-500/20 border border-red-500/50 rounded px-3 py-1.5 mb-2 flex items-center justify-between">
@@ -173,128 +205,146 @@ function GameBoard({
         </div>
       )}
 
-      {/* Game area with cribbage board wrapping three edges */}
-      <div className="relative">
-        <CribbageBoard
-          playerScore={player.score}
-          opponentScore={opponent.score}
-        />
+      {/* Two-column layout on desktop */}
+      <div className="lg:flex lg:gap-6">
+        {/* Game board column */}
+        <div className="flex-1 min-w-0">
+          {/* Game area with cribbage board wrapping three edges */}
+          <div className="relative">
+            <CribbageBoard
+              playerScore={player.score}
+              opponentScore={opponent.score}
+            />
 
-        {/* Content inside the board frame */}
-        <div className="pt-7 pl-7 pr-7 flex flex-col gap-2">
-          {/* Opponent info */}
-          <div className="flex items-center justify-between px-2">
-            <div>
-              <span className="text-white/60 text-xs">{opponent.name}</span>
-              <span className="text-white font-bold text-lg ml-2">{opponent.score}</span>
-            </div>
-            {isDealer && <span className="text-white/30 text-xs">You deal</span>}
-            {!isDealer && <span className="text-white/30 text-xs">They deal</span>}
-          </div>
+            {/* Content inside the board frame */}
+            <div className="flex flex-col gap-2" style={{ paddingTop: boardPad, paddingLeft: boardPad, paddingRight: boardPad }}>
+              {/* Opponent info */}
+              <div className="flex items-center justify-between px-2">
+                <div>
+                  <span className="text-white/60 text-xs">{opponent.name}</span>
+                  <span className="text-white font-bold text-lg ml-2">{opponent.score}</span>
+                </div>
+                {isDealer && <span className="text-white/30 text-xs">You deal</span>}
+                {!isDealer && <span className="text-white/30 text-xs">They deal</span>}
+              </div>
 
-          {/* Opponent hand (face-down) */}
-          <OpponentHand cardCount={opponent.hand.length} />
+              {/* Opponent hand (face-down) */}
+              <OpponentHand cardCount={opponent.hand.length} cardWidth={opponentCardW} cardHeight={opponentCardH} />
 
-          {/* Stage indicator */}
-          <StageIndicator
-            stage={stage}
-            isMyTurn={isMyTurn}
-            isDealer={isDealer}
-            selectedCardCount={selectedCardIndices.size}
-          />
-
-          {/* Center area: cut card + play area */}
-          <div className="flex items-start justify-center gap-4 min-h-[80px]">
-            <CutCard cutCard={gameState.cutCard} />
-
-            {stage === GameStage.PEGGING && (
-              <PlayArea
-                playedCards={gameState.playedCards}
-                peggingCount={gameState.peggingCount}
+              {/* Stage indicator */}
+              <StageIndicator
+                stage={stage}
+                isMyTurn={isMyTurn}
+                isDealer={isDealer}
+                selectedCardCount={selectedCardIndices.size}
               />
-            )}
-          </div>
 
-          {/* Waiting indicator */}
-          {!isMyTurn && stage !== GameStage.GAME_OVER && stage !== GameStage.DEALING && (
-            <div className="text-white/40 text-xs text-center animate-pulse">
-              Waiting for {opponent.name}...
-            </div>
-          )}
+              {/* Center area: cut card + play area */}
+              <div className="flex items-start justify-center gap-4 min-h-[80px]">
+                <CutCard cutCard={gameState.cutCard} width={cutW} height={cutH} />
 
-          {/* Game over */}
-          {stage === GameStage.GAME_OVER && (
-            <div className="text-center bg-white/10 rounded-lg p-4">
-              <div className="text-xl font-bold mb-1">
-                {player.score >= 121 ? (
-                  <span className="text-[var(--gold)]">You Won!</span>
-                ) : (
-                  <span className="text-red-400">You Lost</span>
+                {stage === GameStage.PEGGING && (
+                  <PlayArea
+                    playedCards={gameState.playedCards}
+                    peggingCount={gameState.peggingCount}
+                    miniCardWidth={miniW}
+                    miniCardHeight={miniH}
+                  />
                 )}
               </div>
-              <div className="text-white/60 text-sm mb-3">
-                {player.score} - {opponent.score}
-              </div>
-              <div className="flex gap-2 justify-center">
-                <button
-                  onClick={() => onNavigate(`/analysis/${gameState.gameId}`)}
-                  className="bg-white/10 text-white px-4 py-1.5 rounded hover:bg-white/20 border-none cursor-pointer text-sm"
-                >
-                  Analysis
-                </button>
-                <button
-                  onClick={() => onNavigate('/')}
-                  className="bg-[var(--gold)] text-black px-4 py-1.5 rounded hover:bg-[var(--gold-light)] border-none cursor-pointer font-semibold text-sm"
-                >
-                  New Game
-                </button>
-              </div>
-            </div>
-          )}
 
-          {/* Controls */}
-          <GameControls
-            stage={stage}
-            isMyTurn={isMyTurn}
-            selectedCardCount={selectedCardIndices.size}
-            isDiscarding={isDiscarding}
-            canGo={!hasPlayableCard}
-            onDiscard={handleDiscard}
-            onCut={onCut}
-            onGo={onGo}
-            onCount={onCount}
-            onResign={onResign}
-          />
+              {/* Waiting indicator */}
+              {!isMyTurn && stage !== GameStage.GAME_OVER && stage !== GameStage.DEALING && (
+                <div className="text-white/40 text-xs text-center animate-pulse">
+                  Waiting for {opponent.name}...
+                </div>
+              )}
 
-          {/* Player hand */}
-          {player.hand.length > 0 && stage !== GameStage.GAME_OVER && (
-            <div>
-              <div className="text-white/40 text-xs mb-1 text-center">Your Hand</div>
-              <HandFan
-                cards={player.hand}
-                selectedIndices={selectedCardIndices}
-                enabled={isMyTurn}
-                onCardTap={handleCardTap}
+              {/* Game over */}
+              {stage === GameStage.GAME_OVER && (
+                <div className="text-center bg-white/10 rounded-lg p-4">
+                  <div className="text-xl font-bold mb-1">
+                    {player.score >= 121 ? (
+                      <span className="text-[var(--gold)]">You Won!</span>
+                    ) : (
+                      <span className="text-red-400">You Lost</span>
+                    )}
+                  </div>
+                  <div className="text-white/60 text-sm mb-3">
+                    {player.score} - {opponent.score}
+                  </div>
+                  <div className="flex gap-2 justify-center">
+                    <button
+                      onClick={() => onNavigate(`/analysis/${gameState.gameId}`)}
+                      className="bg-white/10 text-white px-4 py-1.5 rounded hover:bg-white/20 border-none cursor-pointer text-sm"
+                    >
+                      Analysis
+                    </button>
+                    <button
+                      onClick={() => onNavigate('/')}
+                      className="bg-[var(--gold)] text-black px-4 py-1.5 rounded hover:bg-[var(--gold-light)] border-none cursor-pointer font-semibold text-sm"
+                    >
+                      New Game
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Controls */}
+              <GameControls
+                stage={stage}
+                isMyTurn={isMyTurn}
+                selectedCardCount={selectedCardIndices.size}
+                isDiscarding={isDiscarding}
+                canGo={!hasPlayableCard}
+                onDiscard={handleDiscard}
+                onCut={onCut}
+                onGo={onGo}
+                onCount={onCount}
+                onResign={onResign}
               />
-            </div>
-          )}
 
-          {/* Player score */}
-          <div className="flex items-center justify-between px-2">
-            <div>
-              <span className="text-[var(--gold)] text-xs font-medium">{player.name} (you)</span>
-              <span className="text-white font-bold text-lg ml-2">{player.score}</span>
+              {/* Player hand */}
+              {player.hand.length > 0 && stage !== GameStage.GAME_OVER && (
+                <div>
+                  <div className="text-white/40 text-xs mb-1 text-center">Your Hand</div>
+                  <HandFan
+                    cards={player.hand}
+                    selectedIndices={selectedCardIndices}
+                    enabled={isMyTurn}
+                    onCardTap={handleCardTap}
+                    cardWidth={handCardW}
+                    cardHeight={handCardH}
+                    maxWidth={handMaxWidth}
+                  />
+                </div>
+              )}
+
+              {/* Player score */}
+              <div className="flex items-center justify-between px-2">
+                <div>
+                  <span className="text-[var(--gold)] text-xs font-medium">{player.name} (you)</span>
+                  <span className="text-white font-bold text-lg ml-2">{player.score}</span>
+                </div>
+              </div>
             </div>
+
+            {/* Score popups */}
+            <ScorePopupOverlay history={gameState.history} playerId={userId} />
+          </div>
+
+          {/* History log — mobile only (inline below board) */}
+          <div className="mt-2 lg:hidden">
+            <HistoryLog events={gameState.history} playerNames={playerNames} />
           </div>
         </div>
 
-        {/* Score popups */}
-        <ScorePopupOverlay history={gameState.history} playerId={userId} />
-      </div>
-
-      {/* History log */}
-      <div className="mt-2">
-        <HistoryLog events={gameState.history} playerNames={playerNames} />
+        {/* History sidebar — desktop only */}
+        <div className="hidden lg:block w-72 flex-shrink-0">
+          <div className="sticky top-4 h-[calc(100vh-4rem)]">
+            <HistoryLog events={gameState.history} playerNames={playerNames} variant="sidebar" />
+          </div>
+        </div>
       </div>
     </div>
   )

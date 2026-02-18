@@ -5,9 +5,10 @@ import { RANK_DISPLAY, SUIT_SYMBOL } from '@/models/card'
 interface HistoryLogProps {
   events: GameHistoryEvent[]
   playerNames: Record<string, string>
+  variant?: 'inline' | 'sidebar'
 }
 
-export function HistoryLog({ events, playerNames }: HistoryLogProps) {
+export function HistoryLog({ events, playerNames, variant = 'inline' }: HistoryLogProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -18,14 +19,27 @@ export function HistoryLog({ events, playerNames }: HistoryLogProps) {
 
   if (events.length === 0) return null
 
+  const isSidebar = variant === 'sidebar'
+
   return (
-    <div
-      ref={scrollRef}
-      className="bg-black/20 rounded-lg p-3 max-h-32 overflow-y-auto text-xs text-white/60 space-y-0.5"
-    >
-      {events.map((event, i) => (
-        <div key={i}>{formatEvent(event, playerNames)}</div>
-      ))}
+    <div className={isSidebar ? 'flex flex-col h-full' : ''}>
+      {isSidebar && (
+        <div className="text-white/70 text-sm font-semibold px-3 py-2 border-b border-white/10">
+          Game Log
+        </div>
+      )}
+      <div
+        ref={scrollRef}
+        className={
+          isSidebar
+            ? 'bg-black/20 rounded-b-lg p-3 flex-1 overflow-y-auto text-sm text-white/60 space-y-0.5'
+            : 'bg-black/20 rounded-lg p-3 max-h-32 overflow-y-auto text-xs text-white/60 space-y-0.5'
+        }
+      >
+        {events.map((event, i) => (
+          <div key={`${event.type}-${event.timestamp}-${i}`}>{formatEvent(event, playerNames)}</div>
+        ))}
+      </div>
     </div>
   )
 }

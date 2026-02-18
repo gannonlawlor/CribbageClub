@@ -3,7 +3,7 @@
 ## Overview
 
 Rust crate (`cribbage-engine`) implementing the complete cribbage game engine, three AI difficulty levels, and discard analysis. Consumed via:
-- **Flutter**: flutter_rust_bridge (native FFI on mobile, WASM on web)
+- **Mobile (Flutter)**: flutter_rust_bridge (native FFI on iOS/Android)
 - **Backend**: JNA (native shared library on JVM)
 
 ## Build & Test

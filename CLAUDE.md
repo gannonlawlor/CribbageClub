@@ -5,7 +5,8 @@
 Cribbage Club is a cross-platform multiplayer Cribbage card game inspired by Chess.com and LiChess. The project is a monorepo with four sub-projects:
 
 - **Backend** (`src/`): Spring Boot 3.4 server — game logic, persistence, real-time WebSocket, auth, ratings. See `src/CLAUDE.md`.
-- **Frontend** (`frontend/`): Flutter app targeting iOS, Android, and Web. See `frontend/CLAUDE.md`.
+- **Mobile** (`mobile/`): Flutter app targeting iOS and Android. See `mobile/CLAUDE.md`.
+- **Web** (`web/`): React SPA for browser play. See `web/CLAUDE.md`.
 - **Engine** (`engine/`): Rust crate powering game simulation, AI opponents, and discard analysis. See `engine/CLAUDE.md`.
 - **Landing** (`landing/`): Static marketing landing page. See `landing/CLAUDE.md`.
 
@@ -14,7 +15,8 @@ Cribbage Club is a cross-platform multiplayer Cribbage card game inspired by Che
 ```
 CribbageClub/
 ├── src/                          # Spring Boot backend (Kotlin)
-├── frontend/                     # Flutter app (Dart)
+├── mobile/                       # Flutter app (Dart) — iOS & Android
+├── web/                          # React SPA (TypeScript) — browser
 ├── engine/                       # Rust game engine
 ├── landing/                      # Static landing page (HTML/CSS/JS)
 ├── CLAUDE.md                     # This file (project overview)
@@ -24,7 +26,7 @@ CribbageClub/
 ├── docker-compose.yml            # Dev: PostgreSQL + app
 ├── docker-compose.alpha.yml      # Alpha: Tailscale + PostgreSQL + app
 ├── Dockerfile                    # Multi-stage backend container
-└── .github/workflows/ci.yml     # CI: backend build+test, frontend analyze+test
+└── .github/workflows/ci.yml     # CI: backend build+test, mobile analyze+test, web build+test
 ```
 
 ## Tech Stack
@@ -32,7 +34,8 @@ CribbageClub/
 | Layer | Technology |
 |-------|-----------|
 | Backend | Kotlin 1.9.25, Spring Boot 3.4.13, JDK 21, PostgreSQL, Flyway, STOMP/WebSocket |
-| Frontend | Flutter/Dart 3.11+, Riverpod, GoRouter, Dio, freezed, flutter_rust_bridge |
+| Mobile | Flutter/Dart 3.11+, Riverpod, GoRouter, Dio, freezed, flutter_rust_bridge |
+| Web | React 19, TypeScript, Zustand, React Router, Tailwind CSS, Vite |
 | Engine | Rust, serde, flutter_rust_bridge (FFI to Flutter), JNA (FFI to JVM) |
 | Infra | Docker, GitHub Actions CI, Tailscale (alpha networking) |
 
@@ -43,12 +46,19 @@ CribbageClub/
 ./gradlew build          # compile + test
 ./gradlew bootRun        # run server (needs PostgreSQL on 5432)
 
-# Frontend
-cd frontend
+# Mobile (Flutter)
+cd mobile
 flutter pub get          # install deps
-flutter run -d chrome    # run on web
+flutter run              # run on connected device
 flutter test             # run tests
 dart run build_runner build  # regenerate freezed/json code
+
+# Web (React)
+cd web
+npm install              # install deps
+npm run dev              # dev server
+npm run build            # production build (tsc + vite)
+npm test                 # run tests
 
 # Engine (standalone)
 cd engine
@@ -105,6 +115,7 @@ docker compose up -d     # start PostgreSQL + app (dev)
 ## Coding Conventions
 
 - **Backend**: Kotlin data classes, sealed classes for actions/events, `require()` for validation, `@Transactional` on multi-step ops, SLF4J logging
-- **Frontend**: Riverpod manual providers (no codegen), freezed models, `isLocalGame()` prefix check for offline games, `PlayingCard` (not `Card`) to avoid Flutter widget conflict
+- **Mobile**: Riverpod manual providers (no codegen), freezed models, `isLocalGame()` prefix check for offline games, `PlayingCard` (not `Card`) to avoid Flutter widget conflict
+- **Web**: Zustand stores, plain TypeScript interfaces (no codegen), Tailwind utility classes, feature-folder structure
 - **Engine**: Rust idiomatic patterns, serde for JSON, no unsafe code, exhaustive pattern matching
 - **Serialization**: Jackson `@JsonTypeInfo(property = "type")` on backend, `@FreezedUnionValue` on frontend, enums as UPPER_SNAKE

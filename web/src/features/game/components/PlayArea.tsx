@@ -5,9 +5,11 @@ import { MiniCard } from './CardWidget'
 interface PlayAreaProps {
   playedCards: PlayingCard[]
   peggingCount: number
+  miniCardWidth?: number
+  miniCardHeight?: number
 }
 
-export function PlayArea({ playedCards, peggingCount }: PlayAreaProps) {
+export function PlayArea({ playedCards, peggingCount, miniCardWidth, miniCardHeight }: PlayAreaProps) {
   return (
     <div className="flex flex-col items-center gap-2">
       {/* Pegging count badge */}
@@ -39,7 +41,7 @@ export function PlayArea({ playedCards, peggingCount }: PlayAreaProps) {
                 animate={{ scale: 1, y: 0 }}
                 transition={{ duration: 0.25, type: 'spring', stiffness: 300 }}
               >
-                <MiniCard card={card} />
+                <MiniCard card={card} width={miniCardWidth} height={miniCardHeight} />
               </motion.div>
             ))}
           </AnimatePresence>

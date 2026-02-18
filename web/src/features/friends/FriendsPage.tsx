@@ -53,15 +53,26 @@ function FriendsTab() {
   const { isLoggedIn } = useAuthStore()
   const navigate = useNavigate()
   const friends = useAsync(() => (isLoggedIn ? api.getFriends() : Promise.resolve([])), [isLoggedIn])
+  const [error, setError] = useState<string | null>(null)
 
   async function handleChallenge(friendUserId: string) {
-    const lobby = await api.createChallenge(friendUserId)
-    navigate(`/lobby/${lobby.id}`)
+    setError(null)
+    try {
+      const lobby = await api.createChallenge(friendUserId)
+      navigate(`/lobby/${lobby.id}`)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to create challenge')
+    }
   }
 
   async function handleRemove(id: string) {
-    await api.removeFriend(id)
-    friends.refetch()
+    setError(null)
+    try {
+      await api.removeFriend(id)
+      friends.refetch()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to remove friend')
+    }
   }
 
   if (friends.isLoading) {
@@ -74,6 +85,12 @@ function FriendsTab() {
 
   return (
     <div className="space-y-2">
+      {error && (
+        <div className="bg-red-500/20 border border-red-500/50 rounded px-3 py-2 flex items-center justify-between">
+          <span className="text-red-300 text-sm">{error}</span>
+          <button onClick={() => setError(null)} className="text-red-300 bg-transparent border-none cursor-pointer text-sm ml-2">x</button>
+        </div>
+      )}
       {friends.data?.map((f: FriendInfo) => (
         <div key={f.friendshipId} className="flex items-center gap-3 bg-white/10 rounded-lg px-4 py-3">
           <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${f.isOnline ? 'bg-green-400' : 'bg-white/30'}`} />
@@ -107,6 +124,7 @@ function FriendsTab() {
 function RequestsTab() {
   const { isLoggedIn } = useAuthStore()
   const navigate = useNavigate()
+  const [error, setError] = useState<string | null>(null)
   const requests = useAsync(
     () => (isLoggedIn ? api.getIncomingFriendRequests() : Promise.resolve([])),
     [isLoggedIn],
@@ -117,27 +135,43 @@ function RequestsTab() {
   )
 
   async function handleAcceptRequest(id: string) {
-    await api.acceptFriendRequest(id)
-    requests.refetch()
+    try {
+      await api.acceptFriendRequest(id)
+      requests.refetch()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to accept request')
+    }
   }
 
   async function handleDeclineRequest(id: string) {
-    await api.declineFriendRequest(id)
-    requests.refetch()
+    try {
+      await api.declineFriendRequest(id)
+      requests.refetch()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to decline request')
+    }
   }
 
   async function handleAcceptChallenge(lobbyId: string) {
-    const result = await api.acceptChallenge(lobbyId)
-    if (result.gameState) {
-      navigate(`/game/${result.gameState.gameId}`)
-    } else {
-      navigate(`/lobby/${result.lobby.id}`)
+    try {
+      const result = await api.acceptChallenge(lobbyId)
+      if (result.gameState) {
+        navigate(`/game/${result.gameState.gameId}`)
+      } else {
+        navigate(`/lobby/${result.lobby.id}`)
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to accept challenge')
     }
   }
 
   async function handleDeclineChallenge(lobbyId: string) {
-    await api.declineChallenge(lobbyId)
-    challenges.refetch()
+    try {
+      await api.declineChallenge(lobbyId)
+      challenges.refetch()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to decline challenge')
+    }
   }
 
   const hasRequests = requests.data && requests.data.length > 0
@@ -146,6 +180,13 @@ function RequestsTab() {
 
   return (
     <div className="space-y-6">
+      {error && (
+        <div className="bg-red-500/20 border border-red-500/50 rounded px-3 py-2 flex items-center justify-between">
+          <span className="text-red-300 text-sm">{error}</span>
+          <button onClick={() => setError(null)} className="text-red-300 bg-transparent border-none cursor-pointer text-sm ml-2">x</button>
+        </div>
+      )}
+
       {/* Friend requests */}
       {hasRequests && (
         <div>

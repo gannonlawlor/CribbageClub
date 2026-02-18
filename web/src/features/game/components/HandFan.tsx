@@ -8,6 +8,7 @@ interface HandFanProps {
   onCardTap?: (index: number) => void
   cardWidth?: number
   cardHeight?: number
+  maxWidth?: number
 }
 
 export function HandFan({
@@ -17,11 +18,12 @@ export function HandFan({
   onCardTap,
   cardWidth = 64,
   cardHeight = 90,
+  maxWidth: maxWidthProp,
 }: HandFanProps) {
   if (cards.length === 0) return <div className="h-4" />
 
   // Calculate overlap so cards fit within a reasonable width
-  const maxWidth = Math.min(440, window.innerWidth - 32)
+  const maxWidth = Math.min(maxWidthProp ?? 440, window.innerWidth - 32)
   const overlap = Math.min(cardWidth * 0.65, (maxWidth - cardWidth) / Math.max(cards.length - 1, 1))
   const stackWidth = cardWidth + (cards.length - 1) * overlap
 
@@ -52,14 +54,14 @@ export function HandFan({
 
 interface OpponentHandProps {
   cardCount: number
+  cardWidth?: number
+  cardHeight?: number
 }
 
-export function OpponentHand({ cardCount }: OpponentHandProps) {
+export function OpponentHand({ cardCount, cardWidth = 36, cardHeight = 50 }: OpponentHandProps) {
   if (cardCount <= 0) return <div className="h-3" />
 
-  const cardWidth = 36
-  const cardHeight = 50
-  const overlap = 14
+  const overlap = Math.round(cardWidth * 0.39)
   const stackWidth = cardWidth + (cardCount - 1) * overlap
 
   return (

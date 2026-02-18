@@ -10,6 +10,7 @@ export function LobbyWaitingPage() {
   const navigate = useNavigate()
   const lobby = useAsync(() => api.getLobby(lobbyId!), [lobbyId])
   const [copied, setCopied] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   function handleCopy(code: string) {
     navigator.clipboard.writeText(code).then(() => {
@@ -47,8 +48,13 @@ export function LobbyWaitingPage() {
 
   async function handleLeave() {
     if (lobbyId) {
-      await api.leaveLobby(lobbyId)
-      navigate('/')
+      setError(null)
+      try {
+        await api.leaveLobby(lobbyId)
+        navigate('/')
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Failed to leave lobby')
+      }
     }
   }
 
@@ -67,6 +73,13 @@ export function LobbyWaitingPage() {
       <h1 className="text-2xl font-bold text-[var(--gold)] mb-2">
         {l?.name ?? 'Lobby'}
       </h1>
+
+      {error && (
+        <div className="bg-red-500/20 border border-red-500/50 rounded px-3 py-2 mb-4 flex items-center justify-between">
+          <span className="text-red-300 text-sm">{error}</span>
+          <button onClick={() => setError(null)} className="text-red-300 bg-transparent border-none cursor-pointer text-sm ml-2">x</button>
+        </div>
+      )}
 
       {l?.inviteCode && (
         <div className="mb-6">

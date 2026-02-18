@@ -53,13 +53,13 @@ jobs:
         with:
           args: --build-upon-default-config
 
-  frontend:
-    name: Frontend (Analyze + Test)
+  mobile:
+    name: Mobile (Analyze + Test)
     runs-on: ubuntu-latest
 
     defaults:
       run:
-        working-directory: frontend
+        working-directory: mobile
 
     steps:
       - uses: actions/checkout@v4

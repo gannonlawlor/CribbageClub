@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useAsync } from '@/shared/hooks'
 import * as api from '@/api/rest-client'
@@ -5,8 +6,10 @@ import * as api from '@/api/rest-client'
 export function LobbyBrowserPage() {
   const navigate = useNavigate()
   const lobbies = useAsync(() => api.listPublicLobbies())
+  const [error, setError] = useState<string | null>(null)
 
   async function handleJoin(lobbyId: string) {
+    setError(null)
     try {
       const result = await api.joinLobby(lobbyId)
       if (result.gameState) {
@@ -14,14 +17,21 @@ export function LobbyBrowserPage() {
       } else {
         navigate(`/lobby/${result.lobby.id}`)
       }
-    } catch {
-      // TODO: show error
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to join lobby')
     }
   }
 
   return (
     <div className="max-w-2xl mx-auto p-8">
       <h1 className="text-2xl font-bold text-[var(--gold)] mb-6">Open Lobbies</h1>
+
+      {error && (
+        <div className="bg-red-500/20 border border-red-500/50 rounded px-3 py-2 mb-4 flex items-center justify-between">
+          <span className="text-red-300 text-sm">{error}</span>
+          <button onClick={() => setError(null)} className="text-red-300 bg-transparent border-none cursor-pointer text-sm ml-2">x</button>
+        </div>
+      )}
 
       {lobbies.isLoading && (
         <div className="text-white/50 text-center py-8">Loading...</div>

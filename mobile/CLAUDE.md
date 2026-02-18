@@ -1,8 +1,8 @@
-# CLAUDE.md — Frontend (Flutter)
+# CLAUDE.md — Mobile (Flutter)
 
 ## Overview
 
-Flutter app targeting iOS, Android, and Web from a single Dart 3.11+ codebase. Uses Riverpod for state, GoRouter for routing, Dio for HTTP, STOMP for WebSocket, and flutter_rust_bridge for native Rust FFI.
+Flutter app targeting iOS and Android from a single Dart 3.11+ codebase. Uses Riverpod for state, GoRouter for routing, Dio for HTTP, STOMP for WebSocket, and flutter_rust_bridge for native Rust FFI.
 
 ## Build & Run
 
@@ -27,7 +27,7 @@ flutter build ipa --flavor alpha --dart-define-from-file=dart_define/alpha.json
 ## Project Structure
 
 ```
-frontend/lib/
+mobile/lib/
 ├── main.dart                     # Entry point, ProviderScope
 ├── app.dart                      # MaterialApp.router, GoRouter, theme
 ├── config/
@@ -122,5 +122,5 @@ Manual providers (no riverpod_generator — incompatible with Dart 3.11 analyzer
 
 - `build_runner` v2.5.x uses older analyzer — generated code succeeds for model files even if main.dart has Dart 3.11 syntax
 - Removed `riverpod_generator` and `riverpod_lint` due to analyzer_plugin incompatibility with Dart 3.11
-- WASM build for Rust engine: `frontend/web/pkg/` contains compiled WASM + JS glue
+- WASM build for Rust engine: `mobile/web/pkg/` contains compiled WASM + JS glue
 - `flutter_rust_bridge.yaml` config: `default_dart_async: false` (sync FFI calls)

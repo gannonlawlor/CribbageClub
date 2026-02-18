@@ -4,9 +4,11 @@ import { CardWidget } from './CardWidget'
 
 interface CutCardProps {
   cutCard: PlayingCard | null
+  width?: number
+  height?: number
 }
 
-export function CutCard({ cutCard }: CutCardProps) {
+export function CutCard({ cutCard, width = 48, height = 67 }: CutCardProps) {
   if (!cutCard) return null
 
   return (
@@ -17,7 +19,7 @@ export function CutCard({ cutCard }: CutCardProps) {
       className="flex flex-col items-center gap-1"
     >
       <span className="text-white/40 text-xs">Cut Card</span>
-      <CardWidget card={cutCard} faceUp width={48} height={67} />
+      <CardWidget card={cutCard} faceUp width={width} height={height} />
     </motion.div>
   )
 }
