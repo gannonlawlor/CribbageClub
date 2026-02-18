@@ -27,7 +27,10 @@ class UserEntity(
     val createdAt: Instant = Instant.now(),
 
     @Column(nullable = false)
-    var lastLoginAt: Instant = Instant.now()
+    var lastLoginAt: Instant = Instant.now(),
+
+    @Column(nullable = true)
+    var avatarIndex: Int? = null
 ) : Persistable<String> {
 
     @Transient

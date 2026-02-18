@@ -33,6 +33,7 @@ class SecurityConfig(
                     // Public auth endpoints (register, login, guest)
                     .requestMatchers("/api/auth/register", "/api/auth/login", "/api/auth/guest").permitAll()
                     .requestMatchers("/api/stats/leaderboard").permitAll()
+                    .requestMatchers("/api/profiles/**").permitAll()
                     .requestMatchers("/ws/**").permitAll()
                     .requestMatchers("/actuator/**").permitAll()
                     .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()

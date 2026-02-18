@@ -195,57 +195,60 @@ class _FriendTile extends ConsumerWidget {
           }
         }
       },
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        decoration: BoxDecoration(
-          color: Colors.white10,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Row(
-            children: [
-              Container(
-                width: 10,
-                height: 10,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: friend.isOnline ? Colors.greenAccent : Colors.white24,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      friend.displayName ?? friend.username,
-                      style: const TextStyle(color: Colors.white, fontSize: 14),
-                    ),
-                    if (friend.displayName != null)
-                      Text(
-                        friend.username,
-                        style: const TextStyle(
-                          color: Colors.white54,
-                          fontSize: 12,
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              ElevatedButton.icon(
-                onPressed: () => _challengeFriend(context, ref),
-                icon: const Icon(Icons.sports_esports, size: 16),
-                label: const Text('Challenge'),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
+      child: GestureDetector(
+        onTap: () => context.push('/profile/${friend.userId}'),
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 8),
+          decoration: BoxDecoration(
+            color: Colors.white10,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Row(
+              children: [
+                Container(
+                  width: 10,
+                  height: 10,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: friend.isOnline ? Colors.greenAccent : Colors.white24,
                   ),
-                  textStyle: const TextStyle(fontSize: 12),
                 ),
-              ),
-            ],
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        friend.displayName ?? friend.username,
+                        style: const TextStyle(color: Colors.white, fontSize: 14),
+                      ),
+                      if (friend.displayName != null)
+                        Text(
+                          friend.username,
+                          style: const TextStyle(
+                            color: Colors.white54,
+                            fontSize: 12,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                ElevatedButton.icon(
+                  onPressed: () => _challengeFriend(context, ref),
+                  icon: const Icon(Icons.sports_esports, size: 16),
+                  label: const Text('Challenge'),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    textStyle: const TextStyle(fontSize: 12),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -649,54 +652,57 @@ class _SearchResultTile extends ConsumerWidget {
     };
     final canAdd = result.relationshipStatus == null;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      decoration: BoxDecoration(
-        color: Colors.white10,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    result.displayName ?? result.username,
-                    style: const TextStyle(color: Colors.white, fontSize: 14),
-                  ),
-                  if (result.displayName != null)
+    return GestureDetector(
+      onTap: () => context.push('/profile/${result.userId}'),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        decoration: BoxDecoration(
+          color: Colors.white10,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     Text(
-                      result.username,
-                      style: const TextStyle(
-                        color: Colors.white54,
-                        fontSize: 12,
-                      ),
+                      result.displayName ?? result.username,
+                      style: const TextStyle(color: Colors.white, fontSize: 14),
                     ),
-                ],
-              ),
-            ),
-            if (statusLabel != null)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  color: Colors.white10,
-                ),
-                child: Text(
-                  statusLabel,
-                  style: const TextStyle(color: Colors.white54, fontSize: 11),
+                    if (result.displayName != null)
+                      Text(
+                        result.username,
+                        style: const TextStyle(
+                          color: Colors.white54,
+                          fontSize: 12,
+                        ),
+                      ),
+                  ],
                 ),
               ),
-            if (canAdd)
-              IconButton(
-                icon: const Icon(Icons.person_add, color: AppTheme.goldAccent),
-                onPressed: () => _sendRequest(context, ref),
-                tooltip: 'Add Friend',
-              ),
-          ],
+              if (statusLabel != null)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    color: Colors.white10,
+                  ),
+                  child: Text(
+                    statusLabel,
+                    style: const TextStyle(color: Colors.white54, fontSize: 11),
+                  ),
+                ),
+              if (canAdd)
+                IconButton(
+                  icon: const Icon(Icons.person_add, color: AppTheme.goldAccent),
+                  onPressed: () => _sendRequest(context, ref),
+                  tooltip: 'Add Friend',
+                ),
+            ],
+          ),
         ),
       ),
     );

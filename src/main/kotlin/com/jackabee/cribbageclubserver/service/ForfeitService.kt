@@ -85,7 +85,8 @@ class ForfeitService(
             winnerId = winnerPlayer.id,
             loserId = loserPlayer.id,
             winnerScore = winnerPlayer.score,
-            loserScore = loserPlayer.score
+            loserScore = loserPlayer.score,
+            isAIGame = entity.isAIGame
         )
 
         // Broadcast final state with timing info

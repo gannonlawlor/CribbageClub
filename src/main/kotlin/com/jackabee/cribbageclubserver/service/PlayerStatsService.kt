@@ -26,7 +26,8 @@ class PlayerStatsService(
         winnerId: String,
         loserId: String,
         winnerScore: Int,
-        loserScore: Int
+        loserScore: Int,
+        isAIGame: Boolean = false
     ) {
         val winnerStats = getOrCreate(winnerId)
         winnerStats.gamesPlayed++
@@ -42,6 +43,19 @@ class PlayerStatsService(
         }
         winnerStats.updatedAt = Instant.now()
 
+        // Split stats
+        if (isAIGame) {
+            winnerStats.aiGamesPlayed++
+            winnerStats.aiGamesWon++
+            winnerStats.aiTotalPointsScored += winnerScore
+            winnerStats.aiTotalPointsAgainst += loserScore
+        } else {
+            winnerStats.humanGamesPlayed++
+            winnerStats.humanGamesWon++
+            winnerStats.humanTotalPointsScored += winnerScore
+            winnerStats.humanTotalPointsAgainst += loserScore
+        }
+
         val loserStats = getOrCreate(loserId)
         loserStats.gamesPlayed++
         loserStats.gamesLost++
@@ -52,6 +66,19 @@ class PlayerStatsService(
         }
         loserStats.currentWinStreak = 0
         loserStats.updatedAt = Instant.now()
+
+        // Split stats
+        if (isAIGame) {
+            loserStats.aiGamesPlayed++
+            loserStats.aiGamesLost++
+            loserStats.aiTotalPointsScored += loserScore
+            loserStats.aiTotalPointsAgainst += winnerScore
+        } else {
+            loserStats.humanGamesPlayed++
+            loserStats.humanGamesLost++
+            loserStats.humanTotalPointsScored += loserScore
+            loserStats.humanTotalPointsAgainst += winnerScore
+        }
 
         // Update Glicko-2 ratings for non-AI, non-guest games
         val isRated = !winnerId.startsWith("ai_") && !winnerId.startsWith("guest_") &&

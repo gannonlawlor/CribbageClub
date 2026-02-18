@@ -64,7 +64,9 @@ class LeaderboardScreen extends ConsumerWidget {
               final isCurrentUser = entry.playerId == auth.userId;
               final rank = index + 1;
 
-              return Container(
+              return GestureDetector(
+                onTap: () => context.push('/profile/${entry.playerId}'),
+                child: Container(
                 margin: const EdgeInsets.only(bottom: 8),
                 decoration: BoxDecoration(
                   color: isCurrentUser
@@ -149,6 +151,7 @@ class LeaderboardScreen extends ConsumerWidget {
                     ],
                   ),
                 ),
+              ),
               );
             },
           );

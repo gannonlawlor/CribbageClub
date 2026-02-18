@@ -66,10 +66,10 @@ class GameEntity(
     @Column(nullable = true)
     var turnStartedAt: Instant? = null,
 
-    @Column(nullable = false)
+    @Column(name = "player1_time_bank_ms", nullable = false)
     var player1TimeBankMs: Long = 120000,
 
-    @Column(nullable = false)
+    @Column(name = "player2_time_bank_ms", nullable = false)
     var player2TimeBankMs: Long = 120000,
 
     @Column(nullable = true)

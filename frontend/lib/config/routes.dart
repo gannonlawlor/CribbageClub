@@ -15,6 +15,7 @@ import '../features/daily_puzzle/screens/practice_puzzle_screen.dart';
 import '../features/lobby/screens/lobby_browser_screen.dart';
 import '../features/lobby/screens/lobby_waiting_screen.dart';
 import '../features/puzzle/screens/puzzle_screen.dart';
+import '../features/profile/screens/profile_screen.dart';
 import '../features/replay/screens/replay_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -67,6 +68,13 @@ final routerProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) {
           final lobbyId = state.pathParameters['lobbyId']!;
           return NoTransitionPage(child: LobbyWaitingScreen(lobbyId: lobbyId));
+        },
+      ),
+      GoRoute(
+        path: '/profile/:userId',
+        pageBuilder: (context, state) {
+          final userId = state.pathParameters['userId']!;
+          return NoTransitionPage(child: ProfileScreen(userId: userId));
         },
       ),
       GoRoute(
