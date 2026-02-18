@@ -9,10 +9,19 @@ Flutter app targeting iOS, Android, and Web from a single Dart 3.11+ codebase. U
 ```bash
 flutter pub get                   # install dependencies
 flutter run -d chrome             # run on web
-flutter run                       # run on connected device
 flutter test                      # run tests
 flutter analyze                   # static analysis
 dart run build_runner build       # regenerate freezed/json_serializable code
+
+# Development (local backend)
+flutter run --flavor dev                                              # connected device
+
+# Alpha (Tailscale backend)
+flutter run --flavor alpha --dart-define-from-file=dart_define/alpha.json
+
+# Release builds
+flutter build apk --flavor alpha --dart-define-from-file=dart_define/alpha.json
+flutter build ipa --flavor alpha --dart-define-from-file=dart_define/alpha.json
 ```
 
 ## Project Structure
