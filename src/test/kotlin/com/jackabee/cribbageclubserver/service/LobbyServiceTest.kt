@@ -7,6 +7,7 @@ import org.junit.jupiter.api.assertThrows
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -129,5 +130,66 @@ class LobbyServiceTest {
         lobbyService.removeLobby(lobby.id)
 
         assertNull(lobbyService.getLobby(lobby.id))
+    }
+
+    @Test
+    fun `should create private lobby with invite code`() {
+        val lobby = lobbyService.createLobby("Private Lobby", "c1", "Alice", isPrivate = true)
+
+        assertTrue(lobby.isPrivate)
+        assertNotNull(lobby.inviteCode)
+        assertTrue(lobby.inviteCode!!.startsWith("CRIB-"))
+        assertEquals(9, lobby.inviteCode!!.length) // "CRIB-" + 4 chars
+    }
+
+    @Test
+    fun `should create public lobby without invite code`() {
+        val lobby = lobbyService.createLobby("Public Lobby", "c1", "Alice", isPrivate = false)
+
+        assertFalse(lobby.isPrivate)
+        assertNull(lobby.inviteCode)
+    }
+
+    @Test
+    fun `should not list private lobbies in waiting list`() {
+        lobbyService.createLobby("Secret Lobby", "c1", "Alice", isPrivate = true)
+
+        val waiting = lobbyService.listWaitingLobbies()
+        assertTrue(waiting.none { it.name == "Secret Lobby" })
+    }
+
+    @Test
+    fun `should join private lobby by invite code`() {
+        val lobby = lobbyService.createLobby("Code Lobby", "c1", "Alice", isPrivate = true)
+        val result = lobbyService.joinLobbyByCode(lobby.inviteCode!!, "p2", "Bob")
+
+        assertEquals(2, result.lobby.players.size)
+    }
+
+    @Test
+    fun `should auto-start game when joining by code fills lobby`() {
+        val lobby = lobbyService.createLobby("Auto Start", "c1", "Alice", isPrivate = true)
+        val result = lobbyService.joinLobbyByCode(lobby.inviteCode!!, "p2", "Bob")
+
+        assertNotNull(result.gameState)
+        assertEquals(LobbyStatus.IN_GAME, result.lobby.status)
+        assertNotNull(result.lobby.gameId)
+    }
+
+    @Test
+    fun `should reject join by invalid invite code`() {
+        assertThrows<IllegalArgumentException> {
+            lobbyService.joinLobbyByCode("CRIB-ZZZZ", "p2", "Bob")
+        }
+    }
+
+    @Test
+    fun `should persist private lobby fields in database`() {
+        val lobby = lobbyService.createLobby("Persist Private", "c1", "Alice", isPrivate = true)
+
+        val fromDb = lobbyService.getLobby(lobby.id)
+        assertNotNull(fromDb)
+        assertTrue(fromDb.isPrivate)
+        assertEquals(lobby.inviteCode, fromDb.inviteCode)
     }
 }

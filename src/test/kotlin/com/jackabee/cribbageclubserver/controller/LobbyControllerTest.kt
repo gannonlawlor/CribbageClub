@@ -32,6 +32,12 @@ class LobbyControllerTest {
         return objectMapper.readTree(result.response.contentAsString).get("token").asText()
     }
 
+    private fun getGuestToken(): String {
+        val result = mockMvc.perform(post("/api/auth/guest"))
+            .andExpect(status().isOk).andReturn()
+        return objectMapper.readTree(result.response.contentAsString).get("token").asText()
+    }
+
     @Test
     fun `should return 403 when creating lobby without auth`() {
         val request = mapOf("name" to "Test Lobby")
@@ -226,5 +232,126 @@ class LobbyControllerTest {
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.gameId").isNotEmpty)
             .andExpect(jsonPath("$.players.length()").value(2))
+    }
+
+    @Test
+    fun `should create private lobby with invite code`() {
+        val token = registerAndGetToken("lobbytest9")
+
+        val request = mapOf("name" to "Private Lobby", "isPrivate" to true)
+        mockMvc.perform(
+            post("/api/lobbies")
+                .header("Authorization", "Bearer $token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request))
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.isPrivate").value(true))
+            .andExpect(jsonPath("$.inviteCode").isNotEmpty)
+    }
+
+    @Test
+    fun `should join private lobby by invite code`() {
+        val token1 = registerAndGetToken("lobbytest10a")
+        val token2 = registerAndGetToken("lobbytest10b")
+
+        // Create private lobby
+        val createReq = mapOf("name" to "Code Join Lobby", "isPrivate" to true)
+        val createResult = mockMvc.perform(
+            post("/api/lobbies")
+                .header("Authorization", "Bearer $token1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createReq))
+        ).andExpect(status().isOk).andReturn()
+
+        val inviteCode = objectMapper.readTree(createResult.response.contentAsString).get("inviteCode").asText()
+
+        // Join by code
+        val joinReq = mapOf("inviteCode" to inviteCode)
+        mockMvc.perform(
+            post("/api/lobbies/join-by-code")
+                .header("Authorization", "Bearer $token2")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(joinReq))
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.lobby.players.length()").value(2))
+            .andExpect(jsonPath("$.gameState").isNotEmpty) // auto-started
+    }
+
+    @Test
+    fun `should reject join by invalid invite code`() {
+        val token = registerAndGetToken("lobbytest11")
+
+        val joinReq = mapOf("inviteCode" to "CRIB-ZZZZ")
+        mockMvc.perform(
+            post("/api/lobbies/join-by-code")
+                .header("Authorization", "Bearer $token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(joinReq))
+        ).andExpect(status().isBadRequest)
+    }
+
+    @Test
+    fun `guest should not be able to browse public lobbies`() {
+        val guestToken = getGuestToken()
+
+        mockMvc.perform(
+            get("/api/lobbies/waiting")
+                .header("Authorization", "Bearer $guestToken")
+        ).andExpect(status().isBadRequest)
+    }
+
+    @Test
+    fun `guest should not join public lobby by id`() {
+        val token = registerAndGetToken("lobbytest12")
+        val guestToken = getGuestToken()
+
+        // Create public lobby
+        val request = mapOf("name" to "Public Lobby")
+        val createResult = mockMvc.perform(
+            post("/api/lobbies")
+                .header("Authorization", "Bearer $token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request))
+        ).andExpect(status().isOk).andReturn()
+
+        val lobbyId = objectMapper.readTree(createResult.response.contentAsString).get("id").asText()
+
+        // Guest tries to join public lobby
+        mockMvc.perform(
+            post("/api/lobbies/$lobbyId/join")
+                .header("Authorization", "Bearer $guestToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{}")
+        ).andExpect(status().isBadRequest)
+    }
+
+    @Test
+    fun `guest should join private lobby by invite code`() {
+        val token = registerAndGetToken("lobbytest13")
+        val guestToken = getGuestToken()
+
+        // Create private lobby
+        val createReq = mapOf("name" to "Guest Invite Lobby", "isPrivate" to true)
+        val createResult = mockMvc.perform(
+            post("/api/lobbies")
+                .header("Authorization", "Bearer $token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createReq))
+        ).andExpect(status().isOk).andReturn()
+
+        val inviteCode = objectMapper.readTree(createResult.response.contentAsString).get("inviteCode").asText()
+
+        // Guest joins by code
+        val joinReq = mapOf("inviteCode" to inviteCode)
+        mockMvc.perform(
+            post("/api/lobbies/join-by-code")
+                .header("Authorization", "Bearer $guestToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(joinReq))
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.lobby.players.length()").value(2))
     }
 }

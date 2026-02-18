@@ -252,6 +252,45 @@ Ship-ready quality.
 - Web PWA support (installable from browser)
 - Performance profiling and optimization
 
+### Frontend TODO — Guest Mode, Private Lobbies, Leaderboard
+
+These tasks correspond to the backend features added in V2 (guest mode, private lobbies, enriched leaderboard).
+
+#### Guest Mode
+- Add "Play as Guest" button on login/register screen — calls `POST /api/auth/guest`
+- Store guest JWT the same as regular JWT (Dio interceptor works unchanged)
+- Show upgrade banner/modal after first AI game prompting guest to create an account
+- Add upgrade screen — username, password, optional display name — calls `POST /api/auth/upgrade`
+- Update `authProvider` to track `isGuest` flag from `/api/auth/me` response
+
+#### Private Lobbies
+- Add "Create Private Game" option on home screen — calls `POST /api/lobbies` with `isPrivate: true`
+- Show invite code (e.g. `CRIB-A3X7`) on lobby waiting screen with copy-to-clipboard button
+- Add "Join by Code" screen/dialog — text input for invite code, calls `POST /api/lobbies/join-by-code`
+- Handle `JoinByCodeResult` response — if `gameState` is non-null, navigate directly to game screen (auto-started)
+- Add share button to generate a deep link (e.g. `https://cribbageclub.com/join/CRIB-A3X7`) for invite codes
+
+#### Active Games & History
+- Update home screen to show active games list — calls `GET /api/games/me`
+- Add game history screen — calls `GET /api/games/me/history`
+- Tap an active game to resume it, tap a completed game to review it
+
+#### Leaderboard
+- Add leaderboard screen — calls `GET /api/stats/leaderboard`
+- Display `displayName` instead of `playerId` for each entry
+- Link from home screen / profile section
+
+#### REST Endpoints Added
+| Client Action | Method | Endpoint |
+|--------------|--------|----------|
+| Play as guest | POST | `/api/auth/guest` |
+| Upgrade guest | POST | `/api/auth/upgrade` |
+| Create private lobby | POST | `/api/lobbies` (with `isPrivate: true`) |
+| Join by invite code | POST | `/api/lobbies/join-by-code` |
+| My active games | GET | `/api/games/me` |
+| My game history | GET | `/api/games/me/history` |
+| Leaderboard (enriched) | GET | `/api/stats/leaderboard` |
+
 ## Backend Prerequisites
 
 These backend TODO items should be completed before or alongside frontend development:

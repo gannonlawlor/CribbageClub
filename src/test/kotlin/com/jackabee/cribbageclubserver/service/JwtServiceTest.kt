@@ -58,4 +58,21 @@ class JwtServiceTest {
         val token = expiredService.generateToken("user123", "testuser")
         assertFalse(expiredService.isTokenValid(token))
     }
+
+    @Test
+    fun `should default isGuest to false`() {
+        val token = jwtService.generateToken("user123", "testuser")
+        assertFalse(jwtService.isGuestFromToken(token))
+    }
+
+    @Test
+    fun `should store isGuest true in token`() {
+        val token = jwtService.generateToken("guest_123", "guest_123", isGuest = true)
+        assertTrue(jwtService.isGuestFromToken(token))
+    }
+
+    @Test
+    fun `should return false for isGuest on invalid token`() {
+        assertFalse(jwtService.isGuestFromToken("bad.token"))
+    }
 }

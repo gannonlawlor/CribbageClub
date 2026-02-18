@@ -113,6 +113,31 @@ class StompAuthChannelInterceptorTest {
         assertNotNull(result)
     }
 
+    @Test
+    fun `valid non-guest JWT sets isGuest false in session attributes`() {
+        val token = jwtService.generateToken("user123", "alice")
+        val message = buildConnectMessage("Bearer $token")
+
+        val result = interceptor.preSend(message, FakeChannel())
+
+        assertNotNull(result)
+        val accessor = StompHeaderAccessor.wrap(result)
+        assertEquals(false, accessor.sessionAttributes?.get("isGuest"))
+    }
+
+    @Test
+    fun `guest JWT sets isGuest true in session attributes`() {
+        val token = jwtService.generateToken("guest_123", "guest_123", isGuest = true)
+        val message = buildConnectMessage("Bearer $token")
+
+        val result = interceptor.preSend(message, FakeChannel())
+
+        assertNotNull(result)
+        val accessor = StompHeaderAccessor.wrap(result)
+        assertEquals(true, accessor.sessionAttributes?.get("isGuest"))
+        assertEquals("guest_123", accessor.sessionAttributes?.get("userId"))
+    }
+
     /**
      * Minimal MessageChannel implementation for testing.
      */
