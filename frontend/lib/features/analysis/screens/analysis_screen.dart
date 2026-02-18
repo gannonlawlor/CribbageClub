@@ -5,25 +5,64 @@ import '../../../config/theme.dart';
 import '../../../core/auth/auth_provider.dart';
 import '../../../core/engine/local_analysis_service.dart';
 import '../../../core/models/game_analysis.dart';
+import '../../../core/models/game_state.dart';
+import '../../../core/services/analysis_cache_service.dart';
 import '../../../core/services/local_game_history_provider.dart';
 import '../../game/state/game_providers.dart';
 import '../../game/widgets/card_widget.dart';
 
-/// Provider: fetches analysis from REST for server games, computes locally for local games.
+/// Provider: checks local cache → server cache → computes on-device → caches everywhere.
 final analysisProvider = FutureProvider.family
     .autoDispose<GameAnalysis, String>((ref, gameId) async {
+      final cache = ref.read(analysisCacheServiceProvider);
+
+      // 1. Check local cache
+      final cached = await cache.getCachedAnalysis(gameId);
+      if (cached != null) return cached;
+
+      // 2. For server games, try server cache
+      if (!isLocalGame(gameId)) {
+        try {
+          final restClient = ref.read(restClientProvider);
+          final serverCached = await restClient.getGameAnalysis(gameId);
+          await cache.cacheAnalysis(gameId, serverCached);
+          return serverCached;
+        } catch (_) {
+          // Not cached on server, will compute below
+        }
+      }
+
+      // 3. Get game state (history) for on-device computation
+      final GameState state;
       if (isLocalGame(gameId)) {
-        // Try in-memory active game first
         final notifierState = ref.read(localGameNotifierProvider(gameId));
-        var state = notifierState.gameState;
-        // Fall back to persisted storage
-        state ??= await ref.read(persistedGameStateProvider(gameId).future);
-        if (state == null) throw Exception('Local game not found');
-        return LocalAnalysisService.analyzeGame(gameId, state.history);
+        var s = notifierState.gameState;
+        s ??= await ref.read(persistedGameStateProvider(gameId).future);
+        if (s == null) throw Exception('Game not found');
+        state = s;
       } else {
         final restClient = ref.read(restClientProvider);
-        return restClient.getGameAnalysis(gameId);
+        state = await restClient.getGameState(gameId);
       }
+
+      // 4. Yield a frame so the loading UI renders before blocking FFI call
+      await Future.delayed(Duration.zero);
+
+      // 5. Compute on-device
+      final analysis = LocalAnalysisService.analyzeGame(gameId, state.history);
+
+      // 6. Cache locally
+      await cache.cacheAnalysis(gameId, analysis);
+
+      // 7. Upload to server (fire-and-forget) for server games
+      if (!isLocalGame(gameId)) {
+        try {
+          final restClient = ref.read(restClientProvider);
+          await restClient.saveGameAnalysis(gameId, analysis);
+        } catch (_) {}
+      }
+
+      return analysis;
     });
 
 class AnalysisScreen extends ConsumerWidget {

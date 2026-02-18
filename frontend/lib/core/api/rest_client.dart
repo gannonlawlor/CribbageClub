@@ -7,6 +7,7 @@ import '../models/friend.dart';
 import '../models/game_action.dart';
 import '../models/game_analysis.dart';
 import '../models/game_state.dart';
+import '../models/import_games.dart';
 import '../models/join_by_code_result.dart';
 import '../models/leaderboard_entry.dart';
 import '../models/lobby.dart';
@@ -155,6 +156,16 @@ class RestClient {
         .toList();
   }
 
+  Future<ImportGamesResponse> importLocalGames(
+    List<ImportGameRequest> games,
+  ) async {
+    final response = await _dio.post(
+      '/api/games/import',
+      data: {'games': games.map((g) => g.toJson()).toList()},
+    );
+    return ImportGamesResponse.fromJson(response.data as Map<String, dynamic>);
+  }
+
   // Leaderboard
 
   Future<List<LeaderboardEntry>> getLeaderboard() async {
@@ -290,6 +301,10 @@ class RestClient {
   Future<GameAnalysis> getGameAnalysis(String gameId) async {
     final response = await _dio.get('/api/games/$gameId/analysis');
     return GameAnalysis.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  Future<void> saveGameAnalysis(String gameId, GameAnalysis analysis) async {
+    await _dio.post('/api/games/$gameId/analysis', data: analysis.toJson());
   }
 
   // Stats
