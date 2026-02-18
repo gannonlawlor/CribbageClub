@@ -4,10 +4,12 @@ import 'package:go_router/go_router.dart';
 import '../../../config/theme.dart';
 import '../../../core/auth/auth_provider.dart';
 import '../../../core/engine/local_analysis_service.dart';
+import '../../../core/models/card.dart';
 import '../../../core/models/game_analysis.dart';
 import '../../../core/models/game_state.dart';
 import '../../../core/services/analysis_cache_service.dart';
 import '../../../core/services/local_game_history_provider.dart';
+import '../../daily_puzzle/widgets/explain_bottom_sheet.dart';
 import '../../game/state/game_providers.dart';
 import '../../game/widgets/card_widget.dart';
 
@@ -618,6 +620,8 @@ class _FullOptionsList extends StatelessWidget {
               option: unique[i],
               isPlayerChoice: unique[i] == analysis.playerDiscard,
               isOptimal: i == 0,
+              dealtHand: analysis.dealtHand,
+              isDealer: analysis.isDealer,
             ),
         ],
       ),
@@ -630,76 +634,104 @@ class _OptionRow extends StatelessWidget {
   final DiscardOption option;
   final bool isPlayerChoice;
   final bool isOptimal;
+  final List<PlayingCard> dealtHand;
+  final bool isDealer;
 
   const _OptionRow({
     required this.rank,
     required this.option,
     required this.isPlayerChoice,
     required this.isOptimal,
+    required this.dealtHand,
+    required this.isDealer,
   });
+
+  void _showExplain(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (_) => ExplainBottomSheet(
+        rank: rank,
+        keep: option.keep,
+        discard: option.discard,
+        hand: dealtHand,
+        isDealer: isDealer,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 24,
-            child: Text(
-              '#$rank',
-              style: TextStyle(
-                color: isOptimal ? Colors.greenAccent : Colors.white54,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
+    return GestureDetector(
+      onTap: () => _showExplain(context),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 24,
+              child: Text(
+                '#$rank',
+                style: TextStyle(
+                  color: isOptimal ? Colors.greenAccent : Colors.white54,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
-          ),
-          const SizedBox(width: 4),
-          ...option.discard.map(
-            (card) => Padding(
-              padding: const EdgeInsets.only(right: 2),
-              child: CardWidget(
-                card: card,
-                width: 26,
-                height: 36,
-                enabled: false,
+            const SizedBox(width: 4),
+            ...option.discard.map(
+              (card) => Padding(
+                padding: const EdgeInsets.only(right: 2),
+                child: CardWidget(
+                  card: card,
+                  width: 26,
+                  height: 36,
+                  enabled: false,
+                ),
               ),
             ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              '${option.expectedCombinedValue.toStringAsFixed(2)} avg pts',
-              style: const TextStyle(color: Colors.white, fontSize: 12),
-            ),
-          ),
-          if (isPlayerChoice)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: Colors.blueAccent.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: const Text(
-                'You',
-                style: TextStyle(color: Colors.blueAccent, fontSize: 10),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                '${option.expectedCombinedValue.toStringAsFixed(2)} avg pts',
+                style: const TextStyle(color: Colors.white, fontSize: 12),
               ),
             ),
-          if (isOptimal)
-            Container(
-              margin: const EdgeInsets.only(left: 4),
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: Colors.greenAccent.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(4),
+            if (isPlayerChoice)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.blueAccent.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: const Text(
+                  'You',
+                  style: TextStyle(color: Colors.blueAccent, fontSize: 10),
+                ),
               ),
-              child: const Text(
-                'Best',
-                style: TextStyle(color: Colors.greenAccent, fontSize: 10),
+            if (isOptimal)
+              Container(
+                margin: const EdgeInsets.only(left: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.greenAccent.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: const Text(
+                  'Best',
+                  style: TextStyle(color: Colors.greenAccent, fontSize: 10),
+                ),
               ),
+            const SizedBox(width: 4),
+            const Icon(
+              Icons.info_outline,
+              color: Colors.white38,
+              size: 16,
             ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../core/models/card.dart';
 import '../../game/widgets/card_widget.dart';
 import '../models/daily_puzzle.dart';
 import '../services/puzzle_generator.dart';
+import 'explain_bottom_sheet.dart';
 import 'keep_rank_tile.dart';
 import 'streak_badge.dart';
 
@@ -19,6 +21,7 @@ class PuzzleSummary extends StatefulWidget {
   final List<double?> playerScores;
   final List<int?> playerRanks;
   final List<List<KeepOption>?> allResults;
+  final List<List<PlayingCard>?> playerKeeps;
   final int streak;
   final VoidCallback onBackToHome;
 
@@ -28,6 +31,7 @@ class PuzzleSummary extends StatefulWidget {
     required this.playerScores,
     required this.playerRanks,
     required this.allResults,
+    required this.playerKeeps,
     required this.streak,
     required this.onBackToHome,
   });
@@ -38,6 +42,8 @@ class PuzzleSummary extends StatefulWidget {
 
 class _PuzzleSummaryState extends State<PuzzleSummary> {
   int? _expandedIndex;
+
+  bool get _allResultsReady => widget.allResults.every((r) => r != null);
 
   double get _totalScore => widget.playerScores
       .whereType<double>()
@@ -53,7 +59,8 @@ class _PuzzleSummaryState extends State<PuzzleSummary> {
     return total;
   }
 
-  bool get _allOptimal => widget.playerRanks.every((r) => r == 1);
+  bool get _allOptimal =>
+      _allResultsReady && widget.playerRanks.every((r) => r == 1);
 
   @override
   Widget build(BuildContext context) {
@@ -100,89 +107,14 @@ class _PuzzleSummaryState extends State<PuzzleSummary> {
         // Total score banner
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              color: _allOptimal
-                  ? Colors.green.withValues(alpha: 0.15)
-                  : Colors.white.withValues(alpha: 0.08),
-              border: Border.all(
-                color: _allOptimal
-                    ? Colors.green.withValues(alpha: 0.5)
-                    : Colors.white24,
-              ),
-            ),
-            child: Column(
-              children: [
-                if (_allOptimal)
-                  const Padding(
-                    padding: EdgeInsets.only(bottom: 4),
-                    child: Text(
-                      'Perfect!',
-                      style: TextStyle(
-                        color: Colors.green,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.baseline,
-                  textBaseline: TextBaseline.alphabetic,
-                  children: [
-                    Text(
-                      _totalScore.toStringAsFixed(1),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    if (_maxScore > 0) ...[
-                      Text(
-                        '/ ${_maxScore.toStringAsFixed(1)}',
-                        style: const TextStyle(
-                          color: Colors.white54,
-                          fontSize: 18,
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                    ],
-                    const Text(
-                      'avg pts',
-                      style: TextStyle(color: Colors.white38, fontSize: 13),
-                    ),
-                  ],
-                ),
-                if (_allOptimal && widget.streak > 0)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(
-                          Icons.local_fire_department,
-                          color: Colors.orange,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          '${widget.streak} day streak!',
-                          style: const TextStyle(
-                            color: Colors.orange,
-                            fontSize: 16,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-              ],
-            ),
-          ),
+          child: _allResultsReady
+              ? _ScoreBanner(
+                  totalScore: _totalScore,
+                  maxScore: _maxScore,
+                  allOptimal: _allOptimal,
+                  streak: widget.streak,
+                )
+              : _LoadingBanner(),
         ),
         const SizedBox(height: 12),
         // Per-puzzle rows
@@ -197,6 +129,7 @@ class _PuzzleSummaryState extends State<PuzzleSummary> {
               maxScore: widget.allResults[index]?.first.netScore,
               results: widget.allResults[index],
               playerRank: widget.playerRanks[index],
+              playerKeep: widget.playerKeeps[index],
               isExpanded: _expandedIndex == index,
               onTap: () {
                 setState(() {
@@ -213,7 +146,9 @@ class _PuzzleSummaryState extends State<PuzzleSummary> {
             children: [
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: () => _shareResults(context),
+                  onPressed: _allResultsReady
+                      ? () => _shareResults(context)
+                      : null,
                   icon: const Icon(Icons.share, size: 18),
                   label: const Text('Share'),
                   style: OutlinedButton.styleFrom(
@@ -249,7 +184,7 @@ class _PuzzleSummaryState extends State<PuzzleSummary> {
       );
     for (var i = 0; i < PuzzleGenerator.puzzlesPerDay; i++) {
       final rank = widget.playerRanks[i];
-      final emoji = rank == 1 ? '⭐' : '  ';
+      final emoji = rank == 1 ? '\u2B50' : '  ';
       buffer.writeln(
         '$emoji Puzzle ${i + 1}: #${rank ?? '?'} / 15',
       );
@@ -269,6 +204,140 @@ class _PuzzleSummaryState extends State<PuzzleSummary> {
   }
 }
 
+class _ScoreBanner extends StatelessWidget {
+  final double totalScore;
+  final double maxScore;
+  final bool allOptimal;
+  final int streak;
+
+  const _ScoreBanner({
+    required this.totalScore,
+    required this.maxScore,
+    required this.allOptimal,
+    required this.streak,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        color: allOptimal
+            ? Colors.green.withValues(alpha: 0.15)
+            : Colors.white.withValues(alpha: 0.08),
+        border: Border.all(
+          color: allOptimal
+              ? Colors.green.withValues(alpha: 0.5)
+              : Colors.white24,
+        ),
+      ),
+      child: Column(
+        children: [
+          if (allOptimal)
+            const Padding(
+              padding: EdgeInsets.only(bottom: 4),
+              child: Text(
+                'Perfect!',
+                style: TextStyle(
+                  color: Colors.green,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text(
+                totalScore.toStringAsFixed(1),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(width: 4),
+              if (maxScore > 0) ...[
+                Text(
+                  '/ ${maxScore.toStringAsFixed(1)}',
+                  style: const TextStyle(
+                    color: Colors.white54,
+                    fontSize: 18,
+                  ),
+                ),
+                const SizedBox(width: 6),
+              ],
+              const Text(
+                'avg pts',
+                style: TextStyle(color: Colors.white38, fontSize: 13),
+              ),
+            ],
+          ),
+          if (allOptimal && streak > 0)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.local_fire_department,
+                    color: Colors.orange,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    '$streak day streak!',
+                    style: const TextStyle(
+                      color: Colors.orange,
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LoadingBanner extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        color: Colors.white.withValues(alpha: 0.08),
+        border: Border.all(color: Colors.white24),
+      ),
+      child: const Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          SizedBox(
+            width: 16,
+            height: 16,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: Colors.white38,
+            ),
+          ),
+          SizedBox(width: 10),
+          Text(
+            'Analyzing...',
+            style: TextStyle(color: Colors.white54, fontSize: 16),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _PuzzleRow extends StatelessWidget {
   final DailyPuzzle puzzle;
   final int? rank;
@@ -276,6 +345,7 @@ class _PuzzleRow extends StatelessWidget {
   final double? maxScore;
   final List<KeepOption>? results;
   final int? playerRank;
+  final List<PlayingCard>? playerKeep;
   final bool isExpanded;
   final VoidCallback onTap;
 
@@ -286,6 +356,7 @@ class _PuzzleRow extends StatelessWidget {
     required this.maxScore,
     required this.results,
     required this.playerRank,
+    required this.playerKeep,
     required this.isExpanded,
     required this.onTap,
   });
@@ -293,6 +364,7 @@ class _PuzzleRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isOptimal = rank == 1;
+    final hasResults = results != null;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -300,17 +372,17 @@ class _PuzzleRow extends StatelessWidget {
         children: [
           // Collapsed row
           GestureDetector(
-            onTap: onTap,
+            onTap: hasResults ? onTap : null,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
-                color: isOptimal
+                color: hasResults && isOptimal
                     ? Colors.green.withValues(alpha: 0.1)
                     : Colors.white.withValues(alpha: 0.05),
                 borderRadius: isExpanded
                     ? const BorderRadius.vertical(top: Radius.circular(8))
                     : BorderRadius.circular(8),
-                border: isOptimal
+                border: hasResults && isOptimal
                     ? Border.all(
                         color: Colors.green.withValues(alpha: 0.4),
                       )
@@ -331,50 +403,60 @@ class _PuzzleRow extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 4),
-                  // Mini card icons for kept cards (find player's kept cards)
-                  if (results != null && playerRank != null)
+                  // Mini card icons for kept cards
+                  if (playerKeep != null)
                     ..._buildKeptCards()
                   else
                     const SizedBox(width: 80),
                   const Spacer(),
-                  // Score
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.baseline,
-                        textBaseline: TextBaseline.alphabetic,
-                        children: [
-                          Text(
-                            score?.toStringAsFixed(1) ?? '-',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
+                  // Score or loading
+                  if (hasResults) ...[
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.baseline,
+                          textBaseline: TextBaseline.alphabetic,
+                          children: [
+                            Text(
+                              score?.toStringAsFixed(1) ?? '-',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-                          ),
-                          Text(
-                            ' / ${maxScore?.toStringAsFixed(1) ?? '-'}',
-                            style: const TextStyle(
-                              color: Colors.white54,
-                              fontSize: 12,
+                            Text(
+                              ' / ${maxScore?.toStringAsFixed(1) ?? '-'}',
+                              style: const TextStyle(
+                                color: Colors.white54,
+                                fontSize: 12,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(width: 8),
+                    _RankBadge(rank: rank),
+                    const SizedBox(width: 4),
+                    Icon(
+                      isExpanded ? Icons.expand_less : Icons.expand_more,
+                      color: Colors.white38,
+                      size: 20,
+                    ),
+                  ] else ...[
+                    const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white24,
                       ),
-                    ],
-                  ),
-                  const SizedBox(width: 8),
-                  // Rank badge
-                  _RankBadge(rank: rank),
-                  const SizedBox(width: 4),
-                  // Expand indicator
-                  Icon(
-                    isExpanded ? Icons.expand_less : Icons.expand_more,
-                    color: Colors.white38,
-                    size: 20,
-                  ),
+                    ),
+                    const SizedBox(width: 4),
+                  ],
                 ],
               ),
             ),
@@ -408,6 +490,12 @@ class _PuzzleRow extends StatelessWidget {
                       option: option,
                       isPlayerPick: option.rank == playerRank,
                       isOptimal: option.rank == 1,
+                      onExplain: () => _showExplain(
+                        context,
+                        puzzle.hand,
+                        option,
+                        puzzle.isDealer,
+                      ),
                     ),
                   const SizedBox(height: 4),
                 ],
@@ -419,10 +507,7 @@ class _PuzzleRow extends StatelessWidget {
   }
 
   List<Widget> _buildKeptCards() {
-    // Find the player's kept cards from results
-    final playerOption = results!.where((o) => o.rank == playerRank).firstOrNull;
-    if (playerOption == null) return [const SizedBox(width: 80)];
-    return playerOption.keep
+    return playerKeep!
         .map(
           (card) => Padding(
             padding: const EdgeInsets.only(right: 2),
@@ -436,6 +521,26 @@ class _PuzzleRow extends StatelessWidget {
         )
         .toList();
   }
+}
+
+void _showExplain(
+  BuildContext context,
+  List<dynamic> hand,
+  KeepOption option,
+  bool isDealer,
+) {
+  showModalBottomSheet(
+    context: context,
+    backgroundColor: Colors.transparent,
+    isScrollControlled: true,
+    builder: (_) => ExplainBottomSheet(
+      rank: option.rank,
+      keep: option.keep,
+      discard: option.discard,
+      hand: hand,
+      isDealer: isDealer,
+    ),
+  );
 }
 
 class _RankBadge extends StatelessWidget {

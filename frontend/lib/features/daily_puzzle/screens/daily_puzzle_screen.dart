@@ -70,6 +70,7 @@ class _DailyPuzzleScreenState extends ConsumerState<DailyPuzzleScreen> {
                             playerScores: state.playerScores,
                             playerRanks: state.playerRanks,
                             allResults: state.allResults,
+                            playerKeeps: state.playerKeeps,
                             streak: state.streak,
                             onBackToHome: () => context.go('/'),
                           ),
@@ -86,12 +87,12 @@ class _DailyPuzzleScreenState extends ConsumerState<DailyPuzzleScreen> {
 class _ProgressDots extends StatelessWidget {
   final int total;
   final int current;
-  final List<int?> ranks;
+  final List<List<PlayingCard>?> keeps;
 
   const _ProgressDots({
     required this.total,
     required this.current,
-    required this.ranks,
+    required this.keeps,
   });
 
   @override
@@ -106,7 +107,9 @@ class _ProgressDots extends StatelessWidget {
             height: 10,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: _dotColor(i),
+              color: keeps[i] != null
+                  ? Colors.white.withValues(alpha: 0.6)
+                  : Colors.white.withValues(alpha: 0.2),
               border: i == current
                   ? Border.all(color: Colors.white, width: 1.5)
                   : null,
@@ -115,15 +118,6 @@ class _ProgressDots extends StatelessWidget {
         ],
       ],
     );
-  }
-
-  Color _dotColor(int index) {
-    if (ranks[index] == null) {
-      // Not yet played
-      return Colors.white.withValues(alpha: 0.2);
-    }
-    if (ranks[index] == 1) return Colors.green;
-    return AppTheme.goldAccent;
   }
 }
 
@@ -193,17 +187,8 @@ class _PlayingView extends ConsumerWidget {
         _ProgressDots(
           total: total,
           current: state.currentPuzzleIndex,
-          ranks: state.playerRanks,
+          keeps: state.playerKeeps,
         ),
-        // Running total if we have prior scores
-        if (state.currentPuzzleIndex > 0)
-          Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: Text(
-              'Running total: ${state.totalScore.toStringAsFixed(1)} avg pts',
-              style: const TextStyle(color: Colors.white38, fontSize: 13),
-            ),
-          ),
         const Spacer(),
         // Instruction
         Padding(
