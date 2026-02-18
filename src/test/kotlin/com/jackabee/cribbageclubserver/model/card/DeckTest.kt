@@ -49,12 +49,20 @@ class DeckTest {
     }
 
     @Test
-    fun `cut should return a card from the middle of the deck`() {
+    fun `cut should return a card and remove it from the deck`() {
         val cutCard = deck.cut()
-        val remainingCards = List(52) { deck.draw() }
-        assertTrue(cutCard in remainingCards)
-        val cutIndex = remainingCards.indexOf(cutCard)
-        assertTrue(cutIndex in 20..32) // Allowing some flexibility due to shuffling
+        val remainingCards = deck.remainingCards()
+        assertEquals(51, remainingCards.size)
+        assertTrue(cutCard !in remainingCards, "Cut card should be removed from deck")
+    }
+
+    @Test
+    fun `cut card should come from middle of the deck`() {
+        // Use a known deck to verify the index
+        val knownCards = Suit.entries.flatMap { suit -> Rank.entries.map { rank -> Card(rank, suit) } }
+        val knownDeck = Deck(knownCards)
+        val cutCard = knownDeck.cut()
+        assertEquals(knownCards[26], cutCard, "Cut should return card at index size/2")
     }
 
     @Test

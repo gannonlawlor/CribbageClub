@@ -25,7 +25,7 @@ class Deck(existingCards: List<Card>? = null) {
      *
      * @return The middle card of the deck.
      */
-    fun cut(): Card = cards[cards.size / 2]
+    fun cut(): Card = cards.removeAt(cards.size / 2)
 
     /**
      * Returns a copy of the remaining cards in the deck.
@@ -38,6 +38,14 @@ class Deck(existingCards: List<Card>? = null) {
      */
     fun shuffle() {
         cards.shuffle()
+    }
+
+    /**
+     * Resets the deck to a full 52-card shuffled deck.
+     */
+    fun reset() {
+        cards.clear()
+        cards.addAll(createShuffledDeck())
     }
 
     private fun createShuffledDeck(): MutableList<Card> {

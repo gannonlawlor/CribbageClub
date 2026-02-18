@@ -5,6 +5,7 @@ import com.jackabee.cribbageclubserver.repository.UserRepository
 import org.slf4j.LoggerFactory
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
 
 @Service
@@ -17,6 +18,7 @@ class UserService(
 
     data class AuthResponse(val token: String, val userId: String, val username: String, val displayName: String?)
 
+    @Transactional
     fun register(username: String, password: String, displayName: String?): AuthResponse {
         require(username.length >= 3) { "Username must be at least 3 characters" }
         require(password.length >= 6) { "Password must be at least 6 characters" }
@@ -34,6 +36,7 @@ class UserService(
         return AuthResponse(token, saved.id, saved.username, saved.displayName)
     }
 
+    @Transactional
     fun login(username: String, password: String): AuthResponse {
         val user = userRepository.findByUsername(username)
             ?: throw IllegalArgumentException("Invalid username or password")

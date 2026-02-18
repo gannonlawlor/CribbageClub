@@ -14,14 +14,11 @@ data class GameActionMessage(
 )
 
 data class JoinGameMessage(
-    val gameId: String,
-    val playerId: String,
-    val playerName: String
+    val gameId: String
 )
 
 data class LeaveGameMessage(
-    val gameId: String,
-    val playerId: String
+    val gameId: String
 )
 
 // Messages sent from server to client

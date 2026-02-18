@@ -274,6 +274,12 @@ class Game private constructor(
                 playerId = playerId,
                 pointsScored = 1
             ))
+
+            // If all hands are empty after double-Go, transition to counting
+            if (state.players.all { it.hand.isEmpty() }) {
+                historyTracker.addEvent(GameHistoryEvent.PeggingEnded())
+                transitionToHandCounting()
+            }
         } else {
             state = state.copy(
                 currentPlayerId = nextPlayerId,
@@ -420,8 +426,8 @@ class Game private constructor(
     }
 
     private fun startNewRound(updatedPlayers: List<Player>) {
-        // Reset deck and deal new cards
-        deck.shuffle()
+        // Reset deck to full 52 cards and deal new cards
+        deck.reset()
         currentRound++
 
         // Rotate dealer for the new round

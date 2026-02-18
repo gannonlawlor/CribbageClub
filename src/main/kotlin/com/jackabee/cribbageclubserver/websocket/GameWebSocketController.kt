@@ -39,10 +39,23 @@ class GameWebSocketController(
     }
 
     /**
-     * Handle joining a game via WebSocket
+     * Handle joining a game via WebSocket.
+     * Player identity comes from the authenticated session, not the message.
      */
     @MessageMapping("/game/join")
     fun handleJoinGame(@Payload message: JoinGameMessage, headerAccessor: SimpMessageHeaderAccessor) {
+        val playerId = headerAccessor.sessionAttributes?.get("userId") as? String
+        val playerName = headerAccessor.sessionAttributes?.get("username") as? String
+
+        if (playerId == null || playerName == null) {
+            webSocketService.sendErrorToPlayer(
+                headerAccessor.sessionId!!,
+                message.gameId,
+                "Not authenticated"
+            )
+            return
+        }
+
         try {
             // Get current game state
             val gameState = gameService.getGameState(message.gameId)
@@ -50,8 +63,8 @@ class GameWebSocketController(
             // Register session for disconnect cleanup
             sessionRegistry.register(
                 headerAccessor.sessionId!!,
-                message.playerId,
-                message.playerName,
+                playerId,
+                playerName,
                 message.gameId
             )
 
@@ -63,7 +76,7 @@ class GameWebSocketController(
             )
 
             // Notify other players about the new connection
-            webSocketService.broadcastPlayerJoined(message.gameId, message.playerId, message.playerName)
+            webSocketService.broadcastPlayerJoined(message.gameId, playerId, playerName)
 
         } catch (e: Exception) {
             webSocketService.sendErrorToPlayer(
@@ -75,16 +88,21 @@ class GameWebSocketController(
     }
 
     /**
-     * Handle leaving a game via WebSocket
+     * Handle leaving a game via WebSocket.
+     * Player identity comes from the authenticated session.
      */
     @MessageMapping("/game/leave")
     fun handleLeaveGame(@Payload message: LeaveGameMessage, headerAccessor: SimpMessageHeaderAccessor) {
         try {
+            val playerId = headerAccessor.sessionAttributes?.get("userId") as? String
+
             // Unregister session from registry
             sessionRegistry.unregister(headerAccessor.sessionId!!)
 
             // Notify other players about the disconnection
-            webSocketService.broadcastPlayerLeft(message.gameId, message.playerId)
+            if (playerId != null) {
+                webSocketService.broadcastPlayerLeft(message.gameId, playerId)
+            }
 
         } catch (e: Exception) {
             // Log error but don't send back to client since they're leaving

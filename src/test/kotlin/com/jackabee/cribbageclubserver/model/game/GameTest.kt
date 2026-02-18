@@ -349,6 +349,36 @@ class GameTest {
         assertEquals(players[1].id, state.currentPlayerId)
     }
 
+    @Test
+    fun `Double go with empty hands should transition to COUNTING`() {
+        // Arrange: set up a game in PEGGING with both players having empty hands
+        val mockDeck = mock<Deck>()
+        setupGameForCutting(mockDeck)
+        whenever(mockDeck.cut()).thenReturn(Card(Rank.QUEEN, Suit.HEARTS))
+
+        game.applyAction(GameAction.CutDeck(players[1].id))
+
+        // Use reflection to set both players' hands to empty (simulating all cards played)
+        val field = game.javaClass.getDeclaredField("state")
+        field.isAccessible = true
+        val currentState = game.getCurrentState()
+        val emptyHandPlayers = currentState.players.map { it.copy(hand = emptyList()) }
+        field.set(game, currentState.copy(
+            players = emptyHandPlayers,
+            currentPlayerId = players[1].id,
+            lastPlayWasGo = false,
+            // Keep remaining state as-is
+            history = emptyList()
+        ))
+
+        // Act: both players Go with empty hands
+        game.applyAction(GameAction.Go(players[1].id))  // First Go
+        val finalState = game.applyAction(GameAction.Go(players[0].id))  // Second Go -> double Go
+
+        // Assert: should transition to COUNTING, not stay in PEGGING
+        assertEquals(GameStage.COUNTING, finalState.stage)
+    }
+
     private fun discardAllPlayersToCrib(gameInstance: Game = game) {
         val state = gameInstance.getCurrentState()
         state.players.forEach { player ->
