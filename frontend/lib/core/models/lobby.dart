@@ -36,6 +36,7 @@ class Lobby with _$Lobby {
     String? gameId,
     @Default(false) bool isPrivate,
     String? inviteCode,
+    String? challengedUserId,
   }) = _Lobby;
 
   factory Lobby.fromJson(Map<String, dynamic> json) => _$LobbyFromJson(json);

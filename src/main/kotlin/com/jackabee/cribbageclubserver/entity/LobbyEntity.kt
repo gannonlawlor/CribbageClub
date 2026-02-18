@@ -43,6 +43,9 @@ class LobbyEntity(
     @Column(columnDefinition = "TEXT")
     var playersJson: String = "[]",
 
+    @Column(nullable = true)
+    val challengedUserId: String? = null,
+
     @Version
     var version: Long = 0
 )

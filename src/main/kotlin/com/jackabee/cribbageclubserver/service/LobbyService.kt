@@ -219,6 +219,63 @@ class LobbyService(
         logger.info("Removed lobby {}", lobbyId)
     }
 
+    /**
+     * Creates a challenge lobby (private lobby with challengedUserId).
+     */
+    fun createChallenge(challengerId: String, challengerName: String, challengedUserId: String): Lobby {
+        val lobbyId = generateLobbyId()
+        val creator = LobbyPlayer(challengerId, challengerName)
+        val inviteCode = generateInviteCode()
+        val lobby = Lobby(
+            id = lobbyId,
+            name = "$challengerName's Challenge",
+            players = listOf(creator),
+            isPrivate = true,
+            inviteCode = inviteCode,
+            challengedUserId = challengedUserId
+        )
+
+        saveLobbyEntity(lobby)
+        logger.info("Created challenge lobby {} from {} to {}", lobbyId, challengerId, challengedUserId)
+        return lobby
+    }
+
+    /**
+     * Gets pending challenges for a user.
+     */
+    fun getPendingChallengesForUser(userId: String): List<Lobby> {
+        return lobbyRepository.findByChallengedUserIdAndStatus(userId, LobbyStatus.WAITING.name)
+            .map { toLobby(it) }
+    }
+
+    /**
+     * Joins a lobby by ID and auto-starts if full (used for accepting challenges).
+     */
+    @Transactional
+    fun joinLobbyById(lobbyId: String, playerId: String, playerName: String): JoinByCodeResult {
+        val entity = lobbyRepository.findById(lobbyId).orElseThrow {
+            IllegalArgumentException("Lobby not found: $lobbyId")
+        }
+        val lobby = toLobby(entity)
+        require(lobby.status == LobbyStatus.WAITING) { "Lobby is not accepting players" }
+
+        val player = LobbyPlayer(playerId, playerName)
+        val updatedLobby = lobby.addPlayer(player)
+        saveLobbyEntity(updatedLobby)
+
+        // Auto-start if full
+        if (updatedLobby.isReady) {
+            val gamePlayers = updatedLobby.players.map { Player(it.id, it.name) }
+            val gameState = gameService.createGame(gamePlayers)
+            val startedLobby = updatedLobby.startGame(gameState.gameId)
+            saveLobbyEntity(startedLobby)
+            logger.info("Auto-started game {} from lobby {}", gameState.gameId, lobbyId)
+            return JoinByCodeResult(lobby = startedLobby, gameState = gameState)
+        }
+
+        return JoinByCodeResult(lobby = updatedLobby)
+    }
+
     private fun saveLobbyEntity(lobby: Lobby) {
         val existing = lobbyRepository.findById(lobby.id).orElse(null)
         if (existing != null) {
@@ -236,6 +293,7 @@ class LobbyService(
                 gameId = lobby.gameId,
                 isPrivate = lobby.isPrivate,
                 inviteCode = lobby.inviteCode,
+                challengedUserId = lobby.challengedUserId,
                 createdAt = lobby.createdAt,
                 updatedAt = Instant.now(),
                 playersJson = objectMapper.writeValueAsString(lobby.players)
@@ -255,7 +313,8 @@ class LobbyService(
             createdAt = entity.createdAt,
             gameId = entity.gameId,
             isPrivate = entity.isPrivate,
-            inviteCode = entity.inviteCode
+            inviteCode = entity.inviteCode,
+            challengedUserId = entity.challengedUserId
         )
     }
 

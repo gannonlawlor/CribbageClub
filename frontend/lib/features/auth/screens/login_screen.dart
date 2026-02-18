@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../config/theme.dart';
 import '../../../core/auth/auth_provider.dart';
 import '../../../shared/widgets/loading_overlay.dart';
@@ -181,6 +182,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           side: const BorderSide(color: Colors.white38),
                           padding: const EdgeInsets.symmetric(vertical: 12),
                         ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextButton(
+                      onPressed: () => context.go('/'),
+                      child: const Text(
+                        'Skip for now',
+                        style: TextStyle(color: Colors.white38),
                       ),
                     ),
                   ],

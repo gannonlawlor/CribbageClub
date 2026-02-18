@@ -9,4 +9,5 @@ interface LobbyRepository : JpaRepository<LobbyEntity, String> {
     fun findByStatus(status: String): List<LobbyEntity>
     fun findByStatusAndIsPrivateFalse(status: String): List<LobbyEntity>
     fun findByInviteCode(inviteCode: String): LobbyEntity?
+    fun findByChallengedUserIdAndStatus(challengedUserId: String, status: String): List<LobbyEntity>
 }

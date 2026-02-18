@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import '../../config/constants.dart';
 import '../auth/auth_service.dart';
 import '../models/auth.dart';
+import '../models/friend.dart';
 import '../models/game_action.dart';
 import '../models/game_state.dart';
 import '../models/join_by_code_result.dart';
@@ -159,5 +160,86 @@ class RestClient {
 
   Future<void> leaveLobby(String lobbyId) async {
     await _dio.post('/api/lobbies/$lobbyId/leave');
+  }
+
+  // Friends
+
+  Future<List<UserSearchResult>> searchUsers(String query) async {
+    final response = await _dio.get('/api/friends/search', queryParameters: {'query': query});
+    final list = response.data as List<dynamic>;
+    return list
+        .map((json) => UserSearchResult.fromJson(json as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<FriendRequestInfo> sendFriendRequest(String username) async {
+    final response = await _dio.post('/api/friends/requests', data: {
+      'username': username,
+    });
+    return FriendRequestInfo.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  Future<List<FriendRequestInfo>> getIncomingFriendRequests() async {
+    final response = await _dio.get('/api/friends/requests/incoming');
+    final list = response.data as List<dynamic>;
+    return list
+        .map((json) => FriendRequestInfo.fromJson(json as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<FriendInfo> acceptFriendRequest(String id) async {
+    final response = await _dio.post('/api/friends/requests/$id/accept');
+    return FriendInfo.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  Future<void> declineFriendRequest(String id) async {
+    await _dio.post('/api/friends/requests/$id/decline');
+  }
+
+  Future<List<FriendInfo>> getFriends() async {
+    final response = await _dio.get('/api/friends');
+    final list = response.data as List<dynamic>;
+    return list
+        .map((json) => FriendInfo.fromJson(json as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<void> removeFriend(String id) async {
+    await _dio.delete('/api/friends/$id');
+  }
+
+  Future<NotificationCount> getNotificationCount() async {
+    final response = await _dio.get('/api/friends/notifications/count');
+    return NotificationCount.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  // Challenges
+
+  Future<Lobby> createChallenge(String friendUserId) async {
+    final response = await _dio.post('/api/challenges', data: {
+      'friendUserId': friendUserId,
+    });
+    return Lobby.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  Future<List<Lobby>> getIncomingChallenges() async {
+    final response = await _dio.get('/api/challenges/incoming');
+    final list = response.data as List<dynamic>;
+    return list
+        .map((json) => Lobby.fromJson(json as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<JoinByCodeResult> acceptChallenge(String lobbyId) async {
+    final response = await _dio.post('/api/challenges/$lobbyId/accept');
+    return JoinByCodeResult.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  Future<void> declineChallenge(String lobbyId) async {
+    await _dio.post('/api/challenges/$lobbyId/decline');
+  }
+
+  Future<void> cancelChallenge(String lobbyId) async {
+    await _dio.post('/api/challenges/$lobbyId/cancel');
   }
 }

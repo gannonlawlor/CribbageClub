@@ -4,12 +4,14 @@ import 'package:go_router/go_router.dart';
 import '../../../config/theme.dart';
 import '../../../core/api/websocket_client.dart';
 import '../../../core/auth/auth_provider.dart';
+import '../../../core/engine/local_game_service.dart';
 import '../../../core/models/card.dart';
 import '../../../core/models/game_history_event.dart';
 import '../../../core/models/game_state.dart';
 import '../../../core/models/score_breakdown.dart';
 import '../../../shared/utils/card_utils.dart';
 import '../state/game_providers.dart';
+import '../state/local_game_notifier.dart';
 import '../widgets/crib_area.dart';
 import '../widgets/cribbage_board.dart';
 import '../widgets/cut_card.dart';
@@ -26,9 +28,25 @@ class GameScreen extends ConsumerWidget {
 
   const GameScreen({super.key, required this.gameId});
 
+  bool get _isLocal => isLocalGame(gameId);
+
+  /// Read the notifier state from the correct provider (local vs online).
+  GameNotifierState _watchState(WidgetRef ref) {
+    return _isLocal
+        ? ref.watch(localGameNotifierProvider(gameId))
+        : ref.watch(gameNotifierProvider(gameId));
+  }
+
+  /// Access the notifier itself.
+  StateNotifier<GameNotifierState> _readNotifier(WidgetRef ref) {
+    return _isLocal
+        ? ref.read(localGameNotifierProvider(gameId).notifier)
+        : ref.read(gameNotifierProvider(gameId).notifier);
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final gameNotifier = ref.watch(gameNotifierProvider(gameId));
+    final gameNotifier = _watchState(ref);
     final auth = ref.watch(authProvider);
 
     if (gameNotifier.isLoading) {
@@ -86,7 +104,9 @@ class GameScreen extends ConsumerWidget {
       );
     }
 
-    final playerId = auth.userId ?? '';
+    final playerId = _isLocal
+        ? gs.players.firstWhere((p) => !p.id.startsWith('ai_')).id
+        : (auth.userId ?? '');
     final playerIndex = gs.players.indexWhere((p) => p.id == playerId);
     final player = playerIndex >= 0 ? gs.players[playerIndex] : gs.players[0];
     final opponent = gs.players[playerIndex >= 0 ? 1 - playerIndex : 1];
@@ -119,7 +139,12 @@ class GameScreen extends ConsumerWidget {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text(gameNotifier.error!)),
                 );
-                ref.read(gameNotifierProvider(gameId).notifier).clearError();
+                final n = _readNotifier(ref);
+                if (n is GameNotifier) {
+                  n.clearError();
+                } else if (n is LocalGameNotifier) {
+                  n.clearError();
+                }
               },
             ),
         ],
@@ -254,12 +279,21 @@ class GameScreen extends ConsumerWidget {
               isDiscarding: gameNotifier.isDiscarding,
               canGo: !_canPlayAnyCard(player.hand, gs.peggingCount),
               onDiscard: () => _handleDiscard(ref, gs, playerId, selectedCards),
-              onCut: () =>
-                  ref.read(gameNotifierProvider(gameId).notifier).cutDeck(),
-              onGo: () =>
-                  ref.read(gameNotifierProvider(gameId).notifier).sayGo(),
-              onCount: () =>
-                  ref.read(gameNotifierProvider(gameId).notifier).countHand(),
+              onCut: () {
+                final n = _readNotifier(ref);
+                if (n is GameNotifier) n.cutDeck();
+                if (n is LocalGameNotifier) n.cutDeck();
+              },
+              onGo: () {
+                final n = _readNotifier(ref);
+                if (n is GameNotifier) n.sayGo();
+                if (n is LocalGameNotifier) n.sayGo();
+              },
+              onCount: () {
+                final n = _readNotifier(ref);
+                if (n is GameNotifier) n.countHand();
+                if (n is LocalGameNotifier) n.countHand();
+              },
             ),
 
             // Player hand
@@ -316,7 +350,10 @@ class GameScreen extends ConsumerWidget {
     Set<int> selected,
   ) {
     // Block all card interaction while discard is in flight
-    if (ref.read(gameNotifierProvider(gameId)).isDiscarding) return;
+    final currentState = _isLocal
+        ? ref.read(localGameNotifierProvider(gameId))
+        : ref.read(gameNotifierProvider(gameId));
+    if (currentState.isDiscarding) return;
 
     if (gs.stage == GameStage.discardingToCrib) {
       final newSelected = Set<int>.from(selected);
@@ -340,7 +377,9 @@ class GameScreen extends ConsumerWidget {
             ),
           );
         } else {
-          ref.read(gameNotifierProvider(gameId).notifier).playCard(card);
+          final n = _readNotifier(ref);
+          if (n is GameNotifier) n.playCard(card);
+          if (n is LocalGameNotifier) n.playCard(card);
         }
       }
     }
@@ -368,7 +407,9 @@ class GameScreen extends ConsumerWidget {
     // Clear selection immediately to prevent double-tap
     ref.read(selectedCardsProvider(gameId).notifier).state = {};
 
-    await ref.read(gameNotifierProvider(gameId).notifier).discardCards(cardsToDiscard);
+    final n = _readNotifier(ref);
+    if (n is GameNotifier) await n.discardCards(cardsToDiscard);
+    if (n is LocalGameNotifier) await n.discardCards(cardsToDiscard);
   }
 
   Widget _buildGameOver(BuildContext context, WidgetRef ref, GameState gs, String playerId) {
@@ -464,17 +505,38 @@ class GameScreen extends ConsumerWidget {
   }
 
   Future<void> _playAgain(BuildContext context, WidgetRef ref) async {
-    try {
-      final restClient = ref.read(restClientProvider);
-      final gameState = await restClient.createAIGame();
+    if (_isLocal) {
+      // Determine difficulty from AI player name
+      final gs = _watchState(ref).gameState;
+      final aiPlayer = gs?.players.firstWhere((p) => p.id.startsWith('ai_'));
+      final difficulty = aiPlayer?.name.contains('Medium') == true
+          ? 'medium'
+          : aiPlayer?.name.contains('Hard') == true
+              ? 'hard'
+              : 'basic';
+      final auth = ref.read(authProvider);
+      final service = ref.read(localGameServiceProvider);
+      final newState = service.createGame(
+        humanPlayerId: auth.userId ?? 'local_player',
+        humanPlayerName: auth.username ?? 'Player',
+        difficulty: difficulty,
+      );
       if (context.mounted) {
-        context.go('/game/${gameState.gameId}');
+        context.go('/game/${newState.gameId}');
       }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to create game: $e')),
-        );
+    } else {
+      try {
+        final restClient = ref.read(restClientProvider);
+        final gameState = await restClient.createAIGame();
+        if (context.mounted) {
+          context.go('/game/${gameState.gameId}');
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to create game: $e')),
+          );
+        }
       }
     }
   }

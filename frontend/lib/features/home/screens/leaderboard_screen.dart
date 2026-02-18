@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../config/theme.dart';
 import '../../../core/auth/auth_provider.dart';
 import '../../../core/models/leaderboard_entry.dart';
@@ -16,6 +17,30 @@ class LeaderboardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final leaderboard = ref.watch(_leaderboardProvider);
     final auth = ref.watch(authProvider);
+
+    if (!auth.isLoggedIn) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Leaderboard')),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.lock_outline, size: 48, color: Colors.white38),
+              const SizedBox(height: 16),
+              const Text(
+                'Log in to see the leaderboard',
+                style: TextStyle(color: Colors.white54, fontSize: 16),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () => context.go('/login'),
+                child: const Text('Log In'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(title: const Text('Leaderboard')),

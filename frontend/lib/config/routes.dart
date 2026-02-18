@@ -8,6 +8,7 @@ import '../features/game/screens/game_screen.dart';
 import '../features/home/screens/game_history_screen.dart';
 import '../features/home/screens/home_screen.dart';
 import '../features/home/screens/leaderboard_screen.dart';
+import '../features/friends/screens/friends_screen.dart';
 import '../features/lobby/screens/lobby_waiting_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -20,7 +21,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isLoginRoute = state.matchedLocation == '/login';
       final isUpgradeRoute = state.matchedLocation == '/upgrade';
 
-      if (!isLoggedIn && !isLoginRoute) return '/login';
+      // Only redirect: logged-in users away from login, non-guests away from upgrade
       if (isLoggedIn && isLoginRoute) return '/';
       if (isLoggedIn && !auth.isGuest && isUpgradeRoute) return '/';
       return null;
@@ -52,6 +53,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/leaderboard',
         builder: (context, state) => const LeaderboardScreen(),
+      ),
+      GoRoute(
+        path: '/friends',
+        builder: (context, state) => const FriendsScreen(),
       ),
       GoRoute(
         path: '/lobby/:lobbyId',
