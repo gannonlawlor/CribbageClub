@@ -1,0 +1,9 @@
+{
+  "name": "cribbage-engine",
+  "version": "0.1.0",
+  "files": [
+    "cribbage_engine_bg.wasm",
+    "cribbage_engine.js"
+  ],
+  "browser": "cribbage_engine.js"
+}
