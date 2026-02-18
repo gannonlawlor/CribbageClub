@@ -1,9 +1,15 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../src/rust/api/simple.dart' as rust;
 import '../../game/widgets/card_widget.dart';
 import '../models/daily_puzzle.dart';
+import '../models/keep_explanation.dart';
+import '../services/insight_generator.dart';
 import '../services/puzzle_generator.dart';
+import 'explain_bottom_sheet.dart';
 import 'keep_rank_tile.dart';
 import 'streak_badge.dart';
 
@@ -408,6 +414,12 @@ class _PuzzleRow extends StatelessWidget {
                       option: option,
                       isPlayerPick: option.rank == playerRank,
                       isOptimal: option.rank == 1,
+                      onExplain: () => _showExplain(
+                        context,
+                        puzzle.hand,
+                        option,
+                        puzzle.isDealer,
+                      ),
                     ),
                   const SizedBox(height: 4),
                 ],
@@ -436,6 +448,41 @@ class _PuzzleRow extends StatelessWidget {
         )
         .toList();
   }
+}
+
+void _showExplain(
+  BuildContext context,
+  List<dynamic> hand,
+  KeepOption option,
+  bool isDealer,
+) {
+  final handJson = jsonEncode(hand.map((c) => c.toJson()).toList());
+  final keepJson = jsonEncode(option.keep.map((c) => c.toJson()).toList());
+  final resultJson = rust.explainKeepJson(
+    handJson: handJson,
+    keepJson: keepJson,
+    isDealer: isDealer,
+  );
+  final explanation = KeepExplanation.fromJson(
+    jsonDecode(resultJson) as Map<String, dynamic>,
+  );
+  final insights = InsightGenerator.generateInsights(
+    explanation,
+    option.keep,
+    option.discard,
+  );
+
+  showModalBottomSheet(
+    context: context,
+    backgroundColor: Colors.transparent,
+    isScrollControlled: true,
+    builder: (_) => ExplainBottomSheet(
+      rank: option.rank,
+      keep: option.keep,
+      explanation: explanation,
+      insights: insights,
+    ),
+  );
 }
 
 class _RankBadge extends StatelessWidget {

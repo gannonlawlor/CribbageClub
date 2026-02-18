@@ -95,6 +95,18 @@ String analyzeDiscardsJson({
   isDealer: isDealer,
 );
 
+/// Explain a specific keep choice. Returns JSON with guaranteed patterns,
+/// per-cut scores, and crib impact.
+String explainKeepJson({
+  required String handJson,
+  required String keepJson,
+  required bool isDealer,
+}) => RustLib.instance.api.crateApiSimpleExplainKeepJson(
+  handJson: handJson,
+  keepJson: keepJson,
+  isDealer: isDealer,
+);
+
 /// Calculate new Glicko-2 rating. Returns JSON result.
 String glicko2CalculateJson({
   required double playerRating,

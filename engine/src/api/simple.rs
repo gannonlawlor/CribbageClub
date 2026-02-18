@@ -151,6 +151,22 @@ pub fn analyze_discards_json(hand_json: String, is_dealer: bool) -> Result<Strin
     serde_json::to_string(&serializable).map_err(|e| e.to_string())
 }
 
+/// Explain a specific keep choice. Returns JSON with guaranteed patterns,
+/// per-cut scores, and crib impact.
+#[flutter_rust_bridge::frb(sync)]
+pub fn explain_keep_json(
+    hand_json: String,
+    keep_json: String,
+    is_dealer: bool,
+) -> Result<String, String> {
+    let hand: Vec<Card> =
+        serde_json::from_str(&hand_json).map_err(|e| format!("JSON parse error: {e}"))?;
+    let keep: Vec<Card> =
+        serde_json::from_str(&keep_json).map_err(|e| format!("JSON parse error: {e}"))?;
+    let explanation = discard_analyzer::explain_keep(&hand, &keep, is_dealer);
+    serde_json::to_string(&explanation).map_err(|e| e.to_string())
+}
+
 /// Calculate new Glicko-2 rating. Returns JSON result.
 #[flutter_rust_bridge::frb(sync)]
 pub fn glicko2_calculate_json(
