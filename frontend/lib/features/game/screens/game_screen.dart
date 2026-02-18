@@ -111,8 +111,8 @@ class GameScreen extends ConsumerWidget {
     if (_isLocal && gs.stage == GameStage.gameOver) {
       final savedIds = ref.read(_savedLocalGamesProvider);
       if (!savedIds.contains(gs.gameId)) {
-        ref.read(_savedLocalGamesProvider.notifier).state = {...savedIds, gs.gameId};
         Future.microtask(() async {
+          ref.read(_savedLocalGamesProvider.notifier).state = {...savedIds, gs.gameId};
           final service = ref.read(localGameHistoryServiceProvider);
           await service.saveCompletedGame(gs);
           ref.invalidate(localGameHistoryProvider);
