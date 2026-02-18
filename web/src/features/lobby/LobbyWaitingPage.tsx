@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router'
 import { useAsync } from '@/shared/hooks'
 import * as api from '@/api/rest-client'
@@ -9,6 +9,14 @@ export function LobbyWaitingPage() {
   const { lobbyId } = useParams<{ lobbyId: string }>()
   const navigate = useNavigate()
   const lobby = useAsync(() => api.getLobby(lobbyId!), [lobbyId])
+  const [copied, setCopied] = useState(false)
+
+  function handleCopy(code: string) {
+    navigator.clipboard.writeText(code).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    })
+  }
 
   // Poll for lobby updates or listen via WebSocket
   useEffect(() => {
@@ -63,7 +71,15 @@ export function LobbyWaitingPage() {
       {l?.inviteCode && (
         <div className="mb-6">
           <div className="text-white/50 text-sm mb-1">Invite Code</div>
-          <div className="text-white text-3xl font-mono tracking-widest">{l.inviteCode}</div>
+          <div className="flex items-center justify-center gap-3">
+            <div className="text-white text-3xl font-mono tracking-widest">{l.inviteCode}</div>
+            <button
+              onClick={() => handleCopy(l.inviteCode!)}
+              className="text-white/60 hover:text-white bg-white/10 hover:bg-white/20 border-none rounded px-3 py-1.5 text-sm cursor-pointer transition-colors"
+            >
+              {copied ? 'Copied!' : 'Copy'}
+            </button>
+          </div>
         </div>
       )}
 
