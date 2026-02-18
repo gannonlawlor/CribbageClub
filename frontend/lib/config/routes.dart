@@ -11,6 +11,7 @@ import '../features/home/screens/home_screen.dart';
 import '../features/home/screens/leaderboard_screen.dart';
 import '../features/friends/screens/friends_screen.dart';
 import '../features/daily_puzzle/screens/daily_puzzle_screen.dart';
+import '../features/daily_puzzle/screens/practice_puzzle_screen.dart';
 import '../features/lobby/screens/lobby_waiting_screen.dart';
 import '../features/puzzle/screens/puzzle_screen.dart';
 import '../features/replay/screens/replay_screen.dart';
@@ -84,6 +85,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/daily-puzzle',
         builder: (context, state) => const DailyPuzzleScreen(),
+      ),
+      GoRoute(
+        path: '/practice-puzzle',
+        builder: (context, state) => const PracticePuzzleScreen(),
       ),
     ],
     errorBuilder: (context, state) =>
