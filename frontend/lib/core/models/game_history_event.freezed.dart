@@ -52,7 +52,11 @@ mixin _$GameHistoryEvent {
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
     required TResult Function(String timestamp, int roundNumber) roundStarted,
-    required TResult Function(String timestamp) cardsDealt,
+    required TResult Function(
+      String timestamp,
+      Map<String, List<PlayingCard>> dealtHands,
+    )
+    cardsDealt,
     required TResult Function(
       String timestamp,
       PlayingCard cutCard,
@@ -79,6 +83,7 @@ mixin _$GameHistoryEvent {
     required TResult Function(
       String timestamp,
       String playerId,
+      List<PlayingCard> hand,
       int totalPoints,
       ScoreBreakdown scoreBreakdown,
     )
@@ -88,6 +93,7 @@ mixin _$GameHistoryEvent {
       String dealerPlayerId,
       int totalPoints,
       ScoreBreakdown scoreBreakdown,
+      List<PlayingCard> cribCards,
     )
     cribCounted,
     required TResult Function(
@@ -100,7 +106,11 @@ mixin _$GameHistoryEvent {
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function(String timestamp, int roundNumber)? roundStarted,
-    TResult? Function(String timestamp)? cardsDealt,
+    TResult? Function(
+      String timestamp,
+      Map<String, List<PlayingCard>> dealtHands,
+    )?
+    cardsDealt,
     TResult? Function(
       String timestamp,
       PlayingCard cutCard,
@@ -123,6 +133,7 @@ mixin _$GameHistoryEvent {
     TResult? Function(
       String timestamp,
       String playerId,
+      List<PlayingCard> hand,
       int totalPoints,
       ScoreBreakdown scoreBreakdown,
     )?
@@ -132,6 +143,7 @@ mixin _$GameHistoryEvent {
       String dealerPlayerId,
       int totalPoints,
       ScoreBreakdown scoreBreakdown,
+      List<PlayingCard> cribCards,
     )?
     cribCounted,
     TResult? Function(String timestamp, String winnerPlayerId, int finalScore)?
@@ -140,7 +152,11 @@ mixin _$GameHistoryEvent {
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(String timestamp, int roundNumber)? roundStarted,
-    TResult Function(String timestamp)? cardsDealt,
+    TResult Function(
+      String timestamp,
+      Map<String, List<PlayingCard>> dealtHands,
+    )?
+    cardsDealt,
     TResult Function(
       String timestamp,
       PlayingCard cutCard,
@@ -163,6 +179,7 @@ mixin _$GameHistoryEvent {
     TResult Function(
       String timestamp,
       String playerId,
+      List<PlayingCard> hand,
       int totalPoints,
       ScoreBreakdown scoreBreakdown,
     )?
@@ -172,6 +189,7 @@ mixin _$GameHistoryEvent {
       String dealerPlayerId,
       int totalPoints,
       ScoreBreakdown scoreBreakdown,
+      List<PlayingCard> cribCards,
     )?
     cribCounted,
     TResult Function(String timestamp, String winnerPlayerId, int finalScore)?
@@ -356,7 +374,11 @@ class _$RoundStartedImpl implements RoundStarted {
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
     required TResult Function(String timestamp, int roundNumber) roundStarted,
-    required TResult Function(String timestamp) cardsDealt,
+    required TResult Function(
+      String timestamp,
+      Map<String, List<PlayingCard>> dealtHands,
+    )
+    cardsDealt,
     required TResult Function(
       String timestamp,
       PlayingCard cutCard,
@@ -383,6 +405,7 @@ class _$RoundStartedImpl implements RoundStarted {
     required TResult Function(
       String timestamp,
       String playerId,
+      List<PlayingCard> hand,
       int totalPoints,
       ScoreBreakdown scoreBreakdown,
     )
@@ -392,6 +415,7 @@ class _$RoundStartedImpl implements RoundStarted {
       String dealerPlayerId,
       int totalPoints,
       ScoreBreakdown scoreBreakdown,
+      List<PlayingCard> cribCards,
     )
     cribCounted,
     required TResult Function(
@@ -408,7 +432,11 @@ class _$RoundStartedImpl implements RoundStarted {
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function(String timestamp, int roundNumber)? roundStarted,
-    TResult? Function(String timestamp)? cardsDealt,
+    TResult? Function(
+      String timestamp,
+      Map<String, List<PlayingCard>> dealtHands,
+    )?
+    cardsDealt,
     TResult? Function(
       String timestamp,
       PlayingCard cutCard,
@@ -431,6 +459,7 @@ class _$RoundStartedImpl implements RoundStarted {
     TResult? Function(
       String timestamp,
       String playerId,
+      List<PlayingCard> hand,
       int totalPoints,
       ScoreBreakdown scoreBreakdown,
     )?
@@ -440,6 +469,7 @@ class _$RoundStartedImpl implements RoundStarted {
       String dealerPlayerId,
       int totalPoints,
       ScoreBreakdown scoreBreakdown,
+      List<PlayingCard> cribCards,
     )?
     cribCounted,
     TResult? Function(String timestamp, String winnerPlayerId, int finalScore)?
@@ -452,7 +482,11 @@ class _$RoundStartedImpl implements RoundStarted {
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(String timestamp, int roundNumber)? roundStarted,
-    TResult Function(String timestamp)? cardsDealt,
+    TResult Function(
+      String timestamp,
+      Map<String, List<PlayingCard>> dealtHands,
+    )?
+    cardsDealt,
     TResult Function(
       String timestamp,
       PlayingCard cutCard,
@@ -475,6 +509,7 @@ class _$RoundStartedImpl implements RoundStarted {
     TResult Function(
       String timestamp,
       String playerId,
+      List<PlayingCard> hand,
       int totalPoints,
       ScoreBreakdown scoreBreakdown,
     )?
@@ -484,6 +519,7 @@ class _$RoundStartedImpl implements RoundStarted {
       String dealerPlayerId,
       int totalPoints,
       ScoreBreakdown scoreBreakdown,
+      List<PlayingCard> cribCards,
     )?
     cribCounted,
     TResult Function(String timestamp, String winnerPlayerId, int finalScore)?
@@ -584,7 +620,7 @@ abstract class _$$CardsDealtImplCopyWith<$Res>
   ) = __$$CardsDealtImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({String timestamp});
+  $Res call({String timestamp, Map<String, List<PlayingCard>> dealtHands});
 }
 
 /// @nodoc
@@ -600,13 +636,17 @@ class __$$CardsDealtImplCopyWithImpl<$Res>
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
-  $Res call({Object? timestamp = null}) {
+  $Res call({Object? timestamp = null, Object? dealtHands = null}) {
     return _then(
       _$CardsDealtImpl(
         timestamp: null == timestamp
             ? _value.timestamp
             : timestamp // ignore: cast_nullable_to_non_nullable
                   as String,
+        dealtHands: null == dealtHands
+            ? _value._dealtHands
+            : dealtHands // ignore: cast_nullable_to_non_nullable
+                  as Map<String, List<PlayingCard>>,
       ),
     );
   }
@@ -615,21 +655,33 @@ class __$$CardsDealtImplCopyWithImpl<$Res>
 /// @nodoc
 @JsonSerializable()
 class _$CardsDealtImpl implements CardsDealt {
-  const _$CardsDealtImpl({required this.timestamp, final String? $type})
-    : $type = $type ?? 'CardsDealt';
+  const _$CardsDealtImpl({
+    required this.timestamp,
+    final Map<String, List<PlayingCard>> dealtHands = const {},
+    final String? $type,
+  }) : _dealtHands = dealtHands,
+       $type = $type ?? 'CardsDealt';
 
   factory _$CardsDealtImpl.fromJson(Map<String, dynamic> json) =>
       _$$CardsDealtImplFromJson(json);
 
   @override
   final String timestamp;
+  final Map<String, List<PlayingCard>> _dealtHands;
+  @override
+  @JsonKey()
+  Map<String, List<PlayingCard>> get dealtHands {
+    if (_dealtHands is EqualUnmodifiableMapView) return _dealtHands;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(_dealtHands);
+  }
 
   @JsonKey(name: 'type')
   final String $type;
 
   @override
   String toString() {
-    return 'GameHistoryEvent.cardsDealt(timestamp: $timestamp)';
+    return 'GameHistoryEvent.cardsDealt(timestamp: $timestamp, dealtHands: $dealtHands)';
   }
 
   @override
@@ -638,12 +690,20 @@ class _$CardsDealtImpl implements CardsDealt {
         (other.runtimeType == runtimeType &&
             other is _$CardsDealtImpl &&
             (identical(other.timestamp, timestamp) ||
-                other.timestamp == timestamp));
+                other.timestamp == timestamp) &&
+            const DeepCollectionEquality().equals(
+              other._dealtHands,
+              _dealtHands,
+            ));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, timestamp);
+  int get hashCode => Object.hash(
+    runtimeType,
+    timestamp,
+    const DeepCollectionEquality().hash(_dealtHands),
+  );
 
   /// Create a copy of GameHistoryEvent
   /// with the given fields replaced by the non-null parameter values.
@@ -657,7 +717,11 @@ class _$CardsDealtImpl implements CardsDealt {
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
     required TResult Function(String timestamp, int roundNumber) roundStarted,
-    required TResult Function(String timestamp) cardsDealt,
+    required TResult Function(
+      String timestamp,
+      Map<String, List<PlayingCard>> dealtHands,
+    )
+    cardsDealt,
     required TResult Function(
       String timestamp,
       PlayingCard cutCard,
@@ -684,6 +748,7 @@ class _$CardsDealtImpl implements CardsDealt {
     required TResult Function(
       String timestamp,
       String playerId,
+      List<PlayingCard> hand,
       int totalPoints,
       ScoreBreakdown scoreBreakdown,
     )
@@ -693,6 +758,7 @@ class _$CardsDealtImpl implements CardsDealt {
       String dealerPlayerId,
       int totalPoints,
       ScoreBreakdown scoreBreakdown,
+      List<PlayingCard> cribCards,
     )
     cribCounted,
     required TResult Function(
@@ -702,14 +768,18 @@ class _$CardsDealtImpl implements CardsDealt {
     )
     gameEnded,
   }) {
-    return cardsDealt(timestamp);
+    return cardsDealt(timestamp, dealtHands);
   }
 
   @override
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function(String timestamp, int roundNumber)? roundStarted,
-    TResult? Function(String timestamp)? cardsDealt,
+    TResult? Function(
+      String timestamp,
+      Map<String, List<PlayingCard>> dealtHands,
+    )?
+    cardsDealt,
     TResult? Function(
       String timestamp,
       PlayingCard cutCard,
@@ -732,6 +802,7 @@ class _$CardsDealtImpl implements CardsDealt {
     TResult? Function(
       String timestamp,
       String playerId,
+      List<PlayingCard> hand,
       int totalPoints,
       ScoreBreakdown scoreBreakdown,
     )?
@@ -741,19 +812,24 @@ class _$CardsDealtImpl implements CardsDealt {
       String dealerPlayerId,
       int totalPoints,
       ScoreBreakdown scoreBreakdown,
+      List<PlayingCard> cribCards,
     )?
     cribCounted,
     TResult? Function(String timestamp, String winnerPlayerId, int finalScore)?
     gameEnded,
   }) {
-    return cardsDealt?.call(timestamp);
+    return cardsDealt?.call(timestamp, dealtHands);
   }
 
   @override
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(String timestamp, int roundNumber)? roundStarted,
-    TResult Function(String timestamp)? cardsDealt,
+    TResult Function(
+      String timestamp,
+      Map<String, List<PlayingCard>> dealtHands,
+    )?
+    cardsDealt,
     TResult Function(
       String timestamp,
       PlayingCard cutCard,
@@ -776,6 +852,7 @@ class _$CardsDealtImpl implements CardsDealt {
     TResult Function(
       String timestamp,
       String playerId,
+      List<PlayingCard> hand,
       int totalPoints,
       ScoreBreakdown scoreBreakdown,
     )?
@@ -785,6 +862,7 @@ class _$CardsDealtImpl implements CardsDealt {
       String dealerPlayerId,
       int totalPoints,
       ScoreBreakdown scoreBreakdown,
+      List<PlayingCard> cribCards,
     )?
     cribCounted,
     TResult Function(String timestamp, String winnerPlayerId, int finalScore)?
@@ -792,7 +870,7 @@ class _$CardsDealtImpl implements CardsDealt {
     required TResult orElse(),
   }) {
     if (cardsDealt != null) {
-      return cardsDealt(timestamp);
+      return cardsDealt(timestamp, dealtHands);
     }
     return orElse();
   }
@@ -856,14 +934,17 @@ class _$CardsDealtImpl implements CardsDealt {
 }
 
 abstract class CardsDealt implements GameHistoryEvent {
-  const factory CardsDealt({required final String timestamp}) =
-      _$CardsDealtImpl;
+  const factory CardsDealt({
+    required final String timestamp,
+    final Map<String, List<PlayingCard>> dealtHands,
+  }) = _$CardsDealtImpl;
 
   factory CardsDealt.fromJson(Map<String, dynamic> json) =
       _$CardsDealtImpl.fromJson;
 
   @override
   String get timestamp;
+  Map<String, List<PlayingCard>> get dealtHands;
 
   /// Create a copy of GameHistoryEvent
   /// with the given fields replaced by the non-null parameter values.
@@ -1012,7 +1093,11 @@ class _$DeckCutImpl implements DeckCut {
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
     required TResult Function(String timestamp, int roundNumber) roundStarted,
-    required TResult Function(String timestamp) cardsDealt,
+    required TResult Function(
+      String timestamp,
+      Map<String, List<PlayingCard>> dealtHands,
+    )
+    cardsDealt,
     required TResult Function(
       String timestamp,
       PlayingCard cutCard,
@@ -1039,6 +1124,7 @@ class _$DeckCutImpl implements DeckCut {
     required TResult Function(
       String timestamp,
       String playerId,
+      List<PlayingCard> hand,
       int totalPoints,
       ScoreBreakdown scoreBreakdown,
     )
@@ -1048,6 +1134,7 @@ class _$DeckCutImpl implements DeckCut {
       String dealerPlayerId,
       int totalPoints,
       ScoreBreakdown scoreBreakdown,
+      List<PlayingCard> cribCards,
     )
     cribCounted,
     required TResult Function(
@@ -1064,7 +1151,11 @@ class _$DeckCutImpl implements DeckCut {
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function(String timestamp, int roundNumber)? roundStarted,
-    TResult? Function(String timestamp)? cardsDealt,
+    TResult? Function(
+      String timestamp,
+      Map<String, List<PlayingCard>> dealtHands,
+    )?
+    cardsDealt,
     TResult? Function(
       String timestamp,
       PlayingCard cutCard,
@@ -1087,6 +1178,7 @@ class _$DeckCutImpl implements DeckCut {
     TResult? Function(
       String timestamp,
       String playerId,
+      List<PlayingCard> hand,
       int totalPoints,
       ScoreBreakdown scoreBreakdown,
     )?
@@ -1096,6 +1188,7 @@ class _$DeckCutImpl implements DeckCut {
       String dealerPlayerId,
       int totalPoints,
       ScoreBreakdown scoreBreakdown,
+      List<PlayingCard> cribCards,
     )?
     cribCounted,
     TResult? Function(String timestamp, String winnerPlayerId, int finalScore)?
@@ -1108,7 +1201,11 @@ class _$DeckCutImpl implements DeckCut {
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(String timestamp, int roundNumber)? roundStarted,
-    TResult Function(String timestamp)? cardsDealt,
+    TResult Function(
+      String timestamp,
+      Map<String, List<PlayingCard>> dealtHands,
+    )?
+    cardsDealt,
     TResult Function(
       String timestamp,
       PlayingCard cutCard,
@@ -1131,6 +1228,7 @@ class _$DeckCutImpl implements DeckCut {
     TResult Function(
       String timestamp,
       String playerId,
+      List<PlayingCard> hand,
       int totalPoints,
       ScoreBreakdown scoreBreakdown,
     )?
@@ -1140,6 +1238,7 @@ class _$DeckCutImpl implements DeckCut {
       String dealerPlayerId,
       int totalPoints,
       ScoreBreakdown scoreBreakdown,
+      List<PlayingCard> cribCards,
     )?
     cribCounted,
     TResult Function(String timestamp, String winnerPlayerId, int finalScore)?
@@ -1396,7 +1495,11 @@ class _$CardPlayedImpl implements CardPlayed {
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
     required TResult Function(String timestamp, int roundNumber) roundStarted,
-    required TResult Function(String timestamp) cardsDealt,
+    required TResult Function(
+      String timestamp,
+      Map<String, List<PlayingCard>> dealtHands,
+    )
+    cardsDealt,
     required TResult Function(
       String timestamp,
       PlayingCard cutCard,
@@ -1423,6 +1526,7 @@ class _$CardPlayedImpl implements CardPlayed {
     required TResult Function(
       String timestamp,
       String playerId,
+      List<PlayingCard> hand,
       int totalPoints,
       ScoreBreakdown scoreBreakdown,
     )
@@ -1432,6 +1536,7 @@ class _$CardPlayedImpl implements CardPlayed {
       String dealerPlayerId,
       int totalPoints,
       ScoreBreakdown scoreBreakdown,
+      List<PlayingCard> cribCards,
     )
     cribCounted,
     required TResult Function(
@@ -1455,7 +1560,11 @@ class _$CardPlayedImpl implements CardPlayed {
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function(String timestamp, int roundNumber)? roundStarted,
-    TResult? Function(String timestamp)? cardsDealt,
+    TResult? Function(
+      String timestamp,
+      Map<String, List<PlayingCard>> dealtHands,
+    )?
+    cardsDealt,
     TResult? Function(
       String timestamp,
       PlayingCard cutCard,
@@ -1478,6 +1587,7 @@ class _$CardPlayedImpl implements CardPlayed {
     TResult? Function(
       String timestamp,
       String playerId,
+      List<PlayingCard> hand,
       int totalPoints,
       ScoreBreakdown scoreBreakdown,
     )?
@@ -1487,6 +1597,7 @@ class _$CardPlayedImpl implements CardPlayed {
       String dealerPlayerId,
       int totalPoints,
       ScoreBreakdown scoreBreakdown,
+      List<PlayingCard> cribCards,
     )?
     cribCounted,
     TResult? Function(String timestamp, String winnerPlayerId, int finalScore)?
@@ -1506,7 +1617,11 @@ class _$CardPlayedImpl implements CardPlayed {
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(String timestamp, int roundNumber)? roundStarted,
-    TResult Function(String timestamp)? cardsDealt,
+    TResult Function(
+      String timestamp,
+      Map<String, List<PlayingCard>> dealtHands,
+    )?
+    cardsDealt,
     TResult Function(
       String timestamp,
       PlayingCard cutCard,
@@ -1529,6 +1644,7 @@ class _$CardPlayedImpl implements CardPlayed {
     TResult Function(
       String timestamp,
       String playerId,
+      List<PlayingCard> hand,
       int totalPoints,
       ScoreBreakdown scoreBreakdown,
     )?
@@ -1538,6 +1654,7 @@ class _$CardPlayedImpl implements CardPlayed {
       String dealerPlayerId,
       int totalPoints,
       ScoreBreakdown scoreBreakdown,
+      List<PlayingCard> cribCards,
     )?
     cribCounted,
     TResult Function(String timestamp, String winnerPlayerId, int finalScore)?
@@ -1752,7 +1869,11 @@ class _$GoAnnouncedImpl implements GoAnnounced {
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
     required TResult Function(String timestamp, int roundNumber) roundStarted,
-    required TResult Function(String timestamp) cardsDealt,
+    required TResult Function(
+      String timestamp,
+      Map<String, List<PlayingCard>> dealtHands,
+    )
+    cardsDealt,
     required TResult Function(
       String timestamp,
       PlayingCard cutCard,
@@ -1779,6 +1900,7 @@ class _$GoAnnouncedImpl implements GoAnnounced {
     required TResult Function(
       String timestamp,
       String playerId,
+      List<PlayingCard> hand,
       int totalPoints,
       ScoreBreakdown scoreBreakdown,
     )
@@ -1788,6 +1910,7 @@ class _$GoAnnouncedImpl implements GoAnnounced {
       String dealerPlayerId,
       int totalPoints,
       ScoreBreakdown scoreBreakdown,
+      List<PlayingCard> cribCards,
     )
     cribCounted,
     required TResult Function(
@@ -1804,7 +1927,11 @@ class _$GoAnnouncedImpl implements GoAnnounced {
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function(String timestamp, int roundNumber)? roundStarted,
-    TResult? Function(String timestamp)? cardsDealt,
+    TResult? Function(
+      String timestamp,
+      Map<String, List<PlayingCard>> dealtHands,
+    )?
+    cardsDealt,
     TResult? Function(
       String timestamp,
       PlayingCard cutCard,
@@ -1827,6 +1954,7 @@ class _$GoAnnouncedImpl implements GoAnnounced {
     TResult? Function(
       String timestamp,
       String playerId,
+      List<PlayingCard> hand,
       int totalPoints,
       ScoreBreakdown scoreBreakdown,
     )?
@@ -1836,6 +1964,7 @@ class _$GoAnnouncedImpl implements GoAnnounced {
       String dealerPlayerId,
       int totalPoints,
       ScoreBreakdown scoreBreakdown,
+      List<PlayingCard> cribCards,
     )?
     cribCounted,
     TResult? Function(String timestamp, String winnerPlayerId, int finalScore)?
@@ -1848,7 +1977,11 @@ class _$GoAnnouncedImpl implements GoAnnounced {
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(String timestamp, int roundNumber)? roundStarted,
-    TResult Function(String timestamp)? cardsDealt,
+    TResult Function(
+      String timestamp,
+      Map<String, List<PlayingCard>> dealtHands,
+    )?
+    cardsDealt,
     TResult Function(
       String timestamp,
       PlayingCard cutCard,
@@ -1871,6 +2004,7 @@ class _$GoAnnouncedImpl implements GoAnnounced {
     TResult Function(
       String timestamp,
       String playerId,
+      List<PlayingCard> hand,
       int totalPoints,
       ScoreBreakdown scoreBreakdown,
     )?
@@ -1880,6 +2014,7 @@ class _$GoAnnouncedImpl implements GoAnnounced {
       String dealerPlayerId,
       int totalPoints,
       ScoreBreakdown scoreBreakdown,
+      List<PlayingCard> cribCards,
     )?
     cribCounted,
     TResult Function(String timestamp, String winnerPlayerId, int finalScore)?
@@ -2055,7 +2190,11 @@ class _$PeggingEndedImpl implements PeggingEnded {
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
     required TResult Function(String timestamp, int roundNumber) roundStarted,
-    required TResult Function(String timestamp) cardsDealt,
+    required TResult Function(
+      String timestamp,
+      Map<String, List<PlayingCard>> dealtHands,
+    )
+    cardsDealt,
     required TResult Function(
       String timestamp,
       PlayingCard cutCard,
@@ -2082,6 +2221,7 @@ class _$PeggingEndedImpl implements PeggingEnded {
     required TResult Function(
       String timestamp,
       String playerId,
+      List<PlayingCard> hand,
       int totalPoints,
       ScoreBreakdown scoreBreakdown,
     )
@@ -2091,6 +2231,7 @@ class _$PeggingEndedImpl implements PeggingEnded {
       String dealerPlayerId,
       int totalPoints,
       ScoreBreakdown scoreBreakdown,
+      List<PlayingCard> cribCards,
     )
     cribCounted,
     required TResult Function(
@@ -2107,7 +2248,11 @@ class _$PeggingEndedImpl implements PeggingEnded {
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function(String timestamp, int roundNumber)? roundStarted,
-    TResult? Function(String timestamp)? cardsDealt,
+    TResult? Function(
+      String timestamp,
+      Map<String, List<PlayingCard>> dealtHands,
+    )?
+    cardsDealt,
     TResult? Function(
       String timestamp,
       PlayingCard cutCard,
@@ -2130,6 +2275,7 @@ class _$PeggingEndedImpl implements PeggingEnded {
     TResult? Function(
       String timestamp,
       String playerId,
+      List<PlayingCard> hand,
       int totalPoints,
       ScoreBreakdown scoreBreakdown,
     )?
@@ -2139,6 +2285,7 @@ class _$PeggingEndedImpl implements PeggingEnded {
       String dealerPlayerId,
       int totalPoints,
       ScoreBreakdown scoreBreakdown,
+      List<PlayingCard> cribCards,
     )?
     cribCounted,
     TResult? Function(String timestamp, String winnerPlayerId, int finalScore)?
@@ -2151,7 +2298,11 @@ class _$PeggingEndedImpl implements PeggingEnded {
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(String timestamp, int roundNumber)? roundStarted,
-    TResult Function(String timestamp)? cardsDealt,
+    TResult Function(
+      String timestamp,
+      Map<String, List<PlayingCard>> dealtHands,
+    )?
+    cardsDealt,
     TResult Function(
       String timestamp,
       PlayingCard cutCard,
@@ -2174,6 +2325,7 @@ class _$PeggingEndedImpl implements PeggingEnded {
     TResult Function(
       String timestamp,
       String playerId,
+      List<PlayingCard> hand,
       int totalPoints,
       ScoreBreakdown scoreBreakdown,
     )?
@@ -2183,6 +2335,7 @@ class _$PeggingEndedImpl implements PeggingEnded {
       String dealerPlayerId,
       int totalPoints,
       ScoreBreakdown scoreBreakdown,
+      List<PlayingCard> cribCards,
     )?
     cribCounted,
     TResult Function(String timestamp, String winnerPlayerId, int finalScore)?
@@ -2283,6 +2436,7 @@ abstract class _$$HandCountedImplCopyWith<$Res>
   $Res call({
     String timestamp,
     String playerId,
+    List<PlayingCard> hand,
     int totalPoints,
     ScoreBreakdown scoreBreakdown,
   });
@@ -2306,6 +2460,7 @@ class __$$HandCountedImplCopyWithImpl<$Res>
   $Res call({
     Object? timestamp = null,
     Object? playerId = null,
+    Object? hand = null,
     Object? totalPoints = null,
     Object? scoreBreakdown = null,
   }) {
@@ -2319,6 +2474,10 @@ class __$$HandCountedImplCopyWithImpl<$Res>
             ? _value.playerId
             : playerId // ignore: cast_nullable_to_non_nullable
                   as String,
+        hand: null == hand
+            ? _value._hand
+            : hand // ignore: cast_nullable_to_non_nullable
+                  as List<PlayingCard>,
         totalPoints: null == totalPoints
             ? _value.totalPoints
             : totalPoints // ignore: cast_nullable_to_non_nullable
@@ -2348,10 +2507,12 @@ class _$HandCountedImpl implements HandCounted {
   const _$HandCountedImpl({
     required this.timestamp,
     required this.playerId,
+    final List<PlayingCard> hand = const [],
     required this.totalPoints,
     required this.scoreBreakdown,
     final String? $type,
-  }) : $type = $type ?? 'HandCounted';
+  }) : _hand = hand,
+       $type = $type ?? 'HandCounted';
 
   factory _$HandCountedImpl.fromJson(Map<String, dynamic> json) =>
       _$$HandCountedImplFromJson(json);
@@ -2360,6 +2521,15 @@ class _$HandCountedImpl implements HandCounted {
   final String timestamp;
   @override
   final String playerId;
+  final List<PlayingCard> _hand;
+  @override
+  @JsonKey()
+  List<PlayingCard> get hand {
+    if (_hand is EqualUnmodifiableListView) return _hand;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_hand);
+  }
+
   @override
   final int totalPoints;
   @override
@@ -2370,7 +2540,7 @@ class _$HandCountedImpl implements HandCounted {
 
   @override
   String toString() {
-    return 'GameHistoryEvent.handCounted(timestamp: $timestamp, playerId: $playerId, totalPoints: $totalPoints, scoreBreakdown: $scoreBreakdown)';
+    return 'GameHistoryEvent.handCounted(timestamp: $timestamp, playerId: $playerId, hand: $hand, totalPoints: $totalPoints, scoreBreakdown: $scoreBreakdown)';
   }
 
   @override
@@ -2382,6 +2552,7 @@ class _$HandCountedImpl implements HandCounted {
                 other.timestamp == timestamp) &&
             (identical(other.playerId, playerId) ||
                 other.playerId == playerId) &&
+            const DeepCollectionEquality().equals(other._hand, _hand) &&
             (identical(other.totalPoints, totalPoints) ||
                 other.totalPoints == totalPoints) &&
             (identical(other.scoreBreakdown, scoreBreakdown) ||
@@ -2394,6 +2565,7 @@ class _$HandCountedImpl implements HandCounted {
     runtimeType,
     timestamp,
     playerId,
+    const DeepCollectionEquality().hash(_hand),
     totalPoints,
     scoreBreakdown,
   );
@@ -2410,7 +2582,11 @@ class _$HandCountedImpl implements HandCounted {
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
     required TResult Function(String timestamp, int roundNumber) roundStarted,
-    required TResult Function(String timestamp) cardsDealt,
+    required TResult Function(
+      String timestamp,
+      Map<String, List<PlayingCard>> dealtHands,
+    )
+    cardsDealt,
     required TResult Function(
       String timestamp,
       PlayingCard cutCard,
@@ -2437,6 +2613,7 @@ class _$HandCountedImpl implements HandCounted {
     required TResult Function(
       String timestamp,
       String playerId,
+      List<PlayingCard> hand,
       int totalPoints,
       ScoreBreakdown scoreBreakdown,
     )
@@ -2446,6 +2623,7 @@ class _$HandCountedImpl implements HandCounted {
       String dealerPlayerId,
       int totalPoints,
       ScoreBreakdown scoreBreakdown,
+      List<PlayingCard> cribCards,
     )
     cribCounted,
     required TResult Function(
@@ -2455,14 +2633,18 @@ class _$HandCountedImpl implements HandCounted {
     )
     gameEnded,
   }) {
-    return handCounted(timestamp, playerId, totalPoints, scoreBreakdown);
+    return handCounted(timestamp, playerId, hand, totalPoints, scoreBreakdown);
   }
 
   @override
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function(String timestamp, int roundNumber)? roundStarted,
-    TResult? Function(String timestamp)? cardsDealt,
+    TResult? Function(
+      String timestamp,
+      Map<String, List<PlayingCard>> dealtHands,
+    )?
+    cardsDealt,
     TResult? Function(
       String timestamp,
       PlayingCard cutCard,
@@ -2485,6 +2667,7 @@ class _$HandCountedImpl implements HandCounted {
     TResult? Function(
       String timestamp,
       String playerId,
+      List<PlayingCard> hand,
       int totalPoints,
       ScoreBreakdown scoreBreakdown,
     )?
@@ -2494,19 +2677,30 @@ class _$HandCountedImpl implements HandCounted {
       String dealerPlayerId,
       int totalPoints,
       ScoreBreakdown scoreBreakdown,
+      List<PlayingCard> cribCards,
     )?
     cribCounted,
     TResult? Function(String timestamp, String winnerPlayerId, int finalScore)?
     gameEnded,
   }) {
-    return handCounted?.call(timestamp, playerId, totalPoints, scoreBreakdown);
+    return handCounted?.call(
+      timestamp,
+      playerId,
+      hand,
+      totalPoints,
+      scoreBreakdown,
+    );
   }
 
   @override
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(String timestamp, int roundNumber)? roundStarted,
-    TResult Function(String timestamp)? cardsDealt,
+    TResult Function(
+      String timestamp,
+      Map<String, List<PlayingCard>> dealtHands,
+    )?
+    cardsDealt,
     TResult Function(
       String timestamp,
       PlayingCard cutCard,
@@ -2529,6 +2723,7 @@ class _$HandCountedImpl implements HandCounted {
     TResult Function(
       String timestamp,
       String playerId,
+      List<PlayingCard> hand,
       int totalPoints,
       ScoreBreakdown scoreBreakdown,
     )?
@@ -2538,6 +2733,7 @@ class _$HandCountedImpl implements HandCounted {
       String dealerPlayerId,
       int totalPoints,
       ScoreBreakdown scoreBreakdown,
+      List<PlayingCard> cribCards,
     )?
     cribCounted,
     TResult Function(String timestamp, String winnerPlayerId, int finalScore)?
@@ -2545,7 +2741,13 @@ class _$HandCountedImpl implements HandCounted {
     required TResult orElse(),
   }) {
     if (handCounted != null) {
-      return handCounted(timestamp, playerId, totalPoints, scoreBreakdown);
+      return handCounted(
+        timestamp,
+        playerId,
+        hand,
+        totalPoints,
+        scoreBreakdown,
+      );
     }
     return orElse();
   }
@@ -2612,6 +2814,7 @@ abstract class HandCounted implements GameHistoryEvent {
   const factory HandCounted({
     required final String timestamp,
     required final String playerId,
+    final List<PlayingCard> hand,
     required final int totalPoints,
     required final ScoreBreakdown scoreBreakdown,
   }) = _$HandCountedImpl;
@@ -2622,6 +2825,7 @@ abstract class HandCounted implements GameHistoryEvent {
   @override
   String get timestamp;
   String get playerId;
+  List<PlayingCard> get hand;
   int get totalPoints;
   ScoreBreakdown get scoreBreakdown;
 
@@ -2647,6 +2851,7 @@ abstract class _$$CribCountedImplCopyWith<$Res>
     String dealerPlayerId,
     int totalPoints,
     ScoreBreakdown scoreBreakdown,
+    List<PlayingCard> cribCards,
   });
 
   $ScoreBreakdownCopyWith<$Res> get scoreBreakdown;
@@ -2670,6 +2875,7 @@ class __$$CribCountedImplCopyWithImpl<$Res>
     Object? dealerPlayerId = null,
     Object? totalPoints = null,
     Object? scoreBreakdown = null,
+    Object? cribCards = null,
   }) {
     return _then(
       _$CribCountedImpl(
@@ -2689,6 +2895,10 @@ class __$$CribCountedImplCopyWithImpl<$Res>
             ? _value.scoreBreakdown
             : scoreBreakdown // ignore: cast_nullable_to_non_nullable
                   as ScoreBreakdown,
+        cribCards: null == cribCards
+            ? _value._cribCards
+            : cribCards // ignore: cast_nullable_to_non_nullable
+                  as List<PlayingCard>,
       ),
     );
   }
@@ -2712,8 +2922,10 @@ class _$CribCountedImpl implements CribCounted {
     required this.dealerPlayerId,
     required this.totalPoints,
     required this.scoreBreakdown,
+    final List<PlayingCard> cribCards = const [],
     final String? $type,
-  }) : $type = $type ?? 'CribCounted';
+  }) : _cribCards = cribCards,
+       $type = $type ?? 'CribCounted';
 
   factory _$CribCountedImpl.fromJson(Map<String, dynamic> json) =>
       _$$CribCountedImplFromJson(json);
@@ -2726,13 +2938,21 @@ class _$CribCountedImpl implements CribCounted {
   final int totalPoints;
   @override
   final ScoreBreakdown scoreBreakdown;
+  final List<PlayingCard> _cribCards;
+  @override
+  @JsonKey()
+  List<PlayingCard> get cribCards {
+    if (_cribCards is EqualUnmodifiableListView) return _cribCards;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_cribCards);
+  }
 
   @JsonKey(name: 'type')
   final String $type;
 
   @override
   String toString() {
-    return 'GameHistoryEvent.cribCounted(timestamp: $timestamp, dealerPlayerId: $dealerPlayerId, totalPoints: $totalPoints, scoreBreakdown: $scoreBreakdown)';
+    return 'GameHistoryEvent.cribCounted(timestamp: $timestamp, dealerPlayerId: $dealerPlayerId, totalPoints: $totalPoints, scoreBreakdown: $scoreBreakdown, cribCards: $cribCards)';
   }
 
   @override
@@ -2747,7 +2967,11 @@ class _$CribCountedImpl implements CribCounted {
             (identical(other.totalPoints, totalPoints) ||
                 other.totalPoints == totalPoints) &&
             (identical(other.scoreBreakdown, scoreBreakdown) ||
-                other.scoreBreakdown == scoreBreakdown));
+                other.scoreBreakdown == scoreBreakdown) &&
+            const DeepCollectionEquality().equals(
+              other._cribCards,
+              _cribCards,
+            ));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -2758,6 +2982,7 @@ class _$CribCountedImpl implements CribCounted {
     dealerPlayerId,
     totalPoints,
     scoreBreakdown,
+    const DeepCollectionEquality().hash(_cribCards),
   );
 
   /// Create a copy of GameHistoryEvent
@@ -2772,7 +2997,11 @@ class _$CribCountedImpl implements CribCounted {
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
     required TResult Function(String timestamp, int roundNumber) roundStarted,
-    required TResult Function(String timestamp) cardsDealt,
+    required TResult Function(
+      String timestamp,
+      Map<String, List<PlayingCard>> dealtHands,
+    )
+    cardsDealt,
     required TResult Function(
       String timestamp,
       PlayingCard cutCard,
@@ -2799,6 +3028,7 @@ class _$CribCountedImpl implements CribCounted {
     required TResult Function(
       String timestamp,
       String playerId,
+      List<PlayingCard> hand,
       int totalPoints,
       ScoreBreakdown scoreBreakdown,
     )
@@ -2808,6 +3038,7 @@ class _$CribCountedImpl implements CribCounted {
       String dealerPlayerId,
       int totalPoints,
       ScoreBreakdown scoreBreakdown,
+      List<PlayingCard> cribCards,
     )
     cribCounted,
     required TResult Function(
@@ -2817,14 +3048,24 @@ class _$CribCountedImpl implements CribCounted {
     )
     gameEnded,
   }) {
-    return cribCounted(timestamp, dealerPlayerId, totalPoints, scoreBreakdown);
+    return cribCounted(
+      timestamp,
+      dealerPlayerId,
+      totalPoints,
+      scoreBreakdown,
+      cribCards,
+    );
   }
 
   @override
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function(String timestamp, int roundNumber)? roundStarted,
-    TResult? Function(String timestamp)? cardsDealt,
+    TResult? Function(
+      String timestamp,
+      Map<String, List<PlayingCard>> dealtHands,
+    )?
+    cardsDealt,
     TResult? Function(
       String timestamp,
       PlayingCard cutCard,
@@ -2847,6 +3088,7 @@ class _$CribCountedImpl implements CribCounted {
     TResult? Function(
       String timestamp,
       String playerId,
+      List<PlayingCard> hand,
       int totalPoints,
       ScoreBreakdown scoreBreakdown,
     )?
@@ -2856,6 +3098,7 @@ class _$CribCountedImpl implements CribCounted {
       String dealerPlayerId,
       int totalPoints,
       ScoreBreakdown scoreBreakdown,
+      List<PlayingCard> cribCards,
     )?
     cribCounted,
     TResult? Function(String timestamp, String winnerPlayerId, int finalScore)?
@@ -2866,6 +3109,7 @@ class _$CribCountedImpl implements CribCounted {
       dealerPlayerId,
       totalPoints,
       scoreBreakdown,
+      cribCards,
     );
   }
 
@@ -2873,7 +3117,11 @@ class _$CribCountedImpl implements CribCounted {
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(String timestamp, int roundNumber)? roundStarted,
-    TResult Function(String timestamp)? cardsDealt,
+    TResult Function(
+      String timestamp,
+      Map<String, List<PlayingCard>> dealtHands,
+    )?
+    cardsDealt,
     TResult Function(
       String timestamp,
       PlayingCard cutCard,
@@ -2896,6 +3144,7 @@ class _$CribCountedImpl implements CribCounted {
     TResult Function(
       String timestamp,
       String playerId,
+      List<PlayingCard> hand,
       int totalPoints,
       ScoreBreakdown scoreBreakdown,
     )?
@@ -2905,6 +3154,7 @@ class _$CribCountedImpl implements CribCounted {
       String dealerPlayerId,
       int totalPoints,
       ScoreBreakdown scoreBreakdown,
+      List<PlayingCard> cribCards,
     )?
     cribCounted,
     TResult Function(String timestamp, String winnerPlayerId, int finalScore)?
@@ -2917,6 +3167,7 @@ class _$CribCountedImpl implements CribCounted {
         dealerPlayerId,
         totalPoints,
         scoreBreakdown,
+        cribCards,
       );
     }
     return orElse();
@@ -2986,6 +3237,7 @@ abstract class CribCounted implements GameHistoryEvent {
     required final String dealerPlayerId,
     required final int totalPoints,
     required final ScoreBreakdown scoreBreakdown,
+    final List<PlayingCard> cribCards,
   }) = _$CribCountedImpl;
 
   factory CribCounted.fromJson(Map<String, dynamic> json) =
@@ -2996,6 +3248,7 @@ abstract class CribCounted implements GameHistoryEvent {
   String get dealerPlayerId;
   int get totalPoints;
   ScoreBreakdown get scoreBreakdown;
+  List<PlayingCard> get cribCards;
 
   /// Create a copy of GameHistoryEvent
   /// with the given fields replaced by the non-null parameter values.
@@ -3112,7 +3365,11 @@ class _$GameEndedImpl implements GameEnded {
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
     required TResult Function(String timestamp, int roundNumber) roundStarted,
-    required TResult Function(String timestamp) cardsDealt,
+    required TResult Function(
+      String timestamp,
+      Map<String, List<PlayingCard>> dealtHands,
+    )
+    cardsDealt,
     required TResult Function(
       String timestamp,
       PlayingCard cutCard,
@@ -3139,6 +3396,7 @@ class _$GameEndedImpl implements GameEnded {
     required TResult Function(
       String timestamp,
       String playerId,
+      List<PlayingCard> hand,
       int totalPoints,
       ScoreBreakdown scoreBreakdown,
     )
@@ -3148,6 +3406,7 @@ class _$GameEndedImpl implements GameEnded {
       String dealerPlayerId,
       int totalPoints,
       ScoreBreakdown scoreBreakdown,
+      List<PlayingCard> cribCards,
     )
     cribCounted,
     required TResult Function(
@@ -3164,7 +3423,11 @@ class _$GameEndedImpl implements GameEnded {
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function(String timestamp, int roundNumber)? roundStarted,
-    TResult? Function(String timestamp)? cardsDealt,
+    TResult? Function(
+      String timestamp,
+      Map<String, List<PlayingCard>> dealtHands,
+    )?
+    cardsDealt,
     TResult? Function(
       String timestamp,
       PlayingCard cutCard,
@@ -3187,6 +3450,7 @@ class _$GameEndedImpl implements GameEnded {
     TResult? Function(
       String timestamp,
       String playerId,
+      List<PlayingCard> hand,
       int totalPoints,
       ScoreBreakdown scoreBreakdown,
     )?
@@ -3196,6 +3460,7 @@ class _$GameEndedImpl implements GameEnded {
       String dealerPlayerId,
       int totalPoints,
       ScoreBreakdown scoreBreakdown,
+      List<PlayingCard> cribCards,
     )?
     cribCounted,
     TResult? Function(String timestamp, String winnerPlayerId, int finalScore)?
@@ -3208,7 +3473,11 @@ class _$GameEndedImpl implements GameEnded {
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(String timestamp, int roundNumber)? roundStarted,
-    TResult Function(String timestamp)? cardsDealt,
+    TResult Function(
+      String timestamp,
+      Map<String, List<PlayingCard>> dealtHands,
+    )?
+    cardsDealt,
     TResult Function(
       String timestamp,
       PlayingCard cutCard,
@@ -3231,6 +3500,7 @@ class _$GameEndedImpl implements GameEnded {
     TResult Function(
       String timestamp,
       String playerId,
+      List<PlayingCard> hand,
       int totalPoints,
       ScoreBreakdown scoreBreakdown,
     )?
@@ -3240,6 +3510,7 @@ class _$GameEndedImpl implements GameEnded {
       String dealerPlayerId,
       int totalPoints,
       ScoreBreakdown scoreBreakdown,
+      List<PlayingCard> cribCards,
     )?
     cribCounted,
     TResult Function(String timestamp, String winnerPlayerId, int finalScore)?

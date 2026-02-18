@@ -1,8 +1,10 @@
 package com.jackabee.cribbageclubserver.controller
 
+import com.jackabee.cribbageclubserver.model.analysis.GameAnalysis
 import com.jackabee.cribbageclubserver.model.game.GameState
 import com.jackabee.cribbageclubserver.model.game.GameStateFilter
 import com.jackabee.cribbageclubserver.model.action.GameAction
+import com.jackabee.cribbageclubserver.service.AnalysisService
 import com.jackabee.cribbageclubserver.service.GameService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -13,7 +15,8 @@ import org.springframework.web.bind.annotation.*
 @RequestMapping("/api/games")
 @Tag(name = "Games", description = "Game CRUD and gameplay actions")
 class GameController(
-    private val gameService: GameService
+    private val gameService: GameService,
+    private val analysisService: AnalysisService
 ) {
 
     @Operation(summary = "Get current game state")
@@ -24,6 +27,17 @@ class GameController(
     ): GameState {
         val state = gameService.getGameState(gameId)
         return GameStateFilter.forPlayer(state, userId)
+    }
+
+    @Operation(summary = "Get post-game discard analysis", description = "Returns EV analysis of every discard decision. Only available for completed games.")
+    @GetMapping("/{gameId}/analysis")
+    fun getGameAnalysis(
+        @PathVariable gameId: String,
+        @RequestAttribute("userId") userId: String
+    ): GameAnalysis {
+        val state = gameService.getGameState(gameId)
+        require(state.players.any { it.id == userId }) { "You are not a participant in this game" }
+        return analysisService.analyzeGame(gameId)
     }
 
     @Operation(summary = "Apply a game action (discard, play card, cut, count, go)")

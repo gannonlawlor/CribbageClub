@@ -36,7 +36,8 @@ sealed class GameHistoryEvent {
      * Cards have been dealt to players
      */
     data class CardsDealt(
-        override val timestamp: Instant = Instant.now()
+        override val timestamp: Instant = Instant.now(),
+        val dealtHands: Map<String, List<Card>> = emptyMap()
     ) : GameHistoryEvent()
 
     /**
@@ -83,6 +84,7 @@ sealed class GameHistoryEvent {
     data class HandCounted(
         override val timestamp: Instant = Instant.now(),
         val playerId: String,
+        val hand: List<Card> = emptyList(),
         val totalPoints: Int,
         val scoreBreakdown: ScoreBreakdown
     ) : GameHistoryEvent()
@@ -94,7 +96,8 @@ sealed class GameHistoryEvent {
         override val timestamp: Instant = Instant.now(),
         val dealerPlayerId: String,
         val totalPoints: Int,
-        val scoreBreakdown: ScoreBreakdown
+        val scoreBreakdown: ScoreBreakdown,
+        val cribCards: List<Card> = emptyList()
     ) : GameHistoryEvent()
 
     /**

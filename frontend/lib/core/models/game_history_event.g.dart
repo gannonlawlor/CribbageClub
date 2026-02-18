@@ -23,11 +23,25 @@ Map<String, dynamic> _$$RoundStartedImplToJson(_$RoundStartedImpl instance) =>
 _$CardsDealtImpl _$$CardsDealtImplFromJson(Map<String, dynamic> json) =>
     _$CardsDealtImpl(
       timestamp: json['timestamp'] as String,
+      dealtHands:
+          (json['dealtHands'] as Map<String, dynamic>?)?.map(
+            (k, e) => MapEntry(
+              k,
+              (e as List<dynamic>)
+                  .map((e) => PlayingCard.fromJson(e as Map<String, dynamic>))
+                  .toList(),
+            ),
+          ) ??
+          const {},
       $type: json['type'] as String?,
     );
 
 Map<String, dynamic> _$$CardsDealtImplToJson(_$CardsDealtImpl instance) =>
-    <String, dynamic>{'timestamp': instance.timestamp, 'type': instance.$type};
+    <String, dynamic>{
+      'timestamp': instance.timestamp,
+      'dealtHands': instance.dealtHands,
+      'type': instance.$type,
+    };
 
 _$DeckCutImpl _$$DeckCutImplFromJson(Map<String, dynamic> json) =>
     _$DeckCutImpl(
@@ -98,6 +112,11 @@ _$HandCountedImpl _$$HandCountedImplFromJson(Map<String, dynamic> json) =>
     _$HandCountedImpl(
       timestamp: json['timestamp'] as String,
       playerId: json['playerId'] as String,
+      hand:
+          (json['hand'] as List<dynamic>?)
+              ?.map((e) => PlayingCard.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const [],
       totalPoints: (json['totalPoints'] as num).toInt(),
       scoreBreakdown: ScoreBreakdown.fromJson(
         json['scoreBreakdown'] as Map<String, dynamic>,
@@ -109,6 +128,7 @@ Map<String, dynamic> _$$HandCountedImplToJson(_$HandCountedImpl instance) =>
     <String, dynamic>{
       'timestamp': instance.timestamp,
       'playerId': instance.playerId,
+      'hand': instance.hand,
       'totalPoints': instance.totalPoints,
       'scoreBreakdown': instance.scoreBreakdown,
       'type': instance.$type,
@@ -122,6 +142,11 @@ _$CribCountedImpl _$$CribCountedImplFromJson(Map<String, dynamic> json) =>
       scoreBreakdown: ScoreBreakdown.fromJson(
         json['scoreBreakdown'] as Map<String, dynamic>,
       ),
+      cribCards:
+          (json['cribCards'] as List<dynamic>?)
+              ?.map((e) => PlayingCard.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const [],
       $type: json['type'] as String?,
     );
 
@@ -131,6 +156,7 @@ Map<String, dynamic> _$$CribCountedImplToJson(_$CribCountedImpl instance) =>
       'dealerPlayerId': instance.dealerPlayerId,
       'totalPoints': instance.totalPoints,
       'scoreBreakdown': instance.scoreBreakdown,
+      'cribCards': instance.cribCards,
       'type': instance.$type,
     };
 

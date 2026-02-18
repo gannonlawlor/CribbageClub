@@ -11,6 +11,7 @@ import '../../../core/models/score_breakdown.dart';
 import '../../../shared/utils/card_utils.dart';
 import '../state/game_providers.dart';
 import '../widgets/crib_area.dart';
+import '../widgets/cribbage_board.dart';
 import '../widgets/cut_card.dart';
 import '../widgets/game_controls.dart';
 import '../widgets/hand_fan.dart';
@@ -92,6 +93,14 @@ class GameScreen extends ConsumerWidget {
     final isDealer = gs.dealerIndex == playerIndex;
     final cribRevealed =
         gs.stage == GameStage.counting || gs.stage == GameStage.gameOver;
+
+    // Get crib cards: prefer current state, fall back to CribCounted history event
+    final cribCards = gs.crib.isNotEmpty
+        ? gs.crib
+        : gs.history
+            .whereType<CribCounted>()
+            .lastOrNull
+            ?.cribCards ?? const [];
     final selectedCards = ref.watch(selectedCardsProvider(gameId));
 
     return Scaffold(
@@ -164,11 +173,21 @@ class GameScreen extends ConsumerWidget {
               ),
             ),
 
+            // Cribbage Board
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+              child: CribbageBoard(
+                playerScore: player.score,
+                opponentScore: opponent.score,
+                isDealer: isDealer,
+              ),
+            ),
+
             // Opponent hand
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 4),
               child: OpponentHand(
-                cardCount: opponent.hand.isEmpty ? _estimateOpponentCards(gs) : opponent.hand.length,
+                cardCount: opponent.hand.isEmpty ? _estimateOpponentCards(gs, opponent.id) : opponent.hand.length,
               ),
             ),
 
@@ -195,7 +214,7 @@ class GameScreen extends ConsumerWidget {
                       children: [
                         CutCardDisplay(cutCard: gs.cutCard),
                         const SizedBox(width: 16),
-                        CribArea(crib: gs.crib, revealed: cribRevealed),
+                        CribArea(crib: cribCards, revealed: cribRevealed),
                       ],
                     ),
 
@@ -257,14 +276,21 @@ class GameScreen extends ConsumerWidget {
     );
   }
 
-  int _estimateOpponentCards(GameState gs) {
+  int _estimateOpponentCards(GameState gs, String opponentId) {
     switch (gs.stage) {
       case GameStage.dealing:
       case GameStage.discardingToCrib:
         return 6;
       case GameStage.cutting:
-      case GameStage.pegging:
         return 4;
+      case GameStage.pegging:
+        // Count cards opponent has played since the last CardsDealt event
+        int played = 0;
+        for (final event in gs.history.reversed) {
+          if (event is CardsDealt) break;
+          if (event is CardPlayed && event.playerId == opponentId) played++;
+        }
+        return (4 - played).clamp(0, 4);
       case GameStage.counting:
       case GameStage.gameOver:
         return 0;
