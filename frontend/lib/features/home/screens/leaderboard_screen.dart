@@ -110,21 +110,20 @@ class LeaderboardScreen extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Text(
-                            '${(entry.winRate * 100).toStringAsFixed(0)}%',
+                            '${entry.rating.round()}',
                             style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
                               fontSize: 16,
                             ),
                           ),
-                          if (entry.currentWinStreak > 0)
-                            Text(
-                              '${entry.currentWinStreak} streak',
-                              style: const TextStyle(
-                                color: AppTheme.goldAccent,
-                                fontSize: 12,
-                              ),
+                          Text(
+                            '${(entry.winRate * 100).toStringAsFixed(0)}% win',
+                            style: const TextStyle(
+                              color: Colors.white54,
+                              fontSize: 12,
                             ),
+                          ),
                         ],
                       ),
                     ],

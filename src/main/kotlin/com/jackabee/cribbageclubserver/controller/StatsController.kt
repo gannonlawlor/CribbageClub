@@ -1,5 +1,6 @@
 package com.jackabee.cribbageclubserver.controller
 
+import com.jackabee.cribbageclubserver.entity.PlayerStatsEntity
 import com.jackabee.cribbageclubserver.repository.UserRepository
 import com.jackabee.cribbageclubserver.service.PlayerStatsService
 import io.swagger.v3.oas.annotations.Operation
@@ -17,34 +18,14 @@ class StatsController(
     @GetMapping("/me")
     fun getMyStats(@RequestAttribute("userId") userId: String): StatsResponse {
         val stats = playerStatsService.getStats(userId)
-        return StatsResponse(
-            playerId = stats.playerId,
-            gamesPlayed = stats.gamesPlayed,
-            gamesWon = stats.gamesWon,
-            gamesLost = stats.gamesLost,
-            winRate = stats.winRate,
-            averageScore = stats.averageScore,
-            highestGameScore = stats.highestGameScore,
-            currentWinStreak = stats.currentWinStreak,
-            longestWinStreak = stats.longestWinStreak
-        )
+        return stats.toResponse()
     }
 
     @Operation(summary = "Get stats for a specific player")
     @GetMapping("/{playerId}")
     fun getPlayerStats(@PathVariable playerId: String): StatsResponse {
         val stats = playerStatsService.getStats(playerId)
-        return StatsResponse(
-            playerId = stats.playerId,
-            gamesPlayed = stats.gamesPlayed,
-            gamesWon = stats.gamesWon,
-            gamesLost = stats.gamesLost,
-            winRate = stats.winRate,
-            averageScore = stats.averageScore,
-            highestGameScore = stats.highestGameScore,
-            currentWinStreak = stats.currentWinStreak,
-            longestWinStreak = stats.longestWinStreak
-        )
+        return stats.toResponse()
     }
 
     @Operation(summary = "Get top 10 leaderboard (public)")
@@ -66,11 +47,26 @@ class StatsController(
                 averageScore = stats.averageScore,
                 highestGameScore = stats.highestGameScore,
                 currentWinStreak = stats.currentWinStreak,
-                longestWinStreak = stats.longestWinStreak
+                longestWinStreak = stats.longestWinStreak,
+                rating = stats.rating
             )
         }
     }
 }
+
+private fun PlayerStatsEntity.toResponse() = StatsResponse(
+    playerId = playerId,
+    gamesPlayed = gamesPlayed,
+    gamesWon = gamesWon,
+    gamesLost = gamesLost,
+    winRate = winRate,
+    averageScore = averageScore,
+    highestGameScore = highestGameScore,
+    currentWinStreak = currentWinStreak,
+    longestWinStreak = longestWinStreak,
+    rating = rating,
+    ratingDeviation = ratingDeviation
+)
 
 data class StatsResponse(
     val playerId: String,
@@ -81,7 +77,9 @@ data class StatsResponse(
     val averageScore: Double,
     val highestGameScore: Int,
     val currentWinStreak: Int,
-    val longestWinStreak: Int
+    val longestWinStreak: Int,
+    val rating: Double,
+    val ratingDeviation: Double
 )
 
 data class LeaderboardEntry(
@@ -94,5 +92,6 @@ data class LeaderboardEntry(
     val averageScore: Double,
     val highestGameScore: Int,
     val currentWinStreak: Int,
-    val longestWinStreak: Int
+    val longestWinStreak: Int,
+    val rating: Double
 )

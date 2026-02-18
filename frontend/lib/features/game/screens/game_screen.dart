@@ -480,6 +480,25 @@ class GameScreen extends ConsumerWidget {
               ),
             ],
           ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              TextButton.icon(
+                onPressed: () => context.go('/analysis/${gs.gameId}'),
+                icon: const Icon(Icons.analytics, size: 16),
+                label: const Text('Analyze'),
+                style: TextButton.styleFrom(foregroundColor: Colors.white54),
+              ),
+              const SizedBox(width: 8),
+              TextButton.icon(
+                onPressed: () => context.go('/replay/${gs.gameId}'),
+                icon: const Icon(Icons.replay, size: 16),
+                label: const Text('Replay'),
+                style: TextButton.styleFrom(foregroundColor: Colors.white54),
+              ),
+            ],
+          ),
         ],
       ),
     );

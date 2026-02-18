@@ -34,6 +34,15 @@ class PlayerStatsEntity(
     var longestWinStreak: Int = 0,
 
     @Column(nullable = false)
+    var rating: Double = 1500.0,
+
+    @Column(nullable = false)
+    var ratingDeviation: Double = 350.0,
+
+    @Column(nullable = false)
+    var ratingVolatility: Double = 0.06,
+
+    @Column(nullable = false)
     val createdAt: Instant = Instant.now(),
 
     @Column(nullable = false)
