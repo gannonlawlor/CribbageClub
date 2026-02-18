@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -11,9 +9,6 @@ import '../../../core/models/game_analysis.dart';
 import '../../../core/models/game_state.dart';
 import '../../../core/services/analysis_cache_service.dart';
 import '../../../core/services/local_game_history_provider.dart';
-import '../../../src/rust/api/simple.dart' as rust;
-import '../../daily_puzzle/models/keep_explanation.dart';
-import '../../daily_puzzle/services/insight_generator.dart';
 import '../../daily_puzzle/widgets/explain_bottom_sheet.dart';
 import '../../game/state/game_providers.dart';
 import '../../game/widgets/card_widget.dart';
@@ -652,22 +647,6 @@ class _OptionRow extends StatelessWidget {
   });
 
   void _showExplain(BuildContext context) {
-    final handJson = jsonEncode(dealtHand.map((c) => c.toJson()).toList());
-    final keepJson = jsonEncode(option.keep.map((c) => c.toJson()).toList());
-    final resultJson = rust.explainKeepJson(
-      handJson: handJson,
-      keepJson: keepJson,
-      isDealer: isDealer,
-    );
-    final explanation = KeepExplanation.fromJson(
-      jsonDecode(resultJson) as Map<String, dynamic>,
-    );
-    final insights = InsightGenerator.generateInsights(
-      explanation,
-      option.keep,
-      option.discard,
-    );
-
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -675,8 +654,9 @@ class _OptionRow extends StatelessWidget {
       builder: (_) => ExplainBottomSheet(
         rank: rank,
         keep: option.keep,
-        explanation: explanation,
-        insights: insights,
+        discard: option.discard,
+        hand: dealtHand,
+        isDealer: isDealer,
       ),
     );
   }

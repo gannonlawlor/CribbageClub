@@ -1,29 +1,71 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 
 import '../../../core/models/card.dart';
+import '../../../src/rust/api/simple.dart' as rust;
 import '../../game/widgets/card_widget.dart';
 import '../models/keep_explanation.dart';
+import '../services/insight_generator.dart';
 
-class ExplainBottomSheet extends StatelessWidget {
+/// Bottom sheet that computes the explain analysis on-demand with a loading spinner.
+class ExplainBottomSheet extends StatefulWidget {
   final int rank;
   final List<PlayingCard> keep;
-  final KeepExplanation explanation;
-  final List<String> insights;
+  final List<PlayingCard> discard;
+  final List<dynamic> hand;
+  final bool isDealer;
 
   const ExplainBottomSheet({
     super.key,
     required this.rank,
     required this.keep,
-    required this.explanation,
-    required this.insights,
+    required this.discard,
+    required this.hand,
+    required this.isDealer,
   });
 
   @override
-  Widget build(BuildContext context) {
-    final netScore = explanation.isDealer
-        ? explanation.averageHandScore + explanation.averageCribScore
-        : explanation.averageHandScore - explanation.averageCribScore;
+  State<ExplainBottomSheet> createState() => _ExplainBottomSheetState();
+}
 
+class _ExplainBottomSheetState extends State<ExplainBottomSheet> {
+  KeepExplanation? _explanation;
+  List<String>? _insights;
+
+  @override
+  void initState() {
+    super.initState();
+    // Compute explanation after the first frame (shows loading immediately)
+    Future(_computeExplanation);
+  }
+
+  void _computeExplanation() {
+    final handJson = jsonEncode(widget.hand.map((c) => c.toJson()).toList());
+    final keepJson = jsonEncode(widget.keep.map((c) => c.toJson()).toList());
+    final resultJson = rust.explainKeepJson(
+      handJson: handJson,
+      keepJson: keepJson,
+      isDealer: widget.isDealer,
+    );
+    final explanation = KeepExplanation.fromJson(
+      jsonDecode(resultJson) as Map<String, dynamic>,
+    );
+    final insights = InsightGenerator.generateInsights(
+      explanation,
+      widget.keep,
+      widget.discard,
+    );
+    if (mounted) {
+      setState(() {
+        _explanation = explanation;
+        _insights = insights;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
       decoration: const BoxDecoration(
@@ -50,7 +92,7 @@ class ExplainBottomSheet extends StatelessWidget {
           Row(
             children: [
               Text(
-                'Why #$rank?',
+                'Why #${widget.rank}?',
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 20,
@@ -58,7 +100,7 @@ class ExplainBottomSheet extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 12),
-              ...keep.map(
+              ...widget.keep.map(
                 (card) => Padding(
                   padding: const EdgeInsets.only(right: 3),
                   child: CardWidget(
@@ -72,62 +114,87 @@ class ExplainBottomSheet extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          // Insights
-          for (final insight in insights)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    '\u2022 ',
-                    style: TextStyle(color: Colors.white70, fontSize: 15),
-                  ),
-                  Expanded(
-                    child: Text(
-                      insight,
-                      style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 14,
-                        height: 1.3,
+          // Loading or content
+          if (_explanation == null || _insights == null)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 24),
+              child: Center(
+                child: CircularProgressIndicator(color: Colors.white54),
+              ),
+            )
+          else ...[
+            // Insights
+            for (final insight in _insights!)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      '\u2022 ',
+                      style: TextStyle(color: Colors.white70, fontSize: 15),
+                    ),
+                    Expanded(
+                      child: Text(
+                        insight,
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 14,
+                          height: 1.3,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          const SizedBox(height: 12),
-          // Score summary
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _ScoreStat(
-                  label: 'Hand avg',
-                  value: explanation.averageHandScore.toStringAsFixed(1),
-                ),
-                _ScoreStat(
-                  label: 'Crib avg',
-                  value:
-                      '${explanation.isDealer ? '+' : '\u2212'}${explanation.averageCribScore.toStringAsFixed(1)}',
-                ),
-                _ScoreStat(
-                  label: 'Net',
-                  value: netScore.toStringAsFixed(1),
-                  bold: true,
-                ),
-              ],
-            ),
+            const SizedBox(height: 12),
+            // Score summary
+            _ScoreSummary(explanation: _explanation!),
+            // Cut score distribution
+            const SizedBox(height: 12),
+            _CutDistribution(cutScores: _explanation!.cutScores),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _ScoreSummary extends StatelessWidget {
+  final KeepExplanation explanation;
+
+  const _ScoreSummary({required this.explanation});
+
+  @override
+  Widget build(BuildContext context) {
+    final netScore = explanation.isDealer
+        ? explanation.averageHandScore + explanation.averageCribScore
+        : explanation.averageHandScore - explanation.averageCribScore;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          _ScoreStat(
+            label: 'Hand avg',
+            value: explanation.averageHandScore.toStringAsFixed(1),
           ),
-          // Cut score distribution
-          const SizedBox(height: 12),
-          _CutDistribution(cutScores: explanation.cutScores),
+          _ScoreStat(
+            label: 'Crib avg',
+            value:
+                '${explanation.isDealer ? '+' : '\u2212'}${explanation.averageCribScore.toStringAsFixed(1)}',
+          ),
+          _ScoreStat(
+            label: 'Net',
+            value: netScore.toStringAsFixed(1),
+            bold: true,
+          ),
         ],
       ),
     );
