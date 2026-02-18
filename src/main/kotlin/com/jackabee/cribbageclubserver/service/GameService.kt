@@ -6,6 +6,8 @@ import com.jackabee.cribbageclubserver.controller.ImportGameRequest
 import com.jackabee.cribbageclubserver.controller.ImportGamesResponse
 import com.jackabee.cribbageclubserver.controller.ImportedGameMapping
 import com.jackabee.cribbageclubserver.entity.GameEntity
+import com.jackabee.cribbageclubserver.model.action.ForfeitReason
+import com.jackabee.cribbageclubserver.model.action.GameAction
 import com.jackabee.cribbageclubserver.model.game.GameHistoryEvent
 import com.jackabee.cribbageclubserver.model.game.GameState
 import com.jackabee.cribbageclubserver.model.game.GameStage
@@ -40,6 +42,8 @@ class GameService(
     @Autowired(required = false) private val objectMapper: ObjectMapper? = null,
     @Autowired(required = false) private val playerStatsService: PlayerStatsService? = null,
     @Autowired(required = false) private val rustEngineAdapter: RustEngineAdapter? = null,
+    @Autowired(required = false) private val turnTimerService: TurnTimerService? = null,
+    @Autowired(required = false) private val forfeitService: ForfeitService? = null,
 ) {
     private val logger = LoggerFactory.getLogger(GameService::class.java)
 
@@ -63,10 +67,17 @@ class GameService(
         games[gameId] = CachedGame(engine)
 
         // Persist to database
-        saveGameEntity(gameId, players[0], players[1], initialState, isAIGame = false)
+        val entity = saveGameEntity(gameId, players[0], players[1], initialState, isAIGame = false)
+
+        // Start turn timer for online games
+        if (entity != null) {
+            turnTimerService?.onTurnStart(gameId, entity)
+            gameRepository?.save(entity)
+        }
 
         // Broadcast the initial game state via WebSocket if available
-        webSocketService?.broadcastGameStateUpdate(gameId, initialState)
+        val timing = entity?.let { turnTimerService?.getTimingFields(gameId, it) }
+        webSocketService?.broadcastGameStateUpdate(gameId, initialState, timing)
         logger.info("Created game {} between {} and {}", gameId, players[0].name, players[1].name)
 
         return initialState
@@ -127,10 +138,22 @@ class GameService(
      * Applies a human player's action to the game and processes any subsequent AI actions.
      * Broadcasts the updated game state via WebSocket.
      */
-    fun applyHumanAction(gameId: String, action: com.jackabee.cribbageclubserver.model.action.GameAction): GameState {
+    fun applyHumanAction(gameId: String, action: GameAction): GameState {
+        // Handle forfeit action separately (bypass Rust engine)
+        if (action is GameAction.Forfeit) {
+            val fs = forfeitService ?: throw IllegalStateException("ForfeitService not available")
+            return fs.forfeitGame(gameId, action.playerId, action.reason)
+        }
+
         val adapter = requireAdapter()
         val cached = games[gameId] ?: loadGame(gameId)
             ?: throw IllegalArgumentException("Game not found: $gameId")
+
+        // Deduct time bank if over turn limit (non-AI games only)
+        val entity = gameRepository?.findById(gameId)?.orElse(null)
+        if (entity != null && !entity.isAIGame) {
+            turnTimerService?.onActionReceived(gameId, action.playerId, entity)
+        }
 
         // Apply human action
         adapter.applyAction(cached.engine, action)
@@ -141,8 +164,19 @@ class GameService(
         // Update database snapshot
         updateGameEntity(gameId, finalState)
 
-        // Broadcast the updated game state via WebSocket if available
-        webSocketService?.broadcastGameStateUpdate(gameId, finalState)
+        // Start new turn timer (non-AI games, if game not over)
+        if (entity != null && !entity.isAIGame && finalState.stage != GameStage.GAME_OVER) {
+            turnTimerService?.onTurnStart(gameId, entity)
+            gameRepository?.save(entity)
+        } else if (entity != null && finalState.stage == GameStage.GAME_OVER) {
+            entity.turnStartedAt = null
+            gameRepository?.save(entity)
+            turnTimerService?.clearGame(gameId)
+        }
+
+        // Broadcast with timing info
+        val timing = entity?.let { turnTimerService?.getTimingFields(gameId, it) }
+        webSocketService?.broadcastGameStateUpdate(gameId, finalState, timing)
 
         return finalState
     }
@@ -178,12 +212,20 @@ class GameService(
      * Removes a game from the service and database.
      */
     fun removeGame(gameId: String) {
+        turnTimerService?.clearGame(gameId)
         val cached = games.remove(gameId)
         cached?.engine?.close()
 
         // Remove from database
         gameRepository?.deleteById(gameId)
         logger.info("Removed game {}", gameId)
+    }
+
+    /**
+     * Gets the GameEntity for a game (used by controller for timing info).
+     */
+    fun getGameEntity(gameId: String): GameEntity? {
+        return gameRepository?.findById(gameId)?.orElse(null)
     }
 
     /**
@@ -400,6 +442,9 @@ class GameService(
                 is GameHistoryEvent.GameEnded -> event.copy(
                     winnerPlayerId = remapId(event.winnerPlayerId)
                 )
+                is GameHistoryEvent.GameForfeited -> event.copy(
+                    forfeitingPlayerId = remapId(event.forfeitingPlayerId)
+                )
                 is GameHistoryEvent.RoundStarted -> event
                 is GameHistoryEvent.PeggingEnded -> event
             }
@@ -480,9 +525,9 @@ class GameService(
         isAIGame: Boolean,
         aiPlayerId: String? = null,
         aiDifficulty: String? = null
-    ) {
-        val mapper = objectMapper ?: return
-        val repo = gameRepository ?: return
+    ): GameEntity? {
+        val mapper = objectMapper ?: return null
+        val repo = gameRepository ?: return null
 
         val entity = GameEntity(
             id = gameId,
@@ -500,6 +545,7 @@ class GameService(
             stateJson = mapper.writeValueAsString(state)
         )
         repo.save(entity)
+        return entity
     }
 
     private fun updateGameEntity(gameId: String, state: GameState) {

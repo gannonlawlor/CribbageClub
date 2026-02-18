@@ -169,10 +169,10 @@ class HomeScreen extends ConsumerWidget {
                       child: ElevatedButton.icon(
                         onPressed: isCreating
                             ? null
-                            : () => _quickMatch(context, ref),
-                        icon: const Icon(Icons.flash_on, size: 24),
+                            : () => _showDifficultyPicker(context, ref),
+                        icon: const Icon(Icons.smart_toy, size: 24),
                         label: const Text(
-                          'Quick Game',
+                          'Play vs AI',
                           style: TextStyle(fontSize: 18),
                         ),
                       ),
@@ -184,10 +184,10 @@ class HomeScreen extends ConsumerWidget {
                       child: ElevatedButton.icon(
                         onPressed: isCreating
                             ? null
-                            : () => _showDifficultyPicker(context, ref),
-                        icon: const Icon(Icons.smart_toy, size: 24),
+                            : () => _showOnlineOptions(context, ref),
+                        icon: const Icon(Icons.people, size: 24),
                         label: const Text(
-                          'Play vs AI',
+                          'Play Online',
                           style: TextStyle(fontSize: 18),
                         ),
                       ),
@@ -203,7 +203,7 @@ class HomeScreen extends ConsumerWidget {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             const Text(
-                              'Daily Puzzle',
+                              'Daily Challenge',
                               style: TextStyle(fontSize: 18),
                             ),
                             Consumer(
@@ -241,63 +241,6 @@ class HomeScreen extends ConsumerWidget {
                         icon: const Icon(Icons.all_inclusive, size: 24),
                         label: const Text(
                           'Practice Puzzles',
-                          style: TextStyle(fontSize: 18),
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.white,
-                          side: const BorderSide(color: Colors.white38),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 56,
-                      child: OutlinedButton.icon(
-                        onPressed: isCreating
-                            ? null
-                            : () => _browseLobbies(context, ref),
-                        icon: const Icon(Icons.list, size: 24),
-                        label: const Text(
-                          'Browse Lobbies',
-                          style: TextStyle(fontSize: 18),
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.white,
-                          side: const BorderSide(color: Colors.white38),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 56,
-                      child: OutlinedButton.icon(
-                        onPressed: isCreating
-                            ? null
-                            : () => _createPrivateGame(context, ref),
-                        icon: const Icon(Icons.lock, size: 24),
-                        label: const Text(
-                          'Create Private Game',
-                          style: TextStyle(fontSize: 18),
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.white,
-                          side: const BorderSide(color: Colors.white38),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 56,
-                      child: OutlinedButton.icon(
-                        onPressed: isCreating
-                            ? null
-                            : () => _showJoinByCodeDialog(context, ref),
-                        icon: const Icon(Icons.vpn_key, size: 24),
-                        label: const Text(
-                          'Join by Code',
                           style: TextStyle(fontSize: 18),
                         ),
                         style: OutlinedButton.styleFrom(
@@ -389,6 +332,87 @@ class HomeScreen extends ConsumerWidget {
               onTap: () {
                 Navigator.pop(ctx);
                 _createLocalAIGame(context, ref, 'hard');
+              },
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showOnlineOptions(BuildContext context, WidgetRef ref) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppTheme.feltGreenDark,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Padding(
+              padding: EdgeInsets.all(16),
+              child: Text(
+                'Play Online',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.flash_on, color: AppTheme.goldAccent),
+              title: const Text('Quick Game',
+                  style: TextStyle(color: Colors.white)),
+              subtitle: const Text('Find a match instantly',
+                  style: TextStyle(color: Colors.white54, fontSize: 12)),
+              trailing:
+                  const Icon(Icons.chevron_right, color: Colors.white38),
+              onTap: () {
+                Navigator.pop(ctx);
+                _quickMatch(context, ref);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.list, color: AppTheme.goldAccent),
+              title: const Text('Browse Lobbies',
+                  style: TextStyle(color: Colors.white)),
+              subtitle: const Text('Join an open lobby',
+                  style: TextStyle(color: Colors.white54, fontSize: 12)),
+              trailing:
+                  const Icon(Icons.chevron_right, color: Colors.white38),
+              onTap: () {
+                Navigator.pop(ctx);
+                _browseLobbies(context, ref);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.lock, color: AppTheme.goldAccent),
+              title: const Text('Create Private Game',
+                  style: TextStyle(color: Colors.white)),
+              subtitle: const Text('Invite a friend by code',
+                  style: TextStyle(color: Colors.white54, fontSize: 12)),
+              trailing:
+                  const Icon(Icons.chevron_right, color: Colors.white38),
+              onTap: () {
+                Navigator.pop(ctx);
+                _createPrivateGame(context, ref);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.vpn_key, color: AppTheme.goldAccent),
+              title: const Text('Join by Code',
+                  style: TextStyle(color: Colors.white)),
+              subtitle: const Text('Enter an invite code',
+                  style: TextStyle(color: Colors.white54, fontSize: 12)),
+              trailing:
+                  const Icon(Icons.chevron_right, color: Colors.white38),
+              onTap: () {
+                Navigator.pop(ctx);
+                _showJoinByCodeDialog(context, ref);
               },
             ),
             const SizedBox(height: 8),

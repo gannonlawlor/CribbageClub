@@ -42,7 +42,7 @@ final analysisProvider = FutureProvider.family
         state = s;
       } else {
         final restClient = ref.read(restClientProvider);
-        state = await restClient.getGameState(gameId);
+        state = (await restClient.getGameState(gameId)).gameState;
       }
 
       // 4. Yield a frame so the loading UI renders before blocking FFI call

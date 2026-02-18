@@ -10,7 +10,8 @@ import com.jackabee.cribbageclubserver.model.card.Card
     JsonSubTypes.Type(value = GameAction.PlayCard::class, name = "PlayCard"),
     JsonSubTypes.Type(value = GameAction.CutDeck::class, name = "CutDeck"),
     JsonSubTypes.Type(value = GameAction.Go::class, name = "Go"),
-    JsonSubTypes.Type(value = GameAction.CountHand::class, name = "CountHand")
+    JsonSubTypes.Type(value = GameAction.CountHand::class, name = "CountHand"),
+    JsonSubTypes.Type(value = GameAction.Forfeit::class, name = "Forfeit")
 )
 sealed class GameAction {
     abstract val playerId: String
@@ -20,4 +21,11 @@ sealed class GameAction {
     data class CutDeck(override val playerId: String) : GameAction()
     data class Go(override val playerId: String) : GameAction()
     data class CountHand(override val playerId: String) : GameAction()
+    data class Forfeit(override val playerId: String, val reason: ForfeitReason = ForfeitReason.RESIGN) : GameAction()
+}
+
+enum class ForfeitReason {
+    RESIGN,
+    TIMEOUT,
+    DISCONNECT
 }

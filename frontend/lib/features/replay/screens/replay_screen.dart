@@ -156,7 +156,7 @@ final _replayGameStateProvider = FutureProvider.family
         return gs;
       } else {
         final restClient = ref.read(restClientProvider);
-        return restClient.getGameState(gameId);
+        return (await restClient.getGameState(gameId)).gameState;
       }
     });
 

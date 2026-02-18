@@ -7,11 +7,21 @@ import '../../../src/rust/api/simple.dart' as rust;
 import '../models/daily_puzzle.dart';
 
 class PuzzleGenerator {
+  static const puzzlesPerDay = 5;
+
   PuzzleGenerator._();
 
-  /// Generate a deterministic puzzle for the given date.
-  static DailyPuzzle generate(DateTime date) {
-    final seed = date.year * 10000 + date.month * 100 + date.day;
+  /// Generate a deterministic set of [puzzlesPerDay] puzzles for the given date.
+  static DailyPuzzleSet generateSet(DateTime date) {
+    final baseSeed = date.year * 10000 + date.month * 100 + date.day;
+    final puzzles = <DailyPuzzle>[];
+    for (var i = 0; i < puzzlesPerDay; i++) {
+      puzzles.add(_generateOne(date, baseSeed * puzzlesPerDay + i, i));
+    }
+    return DailyPuzzleSet(date: date, puzzles: puzzles);
+  }
+
+  static DailyPuzzle _generateOne(DateTime date, int seed, int index) {
     final rng = Random(seed);
 
     // Build full deck and Fisher-Yates shuffle
@@ -29,9 +39,14 @@ class PuzzleGenerator {
     }
 
     final hand = deck.sublist(0, 6);
-    final isDealer = seed % 2 == 0;
+    final isDealer = rng.nextBool();
 
-    return DailyPuzzle(date: date, hand: hand, isDealer: isDealer);
+    return DailyPuzzle(
+      date: date,
+      index: index,
+      hand: hand,
+      isDealer: isDealer,
+    );
   }
 
   /// Evaluate all 15 possible keeps and return them ranked best-to-worst.

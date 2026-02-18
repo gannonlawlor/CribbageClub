@@ -21,6 +21,11 @@ class GameStateUpdateMessage with _$GameStateUpdateMessage {
   const factory GameStateUpdateMessage({
     required String gameId,
     required GameState gameState,
+    String? turnStartedAt,
+    @Default(30000) int turnTimeLimitMs,
+    @Default(120000) int player1TimeBankMs,
+    @Default(120000) int player2TimeBankMs,
+    @Default(false) bool isTimed,
     int? timestamp,
   }) = _GameStateUpdateMessage;
 

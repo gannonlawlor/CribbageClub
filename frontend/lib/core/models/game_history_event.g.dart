@@ -175,3 +175,19 @@ Map<String, dynamic> _$$GameEndedImplToJson(_$GameEndedImpl instance) =>
       'finalScore': instance.finalScore,
       'type': instance.$type,
     };
+
+_$GameForfeitedImpl _$$GameForfeitedImplFromJson(Map<String, dynamic> json) =>
+    _$GameForfeitedImpl(
+      timestamp: json['timestamp'] as String? ?? '',
+      forfeitingPlayerId: json['forfeitingPlayerId'] as String,
+      reason: json['reason'] as String,
+      $type: json['type'] as String?,
+    );
+
+Map<String, dynamic> _$$GameForfeitedImplToJson(_$GameForfeitedImpl instance) =>
+    <String, dynamic>{
+      'timestamp': instance.timestamp,
+      'forfeitingPlayerId': instance.forfeitingPlayerId,
+      'reason': instance.reason,
+      'type': instance.$type,
+    };

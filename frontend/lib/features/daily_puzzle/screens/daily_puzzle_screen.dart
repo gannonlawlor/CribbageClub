@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../config/theme.dart';
 import '../../../core/models/card.dart';
 import '../../game/widgets/card_widget.dart';
-import '../models/daily_puzzle.dart';
+import '../services/puzzle_generator.dart';
 import '../state/puzzle_provider.dart';
 import '../widgets/keep_rank_tile.dart';
+import '../widgets/puzzle_summary.dart';
 import '../widgets/streak_badge.dart';
 
 const _months = [
@@ -26,7 +26,8 @@ const _months = [
   'Dec',
 ];
 
-String _formatDate(DateTime d) => '${_months[d.month - 1]} ${d.day}, ${d.year}';
+String _formatDate(DateTime d) =>
+    '${_months[d.month - 1]} ${d.day}, ${d.year}';
 
 class DailyPuzzleScreen extends ConsumerStatefulWidget {
   const DailyPuzzleScreen({super.key});
@@ -47,7 +48,7 @@ class _DailyPuzzleScreenState extends ConsumerState<DailyPuzzleScreen> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(dailyPuzzleProvider);
-    final puzzle = state.puzzle;
+    final puzzleSet = state.puzzleSet;
 
     return Scaffold(
       body: Container(
@@ -56,13 +57,27 @@ class _DailyPuzzleScreenState extends ConsumerState<DailyPuzzleScreen> {
           child: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 500),
-              child: puzzle == null
+              child: puzzleSet == null
                   ? const Center(child: CircularProgressIndicator())
                   : AnimatedSwitcher(
                       duration: const Duration(milliseconds: 400),
-                      child: state.phase == PuzzlePhase.playing
-                          ? _PlayingView(key: const ValueKey('playing'))
-                          : _RevealedView(key: const ValueKey('revealed')),
+                      child: switch (state.phase) {
+                        PuzzlePhase.playing => _PlayingView(
+                            key: ValueKey('playing_${state.currentPuzzleIndex}'),
+                          ),
+                        PuzzlePhase.revealed => _RevealedView(
+                            key: ValueKey('revealed_${state.currentPuzzleIndex}'),
+                          ),
+                        PuzzlePhase.summary => PuzzleSummary(
+                            key: const ValueKey('summary'),
+                            puzzleSet: puzzleSet,
+                            playerScores: state.playerScores,
+                            playerRanks: state.playerRanks,
+                            allResults: state.allResults,
+                            streak: state.streak,
+                            onBackToHome: () => context.go('/'),
+                          ),
+                      },
                     ),
             ),
           ),
@@ -72,15 +87,61 @@ class _DailyPuzzleScreenState extends ConsumerState<DailyPuzzleScreen> {
   }
 }
 
+class _ProgressDots extends StatelessWidget {
+  final int total;
+  final int current;
+  final List<int?> ranks;
+
+  const _ProgressDots({
+    required this.total,
+    required this.current,
+    required this.ranks,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (var i = 0; i < total; i++) ...[
+          if (i > 0) const SizedBox(width: 6),
+          Container(
+            width: 10,
+            height: 10,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: _dotColor(i),
+              border: i == current
+                  ? Border.all(color: Colors.white, width: 1.5)
+                  : null,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Color _dotColor(int index) {
+    if (ranks[index] == null) {
+      // Not yet played
+      return Colors.white.withValues(alpha: 0.2);
+    }
+    if (ranks[index] == 1) return Colors.green;
+    return AppTheme.goldAccent;
+  }
+}
+
 class _PlayingView extends ConsumerWidget {
   const _PlayingView({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(dailyPuzzleProvider);
-    final puzzle = state.puzzle!;
+    final puzzle = state.currentPuzzle!;
     final dateStr = _formatDate(puzzle.date);
     final canSubmit = state.selectedCards.length == 4;
+    final puzzleNum = state.currentPuzzleIndex + 1;
+    final total = PuzzleGenerator.puzzlesPerDay;
 
     return Column(
       children: [
@@ -98,13 +159,25 @@ class _PlayingView extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Daily Puzzle',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    Row(
+                      children: [
+                        const Text(
+                          'Daily Challenge',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '$puzzleNum/$total',
+                          style: const TextStyle(
+                            color: Colors.white54,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ],
                     ),
                     Text(
                       dateStr,
@@ -120,6 +193,21 @@ class _PlayingView extends ConsumerWidget {
             ],
           ),
         ),
+        // Progress dots
+        _ProgressDots(
+          total: total,
+          current: state.currentPuzzleIndex,
+          ranks: state.playerRanks,
+        ),
+        // Running total if we have prior scores
+        if (state.currentPuzzleIndex > 0)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text(
+              'Running total: ${state.totalScore.toStringAsFixed(1)} avg pts',
+              style: const TextStyle(color: Colors.white38, fontSize: 13),
+            ),
+          ),
         const Spacer(),
         // Instruction
         Padding(
@@ -177,11 +265,14 @@ class _RevealedView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(dailyPuzzleProvider);
-    final puzzle = state.puzzle!;
-    final results = puzzle.results!;
+    final puzzle = state.currentPuzzle!;
+    final idx = state.currentPuzzleIndex;
+    final results = state.allResults[idx]!;
     final dateStr = _formatDate(puzzle.date);
-    final playerRank = state.playerRank;
+    final playerRank = state.playerRanks[idx];
     final isOptimalPick = playerRank == 1;
+    final puzzleNum = idx + 1;
+    final total = PuzzleGenerator.puzzlesPerDay;
 
     return Column(
       children: [
@@ -199,13 +290,25 @@ class _RevealedView extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Daily Puzzle',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    Row(
+                      children: [
+                        const Text(
+                          'Daily Challenge',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '$puzzleNum/$total',
+                          style: const TextStyle(
+                            color: Colors.white54,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ],
                     ),
                     Text(
                       dateStr,
@@ -221,6 +324,13 @@ class _RevealedView extends ConsumerWidget {
             ],
           ),
         ),
+        // Progress dots
+        _ProgressDots(
+          total: total,
+          current: idx,
+          ranks: state.playerRanks,
+        ),
+        const SizedBox(height: 8),
         // Result banner
         if (playerRank != null)
           Padding(
@@ -239,41 +349,16 @@ class _RevealedView extends ConsumerWidget {
                       : Colors.white24,
                 ),
               ),
-              child: Column(
-                children: [
-                  Text(
-                    isOptimalPick
-                        ? 'Optimal!'
-                        : 'Your pick: #$playerRank of 15',
-                    style: TextStyle(
-                      color: isOptimalPick ? Colors.green : Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  if (isOptimalPick && state.streak > 0)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(
-                            Icons.local_fire_department,
-                            color: Colors.orange,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            '${state.streak} day streak!',
-                            style: const TextStyle(
-                              color: Colors.orange,
-                              fontSize: 16,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                ],
+              child: Text(
+                isOptimalPick
+                    ? 'Optimal!'
+                    : 'Your pick: #$playerRank of 15',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: isOptimalPick ? Colors.green : Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ),
@@ -288,8 +373,7 @@ class _RevealedView extends ConsumerWidget {
             style: const TextStyle(color: Colors.white54, fontSize: 13),
           ),
         ),
-        const SizedBox(height: 8),
-        // Legend
+        const SizedBox(height: 4),
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: 24),
           child: Text(
@@ -316,58 +400,24 @@ class _RevealedView extends ConsumerWidget {
             },
           ),
         ),
-        // Bottom buttons
+        // Next / See Results button
         Padding(
           padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () => _shareResult(context, state, puzzle),
-                  icon: const Icon(Icons.share, size: 18),
-                  label: const Text('Share'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.white,
-                    side: const BorderSide(color: Colors.white38),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                ),
+          child: SizedBox(
+            width: double.infinity,
+            height: 56,
+            child: ElevatedButton(
+              onPressed: () {
+                ref.read(dailyPuzzleProvider.notifier).nextPuzzle();
+              },
+              child: Text(
+                state.isLastPuzzle ? 'See Results' : 'Next Puzzle',
+                style: const TextStyle(fontSize: 18),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: () => context.go('/'),
-                  child: const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 14),
-                    child: Text('Back to Home'),
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ],
-    );
-  }
-
-  void _shareResult(
-    BuildContext context,
-    DailyPuzzleState state,
-    DailyPuzzle puzzle,
-  ) {
-    final dateStr = _formatDate(puzzle.date);
-    final rank = state.playerRank ?? 0;
-    final streak = state.streak;
-    final buffer = StringBuffer()
-      ..writeln('Cribbage Club Daily Puzzle - $dateStr')
-      ..writeln('Result: #$rank / 15')
-      ..writeln(rank == 1 ? 'Optimal pick!' : '');
-    if (streak > 0) {
-      buffer.writeln('Streak: $streak day${streak > 1 ? 's' : ''}');
-    }
-    Clipboard.setData(ClipboardData(text: buffer.toString().trim()));
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Result copied to clipboard!')),
     );
   }
 }

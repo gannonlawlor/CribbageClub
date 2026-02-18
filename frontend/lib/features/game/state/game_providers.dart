@@ -5,7 +5,9 @@ import '../../../core/auth/auth_provider.dart';
 import '../../../core/engine/local_game_service.dart';
 import '../../../core/models/card.dart';
 import '../../../core/models/game_action.dart';
+import '../../../core/models/game_response.dart';
 import '../../../core/models/game_state.dart';
+import '../../../core/models/websocket_messages.dart';
 import '../../../core/services/game_feedback_service.dart';
 import '../animation/game_animation_controller.dart';
 import 'local_game_notifier.dart';
@@ -22,6 +24,12 @@ class GameNotifierState {
   final String? error;
   final ConnectionStatus connectionStatus;
   final bool isDiscarding;
+  // Timing fields (online games only)
+  final DateTime? turnStartedAt;
+  final int turnTimeLimitMs;
+  final int myTimeBankMs;
+  final int opponentTimeBankMs;
+  final bool isTimed;
 
   const GameNotifierState({
     this.gameState,
@@ -29,6 +37,11 @@ class GameNotifierState {
     this.error,
     this.connectionStatus = ConnectionStatus.disconnected,
     this.isDiscarding = false,
+    this.turnStartedAt,
+    this.turnTimeLimitMs = 30000,
+    this.myTimeBankMs = 120000,
+    this.opponentTimeBankMs = 120000,
+    this.isTimed = false,
   });
 
   GameNotifierState copyWith({
@@ -37,6 +50,11 @@ class GameNotifierState {
     String? error,
     ConnectionStatus? connectionStatus,
     bool? isDiscarding,
+    DateTime? turnStartedAt,
+    int? turnTimeLimitMs,
+    int? myTimeBankMs,
+    int? opponentTimeBankMs,
+    bool? isTimed,
   }) {
     return GameNotifierState(
       gameState: gameState ?? this.gameState,
@@ -44,6 +62,11 @@ class GameNotifierState {
       error: error,
       connectionStatus: connectionStatus ?? this.connectionStatus,
       isDiscarding: isDiscarding ?? this.isDiscarding,
+      turnStartedAt: turnStartedAt ?? this.turnStartedAt,
+      turnTimeLimitMs: turnTimeLimitMs ?? this.turnTimeLimitMs,
+      myTimeBankMs: myTimeBankMs ?? this.myTimeBankMs,
+      opponentTimeBankMs: opponentTimeBankMs ?? this.opponentTimeBankMs,
+      isTimed: isTimed ?? this.isTimed,
     );
   }
 }
@@ -85,12 +108,19 @@ class GameNotifier extends StateNotifier<GameNotifierState> {
 
   Future<void> _loadGameState() async {
     try {
-      final gameState = await _restClient.getGameState(gameId);
+      final response = await _restClient.getGameState(gameId);
       state = GameNotifierState(
-        gameState: gameState,
+        gameState: response.gameState,
         connectionStatus: state.connectionStatus,
+        turnStartedAt: response.turnStartedAt != null
+            ? DateTime.tryParse(response.turnStartedAt!)
+            : null,
+        turnTimeLimitMs: response.turnTimeLimitMs,
+        myTimeBankMs: response.myTimeBankMs,
+        opponentTimeBankMs: response.opponentTimeBankMs,
+        isTimed: response.isTimed,
       );
-      _notifyAnimation(gameState);
+      _notifyAnimation(response.gameState);
     } catch (e) {
       state = GameNotifierState(error: 'Failed to load game: $e');
     }
@@ -122,29 +152,35 @@ class GameNotifier extends StateNotifier<GameNotifierState> {
     );
   }
 
+  void _applyWsMessage(GameStateUpdateMessage msg) {
+    if (_actionInFlight) return;
+    final gs = msg.gameState;
+    // Determine which player we are to map player1/player2 banks to my/opponent
+    final isPlayer1 = gs.players.isNotEmpty && gs.players[0].id == _playerId;
+    state = GameNotifierState(
+      gameState: gs,
+      connectionStatus: state.connectionStatus,
+      turnStartedAt:
+          msg.turnStartedAt != null ? DateTime.tryParse(msg.turnStartedAt!) : null,
+      turnTimeLimitMs: msg.turnTimeLimitMs,
+      myTimeBankMs: isPlayer1 ? msg.player1TimeBankMs : msg.player2TimeBankMs,
+      opponentTimeBankMs: isPlayer1 ? msg.player2TimeBankMs : msg.player1TimeBankMs,
+      isTimed: msg.isTimed,
+    );
+    _notifyAnimation(gs);
+  }
+
   void _subscribeToGame() {
     _wsClient.subscribeToGame(
       gameId,
-      onStateUpdate: (newState) {
-        // Suppress WebSocket updates while a REST action is in flight
-        // to prevent stale broadcasts from overwriting authoritative REST state
-        if (_actionInFlight) return;
-        state = GameNotifierState(
-          gameState: newState,
-          connectionStatus: state.connectionStatus,
-        );
-        _notifyAnimation(newState);
+      onStateUpdate: (msg) {
+        _applyWsMessage(msg);
       },
     );
     _wsClient.subscribeToUserState(
-      onStateUpdate: (newState) {
-        if (newState.gameId != gameId) return;
-        if (_actionInFlight) return;
-        state = GameNotifierState(
-          gameState: newState,
-          connectionStatus: state.connectionStatus,
-        );
-        _notifyAnimation(newState);
+      onStateUpdate: (msg) {
+        if (msg.gameId != gameId) return;
+        _applyWsMessage(msg);
       },
     );
     _wsClient.subscribeToErrors(
@@ -162,24 +198,35 @@ class GameNotifier extends StateNotifier<GameNotifierState> {
   // to prevent stale broadcasts from creating race conditions
   bool _actionInFlight = false;
 
+  void _applyResponse(GameResponse response) {
+    state = GameNotifierState(
+      gameState: response.gameState,
+      connectionStatus: state.connectionStatus,
+      turnStartedAt: response.turnStartedAt != null
+          ? DateTime.tryParse(response.turnStartedAt!)
+          : null,
+      turnTimeLimitMs: response.turnTimeLimitMs,
+      myTimeBankMs: response.myTimeBankMs,
+      opponentTimeBankMs: response.opponentTimeBankMs,
+      isTimed: response.isTimed,
+    );
+    _notifyAnimation(response.gameState);
+  }
+
   Future<void> discardCards(List<PlayingCard> cards) async {
     if (state.isDiscarding) return;
     _actionInFlight = true;
     state = state.copyWith(isDiscarding: true, error: null);
     try {
-      GameState? newState;
+      GameResponse? lastResponse;
       for (final card in cards) {
-        newState = await _restClient.applyAction(
+        lastResponse = await _restClient.applyAction(
           gameId,
           GameAction.discardToCrib(playerId: _playerId, card: card),
         );
       }
-      if (newState != null) {
-        state = GameNotifierState(
-          gameState: newState,
-          connectionStatus: state.connectionStatus,
-        );
-        _notifyAnimation(newState);
+      if (lastResponse != null) {
+        _applyResponse(lastResponse);
       }
     } catch (e) {
       state = state.copyWith(isDiscarding: false, error: 'Discard failed: $e');
@@ -192,15 +239,11 @@ class GameNotifier extends StateNotifier<GameNotifierState> {
     _actionInFlight = true;
     state = state.copyWith(error: null);
     try {
-      final newState = await _restClient.applyAction(
+      final response = await _restClient.applyAction(
         gameId,
         GameAction.playCard(playerId: _playerId, card: card),
       );
-      state = GameNotifierState(
-        gameState: newState,
-        connectionStatus: state.connectionStatus,
-      );
-      _notifyAnimation(newState);
+      _applyResponse(response);
     } catch (e) {
       state = state.copyWith(error: 'Play card failed: $e');
     } finally {
@@ -212,15 +255,11 @@ class GameNotifier extends StateNotifier<GameNotifierState> {
     _actionInFlight = true;
     state = state.copyWith(error: null);
     try {
-      final newState = await _restClient.applyAction(
+      final response = await _restClient.applyAction(
         gameId,
         GameAction.cutDeck(playerId: _playerId),
       );
-      state = GameNotifierState(
-        gameState: newState,
-        connectionStatus: state.connectionStatus,
-      );
-      _notifyAnimation(newState);
+      _applyResponse(response);
     } catch (e) {
       state = state.copyWith(error: 'Cut failed: $e');
     } finally {
@@ -232,15 +271,11 @@ class GameNotifier extends StateNotifier<GameNotifierState> {
     _actionInFlight = true;
     state = state.copyWith(error: null);
     try {
-      final newState = await _restClient.applyAction(
+      final response = await _restClient.applyAction(
         gameId,
         GameAction.go(playerId: _playerId),
       );
-      state = GameNotifierState(
-        gameState: newState,
-        connectionStatus: state.connectionStatus,
-      );
-      _notifyAnimation(newState);
+      _applyResponse(response);
     } catch (e) {
       state = state.copyWith(error: 'Go failed: $e');
     } finally {
@@ -252,17 +287,26 @@ class GameNotifier extends StateNotifier<GameNotifierState> {
     _actionInFlight = true;
     state = state.copyWith(error: null);
     try {
-      final newState = await _restClient.applyAction(
+      final response = await _restClient.applyAction(
         gameId,
         GameAction.countHand(playerId: _playerId),
       );
-      state = GameNotifierState(
-        gameState: newState,
-        connectionStatus: state.connectionStatus,
-      );
-      _notifyAnimation(newState);
+      _applyResponse(response);
     } catch (e) {
       state = state.copyWith(error: 'Count failed: $e');
+    } finally {
+      _actionInFlight = false;
+    }
+  }
+
+  Future<void> resign() async {
+    _actionInFlight = true;
+    state = state.copyWith(error: null);
+    try {
+      final response = await _restClient.resignGame(gameId);
+      _applyResponse(response);
+    } catch (e) {
+      state = state.copyWith(error: 'Resign failed: $e');
     } finally {
       _actionInFlight = false;
     }

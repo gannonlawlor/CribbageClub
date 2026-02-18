@@ -4,7 +4,6 @@ import 'package:stomp_dart_client/stomp_dart_client.dart';
 import '../../config/constants.dart';
 import '../auth/auth_service.dart';
 import '../models/game_action.dart';
-import '../models/game_state.dart';
 import '../models/websocket_messages.dart';
 
 enum ConnectionStatus {
@@ -148,7 +147,7 @@ class WebSocketClient {
 
   void subscribeToGame(
     String gameId, {
-    required void Function(GameState) onStateUpdate,
+    required void Function(GameStateUpdateMessage) onStateUpdate,
   }) {
     final key = 'game-$gameId';
     _subscriptions[key]?.call(unsubscribeHeaders: {});
@@ -157,7 +156,7 @@ class WebSocketClient {
       if (frame.body == null) return;
       final json = jsonDecode(frame.body!) as Map<String, dynamic>;
       final message = GameStateUpdateMessage.fromJson(json);
-      onStateUpdate(message.gameState);
+      onStateUpdate(message);
     }
 
     _pendingSubscriptions[key] = _SubscriptionInfo(
@@ -173,14 +172,14 @@ class WebSocketClient {
     }
   }
 
-  void subscribeToUserState({required void Function(GameState) onStateUpdate}) {
+  void subscribeToUserState({required void Function(GameStateUpdateMessage) onStateUpdate}) {
     _subscriptions['user-state']?.call(unsubscribeHeaders: {});
 
     void callback(StompFrame frame) {
       if (frame.body == null) return;
       final json = jsonDecode(frame.body!) as Map<String, dynamic>;
       final message = GameStateUpdateMessage.fromJson(json);
-      onStateUpdate(message.gameState);
+      onStateUpdate(message);
     }
 
     _pendingSubscriptions['user-state'] = _SubscriptionInfo(

@@ -142,6 +142,7 @@ class GameAnimationController extends ChangeNotifier {
       PeggingEnded() => null,
       HandCounted() => null,
       GameEnded() => null,
+      GameForfeited() => null,
     };
   }
 

@@ -2,6 +2,7 @@ package com.jackabee.cribbageclubserver.websocket
 
 import com.jackabee.cribbageclubserver.model.game.GameState
 import com.jackabee.cribbageclubserver.model.game.GameStateFilter
+import com.jackabee.cribbageclubserver.service.TimingInfo
 import org.springframework.messaging.simp.SimpMessagingTemplate
 import org.springframework.stereotype.Service
 
@@ -16,13 +17,21 @@ class GameWebSocketService(
      * Each connected player receives a filtered view showing only their own hand.
      * Falls back to a spectator view on the topic if no sessions are registered.
      */
-    fun broadcastGameStateUpdate(gameId: String, gameState: GameState) {
+    fun broadcastGameStateUpdate(gameId: String, gameState: GameState, timing: TimingInfo? = null) {
         val sessions = sessionRegistry.getSessionsForGame(gameId)
 
         if (sessions.isNotEmpty()) {
             for (session in sessions) {
                 val filtered = GameStateFilter.forPlayer(gameState, session.playerId)
-                val message = GameStateUpdateMessage(gameId = gameId, gameState = filtered)
+                val message = GameStateUpdateMessage(
+                    gameId = gameId,
+                    gameState = filtered,
+                    turnStartedAt = timing?.turnStartedAt,
+                    turnTimeLimitMs = timing?.turnTimeLimitMs ?: 30000,
+                    player1TimeBankMs = timing?.player1TimeBankMs ?: 120000,
+                    player2TimeBankMs = timing?.player2TimeBankMs ?: 120000,
+                    isTimed = timing?.isTimed ?: false
+                )
                 messagingTemplate.convertAndSendToUser(
                     session.sessionId,
                     "/queue/game-state",
@@ -33,7 +42,15 @@ class GameWebSocketService(
 
         // Always send a spectator view on the topic for observers
         val spectatorView = GameStateFilter.forPlayer(gameState, "")
-        val spectatorMessage = GameStateUpdateMessage(gameId = gameId, gameState = spectatorView)
+        val spectatorMessage = GameStateUpdateMessage(
+            gameId = gameId,
+            gameState = spectatorView,
+            turnStartedAt = timing?.turnStartedAt,
+            turnTimeLimitMs = timing?.turnTimeLimitMs ?: 30000,
+            player1TimeBankMs = timing?.player1TimeBankMs ?: 120000,
+            player2TimeBankMs = timing?.player2TimeBankMs ?: 120000,
+            isTimed = timing?.isTimed ?: false
+        )
         messagingTemplate.convertAndSend("/topic/game/$gameId", spectatorMessage)
     }
 

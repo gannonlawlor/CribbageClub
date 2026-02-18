@@ -28,6 +28,7 @@ import '../widgets/score_display.dart';
 import '../widgets/dev_overlay.dart';
 import '../widgets/score_popup_overlay.dart';
 import '../widgets/stage_indicator.dart';
+import '../widgets/turn_timer.dart';
 
 /// Tracks which local game IDs have already been saved to history (prevents duplicate saves on rebuild).
 final _savedLocalGamesProvider = StateProvider<Set<String>>((ref) => {});
@@ -190,7 +191,7 @@ class GameScreen extends ConsumerWidget {
                 children: [
                   Column(
                     children: [
-                      // Top bar: back + scores + history
+                      // Top bar: back + scores + history + resign
                       _TopBar(
                         gameNotifier: gameNotifier,
                         player: player,
@@ -198,6 +199,8 @@ class GameScreen extends ConsumerWidget {
                         isDealer: isDealer,
                         events: gs.history,
                         playerId: playerId,
+                        isOnlineGame: !_isLocal,
+                        isGameOver: gs.stage == GameStage.gameOver,
                         onBack: () => context.go('/'),
                         onError: () {
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -207,6 +210,7 @@ class GameScreen extends ConsumerWidget {
                           if (n is GameNotifier) n.clearError();
                           if (n is LocalGameNotifier) n.clearError();
                         },
+                        onResign: () => _confirmResign(context, ref),
                       ),
 
                       // Reconnecting banner
@@ -248,6 +252,34 @@ class GameScreen extends ConsumerWidget {
                             'Connection lost. Please go back and rejoin.',
                             style: TextStyle(color: Colors.white, fontSize: 12),
                             textAlign: TextAlign.center,
+                          ),
+                        ),
+
+                      // Turn timers (online timed games only)
+                      if (gameNotifier.isTimed)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 2,
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              TurnTimer(
+                                turnStartedAt: gameNotifier.turnStartedAt,
+                                turnTimeLimitMs: gameNotifier.turnTimeLimitMs,
+                                timeBankMs: gameNotifier.opponentTimeBankMs,
+                                isActivePlayer: !isMyTurn,
+                                isTimed: true,
+                              ),
+                              TurnTimer(
+                                turnStartedAt: gameNotifier.turnStartedAt,
+                                turnTimeLimitMs: gameNotifier.turnTimeLimitMs,
+                                timeBankMs: gameNotifier.myTimeBankMs,
+                                isActivePlayer: isMyTurn,
+                                isTimed: true,
+                              ),
+                            ],
                           ),
                         ),
 
@@ -472,6 +504,33 @@ class GameScreen extends ConsumerWidget {
     }
   }
 
+  void _confirmResign(BuildContext context, WidgetRef ref) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Resign Game?'),
+        content: const Text(
+          'Are you sure you want to resign? Your opponent will be awarded the win.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              final n = _readNotifier(ref);
+              if (n is GameNotifier) n.resign();
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Resign'),
+          ),
+        ],
+      ),
+    );
+  }
+
   bool _canPlayAnyCard(List<PlayingCard> hand, int peggingCount) {
     return hand.any((card) => card.rank.peggingValue + peggingCount <= 31);
   }
@@ -512,8 +571,21 @@ class GameScreen extends ConsumerWidget {
     final opponent = gs.players[playerIndex >= 0 ? 1 - playerIndex : 1];
     final margin = (player.score - opponent.score).abs();
 
+    final forfeit = gs.history.whereType<GameForfeited>().firstOrNull;
     final handCounts = gs.history.whereType<HandCounted>().toList();
     final cribCounts = gs.history.whereType<CribCounted>().toList();
+
+    String? forfeitText;
+    if (forfeit != null) {
+      final reason = forfeit.reason;
+      final isMe = forfeit.forfeitingPlayerId == playerId;
+      forfeitText = switch (reason) {
+        'RESIGN' => isMe ? 'You resigned' : 'Opponent resigned',
+        'TIMEOUT' => isMe ? 'You ran out of time' : 'Opponent ran out of time',
+        'DISCONNECT' => isMe ? 'You disconnected' : 'Opponent disconnected',
+        _ => isMe ? 'You forfeited' : 'Opponent forfeited',
+      };
+    }
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12),
@@ -533,12 +605,20 @@ class GameScreen extends ConsumerWidget {
               fontWeight: FontWeight.bold,
             ),
           ),
+          if (forfeitText != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Text(
+                forfeitText,
+                style: const TextStyle(color: Colors.white54, fontSize: 13),
+              ),
+            ),
           const SizedBox(height: 4),
           Text(
             '${player.name}: ${player.score}  -  ${opponent.name}: ${opponent.score}',
             style: const TextStyle(color: Colors.white, fontSize: 14),
           ),
-          if (margin > 0)
+          if (margin > 0 && forfeit == null)
             Text(
               didWin ? 'Won by $margin points' : 'Lost by $margin points',
               style: TextStyle(
@@ -548,7 +628,7 @@ class GameScreen extends ConsumerWidget {
                 fontSize: 12,
               ),
             ),
-          if (handCounts.isNotEmpty || cribCounts.isNotEmpty) ...[
+          if (forfeit == null && (handCounts.isNotEmpty || cribCounts.isNotEmpty)) ...[
             const SizedBox(height: 6),
             ...handCounts.reversed
                 .take(2)
@@ -667,8 +747,11 @@ class _TopBar extends StatelessWidget {
   final bool isDealer;
   final List<GameHistoryEvent> events;
   final String playerId;
+  final bool isOnlineGame;
+  final bool isGameOver;
   final VoidCallback onBack;
   final VoidCallback onError;
+  final VoidCallback onResign;
 
   const _TopBar({
     required this.gameNotifier,
@@ -677,8 +760,11 @@ class _TopBar extends StatelessWidget {
     required this.isDealer,
     required this.events,
     required this.playerId,
+    required this.isOnlineGame,
+    required this.isGameOver,
     required this.onBack,
     required this.onError,
+    required this.onResign,
   });
 
   @override
@@ -704,6 +790,13 @@ class _TopBar extends StatelessWidget {
             IconButton(
               icon: const Icon(Icons.warning, color: Colors.amber, size: 20),
               onPressed: onError,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+            ),
+          if (isOnlineGame && !isGameOver)
+            IconButton(
+              icon: const Icon(Icons.flag, color: Colors.white54, size: 20),
+              onPressed: onResign,
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
             ),

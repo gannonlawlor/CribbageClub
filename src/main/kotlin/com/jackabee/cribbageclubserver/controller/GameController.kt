@@ -1,11 +1,15 @@
 package com.jackabee.cribbageclubserver.controller
 
+import com.jackabee.cribbageclubserver.model.action.ForfeitReason
+import com.jackabee.cribbageclubserver.model.action.GameAction
 import com.jackabee.cribbageclubserver.model.analysis.GameAnalysis
+import com.jackabee.cribbageclubserver.model.game.GameResponse
 import com.jackabee.cribbageclubserver.model.game.GameState
 import com.jackabee.cribbageclubserver.model.game.GameStateFilter
-import com.jackabee.cribbageclubserver.model.action.GameAction
 import com.jackabee.cribbageclubserver.service.AnalysisService
+import com.jackabee.cribbageclubserver.service.ForfeitService
 import com.jackabee.cribbageclubserver.service.GameService
+import com.jackabee.cribbageclubserver.service.TurnTimerService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.ResponseEntity
@@ -16,17 +20,24 @@ import org.springframework.web.bind.annotation.*
 @Tag(name = "Games", description = "Game CRUD and gameplay actions")
 class GameController(
     private val gameService: GameService,
-    private val analysisService: AnalysisService
+    private val analysisService: AnalysisService,
+    private val forfeitService: ForfeitService,
+    private val turnTimerService: TurnTimerService
 ) {
 
-    @Operation(summary = "Get current game state")
+    @Operation(summary = "Get current game state with timing info")
     @GetMapping("/{gameId}")
     fun getGameState(
         @PathVariable gameId: String,
         @RequestAttribute("userId") userId: String
-    ): GameState {
+    ): GameResponse {
         val state = gameService.getGameState(gameId)
-        return GameStateFilter.forPlayer(state, userId)
+        val entity = gameService.getGameEntity(gameId)
+        return if (entity != null) {
+            turnTimerService.buildGameResponse(gameId, entity, state, userId)
+        } else {
+            GameResponse(gameState = GameStateFilter.forPlayer(state, userId))
+        }
     }
 
     @Operation(summary = "Get post-game discard analysis", description = "Returns EV analysis of every discard decision. Only available for completed games.")
@@ -53,15 +64,35 @@ class GameController(
         return ResponseEntity.ok().build()
     }
 
-    @Operation(summary = "Apply a game action (discard, play card, cut, count, go)")
+    @Operation(summary = "Apply a game action (discard, play card, cut, count, go, forfeit)")
     @PostMapping("/{gameId}/actions")
     fun applyAction(
         @PathVariable gameId: String,
         @RequestBody action: GameAction,
         @RequestAttribute("userId") userId: String
-    ): GameState {
+    ): GameResponse {
         val state = gameService.applyHumanAction(gameId, action)
-        return GameStateFilter.forPlayer(state, userId)
+        val entity = gameService.getGameEntity(gameId)
+        return if (entity != null) {
+            turnTimerService.buildGameResponse(gameId, entity, state, userId)
+        } else {
+            GameResponse(gameState = GameStateFilter.forPlayer(state, userId))
+        }
+    }
+
+    @Operation(summary = "Resign from a game")
+    @PostMapping("/{gameId}/resign")
+    fun resignGame(
+        @PathVariable gameId: String,
+        @RequestAttribute("userId") userId: String
+    ): GameResponse {
+        val state = forfeitService.forfeitGame(gameId, userId, ForfeitReason.RESIGN)
+        val entity = gameService.getGameEntity(gameId)
+        return if (entity != null) {
+            turnTimerService.buildGameResponse(gameId, entity, state, userId)
+        } else {
+            GameResponse(gameState = GameStateFilter.forPlayer(state, userId))
+        }
     }
 
     @Operation(summary = "Create a game against an AI opponent", description = "Difficulty: basic, medium, or hard")

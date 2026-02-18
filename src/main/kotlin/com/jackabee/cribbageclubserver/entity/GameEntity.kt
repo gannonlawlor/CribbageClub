@@ -63,6 +63,18 @@ class GameEntity(
     @Column(nullable = true)
     var originalLocalGameId: String? = null,
 
+    @Column(nullable = true)
+    var turnStartedAt: Instant? = null,
+
+    @Column(nullable = false)
+    var player1TimeBankMs: Long = 120000,
+
+    @Column(nullable = false)
+    var player2TimeBankMs: Long = 120000,
+
+    @Column(nullable = true)
+    var forfeitReason: String? = null,
+
     @Version
     var version: Long = 0
 )
