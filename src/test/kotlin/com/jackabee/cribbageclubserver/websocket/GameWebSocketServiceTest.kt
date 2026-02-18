@@ -1,7 +1,11 @@
 package com.jackabee.cribbageclubserver.websocket
 
+import com.jackabee.cribbageclubserver.bridge.CribbageEngineLib
+import com.jackabee.cribbageclubserver.bridge.RustEngineAdapter
 import com.jackabee.cribbageclubserver.model.player.Player
 import com.jackabee.cribbageclubserver.service.GameService
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
 import org.mockito.kotlin.eq
@@ -10,6 +14,16 @@ import org.mockito.kotlin.verify
 import org.springframework.messaging.simp.SimpMessagingTemplate
 
 class GameWebSocketServiceTest {
+
+    companion object {
+        private lateinit var lib: CribbageEngineLib
+
+        @JvmStatic
+        @BeforeAll
+        fun loadNativeLib() {
+            lib = CribbageEngineLib.load()
+        }
+    }
 
     private val messagingTemplate = mock<SimpMessagingTemplate>()
     private val sessionRegistry = WebSocketSessionRegistry()
@@ -23,7 +37,9 @@ class GameWebSocketServiceTest {
             Player("player1", "Player 1"),
             Player("player2", "Player 2")
         )
-        val gameService = GameService()
+        val objectMapper = jacksonObjectMapper()
+        val adapter = RustEngineAdapter(lib, objectMapper)
+        val gameService = GameService(objectMapper = objectMapper, rustEngineAdapter = adapter)
         val gameState = gameService.createGame(players)
 
         // When

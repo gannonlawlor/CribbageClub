@@ -30,6 +30,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-websocket")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
+    implementation("net.java.dev.jna:jna:5.17.0")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.15")
     implementation("io.jsonwebtoken:jjwt-api:0.13.0")
@@ -52,6 +53,23 @@ kotlin {
     }
 }
 
+// ── Rust native library build ───────────────────────────────────────
+
+val cargoReleaseBuild by tasks.registering(Exec::class) {
+    description = "Build the Rust cribbage-engine crate in release mode"
+    workingDir = file("engine")
+    // Use absolute path to cargo since ~/.cargo/bin may not be in Gradle's PATH
+    val cargoPath = File(System.getProperty("user.home"), ".cargo/bin/cargo").absolutePath
+    commandLine(cargoPath, "build", "--release")
+}
+
+tasks.named("compileKotlin") {
+    dependsOn(cargoReleaseBuild)
+}
+
 tasks.withType<Test> {
+    // Make the Rust native library available to JNA during tests
+    val libDir = file("engine/target/release").absolutePath
+    systemProperty("jna.library.path", libDir)
     useJUnitPlatform()
 }
