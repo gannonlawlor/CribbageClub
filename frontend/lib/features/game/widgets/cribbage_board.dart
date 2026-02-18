@@ -1,24 +1,33 @@
+import 'dart:math';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import '../../../config/theme.dart';
 
-class CribbageBoard extends StatefulWidget {
+/// Perimeter cribbage board that wraps around three edges (left, top, right)
+/// of its child content. The path runs from bottom-left → up → across top →
+/// down to bottom-right. Two parallel tracks: outer (player/gold) and
+/// inner (opponent/white).
+class PerimeterCribbageBoard extends StatefulWidget {
+  static const double boardWidth = 28.0;
+
   final int playerScore;
   final int opponentScore;
   final bool isDealer;
+  final Widget child;
 
-  const CribbageBoard({
+  const PerimeterCribbageBoard({
     super.key,
     required this.playerScore,
     required this.opponentScore,
     this.isDealer = false,
+    required this.child,
   });
 
   @override
-  State<CribbageBoard> createState() => _CribbageBoardState();
+  State<PerimeterCribbageBoard> createState() => _PerimeterCribbageBoardState();
 }
 
-class _CribbageBoardState extends State<CribbageBoard>
+class _PerimeterCribbageBoardState extends State<PerimeterCribbageBoard>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _playerAnim;
@@ -37,7 +46,7 @@ class _CribbageBoardState extends State<CribbageBoard>
   }
 
   @override
-  void didUpdateWidget(CribbageBoard oldWidget) {
+  void didUpdateWidget(PerimeterCribbageBoard oldWidget) {
     super.didUpdateWidget(oldWidget);
 
     final playerDelta = (widget.playerScore - _oldPlayerScore).abs();
@@ -46,7 +55,6 @@ class _CribbageBoardState extends State<CribbageBoard>
 
     if (maxDelta == 0) return;
 
-    // Duration: 50ms per hole for the largest move
     final duration = Duration(milliseconds: 50 * maxDelta);
     _controller.duration = duration;
 
@@ -78,212 +86,314 @@ class _CribbageBoardState extends State<CribbageBoard>
       animation: _controller,
       builder: (context, child) {
         return CustomPaint(
-          size: const Size(double.infinity, 36),
-          painter: _CribbageBoardPainter(
+          foregroundPainter: _PerimeterBoardPainter(
             playerScore: _playerAnim.value,
             opponentScore: _opponentAnim.value,
           ),
+          child: child,
         );
       },
+      child: Padding(
+        padding: const EdgeInsets.only(
+          left: PerimeterCribbageBoard.boardWidth,
+          top: PerimeterCribbageBoard.boardWidth,
+          right: PerimeterCribbageBoard.boardWidth,
+        ),
+        child: widget.child,
+      ),
     );
   }
 }
 
-class _CribbageBoardPainter extends CustomPainter {
+class _PerimeterBoardPainter extends CustomPainter {
   final double playerScore;
   final double opponentScore;
 
   static const int _totalHoles = 121;
   static const int _groupSize = 5;
-  static const double _holeRadius = 1.5;
+  static const double _holeRadius = 1.4;
   static const double _pegRadius = 3.0;
-  static const double _trackPadding = 14.0;
-  static const double _trackSpacing = 5.0;
+  static const double _boardWidth = PerimeterCribbageBoard.boardWidth;
+  static const double _cornerRadius = 14.0;
 
-  _CribbageBoardPainter({
+  // Track offsets from strip center line
+  static const double _outerTrackOffset = 5.0; // player (gold) — closer to edge
+  static const double _innerTrackOffset = -5.0; // opponent (white) — closer to content
+
+  _PerimeterBoardPainter({
     required this.playerScore,
     required this.opponentScore,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
-    final boardRect = Rect.fromLTWH(0, 0, size.width, size.height);
+    _drawBoardBackground(canvas, size);
+    _drawBoardBorder(canvas, size);
 
-    // Draw board background
-    final boardPaint = Paint()
-      ..shader = ui.Gradient.linear(Offset(0, 0), Offset(0, size.height), [
-        AppTheme.boardBrownLight,
-        AppTheme.boardBrown,
-      ]);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(boardRect, const Radius.circular(8)),
-      boardPaint,
-    );
+    final outerHoles = _calculateHolePositions(size, _outerTrackOffset);
+    final innerHoles = _calculateHolePositions(size, _innerTrackOffset);
 
-    // Draw subtle border
-    final borderPaint = Paint()
-      ..color = AppTheme.boardHole.withValues(alpha: 0.5)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1;
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(boardRect, const Radius.circular(8)),
-      borderPaint,
-    );
-
-    final trackWidth = size.width - 2 * _trackPadding;
-    final centerY = size.height / 2;
-    final opponentTrackY = centerY - _trackSpacing;
-    final playerTrackY = centerY + _trackSpacing;
-
-    // Calculate hole positions
-    final positions = _calculateHolePositions(trackWidth);
-
-    // Draw holes for both tracks
-    final holePaint = Paint()..color = AppTheme.boardHole;
-    for (final pos in positions) {
-      final x = _trackPadding + pos;
-      canvas.drawCircle(Offset(x, opponentTrackY), _holeRadius, holePaint);
-      canvas.drawCircle(Offset(x, playerTrackY), _holeRadius, holePaint);
-    }
-
-    // Draw milestone markers (31, 61, 91, 121)
-    final milestones = [31, 61, 91, 121];
-    final markerPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.4)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 0.5;
-    final textPainter = TextPainter(textDirection: TextDirection.ltr);
-    for (final m in milestones) {
-      if (m - 1 < positions.length) {
-        final x = _trackPadding + positions[m - 1];
-        // Small tick above/below tracks
-        canvas.drawLine(
-          Offset(x, opponentTrackY - 4),
-          Offset(x, opponentTrackY - 2),
-          markerPaint,
-        );
-        canvas.drawLine(
-          Offset(x, playerTrackY + 2),
-          Offset(x, playerTrackY + 4),
-          markerPaint,
-        );
-        // Label below the board
-        textPainter.text = TextSpan(
-          text: '$m',
-          style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.35),
-            fontSize: 6,
-          ),
-        );
-        textPainter.layout();
-        textPainter.paint(
-          canvas,
-          Offset(x - textPainter.width / 2, playerTrackY + 5),
-        );
-      }
-    }
-
-    // Draw start label
-    textPainter.text = TextSpan(
-      text: '0',
-      style: TextStyle(
-        color: Colors.white.withValues(alpha: 0.35),
-        fontSize: 6,
-      ),
-    );
-    textPainter.layout();
-    textPainter.paint(
-      canvas,
-      Offset(_trackPadding - textPainter.width / 2, playerTrackY + 5),
-    );
+    _drawHoles(canvas, outerHoles);
+    _drawHoles(canvas, innerHoles);
+    _drawMilestones(canvas, size, outerHoles, innerHoles);
 
     // Draw pegs
-    final opponentPegPos = _scoreToPosition(opponentScore, positions);
-    final playerPegPos = _scoreToPosition(playerScore, positions);
+    final playerPos = _scoreToPosition(playerScore, outerHoles);
+    final opponentPos = _scoreToPosition(opponentScore, innerHoles);
 
-    // Opponent peg (white)
-    _drawPeg(
-      canvas,
-      Offset(_trackPadding + opponentPegPos, opponentTrackY),
-      AppTheme.pegWhite,
-    );
-
-    // Player peg (gold)
-    _drawPeg(
-      canvas,
-      Offset(_trackPadding + playerPegPos, playerTrackY),
-      AppTheme.pegGold,
-    );
-
-    // Draw track labels
-    textPainter.text = TextSpan(
-      text: 'You',
-      style: TextStyle(
-        color: AppTheme.pegGold.withValues(alpha: 0.7),
-        fontSize: 7,
-        fontWeight: FontWeight.bold,
-      ),
-    );
-    textPainter.layout();
-    textPainter.paint(canvas, Offset(2, playerTrackY - textPainter.height / 2));
-
-    textPainter.text = TextSpan(
-      text: 'Opp',
-      style: TextStyle(
-        color: AppTheme.pegWhite.withValues(alpha: 0.7),
-        fontSize: 7,
-        fontWeight: FontWeight.bold,
-      ),
-    );
-    textPainter.layout();
-    textPainter.paint(
-      canvas,
-      Offset(2, opponentTrackY - textPainter.height / 2),
-    );
+    _drawPeg(canvas, opponentPos, AppTheme.pegWhite);
+    _drawPeg(canvas, playerPos, AppTheme.pegGold);
   }
 
-  List<double> _calculateHolePositions(double trackWidth) {
-    // 121 holes with grouping every 5
-    final positions = <double>[];
+  /// Draws the three-sided board frame (left, top, right) with rounded top corners.
+  void _drawBoardBackground(Canvas canvas, Size size) {
+    final path = _buildFramePath(size);
+
+    final paint = Paint()
+      ..shader = ui.Gradient.linear(
+        Offset(0, 0),
+        Offset(0, _boardWidth),
+        [AppTheme.boardBrownLight, AppTheme.boardBrown],
+      );
+    canvas.drawPath(path, paint);
+  }
+
+  void _drawBoardBorder(Canvas canvas, Size size) {
+    final path = _buildFramePath(size);
+
+    final paint = Paint()
+      ..color = AppTheme.boardHole.withValues(alpha: 0.5)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0;
+    canvas.drawPath(path, paint);
+  }
+
+  /// Three-sided open frame: left strip, top strip (with rounded corners), right strip.
+  Path _buildFramePath(Size size) {
+    final w = size.width;
+    final h = size.height;
+    final bw = _boardWidth;
+    final r = _cornerRadius;
+    final ir = r - bw; // inner corner radius (may be <= 0)
+
+    final path = Path();
+
+    // Outer edge: start bottom-left, go up, arc top-left, across top, arc top-right, down
+    path.moveTo(0, h);
+    path.lineTo(0, r);
+    path.arcToPoint(Offset(r, 0), radius: Radius.circular(r));
+    path.lineTo(w - r, 0);
+    path.arcToPoint(Offset(w, r), radius: Radius.circular(r));
+    path.lineTo(w, h);
+
+    // Inner edge: bottom-right inner, up, arc top-right inner, across, arc top-left inner, down
+    path.lineTo(w - bw, h);
+    if (ir > 0) {
+      path.lineTo(w - bw, r);
+      path.arcToPoint(
+        Offset(w - r, bw),
+        radius: Radius.circular(ir),
+        clockwise: false,
+      );
+      path.lineTo(r, bw);
+      path.arcToPoint(
+        Offset(bw, r),
+        radius: Radius.circular(ir),
+        clockwise: false,
+      );
+    } else {
+      path.lineTo(w - bw, bw);
+      path.lineTo(bw, bw);
+    }
+    path.lineTo(bw, h);
+    path.close();
+
+    return path;
+  }
+
+  /// Total path length across all 5 segments.
+  double _totalPathLength(Size size) {
+    final segs = _segmentLengths(size);
+    return segs.fold(0.0, (a, b) => a + b);
+  }
+
+  /// Returns lengths of [leftEdge, topLeftArc, topEdge, topRightArc, rightEdge].
+  List<double> _segmentLengths(Size size) {
+    final w = size.width;
+    final h = size.height;
+    final r = _cornerRadius;
+
+    final leftLen = h - r; // bottom of left strip to start of arc
+    final arcLen = (pi / 2) * r; // quarter circle
+    final topLen = w - 2 * r; // between arcs
+    final rightLen = h - r; // end of arc to bottom of right strip
+
+    return [leftLen, arcLen, topLen, arcLen, rightLen];
+  }
+
+  /// Maps a linear distance along the path to a 2D offset on the center line
+  /// of the board strip, shifted by [trackOffset] perpendicular to the path.
+  Offset _pathDistanceToOffset(double d, Size size, double trackOffset) {
+    final w = size.width;
+    final h = size.height;
+    final bw = _boardWidth;
+    final r = _cornerRadius;
+    final center = bw / 2; // center of strip
+
+    final segs = _segmentLengths(size);
+    double remaining = d;
+
+    // Segment 0: Left edge — going up from (0, h) to (0, r)
+    if (remaining <= segs[0]) {
+      final t = remaining / segs[0];
+      final y = h - t * (h - r);
+      // Center of left strip is at x = center
+      // trackOffset: positive = toward outer (left edge of screen), negative = toward inner (content)
+      return Offset(center + trackOffset, y);
+    }
+    remaining -= segs[0];
+
+    // Segment 1: Top-left arc — quarter circle from (0, r) to (r, 0)
+    if (remaining <= segs[1]) {
+      final t = remaining / segs[1];
+      final angle = pi + t * (pi / 2); // from pi (left) to 3pi/2 (top)
+      final cx = r; // arc center
+      final cy = r;
+      final pathX = cx + r * cos(angle);
+      final pathY = cy + r * sin(angle);
+      // Normal points outward (away from arc center)
+      final nx = cos(angle);
+      final ny = sin(angle);
+      return Offset(
+        pathX + nx * (center - r) + nx * trackOffset,
+        pathY + ny * (center - r) + ny * trackOffset,
+      );
+    }
+    remaining -= segs[1];
+
+    // Segment 2: Top edge — going right from (r, 0) to (w-r, 0)
+    if (remaining <= segs[2]) {
+      final t = remaining / segs[2];
+      final x = r + t * (w - 2 * r);
+      return Offset(x, center + trackOffset);
+    }
+    remaining -= segs[2];
+
+    // Segment 3: Top-right arc — quarter circle from (w-r, 0) to (w, r)
+    if (remaining <= segs[3]) {
+      final t = remaining / segs[3];
+      final angle = (3 * pi / 2) + t * (pi / 2); // from 3pi/2 to 2pi
+      final cx = w - r;
+      final cy = r;
+      final pathX = cx + r * cos(angle);
+      final pathY = cy + r * sin(angle);
+      final nx = cos(angle);
+      final ny = sin(angle);
+      return Offset(
+        pathX + nx * (center - r) + nx * trackOffset,
+        pathY + ny * (center - r) + ny * trackOffset,
+      );
+    }
+    remaining -= segs[3];
+
+    // Segment 4: Right edge — going down from (w, r) to (w, h)
+    {
+      final t = (remaining / segs[4]).clamp(0.0, 1.0);
+      final y = r + t * (h - r);
+      return Offset(w - center + trackOffset, y);
+    }
+  }
+
+  /// Distribute 121 holes along the path with 5-hole group gaps.
+  List<Offset> _calculateHolePositions(Size size, double trackOffset) {
+    final totalLen = _totalPathLength(size);
+
+    // Calculate spacing with group gaps
     final numGroups = (_totalHoles / _groupSize).ceil();
-    final groupGap = 3.0; // extra space between groups of 5
+    const groupGap = 3.0;
     final totalGaps = _totalHoles - 1 + (numGroups - 1) * (groupGap / 2);
-    final spacing = trackWidth / totalGaps;
+    final spacing = totalLen / totalGaps;
 
-    double x = 0;
+    // Build linear positions first
+    final linearPositions = <double>[];
+    double pos = 0;
     for (int i = 0; i < _totalHoles; i++) {
-      positions.add(x);
-      x += spacing;
+      linearPositions.add(pos);
+      pos += spacing;
       if ((i + 1) % _groupSize == 0 && i < _totalHoles - 1) {
-        x += spacing * (groupGap / 2);
+        pos += spacing * (groupGap / 2);
       }
     }
 
-    // Normalize to fit within trackWidth
-    if (positions.isNotEmpty && positions.last > 0) {
-      final scale = trackWidth / positions.last;
-      for (int i = 0; i < positions.length; i++) {
-        positions[i] *= scale;
+    // Normalize to fit total path length
+    if (linearPositions.isNotEmpty && linearPositions.last > 0) {
+      final scale = totalLen / linearPositions.last;
+      for (int i = 0; i < linearPositions.length; i++) {
+        linearPositions[i] *= scale;
       }
     }
 
-    return positions;
+    // Map to 2D offsets
+    return linearPositions
+        .map((d) => _pathDistanceToOffset(d, size, trackOffset))
+        .toList();
   }
 
-  double _scoreToPosition(double score, List<double> positions) {
-    if (score <= 0 || positions.isEmpty) return 0;
-    final clampedScore = score.clamp(0.0, 121.0);
-    final intScore = clampedScore.floor();
-    final fraction = clampedScore - intScore;
+  Offset _scoreToPosition(double score, List<Offset> holes) {
+    if (score <= 0 || holes.isEmpty) return holes.isNotEmpty ? holes[0] : Offset.zero;
+    final clamped = score.clamp(0.0, 121.0);
+    final intScore = clamped.floor();
+    final fraction = clamped - intScore;
 
-    if (intScore >= positions.length) return positions.last;
-    if (intScore == 0) return positions[0] * fraction;
+    if (intScore >= holes.length) return holes.last;
+    if (intScore == 0) return Offset.lerp(holes[0], holes[0], fraction)!;
 
-    final posA = positions[intScore - 1];
-    final posB = intScore < positions.length
-        ? positions[intScore]
-        : positions.last;
-    return posA + (posB - posA) * fraction;
+    final a = holes[intScore - 1];
+    final b = intScore < holes.length ? holes[intScore] : holes.last;
+    return Offset.lerp(a, b, fraction)!;
+  }
+
+  void _drawHoles(Canvas canvas, List<Offset> holes) {
+    final paint = Paint()..color = AppTheme.boardHole;
+    for (final hole in holes) {
+      canvas.drawCircle(hole, _holeRadius, paint);
+    }
+  }
+
+  void _drawMilestones(
+    Canvas canvas,
+    Size size,
+    List<Offset> outerHoles,
+    List<Offset> innerHoles,
+  ) {
+    final milestones = [31, 61, 91, 121];
+    final textPainter = TextPainter(textDirection: TextDirection.ltr);
+
+    for (final m in milestones) {
+      if (m - 1 >= outerHoles.length) continue;
+
+      // Use the midpoint between outer and inner hole for label placement
+      final outerPt = outerHoles[m - 1];
+      final innerPt = innerHoles[m - 1];
+      final mid = Offset(
+        (outerPt.dx + innerPt.dx) / 2,
+        (outerPt.dy + innerPt.dy) / 2,
+      );
+
+      textPainter.text = TextSpan(
+        text: '$m',
+        style: TextStyle(
+          color: Colors.white.withValues(alpha: 0.45),
+          fontSize: 7,
+          fontWeight: FontWeight.bold,
+        ),
+      );
+      textPainter.layout();
+      textPainter.paint(
+        canvas,
+        Offset(mid.dx - textPainter.width / 2, mid.dy - textPainter.height / 2),
+      );
+    }
   }
 
   void _drawPeg(Canvas canvas, Offset center, Color color) {
@@ -293,18 +403,18 @@ class _CribbageBoardPainter extends CustomPainter {
       _pegRadius + 2,
       Paint()..color = color.withValues(alpha: 0.3),
     );
-    // Peg body
+    // Body
     canvas.drawCircle(center, _pegRadius, Paint()..color = color);
     // Highlight
     canvas.drawCircle(
-      Offset(center.dx - 1, center.dy - 1),
+      Offset(center.dx - 0.7, center.dy - 0.7),
       _pegRadius * 0.4,
       Paint()..color = Colors.white.withValues(alpha: 0.5),
     );
   }
 
   @override
-  bool shouldRepaint(_CribbageBoardPainter oldDelegate) =>
+  bool shouldRepaint(_PerimeterBoardPainter oldDelegate) =>
       playerScore != oldDelegate.playerScore ||
       opponentScore != oldDelegate.opponentScore;
 }
