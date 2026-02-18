@@ -14,6 +14,21 @@ class AppTheme {
   static const Color goldAccent = Color(0xFFFFD54F);
   static const Color selectedHighlight = Color(0x4DFFEB3B);
 
+  // Felt gradient (top→bottom, 3-stop)
+  static const LinearGradient feltGradient = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [
+      Color(0xFF1B5E20), // dark top
+      Color(0xFF2E7D32), // mid green
+      Color(0xFF1B5E20), // dark bottom
+    ],
+    stops: [0.0, 0.5, 1.0],
+  );
+
+  // Card aspect ratio (standard playing card 2.5:3.5)
+  static const double cardAspectRatio = 2.5 / 3.5;
+
   // Cribbage board colors
   static const Color boardBrown = Color(0xFF5D4037);
   static const Color boardBrownLight = Color(0xFF795548);

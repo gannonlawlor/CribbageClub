@@ -160,7 +160,7 @@ class _ScorePopupWidget extends StatelessWidget {
     ]).animate(entry.controller);
 
     // Position: player popups near bottom, opponent near top
-    final baseVertical = entry.isPlayer ? 0.65 : 0.12;
+    final baseVertical = entry.isPlayer ? 0.55 : 0.05;
     final stackShift = entry.stackOffset * 0.06;
 
     return Positioned.fill(

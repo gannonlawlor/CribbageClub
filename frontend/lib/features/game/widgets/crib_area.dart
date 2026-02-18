@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/models/card.dart';
+import '../../../shared/utils/card_dimensions.dart';
 import 'card_widget.dart';
 
 class CribArea extends StatefulWidget {
@@ -34,33 +35,39 @@ class _CribAreaState extends State<CribArea> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        const Text(
-          'Crib',
-          style: TextStyle(color: Colors.white70, fontSize: 12),
-        ),
-        const SizedBox(height: 4),
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: _buildCards(),
-        ),
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final dims = CardDimensions(constraints.maxWidth > 0 ? constraints.maxWidth : 360);
+        final cardW = dims.playCardWidth;
+        final cardH = dims.playCardHeight;
+        const count = 4;
+        final stackWidth = dims.cribStackWidth(count);
+
+        return SizedBox(
+          width: stackWidth,
+          height: cardH,
+          child: Stack(
+            children: _buildCards(dims, cardW, cardH),
+          ),
+        );
+      },
     );
   }
 
-  List<Widget> _buildCards() {
+  List<Widget> _buildCards(CardDimensions dims, double cardW, double cardH) {
+    const count = 4;
+
     if (_shouldAnimate && widget.crib.isNotEmpty) {
-      // Staggered flip: each card flips with 100ms delay
       return [
         for (int i = 0; i < widget.crib.length; i++)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 1),
+          Positioned(
+            left: i * dims.cribCardVisible,
+            top: 0,
             child: FlippableCardWidget(
               card: widget.crib[i],
               faceUp: widget.revealed,
-              width: 40,
-              height: 60,
+              width: cardW,
+              height: cardH,
               duration: const Duration(milliseconds: 400),
               delay: Duration(milliseconds: 100 * i),
             ),
@@ -69,30 +76,33 @@ class _CribAreaState extends State<CribArea> {
     }
 
     if (widget.revealed && widget.crib.isNotEmpty) {
-      return widget.crib
-          .map((card) => Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 1),
-                child: CardWidget(
-                  card: card,
-                  faceUp: true,
-                  enabled: false,
-                  width: 40,
-                  height: 60,
-                ),
-              ))
-          .toList();
+      return [
+        for (int i = 0; i < widget.crib.length; i++)
+          Positioned(
+            left: i * dims.cribCardVisible,
+            top: 0,
+            child: CardWidget(
+              card: widget.crib[i],
+              faceUp: true,
+              enabled: false,
+              width: cardW,
+              height: cardH,
+            ),
+          ),
+      ];
     }
 
-    return List.generate(
-      4,
-      (_) => const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 1),
-        child: CardWidget(
-          faceUp: false,
-          width: 40,
-          height: 60,
+    return [
+      for (int i = 0; i < count; i++)
+        Positioned(
+          left: i * dims.cribCardVisible,
+          top: 0,
+          child: CardWidget(
+            faceUp: false,
+            width: cardW,
+            height: cardH,
+          ),
         ),
-      ),
-    );
+    ];
   }
 }

@@ -44,10 +44,10 @@ class StageIndicator extends StatelessWidget {
   Widget build(BuildContext context) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
       decoration: BoxDecoration(
         color: isMyTurn ? AppTheme.goldAccent.withValues(alpha: 0.2) : Colors.black26,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         border: isMyTurn
             ? Border.all(color: AppTheme.goldAccent.withValues(alpha: 0.5))
             : null,
@@ -73,7 +73,7 @@ class StageIndicator extends StatelessWidget {
           key: ValueKey('${stage.name}_$isMyTurn'),
           style: TextStyle(
             color: isMyTurn ? AppTheme.goldAccent : Colors.white70,
-            fontSize: 16,
+            fontSize: 13,
             fontWeight: isMyTurn ? FontWeight.bold : FontWeight.normal,
           ),
           textAlign: TextAlign.center,

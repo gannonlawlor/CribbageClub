@@ -21,7 +21,7 @@ class CardWidget extends StatelessWidget {
     this.enabled = true,
     this.onTap,
     this.width = 60,
-    this.height = 90,
+    this.height = 84,
   });
 
   @override
@@ -32,32 +32,40 @@ class CardWidget extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         width: width,
         height: height,
-        transform: Matrix4.translationValues(0, selected ? -12 : 0, 0),
+        transform: Matrix4.translationValues(0, selected ? -10 : 0, 0),
         decoration: BoxDecoration(
-          color: faceUp ? AppTheme.cardWhite : AppTheme.feltGreenDark,
-          borderRadius: BorderRadius.circular(8),
+          color: faceUp ? AppTheme.cardWhite : null,
+          borderRadius: BorderRadius.circular(6),
           border: Border.all(
-            color: selected ? AppTheme.goldAccent : AppTheme.cardBorder,
-            width: selected ? 2.5 : 1,
+            color: selected ? AppTheme.goldAccent : Colors.white24,
+            width: selected ? 2.0 : 0.5,
           ),
           boxShadow: [
-            BoxShadow(
-              color: selected
-                  ? AppTheme.goldAccent.withValues(alpha: 0.4)
-                  : Colors.black26,
-              blurRadius: selected ? 8 : 4,
-              offset: const Offset(1, 2),
-            ),
+            if (selected)
+              BoxShadow(
+                color: AppTheme.goldAccent.withValues(alpha: 0.5),
+                blurRadius: 10,
+                spreadRadius: 1,
+              )
+            else
+              const BoxShadow(
+                color: Colors.black26,
+                blurRadius: 3,
+                offset: Offset(1, 2),
+              ),
           ],
         ),
-        child: faceUp && card != null ? _buildFace() : _buildBack(),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(5),
+          child: faceUp && card != null ? _buildFace() : _buildBack(),
+        ),
       ),
     );
   }
 
   Widget _buildFace() {
     final color = CardUtils.suitColor(card!.suit);
-    final scale = height / 90; // scale relative to default card height
+    final scale = height / 84;
     final rankText = card!.rank.display;
     final suitText = card!.suit.symbol;
     return Padding(
@@ -76,14 +84,14 @@ class CardWidget extends StatelessWidget {
                   rankText,
                   style: TextStyle(
                     color: color,
-                    fontSize: 14 * scale,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 16 * scale,
+                    fontWeight: FontWeight.w800,
                     height: 1.1,
                   ),
                 ),
                 Text(
                   suitText,
-                  style: TextStyle(color: color, fontSize: 11 * scale, height: 1.0),
+                  style: TextStyle(color: color, fontSize: 12 * scale, height: 1.0),
                 ),
               ],
             ),
@@ -92,7 +100,7 @@ class CardWidget extends StatelessWidget {
           Center(
             child: Text(
               suitText,
-              style: TextStyle(color: color, fontSize: 26 * scale),
+              style: TextStyle(color: color, fontSize: 28 * scale),
             ),
           ),
           // Bottom-right: rank + suit (rotated 180)
@@ -109,14 +117,14 @@ class CardWidget extends StatelessWidget {
                     rankText,
                     style: TextStyle(
                       color: color,
-                      fontSize: 14 * scale,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 16 * scale,
+                      fontWeight: FontWeight.w800,
                       height: 1.1,
                     ),
                   ),
                   Text(
                     suitText,
-                    style: TextStyle(color: color, fontSize: 11 * scale, height: 1.0),
+                    style: TextStyle(color: color, fontSize: 12 * scale, height: 1.0),
                   ),
                 ],
               ),
@@ -130,15 +138,28 @@ class CardWidget extends StatelessWidget {
   Widget _buildBack() {
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(7),
         gradient: const LinearGradient(
-          colors: [AppTheme.feltGreen, AppTheme.feltGreenDark],
+          colors: [Color(0xFF2E7D32), Color(0xFF1B5E20)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
       ),
-      child: const Center(
-        child: Icon(Icons.style, color: Colors.white38, size: 30),
+      child: Container(
+        margin: EdgeInsets.all(width * 0.08),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(3),
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.15),
+            width: 1,
+          ),
+        ),
+        child: Center(
+          child: Icon(
+            Icons.style,
+            color: Colors.white.withValues(alpha: 0.2),
+            size: width * 0.4,
+          ),
+        ),
       ),
     );
   }
@@ -159,7 +180,7 @@ class FlippableCardWidget extends StatefulWidget {
     this.card,
     this.faceUp = false,
     this.width = 60,
-    this.height = 90,
+    this.height = 84,
     this.duration = const Duration(milliseconds: 400),
     this.delay = Duration.zero,
   });
@@ -190,7 +211,6 @@ class _FlippableCardWidgetState extends State<FlippableCardWidget>
       _controller.value = 1.0;
     }
     _animation.addListener(() {
-      // Swap face/back at the halfway point
       final shouldShowFace = _animation.value >= 0.5;
       if (shouldShowFace != _showFace) {
         setState(() => _showFace = shouldShowFace);
@@ -202,7 +222,6 @@ class _FlippableCardWidgetState extends State<FlippableCardWidget>
   void didUpdateWidget(FlippableCardWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.faceUp && !oldWidget.faceUp) {
-      // Flip from back to face
       if (widget.delay > Duration.zero) {
         Future.delayed(widget.delay, () {
           if (mounted) _controller.forward(from: 0);
@@ -211,7 +230,6 @@ class _FlippableCardWidgetState extends State<FlippableCardWidget>
         _controller.forward(from: 0);
       }
     } else if (!widget.faceUp && oldWidget.faceUp) {
-      // Flip from face to back
       _controller.reverse(from: 1);
     }
   }
@@ -227,15 +245,12 @@ class _FlippableCardWidgetState extends State<FlippableCardWidget>
     return AnimatedBuilder(
       animation: _animation,
       builder: (context, child) {
-        // Animate 0→π/2 then π/2→0 so the card never appears mirrored.
-        // First half (0→0.5): back rotates away from viewer (0→π/2)
-        // Second half (0.5→1): face rotates toward viewer (π/2→0)
         final value = _animation.value;
         final angle = value <= 0.5
-            ? value * math.pi // 0 → π/2
-            : (1.0 - value) * math.pi; // π/2 → 0
+            ? value * math.pi
+            : (1.0 - value) * math.pi;
         final transform = Matrix4.identity()
-          ..setEntry(3, 2, 0.001) // perspective
+          ..setEntry(3, 2, 0.001)
           ..rotateY(angle);
         return Transform(
           alignment: Alignment.center,
