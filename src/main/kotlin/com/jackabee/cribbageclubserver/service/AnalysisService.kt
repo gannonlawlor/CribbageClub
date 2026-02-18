@@ -1,26 +1,63 @@
 package com.jackabee.cribbageclubserver.service
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.jackabee.cribbageclubserver.bridge.RustEngineAdapter
+import com.jackabee.cribbageclubserver.entity.GameAnalysisEntity
 import com.jackabee.cribbageclubserver.model.analysis.GameAnalysis
 import com.jackabee.cribbageclubserver.model.analysis.PlayerRoundAnalysis
 import com.jackabee.cribbageclubserver.model.analysis.RoundAnalysis
 import com.jackabee.cribbageclubserver.model.card.Card
 import com.jackabee.cribbageclubserver.model.game.GameHistoryEvent
 import com.jackabee.cribbageclubserver.model.game.GameStage
+import com.jackabee.cribbageclubserver.repository.GameAnalysisRepository
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
 @Service
 class AnalysisService(
     private val gameService: GameService,
-    private val rustEngineAdapter: RustEngineAdapter
+    private val rustEngineAdapter: RustEngineAdapter,
+    private val gameAnalysisRepository: GameAnalysisRepository,
+    private val objectMapper: ObjectMapper
 ) {
+    private val log = LoggerFactory.getLogger(AnalysisService::class.java)
 
     fun analyzeGame(gameId: String): GameAnalysis {
+        // Check DB cache first
+        val cached = gameAnalysisRepository.findById(gameId)
+        if (cached.isPresent) {
+            return objectMapper.readValue(cached.get().analysisJson, GameAnalysis::class.java)
+        }
+
+        // Compute analysis
         val state = gameService.getGameState(gameId)
         require(state.stage == GameStage.GAME_OVER) { "Game must be completed for analysis" }
 
         val rounds = parseRounds(state.history)
-        return GameAnalysis(gameId, rounds)
+        val analysis = GameAnalysis(gameId, rounds)
+
+        // Cache in DB
+        try {
+            val entity = GameAnalysisEntity(
+                gameId = gameId,
+                analysisJson = objectMapper.writeValueAsString(analysis)
+            )
+            gameAnalysisRepository.save(entity)
+        } catch (e: Exception) {
+            log.warn("Failed to cache analysis for game {}: {}", gameId, e.message)
+        }
+
+        return analysis
+    }
+
+    fun saveAnalysis(gameId: String, analysis: GameAnalysis) {
+        if (gameAnalysisRepository.existsById(gameId)) return
+
+        val entity = GameAnalysisEntity(
+            gameId = gameId,
+            analysisJson = objectMapper.writeValueAsString(analysis)
+        )
+        gameAnalysisRepository.save(entity)
     }
 
     internal fun parseRounds(history: List<GameHistoryEvent>): List<RoundAnalysis> {

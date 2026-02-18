@@ -40,6 +40,19 @@ class GameController(
         return analysisService.analyzeGame(gameId)
     }
 
+    @Operation(summary = "Upload client-computed analysis", description = "Saves analysis computed on-device to the server cache.")
+    @PostMapping("/{gameId}/analysis")
+    fun saveGameAnalysis(
+        @PathVariable gameId: String,
+        @RequestBody analysis: GameAnalysis,
+        @RequestAttribute("userId") userId: String
+    ): ResponseEntity<Void> {
+        val state = gameService.getGameState(gameId)
+        require(state.players.any { it.id == userId }) { "You are not a participant in this game" }
+        analysisService.saveAnalysis(gameId, analysis)
+        return ResponseEntity.ok().build()
+    }
+
     @Operation(summary = "Apply a game action (discard, play card, cut, count, go)")
     @PostMapping("/{gameId}/actions")
     fun applyAction(
@@ -97,9 +110,40 @@ class GameController(
             GameStateFilter.forPlayer(state, userId)
         }
     }
+
+    @Operation(summary = "Import completed local games to the server")
+    @PostMapping("/import")
+    fun importLocalGames(
+        @RequestBody request: ImportGamesRequest,
+        @RequestAttribute("userId") userId: String,
+        @RequestAttribute("username") username: String
+    ): ImportGamesResponse {
+        return gameService.importLocalGames(request.games, userId, username)
+    }
 }
 
 data class CreateAIGameRequest(
     val playerName: String? = null,
     val difficulty: String? = null
+)
+
+data class ImportGameRequest(
+    val localGameId: String,
+    val stateJson: String,
+    val completedAt: String? = null
+)
+
+data class ImportGamesRequest(
+    val games: List<ImportGameRequest>
+)
+
+data class ImportedGameMapping(
+    val localGameId: String,
+    val serverGameId: String
+)
+
+data class ImportGamesResponse(
+    val imported: List<ImportedGameMapping>,
+    val duplicates: List<String>,
+    val errors: List<String>
 )
