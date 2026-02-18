@@ -3,6 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../api/rest_client.dart';
 import 'auth_service.dart';
 
+// Module-level initial auth data, set before runApp
+AuthData? _initialAuthData;
+
+void setInitialAuthData(AuthData? data) {
+  _initialAuthData = data;
+}
+
 // Singletons
 final authServiceProvider = Provider<AuthService>((ref) => AuthService());
 
@@ -51,23 +58,21 @@ class AuthNotifier extends StateNotifier<AuthState> {
   final AuthService _authService;
   final RestClient _restClient;
 
-  AuthNotifier(this._authService, this._restClient) : super(const AuthState()) {
-    _checkExistingAuth();
-  }
-
-  Future<void> _checkExistingAuth() async {
-    final isLoggedIn = await _authService.isLoggedIn();
-    if (isLoggedIn) {
-      final userId = await _authService.getUserId();
-      final username = await _authService.getUsername();
-      final isGuest = await _authService.getIsGuest();
-      state = AuthState(
-        isLoggedIn: true,
-        userId: userId,
-        username: username,
-        isGuest: isGuest,
-      );
-    }
+  AuthNotifier(this._authService, this._restClient, {AuthData? initialAuth})
+      : super(
+          initialAuth != null
+              ? AuthState(
+                  isLoggedIn: true,
+                  userId: initialAuth.userId,
+                  username: initialAuth.username,
+                  isGuest: initialAuth.isGuest,
+                )
+              : const AuthState(),
+        ) {
+    _restClient.setOnAuthExpired(() {
+      _authService.clearAuth();
+      state = const AuthState();
+    });
   }
 
   Future<void> login(String username, String password) async {
@@ -192,5 +197,6 @@ final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
   return AuthNotifier(
     ref.read(authServiceProvider),
     ref.read(restClientProvider),
+    initialAuth: _initialAuthData,
   );
 });

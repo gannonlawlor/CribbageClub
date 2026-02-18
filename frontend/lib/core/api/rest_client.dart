@@ -16,6 +16,11 @@ import '../models/stats_response.dart';
 class RestClient {
   final Dio _dio;
   final AuthService _authService;
+  void Function()? _onAuthExpired;
+
+  void setOnAuthExpired(void Function() callback) {
+    _onAuthExpired = callback;
+  }
 
   RestClient({required AuthService authService})
     : _authService = authService,
@@ -35,6 +40,15 @@ class RestClient {
             options.headers['Authorization'] = 'Bearer $token';
           }
           handler.next(options);
+        },
+        onError: (error, handler) {
+          if (error.response?.statusCode == 401) {
+            final path = error.requestOptions.path;
+            if (!path.startsWith('/api/auth/')) {
+              _onAuthExpired?.call();
+            }
+          }
+          handler.next(error);
         },
       ),
     );
