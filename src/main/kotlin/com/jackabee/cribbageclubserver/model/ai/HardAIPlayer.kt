@@ -1,6 +1,7 @@
 package com.jackabee.cribbageclubserver.model.ai
 
 import com.jackabee.cribbageclubserver.model.action.GameAction
+import com.jackabee.cribbageclubserver.model.ai.AIUtils.combinations
 import com.jackabee.cribbageclubserver.model.card.Card
 import com.jackabee.cribbageclubserver.model.card.Rank
 import com.jackabee.cribbageclubserver.model.card.Suit
@@ -222,14 +223,6 @@ class HardAIPlayer(
 
     private fun isDealer(gameState: GameState): Boolean {
         return gameState.players.getOrNull(gameState.dealerIndex)?.id == playerId
-    }
-
-    private fun <T> List<T>.combinations(size: Int): List<List<T>> {
-        if (size == 0) return listOf(emptyList())
-        if (isEmpty()) return emptyList()
-        val head = first()
-        val tail = drop(1)
-        return tail.combinations(size - 1).map { listOf(head) + it } + tail.combinations(size)
     }
 
     private fun Card.peggingValue(): Int = HandCounting.run { this@peggingValue.peggingValue() }

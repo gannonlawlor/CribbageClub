@@ -50,13 +50,13 @@
 - [x] Add `@Transactional` to `UserService.register()` and `UserService.login()`
 - [x] Audit other service methods for transaction boundaries
 
-### 5b. Add database migrations (Flyway) — deferred
-Schema is managed by `ddl-auto=update` which is unsafe for production. No migration history.
+### ~~5b. Add database migrations (Flyway)~~ ✅
+~~Schema is managed by `ddl-auto=update` which is unsafe for production. No migration history.~~
 
-- [ ] Add Flyway dependency to `build.gradle.kts`
-- [ ] Create initial migration (`V1__initial_schema.sql`) from current entity definitions
-- [ ] Set `ddl-auto=validate` (or `none`) and rely on Flyway for schema management
-- [ ] Add migration for any future schema changes
+- [x] Add Flyway dependency to `build.gradle.kts`
+- [x] Create initial migration (`V1__initial_schema.sql`) from current entity definitions
+- [x] Set `ddl-auto=validate` and rely on Flyway for schema management
+- [x] Add migration for any future schema changes
 
 ### ~~5c. Optimistic locking for concurrent access~~ ✅
 ~~No `@Version` columns on entities — concurrent requests could overwrite each other's changes.~~
@@ -87,29 +87,29 @@ Schema is managed by `ddl-auto=update` which is unsafe for production. No migrat
 - [x] Add test: create game, play some actions, persist state, restore, verify state matches
 - [x] Add test: restore game and continue playing through to completion
 
-## 7. Deployment & Infrastructure
+## ~~7. Deployment & Infrastructure~~ ✅
 
-### 7a. CI/CD pipeline
-Only a Copilot setup workflow exists — no actual CI pipeline that runs on push/PR.
+### ~~7a. CI/CD pipeline~~ ✅
+~~Only a Copilot setup workflow exists — no actual CI pipeline that runs on push/PR.~~
 
-- [ ] Create `.github/workflows/ci.yml` (build + test on push/PR to master)
-- [ ] Add linting or static analysis step (detekt for Kotlin)
+- [x] Create `.github/workflows/ci.yml` (build + test on push/PR to master)
+- [x] Add linting / static analysis step (Detekt for Kotlin, `flutter analyze` for frontend)
 
-### 7b. Docker Compose improvements
-`docker-compose.yml` has PostgreSQL but no app service, and no prod profile activation.
+### ~~7b. Docker Compose improvements~~ ✅
+~~`docker-compose.yml` has PostgreSQL but no app service, and no prod profile activation.~~
 
-- [ ] Add `app` service to `docker-compose.yml` that builds and runs the Spring Boot app
-- [ ] Pass `SPRING_PROFILES_ACTIVE=prod` and DB credentials as environment variables
-- [ ] Add health check wait for PostgreSQL before app starts
+- [x] Add `app` service to `docker-compose.yml` that builds and runs the Spring Boot app
+- [x] Pass `SPRING_PROFILES_ACTIVE=prod` and DB credentials as environment variables
+- [x] Add health check wait for PostgreSQL before app starts
 
-### 7c. CORS configuration
-No CORS config for REST endpoints — browser clients from different origins will be blocked.
+### ~~7c. CORS configuration~~ ✅
+~~CORS was implemented in `SecurityConfig` but origins were hardcoded.~~
 
-- [ ] Add CORS configuration in `SecurityConfig` or a dedicated `WebMvcConfigurer`
-- [ ] Make allowed origins configurable via properties
+- [x] Add CORS configuration in `SecurityConfig`
+- [x] Make allowed origins configurable via `cors.allowed-origin-patterns` property
 
-## 8. Code Quality
+## ~~8. Code Quality~~ ✅
 
-- [ ] Extract shared AI utility methods (`combinations()`, `findRunContinuation()`) into a common `AIUtils` object
-- [ ] Fix `ScoreBreakdown` inconsistency: `totalScore` field vs `total()` method compute differently
-- [ ] Filter AI players from leaderboard results in `PlayerStatsService`
+- [x] Extract shared AI utility methods (`combinations()`, `findRunContinuation()`) into `AIUtils` object
+- [x] Fix `ScoreBreakdown` inconsistency: removed `totalScore` constructor param, made it a computed `val`
+- [x] Filter AI players from leaderboard results in `PlayerStatsService`

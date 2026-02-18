@@ -238,7 +238,7 @@ class GameHistoryTest {
             nobs = 1
         )
         
-        assertEquals(14, breakdown.total())
+        assertEquals(14, breakdown.totalScore)
     }
 
     private fun discardAllPlayersToCrib(gameInstance: Game = game) {

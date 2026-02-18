@@ -1,11 +1,11 @@
 package com.jackabee.cribbageclubserver.model.ai
 
 import com.jackabee.cribbageclubserver.model.action.GameAction
+import com.jackabee.cribbageclubserver.model.ai.AIUtils.combinations
 import com.jackabee.cribbageclubserver.model.card.Card
 import com.jackabee.cribbageclubserver.model.game.GameState
 import com.jackabee.cribbageclubserver.model.game.GameStage
 import com.jackabee.cribbageclubserver.utils.HandCounting.peggingValue
-import kotlin.random.Random
 
 /**
  * A basic AI player implementation that uses simple strategies to play cribbage.
@@ -155,7 +155,7 @@ class BasicAIPlayer(
         
         // Try to continue a run
         if (playedCards.size >= 2) {
-            val runCard = findRunContinuation(playableCards, playedCards)
+            val runCard = AIUtils.findRunContinuation(playableCards, playedCards)
             if (runCard != null) return runCard
         }
         
@@ -195,37 +195,4 @@ class BasicAIPlayer(
         return combinations
     }
     
-    private fun findRunContinuation(playableCards: List<Card>, playedCards: List<Card>): Card? {
-        // Look for cards that would continue the current run
-        // This is a simplified version - full implementation would be more complex
-        val recentCards = playedCards.takeLast(3)
-        if (recentCards.size < 2) return null
-        
-        val recentRanks = recentCards.map { it.rank.ordinal }.sorted()
-        val isConsecutive = recentRanks.zipWithNext().all { (a, b) -> b - a == 1 }
-        
-        if (isConsecutive) {
-            // Try to extend the run at either end
-            val minRank = recentRanks.min()
-            val maxRank = recentRanks.max()
-            
-            return playableCards.find { card ->
-                val rank = card.rank.ordinal
-                rank == minRank - 1 || rank == maxRank + 1
-            }
-        }
-        
-        return null
-    }
-    
-    // Extension function to generate combinations
-    private fun <T> List<T>.combinations(size: Int): List<List<T>> {
-        if (size == 0) return listOf(emptyList())
-        if (isEmpty()) return emptyList()
-        
-        val head = first()
-        val tail = drop(1)
-        
-        return tail.combinations(size - 1).map { listOf(head) + it } + tail.combinations(size)
-    }
 }

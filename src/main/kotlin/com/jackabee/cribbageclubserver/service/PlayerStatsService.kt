@@ -57,7 +57,7 @@ class PlayerStatsService(
     }
 
     fun getLeaderboard(): List<PlayerStatsEntity> {
-        return playerStatsRepository.findTop10ByOrderByGamesWonDesc()
+        return playerStatsRepository.findTop10ExcludingPrefix("ai_%")
     }
 
     private fun getOrCreate(playerId: String): PlayerStatsEntity {

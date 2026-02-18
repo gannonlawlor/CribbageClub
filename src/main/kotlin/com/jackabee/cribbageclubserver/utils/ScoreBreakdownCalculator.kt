@@ -19,16 +19,13 @@ object ScoreBreakdownCalculator {
         val runs = HandCounting.countRuns(allCards)
         val flushes = HandCounting.countFlushes(hand, cutCard, isCrib)
         val nobs = HandCounting.countNobs(hand, cutCard)
-        
-        val totalScore = fifteens + pairs + runs + flushes + nobs
-        
+
         return GameHistoryEvent.ScoreBreakdown(
             fifteens = fifteens,
             pairs = pairs,
             runs = runs,
             flushes = flushes,
-            nobs = nobs,
-            totalScore = totalScore
+            nobs = nobs
         )
     }
 }
