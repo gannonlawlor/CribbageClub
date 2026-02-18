@@ -24,10 +24,11 @@ class LocalGameNotifier extends StateNotifier<GameNotifierState> {
   })  : _service = service,
         _playerId = playerId,
         _feedbackService = feedbackService,
-        super(GameNotifierState(
-          gameState: service.currentState,
-        )) {
-    _notifyAnimation(service.currentState);
+        super(service.currentState != null
+            ? GameNotifierState(gameState: service.currentState)
+            : const GameNotifierState(error: 'Game not found. It may have been lost after a page refresh.')) {
+    final cs = service.currentState;
+    if (cs != null) _notifyAnimation(cs);
   }
 
   void _notifyAnimation(GameState newState) {
