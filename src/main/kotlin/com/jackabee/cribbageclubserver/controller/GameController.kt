@@ -1,6 +1,7 @@
 package com.jackabee.cribbageclubserver.controller
 
 import com.jackabee.cribbageclubserver.model.game.GameState
+import com.jackabee.cribbageclubserver.model.game.GameStateFilter
 import com.jackabee.cribbageclubserver.model.action.GameAction
 import com.jackabee.cribbageclubserver.service.GameService
 import io.swagger.v3.oas.annotations.Operation
@@ -17,8 +18,12 @@ class GameController(
 
     @Operation(summary = "Get current game state")
     @GetMapping("/{gameId}")
-    fun getGameState(@PathVariable gameId: String): GameState {
-        return gameService.getGameState(gameId)
+    fun getGameState(
+        @PathVariable gameId: String,
+        @RequestAttribute("userId") userId: String
+    ): GameState {
+        val state = gameService.getGameState(gameId)
+        return GameStateFilter.forPlayer(state, userId)
     }
 
     @Operation(summary = "Apply a game action (discard, play card, cut, count, go)")
@@ -28,7 +33,8 @@ class GameController(
         @RequestBody action: GameAction,
         @RequestAttribute("userId") userId: String
     ): GameState {
-        return gameService.applyHumanAction(gameId, action)
+        val state = gameService.applyHumanAction(gameId, action)
+        return GameStateFilter.forPlayer(state, userId)
     }
 
     @Operation(summary = "Create a game against an AI opponent", description = "Difficulty: basic, medium, or hard")
@@ -38,11 +44,12 @@ class GameController(
         @RequestAttribute("userId") userId: String,
         @RequestAttribute("username") username: String
     ): GameState {
-        return gameService.createGameWithAI(
+        val state = gameService.createGameWithAI(
             humanPlayerId = userId,
             humanPlayerName = request.playerName ?: username,
             aiDifficulty = request.difficulty ?: "basic"
         )
+        return GameStateFilter.forPlayer(state, userId)
     }
 
     @Operation(summary = "Delete a game")
@@ -56,7 +63,9 @@ class GameController(
     @Operation(summary = "List all active games")
     @GetMapping
     fun listGames(): Map<String, GameState> {
-        return gameService.listGames()
+        return gameService.listGames().mapValues { (_, state) ->
+            GameStateFilter.forPlayer(state, "")
+        }
     }
 }
 
