@@ -5,6 +5,7 @@ import '../../../config/theme.dart';
 import '../../../core/auth/auth_provider.dart';
 import '../../../core/engine/local_analysis_service.dart';
 import '../../../core/models/game_analysis.dart';
+import '../../../core/services/local_game_history_provider.dart';
 import '../../game/state/game_providers.dart';
 import '../../game/widgets/card_widget.dart';
 
@@ -12,8 +13,11 @@ import '../../game/widgets/card_widget.dart';
 final analysisProvider = FutureProvider.family
     .autoDispose<GameAnalysis, String>((ref, gameId) async {
       if (isLocalGame(gameId)) {
+        // Try in-memory active game first
         final notifierState = ref.read(localGameNotifierProvider(gameId));
-        final state = notifierState.gameState;
+        var state = notifierState.gameState;
+        // Fall back to persisted storage
+        state ??= await ref.read(persistedGameStateProvider(gameId).future);
         if (state == null) throw Exception('Local game not found');
         return LocalAnalysisService.analyzeGame(gameId, state.history);
       } else {
