@@ -7,84 +7,84 @@ import type { GameState } from '@/models'
 import { GAME_STAGE_DISPLAY } from '@/models/game-state'
 
 export function HomePage() {
-  const { isLoggedIn, username, isGuest, userId } = useAuthStore()
+  const { isLoggedIn, username, isGuest, userId, loginAsGuest } = useAuthStore()
   const navigate = useNavigate()
-
-  if (!isLoggedIn) {
-    return (
-      <div className="max-w-2xl mx-auto p-8 text-center">
-        <h1 className="text-3xl font-bold text-[var(--gold)] mb-4">Cribbage Club</h1>
-        <p className="text-white/70 mb-8">Play cribbage online against AI or friends.</p>
-        <Link
-          to="/login"
-          className="inline-block bg-[var(--gold)] text-black px-6 py-3 rounded font-semibold no-underline hover:bg-[var(--gold-light)]"
-        >
-          Get Started
-        </Link>
-      </div>
-    )
-  }
-
-  return <AuthenticatedHome username={username} isGuest={isGuest} userId={userId} navigate={navigate} />
-}
-
-function AuthenticatedHome({
-  username,
-  isGuest,
-  userId,
-  navigate,
-}: {
-  username: string | null
-  isGuest: boolean
-  userId: string | null
-  navigate: ReturnType<typeof useNavigate>
-}) {
   const [isCreating, setIsCreating] = useState(false)
+  const [createError, setCreateError] = useState<string | null>(null)
   const [showDifficultyPicker, setShowDifficultyPicker] = useState(false)
   const [showOnlineOptions, setShowOnlineOptions] = useState(false)
-  const activeGames = useAsync(() => api.getMyActiveGames())
+
+  const activeGames = useAsync(
+    () => isLoggedIn ? api.getMyActiveGames() : Promise.resolve([]),
+    [isLoggedIn],
+  )
+
+  /** Ensure we have a session (guest if needed) before server calls */
+  async function ensureAuth(): Promise<void> {
+    if (!useAuthStore.getState().token) {
+      await loginAsGuest()
+    }
+  }
 
   async function createAIGame(difficulty: string) {
     setIsCreating(true)
+    setCreateError(null)
     setShowDifficultyPicker(false)
     try {
+      await ensureAuth()
       const game = await api.createAIGame({ difficulty })
       navigate(`/game/${game.gameId}`)
-    } catch {
+    } catch (e) {
+      setCreateError(e instanceof Error ? e.message : 'Failed to create game')
       setIsCreating(false)
     }
   }
 
   async function handleQuickMatch() {
     setIsCreating(true)
+    setCreateError(null)
     setShowOnlineOptions(false)
     try {
+      await ensureAuth()
       const result = await api.quickMatch()
       if (result.gameState) {
         navigate(`/game/${result.gameState.gameId}`)
       } else {
         navigate(`/lobby/${result.lobby.id}`)
       }
-    } catch {
+    } catch (e) {
+      setCreateError(e instanceof Error ? e.message : 'Failed to find match')
       setIsCreating(false)
     }
   }
 
   async function handleCreatePrivate() {
     setIsCreating(true)
+    setCreateError(null)
     setShowOnlineOptions(false)
     try {
-      const lobby = await api.createLobby(`${username}'s game`, { isPrivate: true })
+      await ensureAuth()
+      const currentUsername = useAuthStore.getState().username
+      const lobby = await api.createLobby(`${currentUsername}'s game`, { isPrivate: true })
       navigate(`/lobby/${lobby.id}`)
-    } catch {
+    } catch (e) {
+      setCreateError(e instanceof Error ? e.message : 'Failed to create lobby')
       setIsCreating(false)
     }
   }
 
   return (
     <div className="max-w-md mx-auto p-8">
+      {/* Error banner */}
+      {createError && (
+        <div className="bg-red-500/20 border border-red-500/50 rounded-lg px-4 py-2 mb-4 flex items-center justify-between">
+          <span className="text-red-300 text-sm">{createError}</span>
+          <button onClick={() => setCreateError(null)} className="text-red-300 bg-transparent border-none cursor-pointer text-sm ml-2">x</button>
+        </div>
+      )}
+
       {/* Guest upgrade banner */}
-      {isGuest && (
+      {isLoggedIn && isGuest && (
         <div className="border border-[var(--gold)] rounded-lg p-4 mb-6 bg-[var(--gold)]/10">
           <div className="flex items-center gap-3">
             <span className="text-[var(--gold)]">i</span>
@@ -108,14 +108,22 @@ function AuthenticatedHome({
         </div>
       )}
 
-      <h1 className="text-2xl font-bold text-[var(--gold)] mb-6 text-center">Welcome, {username}</h1>
+      <h1 className="text-2xl font-bold text-[var(--gold)] mb-6 text-center">
+        {isLoggedIn ? `Welcome, ${username}` : 'Cribbage Club'}
+      </h1>
+
+      {!isLoggedIn && (
+        <p className="text-white/60 text-center mb-6 -mt-4 text-sm">
+          Play cribbage online against AI or friends.
+        </p>
+      )}
 
       {/* Play vs AI */}
       <div className="relative mb-3">
         <button
           onClick={() => setShowDifficultyPicker(!showDifficultyPicker)}
           disabled={isCreating}
-          className="w-full bg-[var(--gold)] text-black font-semibold py-3 rounded hover:bg-[var(--gold-light)] disabled:opacity-50 text-lg"
+          className="w-full bg-[var(--gold)] text-black font-semibold py-3 rounded hover:bg-[var(--gold-light)] disabled:opacity-50 text-lg border-none cursor-pointer"
         >
           Play vs AI
         </button>
@@ -133,7 +141,7 @@ function AuthenticatedHome({
         <button
           onClick={() => setShowOnlineOptions(!showOnlineOptions)}
           disabled={isCreating}
-          className="w-full bg-[var(--gold)] text-black font-semibold py-3 rounded hover:bg-[var(--gold-light)] disabled:opacity-50 text-lg"
+          className="w-full bg-[var(--gold)] text-black font-semibold py-3 rounded hover:bg-[var(--gold-light)] disabled:opacity-50 text-lg border-none cursor-pointer"
         >
           Play Online
         </button>
@@ -149,26 +157,33 @@ function AuthenticatedHome({
       {/* Daily Challenge */}
       <button
         onClick={() => navigate('/daily-puzzle')}
-        className="w-full border border-orange-500 text-white py-3 rounded bg-transparent hover:bg-white/5 text-lg mb-3"
+        className="w-full border border-orange-500 text-white py-3 rounded bg-transparent hover:bg-white/5 text-lg mb-3 cursor-pointer"
       >
         Daily Challenge
       </button>
 
       {/* Practice Puzzles */}
       <button
-        onClick={() => navigate('/practice-puzzle')}
-        className="w-full border border-white/30 text-white py-3 rounded bg-transparent hover:bg-white/5 text-lg mb-6"
+        onClick={() => navigate('/puzzle')}
+        className="w-full border border-white/30 text-white py-3 rounded bg-transparent hover:bg-white/5 text-lg mb-6 cursor-pointer"
       >
         Practice Puzzles
       </button>
 
       {/* Bottom links */}
       <div className="flex justify-center gap-4 text-sm">
-        {!isGuest && (
+        {isLoggedIn && !isGuest && (
           <Link to="/friends" className="text-white/70 hover:text-white no-underline">Friends</Link>
         )}
-        <Link to="/history" className="text-white/70 hover:text-white no-underline">History</Link>
+        {isLoggedIn && (
+          <Link to="/history" className="text-white/70 hover:text-white no-underline">History</Link>
+        )}
         <Link to="/leaderboard" className="text-white/70 hover:text-white no-underline">Leaderboard</Link>
+        {!isLoggedIn && (
+          <Link to="/login" className="text-[var(--gold)] hover:text-[var(--gold-light)] no-underline">
+            Sign In
+          </Link>
+        )}
       </div>
     </div>
   )
