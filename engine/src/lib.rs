@@ -14,3 +14,4 @@ pub mod scoring;
 pub mod ai;
 pub mod analysis;
 pub mod api;
+pub mod c_api;

@@ -1,11 +1,8 @@
 package com.jackabee.cribbageclubserver.service
 
+import com.jackabee.cribbageclubserver.bridge.RustEngine
+import com.jackabee.cribbageclubserver.bridge.RustEngineAdapter
 import com.jackabee.cribbageclubserver.entity.GameEntity
-import com.jackabee.cribbageclubserver.model.ai.AIPlayer
-import com.jackabee.cribbageclubserver.model.ai.BasicAIPlayer
-import com.jackabee.cribbageclubserver.model.ai.HardAIPlayer
-import com.jackabee.cribbageclubserver.model.ai.MediumAIPlayer
-import com.jackabee.cribbageclubserver.model.game.Game
 import com.jackabee.cribbageclubserver.model.game.GameState
 import com.jackabee.cribbageclubserver.model.game.GameStage
 import com.jackabee.cribbageclubserver.model.player.Player
@@ -18,41 +15,48 @@ import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.random.Random
 
+/** Tracks a cached Rust engine handle together with AI metadata. */
+private data class CachedGame(
+    val engine: RustEngine,
+    val aiPlayerId: String? = null,
+    val aiDifficulty: String? = null,
+)
+
 /**
  * Service for managing cribbage games with AI players and human players.
- * The database is the source of truth; in-memory Game objects serve as a cache
- * for active play. On cache miss (e.g., after server restart), games are
- * reconstructed from the persisted GameState.
+ * Game logic is delegated to the Rust cribbage-engine via JNA.
+ * The database is the source of truth; in-memory engine handles serve as a
+ * cache for active play. On cache miss (e.g., after server restart), engines
+ * are reconstructed from the persisted GameState.
  */
 @org.springframework.stereotype.Service
 class GameService(
     @Autowired(required = false) private val webSocketService: GameWebSocketService? = null,
     @Autowired(required = false) private val gameRepository: GameRepository? = null,
     @Autowired(required = false) private val objectMapper: ObjectMapper? = null,
-    @Autowired(required = false) private val playerStatsService: PlayerStatsService? = null
+    @Autowired(required = false) private val playerStatsService: PlayerStatsService? = null,
+    @Autowired(required = false) private val rustEngineAdapter: RustEngineAdapter? = null,
 ) {
     private val logger = LoggerFactory.getLogger(GameService::class.java)
 
-    // In-memory cache of active Game objects (rebuilt from DB on cache miss)
-    private val games = ConcurrentHashMap<String, Game>()
-    private val aiPlayers = ConcurrentHashMap<String, AIPlayer>()
+    // In-memory cache of active Rust engine handles (rebuilt from DB on cache miss)
+    private val games = ConcurrentHashMap<String, CachedGame>()
 
     /**
      * Creates a new game with the provided players.
      * Broadcasts the initial game state via WebSocket.
-     *
-     * @param players The list of players for the game
-     * @return The initial game state
      */
     fun createGame(players: List<Player>): GameState {
         require(players.size == 2) { "Game must have exactly 2 players" }
+        val adapter = requireAdapter()
 
         val gameId = generateGameId()
-        val game = Game(gameId, players)
-        games[gameId] = game
-
-        // Process any immediate AI actions if any players are AI
-        val initialState = processAIActions(game)
+        val (engine, initialState) = adapter.createEngine(
+            gameId,
+            players[0].id, players[0].name,
+            players[1].id, players[1].name,
+        )
+        games[gameId] = CachedGame(engine)
 
         // Persist to database
         saveGameEntity(gameId, players[0], players[1], initialState, isAIGame = false)
@@ -67,48 +71,45 @@ class GameService(
     /**
      * Creates a new game with a human player and an AI opponent.
      * Broadcasts the initial game state via WebSocket.
-     *
-     * @param humanPlayerId The ID of the human player
-     * @param humanPlayerName The name of the human player
-     * @param aiDifficulty The difficulty level of the AI (currently only "basic" is supported)
-     * @return The initial game state
      */
     fun createGameWithAI(
         humanPlayerId: String,
         humanPlayerName: String,
         aiDifficulty: String = "basic"
     ): GameState {
+        val adapter = requireAdapter()
+
         val gameId = generateGameId()
         val aiPlayerId = "ai_${Random.nextInt(1000, 9999)}"
-        val aiPlayerName = "AI Opponent"
-
-        // Create AI player based on difficulty
-        val aiPlayer = when (aiDifficulty.lowercase()) {
-            "basic" -> BasicAIPlayer(aiPlayerId, aiPlayerName)
-            "medium" -> MediumAIPlayer(aiPlayerId, "$aiPlayerName (Medium)")
-            "hard" -> HardAIPlayer(aiPlayerId, "$aiPlayerName (Hard)")
-            else -> BasicAIPlayer(aiPlayerId, aiPlayerName)
+        // Normalize difficulty to values the Rust engine understands
+        val normalizedDifficulty = when (aiDifficulty.lowercase()) {
+            "medium" -> "medium"
+            "hard" -> "hard"
+            else -> "basic"
+        }
+        val aiPlayerName = when (normalizedDifficulty) {
+            "medium" -> "AI Opponent (Medium)"
+            "hard" -> "AI Opponent (Hard)"
+            else -> "AI Opponent"
         }
 
-        // Store AI player for later use
-        aiPlayers[aiPlayerId] = aiPlayer
-
-        // Create game with human and AI players
-        val players = listOf(
-            Player(humanPlayerId, humanPlayerName),
-            Player(aiPlayerId, aiPlayerName)
+        val (engine, _) = adapter.createEngine(
+            gameId,
+            humanPlayerId, humanPlayerName,
+            aiPlayerId, aiPlayerName,
         )
+        games[gameId] = CachedGame(engine, aiPlayerId, normalizedDifficulty)
 
-        val game = Game(gameId, players)
-        games[gameId] = game
-
-        // Process any immediate AI actions
-        val initialState = processAIActions(game)
+        // Process immediate AI actions (e.g. if AI is dealer's opponent during discard)
+        val initialState = processAIActions(gameId)
 
         // Persist to database
         saveGameEntity(
-            gameId, players[0], players[1], initialState,
-            isAIGame = true, aiPlayerId = aiPlayerId, aiDifficulty = aiDifficulty
+            gameId,
+            Player(humanPlayerId, humanPlayerName),
+            Player(aiPlayerId, aiPlayerName),
+            initialState,
+            isAIGame = true, aiPlayerId = aiPlayerId, aiDifficulty = normalizedDifficulty
         )
 
         // Broadcast the initial game state via WebSocket if available
@@ -121,20 +122,17 @@ class GameService(
     /**
      * Applies a human player's action to the game and processes any subsequent AI actions.
      * Broadcasts the updated game state via WebSocket.
-     *
-     * @param gameId The ID of the game
-     * @param action The action to apply
-     * @return The updated game state after all actions are processed
      */
     fun applyHumanAction(gameId: String, action: com.jackabee.cribbageclubserver.model.action.GameAction): GameState {
-        val game = games[gameId] ?: loadGame(gameId)
+        val adapter = requireAdapter()
+        val cached = games[gameId] ?: loadGame(gameId)
             ?: throw IllegalArgumentException("Game not found: $gameId")
 
         // Apply human action
-        game.applyAction(action)
+        adapter.applyAction(cached.engine, action)
 
         // Process any AI actions that should follow
-        val finalState = processAIActions(game)
+        val finalState = processAIActions(gameId)
 
         // Update database snapshot
         updateGameEntity(gameId, finalState)
@@ -147,21 +145,20 @@ class GameService(
 
     /**
      * Gets the current state of a game.
-     *
-     * @param gameId The ID of the game
-     * @return The current game state
      */
     fun getGameState(gameId: String): GameState {
+        val adapter = requireAdapter()
+
         // Try in-memory cache first
-        val cachedGame = games[gameId]
-        if (cachedGame != null) {
-            return cachedGame.getCurrentState()
+        val cached = games[gameId]
+        if (cached != null) {
+            return adapter.getState(cached.engine)
         }
 
         // Try to restore active game from database
-        val restoredGame = loadGame(gameId)
-        if (restoredGame != null) {
-            return restoredGame.getCurrentState()
+        val restored = loadGame(gameId)
+        if (restored != null) {
+            return adapter.getState(restored.engine)
         }
 
         // Fall back to raw DB state (for finished games)
@@ -175,16 +172,10 @@ class GameService(
 
     /**
      * Removes a game from the service and database.
-     *
-     * @param gameId The ID of the game to remove
      */
     fun removeGame(gameId: String) {
-        // Clean up AI players associated with this game before removing it
-        val game = games[gameId]
-        game?.getCurrentState()?.players?.forEach { player ->
-            aiPlayers.remove(player.id)
-        }
-        games.remove(gameId)
+        val cached = games.remove(gameId)
+        cached?.engine?.close()
 
         // Remove from database
         gameRepository?.deleteById(gameId)
@@ -193,8 +184,6 @@ class GameService(
 
     /**
      * Lists all active (non-finished) games.
-     *
-     * @return Map of game IDs to their current states
      */
     fun listGames(): Map<String, GameState> {
         val repo = gameRepository
@@ -205,7 +194,8 @@ class GameService(
             }
         }
         // Fallback to in-memory cache when no DB is available
-        return games.mapValues { it.value.getCurrentState() }
+        val adapter = requireAdapter()
+        return games.mapValues { adapter.getState(it.value.engine) }
     }
 
     /**
@@ -239,8 +229,6 @@ class GameService(
     /**
      * Removes games that have been inactive for longer than the given duration.
      * Finished games (GAME_OVER) are always eligible for removal.
-     *
-     * @return The list of removed game IDs
      */
     fun removeInactiveGames(inactiveThreshold: Instant): List<String> {
         val removed = mutableListOf<String>()
@@ -255,8 +243,9 @@ class GameService(
             }
         } else {
             // Fallback: clean up only cached games (no activity tracking without DB)
-            for ((gameId, game) in games) {
-                val state = game.getCurrentState()
+            val adapter = requireAdapter()
+            for ((gameId, cached) in games) {
+                val state = adapter.getState(cached.engine)
                 if (state.stage == GameStage.GAME_OVER) {
                     removeGame(gameId)
                     removed.add(gameId)
@@ -267,78 +256,54 @@ class GameService(
     }
 
     /**
-     * Loads a game from the database, restores the Game object, and caches it.
-     * For AI games, also recreates the AIPlayer instance.
-     *
-     * @return The restored Game, or null if not found in DB
+     * Loads a game from the database, restores the Rust engine, and caches it.
      */
-    private fun loadGame(gameId: String): Game? {
+    private fun loadGame(gameId: String): CachedGame? {
         val repo = gameRepository ?: return null
         objectMapper ?: return null
+        val adapter = requireAdapter()
 
         val entity = repo.findById(gameId).orElse(null) ?: return null
         val state = deserializeGameState(entity)
 
-        // Don't restore finished games as playable Game objects
+        // Don't restore finished games as playable engine handles
         if (state.stage == GameStage.GAME_OVER) return null
 
-        val game = Game.restore(state)
-        games[gameId] = game
-
-        // Recreate AI player if this is an AI game
-        if (entity.isAIGame && entity.aiPlayerId != null) {
-            val aiPlayerId = entity.aiPlayerId!!
-            val difficulty = entity.aiDifficulty ?: "basic"
-            val aiPlayerName = state.players.find { it.id == aiPlayerId }?.name ?: "AI Opponent"
-            val aiPlayer = when (difficulty.lowercase()) {
-                "basic" -> BasicAIPlayer(aiPlayerId, aiPlayerName)
-                "medium" -> MediumAIPlayer(aiPlayerId, aiPlayerName)
-                "hard" -> HardAIPlayer(aiPlayerId, aiPlayerName)
-                else -> BasicAIPlayer(aiPlayerId, aiPlayerName)
-            }
-            aiPlayers[aiPlayerId] = aiPlayer
-        }
+        val engine = adapter.restoreEngine(state)
+        val cached = CachedGame(
+            engine = engine,
+            aiPlayerId = if (entity.isAIGame) entity.aiPlayerId else null,
+            aiDifficulty = if (entity.isAIGame) (entity.aiDifficulty ?: "basic") else null,
+        )
+        games[gameId] = cached
 
         logger.info("Restored game {} from database", gameId)
-        return game
+        return cached
     }
 
     /**
-     * Processes AI actions for the current game state.
-     * Continues processing until it's a human player's turn or the game is over.
-     *
-     * @param game The game to process
-     * @return The final game state after all AI actions
+     * Processes AI actions via the Rust engine.
+     * Returns the current state (whether or not AI actions were processed).
      */
-    private fun processAIActions(game: Game): GameState {
-        var currentState = game.getCurrentState()
-        var iterationCount = 0
-        val maxIterations = 10 // Prevent infinite loops
+    private fun processAIActions(gameId: String): GameState {
+        val adapter = requireAdapter()
+        val cached = games[gameId]
+            ?: throw IllegalStateException("No cached engine for game: $gameId")
 
-        while (iterationCount < maxIterations) {
-            val currentPlayerId = currentState.currentPlayerId
-
-            // Check if current player is AI
-            val aiPlayer = currentPlayerId?.let { aiPlayers[it] }
-            if (aiPlayer == null) {
-                // Human player's turn or no current player
-                break
-            }
-
-            // Get AI action
-            val aiAction = aiPlayer.getNextAction(currentState)
-            if (aiAction == null) {
-                // AI has no action to take
-                break
-            }
-
-            // Apply AI action
-            currentState = game.applyAction(aiAction)
-            iterationCount++
+        if (cached.aiPlayerId != null && cached.aiDifficulty != null) {
+            return adapter.processAI(
+                cached.engine,
+                cached.aiPlayerId,
+                cached.aiDifficulty,
+                maxIterations = 10,
+            )
         }
 
-        return currentState
+        return adapter.getState(cached.engine)
     }
+
+    private fun requireAdapter(): RustEngineAdapter =
+        rustEngineAdapter ?: throw IllegalStateException("RustEngineAdapter is not available")
 
     private fun saveGameEntity(
         gameId: String,
