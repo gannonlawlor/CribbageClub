@@ -18,6 +18,7 @@ import '../widgets/hand_fan.dart';
 import '../widgets/history_log.dart';
 import '../widgets/play_area.dart';
 import '../widgets/score_display.dart';
+import '../widgets/score_popup_overlay.dart';
 import '../widgets/stage_indicator.dart';
 
 class GameScreen extends ConsumerWidget {
@@ -124,7 +125,9 @@ class GameScreen extends ConsumerWidget {
         ],
       ),
       body: SafeArea(
-        child: Column(
+        child: Stack(
+          children: [
+            Column(
           children: [
             // Reconnecting banner
             if (gameNotifier.connectionStatus == ConnectionStatus.reconnecting)
@@ -269,6 +272,13 @@ class GameScreen extends ConsumerWidget {
                 onCardTap: (index) =>
                     _handleCardTap(context, ref, gs, playerId, index, selectedCards),
               ),
+            ),
+          ],
+        ),
+            // Score popup overlay
+            ScorePopupOverlay(
+              gameId: gameId,
+              playerId: playerId,
             ),
           ],
         ),

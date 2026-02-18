@@ -5,6 +5,7 @@ import '../../../core/auth/auth_provider.dart';
 import '../../../core/models/card.dart';
 import '../../../core/models/game_action.dart';
 import '../../../core/models/game_state.dart';
+import '../../../core/services/game_feedback_service.dart';
 import '../animation/game_animation_controller.dart';
 
 // WebSocket client singleton
@@ -51,6 +52,7 @@ class GameNotifier extends StateNotifier<GameNotifierState> {
   final WebSocketClient _wsClient;
   final String _playerId;
   final GameAnimationController animationController;
+  final GameFeedbackService _feedbackService;
 
   GameNotifier({
     required this.gameId,
@@ -58,9 +60,11 @@ class GameNotifier extends StateNotifier<GameNotifierState> {
     required WebSocketClient wsClient,
     required String playerId,
     required this.animationController,
+    required GameFeedbackService feedbackService,
   })  : _restClient = restClient,
         _wsClient = wsClient,
         _playerId = playerId,
+        _feedbackService = feedbackService,
         super(const GameNotifierState(isLoading: true)) {
     _init();
   }
@@ -72,6 +76,9 @@ class GameNotifier extends StateNotifier<GameNotifierState> {
 
   void _notifyAnimation(GameState newState) {
     animationController.processStateUpdate(newState);
+    for (final event in animationController.events) {
+      _feedbackService.onEvent(event);
+    }
   }
 
   Future<void> _loadGameState() async {
@@ -281,17 +288,25 @@ final gameAnimationProvider =
   return controller;
 });
 
+// Feedback service (sound + haptics) per game
+final gameFeedbackServiceProvider =
+    Provider.family<GameFeedbackService, String>((ref, gameId) {
+  return GameFeedbackService();
+});
+
 final gameNotifierProvider =
     StateNotifierProvider.family<GameNotifier, GameNotifierState, String>(
   (ref, gameId) {
     final auth = ref.read(authProvider);
     final animController = ref.read(gameAnimationProvider(gameId));
+    final feedbackService = ref.read(gameFeedbackServiceProvider(gameId));
     return GameNotifier(
       gameId: gameId,
       restClient: ref.read(restClientProvider),
       wsClient: ref.read(webSocketClientProvider),
       playerId: auth.userId ?? '',
       animationController: animController,
+      feedbackService: feedbackService,
     );
   },
 );

@@ -34,6 +34,8 @@ _$LobbyImpl _$$LobbyImplFromJson(Map<String, dynamic> json) => _$LobbyImpl(
       LobbyStatus.waiting,
   createdAt: json['createdAt'] as String,
   gameId: json['gameId'] as String?,
+  isPrivate: json['isPrivate'] as bool? ?? false,
+  inviteCode: json['inviteCode'] as String?,
 );
 
 Map<String, dynamic> _$$LobbyImplToJson(_$LobbyImpl instance) =>
@@ -45,6 +47,8 @@ Map<String, dynamic> _$$LobbyImplToJson(_$LobbyImpl instance) =>
       'status': _$LobbyStatusEnumMap[instance.status]!,
       'createdAt': instance.createdAt,
       'gameId': instance.gameId,
+      'isPrivate': instance.isPrivate,
+      'inviteCode': instance.inviteCode,
     };
 
 const _$LobbyStatusEnumMap = {

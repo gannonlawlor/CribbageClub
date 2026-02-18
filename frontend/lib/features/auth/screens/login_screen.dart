@@ -165,6 +165,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         style: const TextStyle(color: Colors.white70),
                       ),
                     ),
+                    const SizedBox(height: 16),
+                    const Divider(color: Colors.white24),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: auth.isLoading
+                            ? null
+                            : () => ref.read(authProvider.notifier).loginAsGuest(),
+                        icon: const Icon(Icons.person_outline),
+                        label: const Text('Play as Guest'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.white70,
+                          side: const BorderSide(color: Colors.white38),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),

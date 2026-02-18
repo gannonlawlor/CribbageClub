@@ -1,4 +1,8 @@
 import '../../../core/models/card.dart';
+import '../../../core/models/score_breakdown.dart';
+
+/// Source of a score change for contextual popups.
+enum ScoreSource { pegging, nobs, hand, crib, go }
 
 /// Events emitted by the animation controller when game state changes.
 /// Widgets consume these to trigger their own AnimationControllers.
@@ -30,11 +34,19 @@ class ScoreChangedEvent extends AnimationEvent {
   final String playerId;
   final int oldScore;
   final int newScore;
+  final String? reason;
+  final ScoreBreakdown? breakdown;
+  final ScoreSource? source;
   const ScoreChangedEvent({
     required this.playerId,
     required this.oldScore,
     required this.newScore,
+    this.reason,
+    this.breakdown,
+    this.source,
   });
+
+  int get points => newScore - oldScore;
 }
 
 class StageChangedEvent extends AnimationEvent {

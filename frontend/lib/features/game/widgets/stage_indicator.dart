@@ -52,14 +52,32 @@ class StageIndicator extends StatelessWidget {
             ? Border.all(color: AppTheme.goldAccent.withValues(alpha: 0.5))
             : null,
       ),
-      child: Text(
-        _message,
-        style: TextStyle(
-          color: isMyTurn ? AppTheme.goldAccent : Colors.white70,
-          fontSize: 16,
-          fontWeight: isMyTurn ? FontWeight.bold : FontWeight.normal,
+      child: AnimatedSwitcher(
+        duration: AppTheme.stageTransitionDuration,
+        switchInCurve: Curves.easeIn,
+        switchOutCurve: Curves.easeOut,
+        transitionBuilder: (child, animation) {
+          return FadeTransition(
+            opacity: animation,
+            child: SlideTransition(
+              position: Tween<Offset>(
+                begin: const Offset(0, 0.3),
+                end: Offset.zero,
+              ).animate(animation),
+              child: child,
+            ),
+          );
+        },
+        child: Text(
+          _message,
+          key: ValueKey('${stage.name}_$isMyTurn'),
+          style: TextStyle(
+            color: isMyTurn ? AppTheme.goldAccent : Colors.white70,
+            fontSize: 16,
+            fontWeight: isMyTurn ? FontWeight.bold : FontWeight.normal,
+          ),
+          textAlign: TextAlign.center,
         ),
-        textAlign: TextAlign.center,
       ),
     );
   }

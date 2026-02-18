@@ -28,6 +28,8 @@ class AppTheme {
   static const Duration scalBounceDuration = Duration(milliseconds: 200);
   static const Duration cribStaggerDelay = Duration(milliseconds: 100);
   static const Duration pegMovePerHole = Duration(milliseconds: 50);
+  static const Duration scorePopupDuration = Duration(milliseconds: 1800);
+  static const Duration stageTransitionDuration = Duration(milliseconds: 400);
 
   static ThemeData get theme => ThemeData(
         colorScheme: ColorScheme.fromSeed(

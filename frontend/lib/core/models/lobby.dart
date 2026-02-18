@@ -34,6 +34,8 @@ class Lobby with _$Lobby {
     @Default(LobbyStatus.waiting) LobbyStatus status,
     required String createdAt,
     String? gameId,
+    @Default(false) bool isPrivate,
+    String? inviteCode,
   }) = _Lobby;
 
   factory Lobby.fromJson(Map<String, dynamic> json) => _$LobbyFromJson(json);

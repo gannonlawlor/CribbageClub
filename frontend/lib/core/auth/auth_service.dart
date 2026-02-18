@@ -18,11 +18,13 @@ class AuthService {
     required String token,
     required String userId,
     required String username,
+    bool isGuest = false,
   }) async {
     final prefs = await _preferences;
     await prefs.setString(AppConstants.tokenKey, token);
     await prefs.setString(AppConstants.userIdKey, userId);
     await prefs.setString(AppConstants.usernameKey, username);
+    await prefs.setBool(AppConstants.isGuestKey, isGuest);
   }
 
   Future<String?> getUserId() async {
@@ -35,11 +37,17 @@ class AuthService {
     return prefs.getString(AppConstants.usernameKey);
   }
 
+  Future<bool> getIsGuest() async {
+    final prefs = await _preferences;
+    return prefs.getBool(AppConstants.isGuestKey) ?? false;
+  }
+
   Future<void> clearAuth() async {
     final prefs = await _preferences;
     await prefs.remove(AppConstants.tokenKey);
     await prefs.remove(AppConstants.userIdKey);
     await prefs.remove(AppConstants.usernameKey);
+    await prefs.remove(AppConstants.isGuestKey);
   }
 
   Future<bool> isLoggedIn() async {
