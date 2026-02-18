@@ -19,19 +19,13 @@ sealed class GameAction with _$GameAction {
   }) = PlayCard;
 
   @FreezedUnionValue('CutDeck')
-  const factory GameAction.cutDeck({
-    required String playerId,
-  }) = CutDeck;
+  const factory GameAction.cutDeck({required String playerId}) = CutDeck;
 
   @FreezedUnionValue('Go')
-  const factory GameAction.go({
-    required String playerId,
-  }) = Go;
+  const factory GameAction.go({required String playerId}) = Go;
 
   @FreezedUnionValue('CountHand')
-  const factory GameAction.countHand({
-    required String playerId,
-  }) = CountHand;
+  const factory GameAction.countHand({required String playerId}) = CountHand;
 
   factory GameAction.fromJson(Map<String, dynamic> json) =>
       _$GameActionFromJson(json);

@@ -5,10 +5,12 @@ import '../../../config/theme.dart';
 import '../../../core/auth/auth_provider.dart';
 import '../../../core/models/leaderboard_entry.dart';
 
-final _leaderboardProvider = FutureProvider.autoDispose<List<LeaderboardEntry>>((ref) async {
-  final restClient = ref.read(restClientProvider);
-  return restClient.getLeaderboard();
-});
+final _leaderboardProvider = FutureProvider.autoDispose<List<LeaderboardEntry>>(
+  (ref) async {
+    final restClient = ref.read(restClientProvider);
+    return restClient.getLeaderboard();
+  },
+);
 
 class LeaderboardScreen extends ConsumerWidget {
   const LeaderboardScreen({super.key});
@@ -65,14 +67,21 @@ class LeaderboardScreen extends ConsumerWidget {
               return Container(
                 margin: const EdgeInsets.only(bottom: 8),
                 decoration: BoxDecoration(
-                  color: isCurrentUser ? AppTheme.goldAccent.withValues(alpha: 0.15) : Colors.white10,
+                  color: isCurrentUser
+                      ? AppTheme.goldAccent.withValues(alpha: 0.15)
+                      : Colors.white10,
                   borderRadius: BorderRadius.circular(8),
                   border: isCurrentUser
-                      ? Border.all(color: AppTheme.goldAccent.withValues(alpha: 0.5))
+                      ? Border.all(
+                          color: AppTheme.goldAccent.withValues(alpha: 0.5),
+                        )
                       : null,
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                   child: Row(
                     children: [
                       SizedBox(
@@ -80,8 +89,12 @@ class LeaderboardScreen extends ConsumerWidget {
                         child: Text(
                           '#$rank',
                           style: TextStyle(
-                            color: rank <= 3 ? AppTheme.goldAccent : Colors.white54,
-                            fontWeight: rank <= 3 ? FontWeight.bold : FontWeight.normal,
+                            color: rank <= 3
+                                ? AppTheme.goldAccent
+                                : Colors.white54,
+                            fontWeight: rank <= 3
+                                ? FontWeight.bold
+                                : FontWeight.normal,
                             fontSize: 16,
                           ),
                         ),
@@ -94,14 +107,21 @@ class LeaderboardScreen extends ConsumerWidget {
                             Text(
                               entry.displayName,
                               style: TextStyle(
-                                color: isCurrentUser ? AppTheme.goldAccent : Colors.white,
+                                color: isCurrentUser
+                                    ? AppTheme.goldAccent
+                                    : Colors.white,
                                 fontSize: 14,
-                                fontWeight: isCurrentUser ? FontWeight.bold : FontWeight.normal,
+                                fontWeight: isCurrentUser
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
                               ),
                             ),
                             Text(
                               '${entry.gamesPlayed} games played',
-                              style: const TextStyle(color: Colors.white54, fontSize: 12),
+                              style: const TextStyle(
+                                color: Colors.white54,
+                                fontSize: 12,
+                              ),
                             ),
                           ],
                         ),

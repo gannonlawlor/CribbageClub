@@ -92,7 +92,11 @@ class CardWidget extends StatelessWidget {
                 ),
                 Text(
                   suitText,
-                  style: TextStyle(color: color, fontSize: 12 * scale, height: 1.0),
+                  style: TextStyle(
+                    color: color,
+                    fontSize: 12 * scale,
+                    height: 1.0,
+                  ),
                 ),
               ],
             ),
@@ -125,7 +129,11 @@ class CardWidget extends StatelessWidget {
                   ),
                   Text(
                     suitText,
-                    style: TextStyle(color: color, fontSize: 12 * scale, height: 1.0),
+                    style: TextStyle(
+                      color: color,
+                      fontSize: 12 * scale,
+                      height: 1.0,
+                    ),
                   ),
                 ],
               ),
@@ -199,14 +207,8 @@ class _FlippableCardWidgetState extends State<FlippableCardWidget>
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      duration: widget.duration,
-      vsync: this,
-    );
-    _animation = CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeInOut,
-    );
+    _controller = AnimationController(duration: widget.duration, vsync: this);
+    _animation = CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
     _showFace = widget.faceUp;
     if (widget.faceUp) {
       _controller.value = 1.0;
@@ -247,9 +249,7 @@ class _FlippableCardWidgetState extends State<FlippableCardWidget>
       animation: _animation,
       builder: (context, child) {
         final value = _animation.value;
-        final angle = value <= 0.5
-            ? value * math.pi
-            : (1.0 - value) * math.pi;
+        final angle = value <= 0.5 ? value * math.pi : (1.0 - value) * math.pi;
         final transform = Matrix4.identity()
           ..setEntry(3, 2, 0.001)
           ..rotateY(angle);

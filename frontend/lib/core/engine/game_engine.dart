@@ -19,13 +19,10 @@ class GameEngine {
   static const _keepCards = 4;
   static const _winScore = 121;
 
-  GameEngine({
-    required this.id,
-    required List<Player> players,
-    Deck? deck,
-  })  : _deck = deck ?? Deck(),
-        _state = GameState(gameId: id, players: players),
-        _currentRound = 1 {
+  GameEngine({required this.id, required List<Player> players, Deck? deck})
+    : _deck = deck ?? Deck(),
+      _state = GameState(gameId: id, players: players),
+      _currentRound = 1 {
     assert(players.length == 2);
     _dealCards();
   }
@@ -36,18 +33,18 @@ class GameEngine {
     required GameState state,
     required List<GameHistoryEvent> history,
     required int currentRound,
-  })  : _deck = deck,
-        _state = state,
-        _currentRound = currentRound {
+  }) : _deck = deck,
+       _state = state,
+       _currentRound = currentRound {
     _history.addAll(history);
   }
 
   factory GameEngine.restore(GameState state) {
     final deck = Deck(state.remainingDeck);
-    final currentRound = state.history
-        .whereType<RoundStarted>()
-        .length
-        .clamp(1, 999);
+    final currentRound = state.history.whereType<RoundStarted>().length.clamp(
+      1,
+      999,
+    );
     return GameEngine._restore(
       id: state.gameId,
       deck: deck,
@@ -58,9 +55,9 @@ class GameEngine {
   }
 
   GameState get currentState => _state.copyWith(
-        history: List.unmodifiable(_history),
-        remainingDeck: _deck.remainingCards(),
-      );
+    history: List.unmodifiable(_history),
+    remainingDeck: _deck.remainingCards(),
+  );
 
   GameState applyAction(GameAction action) {
     action.map(
@@ -76,26 +73,32 @@ class GameEngine {
   // ── Deal ──────────────────────────────────────────────────────────────
 
   void _dealCards() {
-    _addEvent(GameHistoryEvent.roundStarted(
-      timestamp: _now(),
-      roundNumber: _currentRound,
-    ));
+    _addEvent(
+      GameHistoryEvent.roundStarted(
+        timestamp: _now(),
+        roundNumber: _currentRound,
+      ),
+    );
 
     final devHands = _devNextHands;
     _devNextHands = null;
     _state = _state.copyWith(
       stage: GameStage.dealing,
       players: _state.players
-          .map((p) => p.copyWith(
-              hand: devHands?[p.id] ?? _deck.drawN(_cardsPerHand)))
+          .map(
+            (p) =>
+                p.copyWith(hand: devHands?[p.id] ?? _deck.drawN(_cardsPerHand)),
+          )
           .toList(),
       currentPlayerId: _state.players.first.id,
     );
 
-    _addEvent(GameHistoryEvent.cardsDealt(
-      timestamp: _now(),
-      dealtHands: {for (final p in _state.players) p.id: p.hand},
-    ));
+    _addEvent(
+      GameHistoryEvent.cardsDealt(
+        timestamp: _now(),
+        dealtHands: {for (final p in _state.players) p.id: p.hand},
+      ),
+    );
 
     _state = _state.copyWith(stage: GameStage.discardingToCrib);
   }
@@ -163,17 +166,18 @@ class GameEngine {
       final dealerIdx = _dealerIndex();
       final updatedPlayers = List.of(_state.players);
       final dealer = updatedPlayers[dealerIdx];
-      updatedPlayers[dealerIdx] =
-          dealer.copyWith(score: dealer.score + 2);
+      updatedPlayers[dealerIdx] = dealer.copyWith(score: dealer.score + 2);
       _state = _state.copyWith(players: updatedPlayers);
     }
 
-    _addEvent(GameHistoryEvent.deckCut(
-      timestamp: _now(),
-      cutCard: cutCard,
-      cuttingPlayerId: playerId,
-      dealerScoredNobs: dealerScoredNobs,
-    ));
+    _addEvent(
+      GameHistoryEvent.deckCut(
+        timestamp: _now(),
+        cutCard: cutCard,
+        cuttingPlayerId: playerId,
+        dealerScoredNobs: dealerScoredNobs,
+      ),
+    );
 
     if (dealerScoredNobs) {
       _checkWin(_state.players[_dealerIndex()].id);
@@ -198,10 +202,10 @@ class GameEngine {
     );
     final updatedPlayedCards = [..._state.playedCards, card];
 
-    final scoreEarned =
-        _calculatePeggingScore(updatedPlayedCards, newCount);
-    final playerWithScore =
-        updatedPlayer.copyWith(score: updatedPlayer.score + scoreEarned);
+    final scoreEarned = _calculatePeggingScore(updatedPlayedCards, newCount);
+    final playerWithScore = updatedPlayer.copyWith(
+      score: updatedPlayer.score + scoreEarned,
+    );
     final updatedPlayers = List.of(_state.players)
       ..[playerIndex] = playerWithScore;
 
@@ -226,20 +230,22 @@ class GameEngine {
         3 => 'Three of a kind',
         4 => 'Four of a kind',
         _ => () {
-            for (var runLength = 7; runLength >= 3; runLength--) {
-              if (updatedPlayedCards.length >= runLength &&
-                  _isRun(updatedPlayedCards
-                      .sublist(updatedPlayedCards.length - runLength))) {
-                return 'Run of $runLength';
-              }
+          for (var runLength = 7; runLength >= 3; runLength--) {
+            if (updatedPlayedCards.length >= runLength &&
+                _isRun(
+                  updatedPlayedCards.sublist(
+                    updatedPlayedCards.length - runLength,
+                  ),
+                )) {
+              return 'Run of $runLength';
             }
-            return null;
-          }(),
+          }
+          return null;
+        }(),
       };
     }
 
-    final nextPlayerIndex =
-        (playerIndex + 1) % _state.players.length;
+    final nextPlayerIndex = (playerIndex + 1) % _state.players.length;
     _state = _state.copyWith(
       players: updatedPlayers,
       playedCards: updatedPlayedCards,
@@ -248,14 +254,16 @@ class GameEngine {
       lastPlayWasGo: false,
     );
 
-    _addEvent(GameHistoryEvent.cardPlayed(
-      timestamp: _now(),
-      playerId: playerId,
-      card: card,
-      newCount: newCount,
-      pointsScored: scoreEarned,
-      scoringReason: scoringReason,
-    ));
+    _addEvent(
+      GameHistoryEvent.cardPlayed(
+        timestamp: _now(),
+        playerId: playerId,
+        card: card,
+        newCount: newCount,
+        pointsScored: scoreEarned,
+        scoringReason: scoringReason,
+      ),
+    );
 
     if (_checkWin(playerId)) return;
 
@@ -270,14 +278,14 @@ class GameEngine {
     assert(playerId == _state.currentPlayerId);
 
     final playerIndex = _playerIndex(playerId);
-    final nextPlayerIndex =
-        (playerIndex + 1) % _state.players.length;
+    final nextPlayerIndex = (playerIndex + 1) % _state.players.length;
     final nextPlayerId = _state.players[nextPlayerIndex].id;
 
     if (_state.lastPlayWasGo) {
       final currentPlayer = _state.players[playerIndex];
-      final updatedPlayer =
-          currentPlayer.copyWith(score: currentPlayer.score + 1);
+      final updatedPlayer = currentPlayer.copyWith(
+        score: currentPlayer.score + 1,
+      );
       final updatedPlayers = List.of(_state.players)
         ..[playerIndex] = updatedPlayer;
 
@@ -289,11 +297,13 @@ class GameEngine {
         lastPlayWasGo: false,
       );
 
-      _addEvent(GameHistoryEvent.goAnnounced(
-        timestamp: _now(),
-        playerId: playerId,
-        pointsScored: 1,
-      ));
+      _addEvent(
+        GameHistoryEvent.goAnnounced(
+          timestamp: _now(),
+          playerId: playerId,
+          pointsScored: 1,
+        ),
+      );
 
       if (_checkWin(playerId)) return;
 
@@ -307,18 +317,17 @@ class GameEngine {
         lastPlayWasGo: true,
       );
 
-      _addEvent(GameHistoryEvent.goAnnounced(
-        timestamp: _now(),
-        playerId: playerId,
-        pointsScored: 0,
-      ));
+      _addEvent(
+        GameHistoryEvent.goAnnounced(
+          timestamp: _now(),
+          playerId: playerId,
+          pointsScored: 0,
+        ),
+      );
     }
   }
 
-  int _calculatePeggingScore(
-    List<PlayingCard> playedCards,
-    int count,
-  ) {
+  int _calculatePeggingScore(List<PlayingCard> playedCards, int count) {
     var score = 0;
 
     if (count == 15 || count == 31) score += 2;
@@ -341,8 +350,7 @@ class GameEngine {
 
     for (var runLength = 7; runLength >= 3; runLength--) {
       if (playedCards.length >= runLength &&
-          _isRun(
-              playedCards.sublist(playedCards.length - runLength))) {
+          _isRun(playedCards.sublist(playedCards.length - runLength))) {
         score += runLength;
         break;
       }
@@ -381,33 +389,40 @@ class GameEngine {
     final handToCount = _state.handsForCounting[playerId] ?? [];
     assert(handToCount.isNotEmpty);
 
-    final handScore =
-        HandCounting.calculateHandScore(handToCount, _state.cutCard!);
-    final scoreBreakdown =
-        ScoreBreakdownCalculator.calculate(handToCount, _state.cutCard!);
-    final updatedPlayer =
-        player.copyWith(score: player.score + handScore);
+    final handScore = HandCounting.calculateHandScore(
+      handToCount,
+      _state.cutCard!,
+    );
+    final scoreBreakdown = ScoreBreakdownCalculator.calculate(
+      handToCount,
+      _state.cutCard!,
+    );
+    final updatedPlayer = player.copyWith(score: player.score + handScore);
     final updatedPlayers = List.of(_state.players)
       ..[playerIndex] = updatedPlayer;
 
-    _addEvent(GameHistoryEvent.handCounted(
-      timestamp: _now(),
-      playerId: playerId,
-      hand: handToCount,
-      totalPoints: handScore,
-      scoreBreakdown: scoreBreakdown,
-    ));
+    _addEvent(
+      GameHistoryEvent.handCounted(
+        timestamp: _now(),
+        playerId: playerId,
+        hand: handToCount,
+        totalPoints: handScore,
+        scoreBreakdown: scoreBreakdown,
+      ),
+    );
 
     if (updatedPlayer.score >= _winScore) {
       _state = _state.copyWith(
         players: updatedPlayers,
         stage: GameStage.gameOver,
       );
-      _addEvent(GameHistoryEvent.gameEnded(
-        timestamp: _now(),
-        winnerPlayerId: playerId,
-        finalScore: updatedPlayer.score,
-      ));
+      _addEvent(
+        GameHistoryEvent.gameEnded(
+          timestamp: _now(),
+          winnerPlayerId: playerId,
+          finalScore: updatedPlayer.score,
+        ),
+      );
       return;
     }
 
@@ -425,28 +440,31 @@ class GameEngine {
         _state.cutCard!,
         isCrib: true,
       );
-      final updatedDealer =
-          dealer.copyWith(score: dealer.score + cribScore);
+      final updatedDealer = dealer.copyWith(score: dealer.score + cribScore);
       updatedPlayers[dealerIndex] = updatedDealer;
 
-      _addEvent(GameHistoryEvent.cribCounted(
-        timestamp: _now(),
-        dealerPlayerId: dealer.id,
-        totalPoints: cribScore,
-        scoreBreakdown: cribBreakdown,
-        cribCards: _state.crib,
-      ));
+      _addEvent(
+        GameHistoryEvent.cribCounted(
+          timestamp: _now(),
+          dealerPlayerId: dealer.id,
+          totalPoints: cribScore,
+          scoreBreakdown: cribBreakdown,
+          cribCards: _state.crib,
+        ),
+      );
 
       if (updatedDealer.score >= _winScore) {
         _state = _state.copyWith(
           players: updatedPlayers,
           stage: GameStage.gameOver,
         );
-        _addEvent(GameHistoryEvent.gameEnded(
-          timestamp: _now(),
-          winnerPlayerId: dealer.id,
-          finalScore: updatedDealer.score,
-        ));
+        _addEvent(
+          GameHistoryEvent.gameEnded(
+            timestamp: _now(),
+            winnerPlayerId: dealer.id,
+            finalScore: updatedDealer.score,
+          ),
+        );
         return;
       }
 
@@ -465,15 +483,16 @@ class GameEngine {
     _deck.reset();
     _currentRound++;
 
-    final newDealerIndex =
-        (_state.dealerIndex + 1) % _state.players.length;
+    final newDealerIndex = (_state.dealerIndex + 1) % _state.players.length;
 
     final devHands = _devNextHands;
     _devNextHands = null;
     _state = _state.copyWith(
       players: updatedPlayers
-          .map((p) => p.copyWith(
-              hand: devHands?[p.id] ?? _deck.drawN(_cardsPerHand)))
+          .map(
+            (p) =>
+                p.copyWith(hand: devHands?[p.id] ?? _deck.drawN(_cardsPerHand)),
+          )
           .toList(),
       crib: [],
       cutCard: null,
@@ -486,14 +505,18 @@ class GameEngine {
       dealerIndex: newDealerIndex,
     );
 
-    _addEvent(GameHistoryEvent.roundStarted(
-      timestamp: _now(),
-      roundNumber: _currentRound,
-    ));
-    _addEvent(GameHistoryEvent.cardsDealt(
-      timestamp: _now(),
-      dealtHands: {for (final p in _state.players) p.id: p.hand},
-    ));
+    _addEvent(
+      GameHistoryEvent.roundStarted(
+        timestamp: _now(),
+        roundNumber: _currentRound,
+      ),
+    );
+    _addEvent(
+      GameHistoryEvent.cardsDealt(
+        timestamp: _now(),
+        dealtHands: {for (final p in _state.players) p.id: p.hand},
+      ),
+    );
 
     _state = _state.copyWith(stage: GameStage.discardingToCrib);
   }
@@ -520,11 +543,13 @@ class GameEngine {
     final player = _state.players[_playerIndex(playerId)];
     if (player.score >= _winScore) {
       _state = _state.copyWith(stage: GameStage.gameOver);
-      _addEvent(GameHistoryEvent.gameEnded(
-        timestamp: _now(),
-        winnerPlayerId: playerId,
-        finalScore: player.score,
-      ));
+      _addEvent(
+        GameHistoryEvent.gameEnded(
+          timestamp: _now(),
+          winnerPlayerId: playerId,
+          finalScore: player.score,
+        ),
+      );
       return true;
     }
     return false;
@@ -537,8 +562,7 @@ class GameEngine {
   }
 
   int _dealerIndex() => _state.dealerIndex;
-  int _nonDealerIndex() =>
-      (_state.dealerIndex + 1) % _state.players.length;
+  int _nonDealerIndex() => (_state.dealerIndex + 1) % _state.players.length;
 
   void _addEvent(GameHistoryEvent event) => _history.add(event);
 

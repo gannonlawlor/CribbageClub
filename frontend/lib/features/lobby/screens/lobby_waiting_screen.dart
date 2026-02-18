@@ -26,7 +26,10 @@ class _LobbyWaitingScreenState extends ConsumerState<LobbyWaitingScreen> {
   void initState() {
     super.initState();
     _fetchLobby();
-    _pollTimer = Timer.periodic(const Duration(seconds: 3), (_) => _fetchLobby());
+    _pollTimer = Timer.periodic(
+      const Duration(seconds: 3),
+      (_) => _fetchLobby(),
+    );
   }
 
   @override
@@ -86,8 +89,8 @@ class _LobbyWaitingScreenState extends ConsumerState<LobbyWaitingScreen> {
             child: _isLoading
                 ? const CircularProgressIndicator()
                 : _error != null
-                    ? Text(_error!, style: const TextStyle(color: Colors.redAccent))
-                    : _buildLobbyContent(),
+                ? Text(_error!, style: const TextStyle(color: Colors.redAccent))
+                : _buildLobbyContent(),
           ),
         ),
       ),
@@ -121,7 +124,9 @@ class _LobbyWaitingScreenState extends ConsumerState<LobbyWaitingScreen> {
             decoration: BoxDecoration(
               color: Colors.white10,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppTheme.goldAccent.withValues(alpha: 0.5)),
+              border: Border.all(
+                color: AppTheme.goldAccent.withValues(alpha: 0.5),
+              ),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -160,13 +165,15 @@ class _LobbyWaitingScreenState extends ConsumerState<LobbyWaitingScreen> {
           style: const TextStyle(color: Colors.white70, fontSize: 16),
         ),
         const SizedBox(height: 8),
-        ...lobby.players.map((p) => Padding(
-          padding: const EdgeInsets.only(bottom: 4),
-          child: Text(
-            p.name,
-            style: const TextStyle(color: Colors.white, fontSize: 14),
+        ...lobby.players.map(
+          (p) => Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: Text(
+              p.name,
+              style: const TextStyle(color: Colors.white, fontSize: 14),
+            ),
           ),
-        )),
+        ),
         const SizedBox(height: 32),
         const SizedBox(
           width: 24,

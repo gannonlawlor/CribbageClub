@@ -111,11 +111,10 @@ class _CribbageBoardPainter extends CustomPainter {
 
     // Draw board background
     final boardPaint = Paint()
-      ..shader = ui.Gradient.linear(
-        Offset(0, 0),
-        Offset(0, size.height),
-        [AppTheme.boardBrownLight, AppTheme.boardBrown],
-      );
+      ..shader = ui.Gradient.linear(Offset(0, 0), Offset(0, size.height), [
+        AppTheme.boardBrownLight,
+        AppTheme.boardBrown,
+      ]);
     canvas.drawRRect(
       RRect.fromRectAndRadius(boardRect, const Radius.circular(8)),
       boardPaint,
@@ -226,10 +225,7 @@ class _CribbageBoardPainter extends CustomPainter {
       ),
     );
     textPainter.layout();
-    textPainter.paint(
-      canvas,
-      Offset(2, playerTrackY - textPainter.height / 2),
-    );
+    textPainter.paint(canvas, Offset(2, playerTrackY - textPainter.height / 2));
 
     textPainter.text = TextSpan(
       text: 'Opp',
@@ -284,7 +280,9 @@ class _CribbageBoardPainter extends CustomPainter {
     if (intScore == 0) return positions[0] * fraction;
 
     final posA = positions[intScore - 1];
-    final posB = intScore < positions.length ? positions[intScore] : positions.last;
+    final posB = intScore < positions.length
+        ? positions[intScore]
+        : positions.last;
     return posA + (posB - posA) * fraction;
   }
 
@@ -296,11 +294,7 @@ class _CribbageBoardPainter extends CustomPainter {
       Paint()..color = color.withValues(alpha: 0.3),
     );
     // Peg body
-    canvas.drawCircle(
-      center,
-      _pegRadius,
-      Paint()..color = color,
-    );
+    canvas.drawCircle(center, _pegRadius, Paint()..color = color);
     // Highlight
     canvas.drawCircle(
       Offset(center.dx - 1, center.dy - 1),

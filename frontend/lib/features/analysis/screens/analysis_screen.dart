@@ -9,18 +9,18 @@ import '../../game/state/game_providers.dart';
 import '../../game/widgets/card_widget.dart';
 
 /// Provider: fetches analysis from REST for server games, computes locally for local games.
-final analysisProvider =
-    FutureProvider.family.autoDispose<GameAnalysis, String>((ref, gameId) async {
-  if (isLocalGame(gameId)) {
-    final notifierState = ref.read(localGameNotifierProvider(gameId));
-    final state = notifierState.gameState;
-    if (state == null) throw Exception('Local game not found');
-    return LocalAnalysisService.analyzeGame(gameId, state.history);
-  } else {
-    final restClient = ref.read(restClientProvider);
-    return restClient.getGameAnalysis(gameId);
-  }
-});
+final analysisProvider = FutureProvider.family
+    .autoDispose<GameAnalysis, String>((ref, gameId) async {
+      if (isLocalGame(gameId)) {
+        final notifierState = ref.read(localGameNotifierProvider(gameId));
+        final state = notifierState.gameState;
+        if (state == null) throw Exception('Local game not found');
+        return LocalAnalysisService.analyzeGame(gameId, state.history);
+      } else {
+        final restClient = ref.read(restClientProvider);
+        return restClient.getGameAnalysis(gameId);
+      }
+    });
 
 class AnalysisScreen extends ConsumerWidget {
   final String gameId;
@@ -52,47 +52,51 @@ class AnalysisScreen extends ConsumerWidget {
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 500),
           child: analysis.when(
-        data: (data) => _AnalysisContent(
-          analysis: data,
-          playerId: playerId,
-          isLocal: isLocalGame(gameId),
-        ),
-        loading: () => const Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              CircularProgressIndicator(),
-              SizedBox(height: 16),
-              Text(
-                'Analyzing discards...',
-                style: TextStyle(color: Colors.white54),
+            data: (data) => _AnalysisContent(
+              analysis: data,
+              playerId: playerId,
+              isLocal: isLocalGame(gameId),
+            ),
+            loading: () => const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 16),
+                  Text(
+                    'Analyzing discards...',
+                    style: TextStyle(color: Colors.white54),
+                  ),
+                ],
               ),
-            ],
-          ),
-        ),
-        error: (error, _) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(32),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.error_outline, size: 48, color: Colors.redAccent),
-                const SizedBox(height: 16),
-                Text(
-                  'Analysis unavailable: $error',
-                  style: const TextStyle(color: Colors.redAccent),
-                  textAlign: TextAlign.center,
+            ),
+            error: (error, _) => Center(
+              child: Padding(
+                padding: const EdgeInsets.all(32),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.error_outline,
+                      size: 48,
+                      color: Colors.redAccent,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Analysis unavailable: $error',
+                      style: const TextStyle(color: Colors.redAccent),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () => context.go('/'),
+                      child: const Text('Back to Home'),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () => context.go('/'),
-                  child: const Text('Back to Home'),
-                ),
-              ],
+              ),
             ),
           ),
-        ),
-      ),
         ),
       ),
     );
@@ -124,7 +128,10 @@ class _AnalysisContent extends StatelessWidget {
     // Compute summary stats
     final myAnalyses = analysis.rounds
         .expand((r) => r.playerAnalyses)
-        .where((a) => isLocal ? !a.playerId.startsWith('ai_') : a.playerId == playerId)
+        .where(
+          (a) =>
+              isLocal ? !a.playerId.startsWith('ai_') : a.playerId == playerId,
+        )
         .toList();
     final totalEvLost = myAnalyses.fold(0.0, (sum, a) => sum + a.evDifference);
     final optimalCount = myAnalyses.where((a) => a.evDifference < 0.01).length;
@@ -144,7 +151,10 @@ class _AnalysisContent extends StatelessWidget {
               const Text(
                 'Summary',
                 style: TextStyle(
-                    color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 8),
               Row(
@@ -164,8 +174,8 @@ class _AnalysisContent extends StatelessWidget {
                     color: totalEvLost < 2.0
                         ? Colors.greenAccent
                         : totalEvLost < 5.0
-                            ? Colors.orangeAccent
-                            : Colors.redAccent,
+                        ? Colors.orangeAccent
+                        : Colors.redAccent,
                   ),
                 ],
               ),
@@ -195,12 +205,18 @@ class _SummaryChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Text(value,
-            style: TextStyle(
-                color: color ?? Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.bold)),
-        Text(label, style: const TextStyle(color: Colors.white54, fontSize: 12)),
+        Text(
+          value,
+          style: TextStyle(
+            color: color ?? Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        Text(
+          label,
+          style: const TextStyle(color: Colors.white54, fontSize: 12),
+        ),
       ],
     );
   }
@@ -211,8 +227,11 @@ class _RoundCard extends StatefulWidget {
   final String playerId;
   final bool isLocal;
 
-  const _RoundCard(
-      {required this.round, required this.playerId, required this.isLocal});
+  const _RoundCard({
+    required this.round,
+    required this.playerId,
+    required this.isLocal,
+  });
 
   @override
   State<_RoundCard> createState() => _RoundCardState();
@@ -224,16 +243,21 @@ class _RoundCardState extends State<_RoundCard> {
   @override
   Widget build(BuildContext context) {
     // Find the player's analysis (for local games, pick the non-AI player)
-    final myAnalysis = widget.round.playerAnalyses.where((a) =>
-        widget.isLocal ? !a.playerId.startsWith('ai_') : a.playerId == widget.playerId).firstOrNull;
+    final myAnalysis = widget.round.playerAnalyses
+        .where(
+          (a) => widget.isLocal
+              ? !a.playerId.startsWith('ai_')
+              : a.playerId == widget.playerId,
+        )
+        .firstOrNull;
     if (myAnalysis == null) return const SizedBox.shrink();
 
     final evDiff = myAnalysis.evDifference;
     final evColor = evDiff < 0.5
         ? Colors.greenAccent
         : evDiff < 2.0
-            ? Colors.orangeAccent
-            : Colors.redAccent;
+        ? Colors.orangeAccent
+        : Colors.redAccent;
 
     return Container(
       decoration: BoxDecoration(
@@ -251,24 +275,36 @@ class _RoundCardState extends State<_RoundCard> {
                 Text(
                   'Round ${widget.round.roundNumber}',
                   style: const TextStyle(
-                      color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(width: 8),
                 if (myAnalysis.isDealer)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: AppTheme.goldAccent.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(4),
                     ),
-                    child: const Text('Dealer',
-                        style: TextStyle(
-                            color: AppTheme.goldAccent, fontSize: 11)),
+                    child: const Text(
+                      'Dealer',
+                      style: TextStyle(
+                        color: AppTheme.goldAccent,
+                        fontSize: 11,
+                      ),
+                    ),
                   ),
                 const Spacer(),
                 if (widget.round.cutCard != null) ...[
-                  const Text('Cut: ',
-                      style: TextStyle(color: Colors.white54, fontSize: 12)),
+                  const Text(
+                    'Cut: ',
+                    style: TextStyle(color: Colors.white54, fontSize: 12),
+                  ),
                   SizedBox(
                     width: 30,
                     height: 42,
@@ -290,8 +326,10 @@ class _RoundCardState extends State<_RoundCard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Dealt Hand',
-                    style: TextStyle(color: Colors.white54, fontSize: 12)),
+                const Text(
+                  'Dealt Hand',
+                  style: TextStyle(color: Colors.white54, fontSize: 12),
+                ),
                 const SizedBox(height: 4),
                 Wrap(
                   spacing: 4,
@@ -396,7 +434,13 @@ class _RoundCardState extends State<_RoundCard> {
             ),
           ),
 
-          if (_expanded) _AllOptionsExpanded(gameId: '', round: widget.round, playerId: widget.playerId, isLocal: widget.isLocal),
+          if (_expanded)
+            _AllOptionsExpanded(
+              gameId: '',
+              round: widget.round,
+              playerId: widget.playerId,
+              isLocal: widget.isLocal,
+            ),
         ],
       ),
     );
@@ -432,30 +476,38 @@ class _DiscardComparison extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label,
-              style: TextStyle(
-                color: isOptimal ? Colors.greenAccent : Colors.white70,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              )),
+          Text(
+            label,
+            style: TextStyle(
+              color: isOptimal ? Colors.greenAccent : Colors.white70,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
           const SizedBox(height: 4),
           Row(
             children: option.discard
-                .map((card) => Padding(
-                      padding: const EdgeInsets.only(right: 3),
-                      child: CardWidget(
-                        card: card,
-                        width: 32,
-                        height: 45,
-                        enabled: false,
-                      ),
-                    ))
+                .map(
+                  (card) => Padding(
+                    padding: const EdgeInsets.only(right: 3),
+                    child: CardWidget(
+                      card: card,
+                      width: 32,
+                      height: 45,
+                      enabled: false,
+                    ),
+                  ),
+                )
                 .toList(),
           ),
           const SizedBox(height: 4),
           Text(
             'EV: ${option.expectedCombinedValue.toStringAsFixed(2)}',
-            style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
           ),
           Text(
             'Hand: ${option.expectedHandValue.toStringAsFixed(1)}  Crib: ${option.expectedCribValue.toStringAsFixed(1)}',
@@ -483,7 +535,10 @@ class _AllOptionsExpanded extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final myAnalysis = round.playerAnalyses
-        .where((a) => isLocal ? !a.playerId.startsWith('ai_') : a.playerId == playerId)
+        .where(
+          (a) =>
+              isLocal ? !a.playerId.startsWith('ai_') : a.playerId == playerId,
+        )
         .firstOrNull;
     if (myAnalysis == null) return const SizedBox.shrink();
 
@@ -558,15 +613,17 @@ class _OptionRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 4),
-          ...option.discard.map((card) => Padding(
-                padding: const EdgeInsets.only(right: 2),
-                child: CardWidget(
-                  card: card,
-                  width: 26,
-                  height: 36,
-                  enabled: false,
-                ),
-              )),
+          ...option.discard.map(
+            (card) => Padding(
+              padding: const EdgeInsets.only(right: 2),
+              child: CardWidget(
+                card: card,
+                width: 26,
+                height: 36,
+                enabled: false,
+              ),
+            ),
+          ),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -581,8 +638,10 @@ class _OptionRow extends StatelessWidget {
                 color: Colors.blueAccent.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(4),
               ),
-              child: const Text('You',
-                  style: TextStyle(color: Colors.blueAccent, fontSize: 10)),
+              child: const Text(
+                'You',
+                style: TextStyle(color: Colors.blueAccent, fontSize: 10),
+              ),
             ),
           if (isOptimal)
             Container(
@@ -592,8 +651,10 @@ class _OptionRow extends StatelessWidget {
                 color: Colors.greenAccent.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(4),
               ),
-              child: const Text('Best',
-                  style: TextStyle(color: Colors.greenAccent, fontSize: 10)),
+              child: const Text(
+                'Best',
+                style: TextStyle(color: Colors.greenAccent, fontSize: 10),
+              ),
             ),
         ],
       ),

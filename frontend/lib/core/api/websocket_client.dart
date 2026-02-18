@@ -7,7 +7,13 @@ import '../models/game_action.dart';
 import '../models/game_state.dart';
 import '../models/websocket_messages.dart';
 
-enum ConnectionStatus { disconnected, connecting, connected, reconnecting, failed }
+enum ConnectionStatus {
+  disconnected,
+  connecting,
+  connected,
+  reconnecting,
+  failed,
+}
 
 class WebSocketClient {
   final AuthService _authService;
@@ -30,7 +36,7 @@ class WebSocketClient {
   void Function(ConnectionStatus)? onStatusChange;
 
   WebSocketClient({required AuthService authService})
-      : _authService = authService;
+    : _authService = authService;
 
   ConnectionStatus get status => _status;
   bool get isConnected => _stompClient?.connected ?? false;
@@ -113,7 +119,10 @@ class WebSocketClient {
     _reconnectAttempts++;
 
     // Exponential backoff: 1s, 2s, 4s, 8s, 16s, 30s, 30s...
-    final delaySeconds = (1 << (_reconnectAttempts - 1)).clamp(1, _maxBackoff.inSeconds);
+    final delaySeconds = (1 << (_reconnectAttempts - 1)).clamp(
+      1,
+      _maxBackoff.inSeconds,
+    );
     final delay = Duration(seconds: delaySeconds);
 
     _reconnectTimer?.cancel();
@@ -164,9 +173,7 @@ class WebSocketClient {
     }
   }
 
-  void subscribeToUserState({
-    required void Function(GameState) onStateUpdate,
-  }) {
+  void subscribeToUserState({required void Function(GameState) onStateUpdate}) {
     _subscriptions['user-state']?.call(unsubscribeHeaders: {});
 
     void callback(StompFrame frame) {
@@ -189,9 +196,7 @@ class WebSocketClient {
     }
   }
 
-  void subscribeToErrors({
-    required void Function(GameErrorMessage) onError,
-  }) {
+  void subscribeToErrors({required void Function(GameErrorMessage) onError}) {
     _subscriptions['user-errors']?.call(unsubscribeHeaders: {});
 
     void callback(StompFrame frame) {
@@ -216,10 +221,9 @@ class WebSocketClient {
   void sendAction(String gameId, GameAction action) {
     _stompClient?.send(
       destination: '/app/game/action',
-      body: jsonEncode(GameActionMessage(
-        gameId: gameId,
-        action: action,
-      ).toJson()),
+      body: jsonEncode(
+        GameActionMessage(gameId: gameId, action: action).toJson(),
+      ),
     );
   }
 

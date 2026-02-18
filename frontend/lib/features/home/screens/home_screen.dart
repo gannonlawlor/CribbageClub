@@ -14,7 +14,9 @@ import '../../game/state/game_providers.dart';
 final _isCreatingGameProvider = StateProvider<bool>((ref) => false);
 
 // Active games provider — fetches from /api/games/me (only when logged in)
-final _activeGamesProvider = FutureProvider.autoDispose<List<GameState>>((ref) async {
+final _activeGamesProvider = FutureProvider.autoDispose<List<GameState>>((
+  ref,
+) async {
   final auth = ref.read(authProvider);
   if (!auth.isLoggedIn) return [];
   final restClient = ref.read(restClientProvider);
@@ -89,12 +91,18 @@ class HomeScreen extends ConsumerWidget {
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.info_outline, color: AppTheme.goldAccent),
+                            const Icon(
+                              Icons.info_outline,
+                              color: AppTheme.goldAccent,
+                            ),
                             const SizedBox(width: 12),
                             const Expanded(
                               child: Text(
                                 'Create an account to save your progress and stats.',
-                                style: TextStyle(color: Colors.white70, fontSize: 13),
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 13,
+                                ),
                               ),
                             ),
                             const SizedBox(width: 8),
@@ -102,7 +110,10 @@ class HomeScreen extends ConsumerWidget {
                               onPressed: () => context.go('/upgrade'),
                               child: const Text(
                                 'Upgrade',
-                                style: TextStyle(color: AppTheme.goldAccent, fontWeight: FontWeight.bold),
+                                style: TextStyle(
+                                  color: AppTheme.goldAccent,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
                           ],
@@ -128,7 +139,9 @@ class HomeScreen extends ConsumerWidget {
                                 ),
                               ),
                               const SizedBox(height: 8),
-                              ...games.map((game) => _ActiveGameTile(game: game)),
+                              ...games.map(
+                                (game) => _ActiveGameTile(game: game),
+                              ),
                               const SizedBox(height: 24),
                             ],
                           );
@@ -180,11 +193,16 @@ class HomeScreen extends ConsumerWidget {
                             ),
                             Consumer(
                               builder: (context, ref, _) {
-                                final streak = ref.watch(dailyPuzzleProvider).streak;
+                                final streak = ref
+                                    .watch(dailyPuzzleProvider)
+                                    .streak;
                                 if (streak <= 0) return const SizedBox.shrink();
                                 return Padding(
                                   padding: const EdgeInsets.only(left: 8),
-                                  child: StreakBadge(streak: streak, fontSize: 12),
+                                  child: StreakBadge(
+                                    streak: streak,
+                                    fontSize: 12,
+                                  ),
                                 );
                               },
                             ),
@@ -192,7 +210,10 @@ class HomeScreen extends ConsumerWidget {
                         ),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: Colors.white,
-                          side: const BorderSide(color: Colors.orange, width: 1.5),
+                          side: const BorderSide(
+                            color: Colors.orange,
+                            width: 1.5,
+                          ),
                         ),
                       ),
                     ),
@@ -238,22 +259,25 @@ class HomeScreen extends ConsumerWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        if (auth.isLoggedIn && !auth.isGuest)
-                          _FriendsButton(),
+                        if (auth.isLoggedIn && !auth.isGuest) _FriendsButton(),
                         if (auth.isLoggedIn && !auth.isGuest)
                           const SizedBox(width: 16),
                         TextButton.icon(
                           onPressed: () => context.go('/history'),
                           icon: const Icon(Icons.history, size: 18),
                           label: const Text('History'),
-                          style: TextButton.styleFrom(foregroundColor: Colors.white70),
+                          style: TextButton.styleFrom(
+                            foregroundColor: Colors.white70,
+                          ),
                         ),
                         const SizedBox(width: 16),
                         TextButton.icon(
                           onPressed: () => context.go('/leaderboard'),
                           icon: const Icon(Icons.leaderboard, size: 18),
                           label: const Text('Leaderboard'),
-                          style: TextButton.styleFrom(foregroundColor: Colors.white70),
+                          style: TextButton.styleFrom(
+                            foregroundColor: Colors.white70,
+                          ),
                         ),
                       ],
                     ),
@@ -323,19 +347,21 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  void _createLocalAIGame(
+  Future<void> _createLocalAIGame(
     BuildContext context,
     WidgetRef ref,
     String difficulty,
-  ) {
+  ) async {
     final auth = ref.read(authProvider);
     final service = ref.read(localGameServiceProvider);
-    final state = service.createGame(
+    final state = await service.createGame(
       humanPlayerId: auth.userId ?? 'local_player',
       humanPlayerName: auth.username ?? 'Player',
       difficulty: difficulty,
     );
-    context.go('/game/${state.gameId}');
+    if (context.mounted) {
+      context.go('/game/${state.gameId}');
+    }
   }
 
   Future<void> _createPrivateGame(BuildContext context, WidgetRef ref) async {
@@ -355,9 +381,9 @@ class HomeScreen extends ConsumerWidget {
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to create lobby: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to create lobby: $e')));
       }
     } finally {
       ref.read(_isCreatingGameProvider.notifier).state = false;
@@ -374,7 +400,10 @@ class HomeScreen extends ConsumerWidget {
       context: context,
       builder: (dialogContext) => AlertDialog(
         backgroundColor: AppTheme.feltGreenDark,
-        title: const Text('Join by Code', style: TextStyle(color: Colors.white)),
+        title: const Text(
+          'Join by Code',
+          style: TextStyle(color: Colors.white),
+        ),
         content: TextField(
           controller: codeController,
           autofocus: true,
@@ -392,7 +421,8 @@ class HomeScreen extends ConsumerWidget {
             letterSpacing: 4,
           ),
           textAlign: TextAlign.center,
-          onSubmitted: (_) => _joinByCode(dialogContext, context, ref, codeController),
+          onSubmitted: (_) =>
+              _joinByCode(dialogContext, context, ref, codeController),
         ),
         actions: [
           TextButton(
@@ -400,7 +430,8 @@ class HomeScreen extends ConsumerWidget {
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            onPressed: () => _joinByCode(dialogContext, context, ref, codeController),
+            onPressed: () =>
+                _joinByCode(dialogContext, context, ref, codeController),
             child: const Text('Join'),
           ),
         ],
@@ -430,9 +461,9 @@ class HomeScreen extends ConsumerWidget {
       }
     } catch (e) {
       if (homeContext.mounted) {
-        ScaffoldMessenger.of(homeContext).showSnackBar(
-          SnackBar(content: Text('Failed to join: $e')),
-        );
+        ScaffoldMessenger.of(
+          homeContext,
+        ).showSnackBar(SnackBar(content: Text('Failed to join: $e')));
       }
     } finally {
       ref.read(_isCreatingGameProvider.notifier).state = false;
@@ -458,7 +489,10 @@ class _DifficultyTile extends StatelessWidget {
     return ListTile(
       leading: Icon(icon, color: AppTheme.goldAccent),
       title: Text(label, style: const TextStyle(color: Colors.white)),
-      subtitle: Text(description, style: const TextStyle(color: Colors.white54, fontSize: 12)),
+      subtitle: Text(
+        description,
+        style: const TextStyle(color: Colors.white54, fontSize: 12),
+      ),
       trailing: const Icon(Icons.chevron_right, color: Colors.white38),
       onTap: onTap,
     );
@@ -495,7 +529,9 @@ class _ActiveGameTile extends ConsumerWidget {
     final auth = ref.watch(authProvider);
     final playerId = auth.userId ?? '';
     final playerIndex = game.players.indexWhere((p) => p.id == playerId);
-    final player = playerIndex >= 0 ? game.players[playerIndex] : game.players[0];
+    final player = playerIndex >= 0
+        ? game.players[playerIndex]
+        : game.players[0];
     final opponent = game.players[playerIndex >= 0 ? 1 - playerIndex : 1];
 
     return Padding(
@@ -510,7 +546,11 @@ class _ActiveGameTile extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Row(
               children: [
-                const Icon(Icons.play_arrow, color: AppTheme.goldAccent, size: 20),
+                const Icon(
+                  Icons.play_arrow,
+                  color: AppTheme.goldAccent,
+                  size: 20,
+                ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -518,11 +558,17 @@ class _ActiveGameTile extends ConsumerWidget {
                     children: [
                       Text(
                         'vs ${opponent.name}',
-                        style: const TextStyle(color: Colors.white, fontSize: 14),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                        ),
                       ),
                       Text(
                         '${game.stage.displayName} — ${player.score} to ${opponent.score}',
-                        style: const TextStyle(color: Colors.white54, fontSize: 12),
+                        style: const TextStyle(
+                          color: Colors.white54,
+                          fontSize: 12,
+                        ),
                       ),
                     ],
                   ),

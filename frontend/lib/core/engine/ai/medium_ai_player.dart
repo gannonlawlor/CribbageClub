@@ -23,29 +23,31 @@ class MediumAIPlayer extends AIPlayer {
 
     return switch (gameState.stage) {
       GameStage.discardingToCrib => () {
-          if (player.hand.length > 4) {
-            final cardsToDiscard =
-                chooseCardsToDiscard(player.hand, isDealer(gameState));
-            if (cardsToDiscard.isNotEmpty) {
-              return GameAction.discardToCrib(
-                playerId: playerId,
-                card: cardsToDiscard.first,
-              );
-            }
+        if (player.hand.length > 4) {
+          final cardsToDiscard = chooseCardsToDiscard(
+            player.hand,
+            isDealer(gameState),
+          );
+          if (cardsToDiscard.isNotEmpty) {
+            return GameAction.discardToCrib(
+              playerId: playerId,
+              card: cardsToDiscard.first,
+            );
           }
-          return null;
-        }(),
+        }
+        return null;
+      }(),
       GameStage.cutting => GameAction.cutDeck(playerId: playerId),
       GameStage.pegging => () {
-          final card = chooseCardToPlay(
-            player.hand,
-            gameState.playedCards,
-            gameState.peggingCount,
-          );
-          return card != null
-              ? GameAction.playCard(playerId: playerId, card: card)
-              : GameAction.go(playerId: playerId);
-        }(),
+        final card = chooseCardToPlay(
+          player.hand,
+          gameState.playedCards,
+          gameState.peggingCount,
+        );
+        return card != null
+            ? GameAction.playCard(playerId: playerId, card: card)
+            : GameAction.go(playerId: playerId);
+      }(),
       GameStage.counting => GameAction.countHand(playerId: playerId),
       _ => null,
     };
@@ -79,8 +81,9 @@ class MediumAIPlayer extends AIPlayer {
     List<PlayingCard> playedCards,
     int currentCount,
   ) {
-    final playable =
-        hand.where((c) => currentCount + c.rank.peggingValue <= 31).toList();
+    final playable = hand
+        .where((c) => currentCount + c.rank.peggingValue <= 31)
+        .toList();
     if (playable.isEmpty) return null;
 
     // Priority 1: Make 31
@@ -100,8 +103,7 @@ class MediumAIPlayer extends AIPlayer {
       if (pairCard != null) {
         final weHaveTrips =
             playable.where((c) => c.rank == lastRank).length >= 2;
-        final lastPlayed =
-            playedCards.where((c) => c.rank == lastRank).length;
+        final lastPlayed = playedCards.where((c) => c.rank == lastRank).length;
         if (weHaveTrips || lastPlayed == 1) return pairCard;
       }
     }
@@ -120,11 +122,13 @@ class MediumAIPlayer extends AIPlayer {
 
     if (safe.isNotEmpty) {
       return safe.reduce(
-          (a, b) => a.rank.peggingValue >= b.rank.peggingValue ? a : b);
+        (a, b) => a.rank.peggingValue >= b.rank.peggingValue ? a : b,
+      );
     }
 
     return playable.reduce(
-        (a, b) => a.rank.peggingValue <= b.rank.peggingValue ? a : b);
+      (a, b) => a.rank.peggingValue <= b.rank.peggingValue ? a : b,
+    );
   }
 
   double _averageHandScore(List<PlayingCard> keep) {

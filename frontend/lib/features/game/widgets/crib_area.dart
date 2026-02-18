@@ -7,11 +7,7 @@ class CribArea extends StatefulWidget {
   final List<PlayingCard> crib;
   final bool revealed;
 
-  const CribArea({
-    super.key,
-    required this.crib,
-    this.revealed = false,
-  });
+  const CribArea({super.key, required this.crib, this.revealed = false});
 
   @override
   State<CribArea> createState() => _CribAreaState();
@@ -44,9 +40,7 @@ class _CribAreaState extends State<CribArea> {
     return SizedBox(
       width: stackWidth,
       height: cardH,
-      child: Stack(
-        children: _buildCards(dims, cardW, cardH),
-      ),
+      child: Stack(children: _buildCards(dims, cardW, cardH)),
     );
   }
 
@@ -93,11 +87,7 @@ class _CribAreaState extends State<CribArea> {
         Positioned(
           left: i * dims.cribCardVisible,
           top: 0,
-          child: CardWidget(
-            faceUp: false,
-            width: cardW,
-            height: cardH,
-          ),
+          child: CardWidget(faceUp: false, width: cardW, height: cardH),
         ),
     ];
   }

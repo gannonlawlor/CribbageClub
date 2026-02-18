@@ -4,11 +4,7 @@ class StreakBadge extends StatelessWidget {
   final int streak;
   final double fontSize;
 
-  const StreakBadge({
-    super.key,
-    required this.streak,
-    this.fontSize = 14,
-  });
+  const StreakBadge({super.key, required this.streak, this.fontSize = 14});
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +19,11 @@ class StreakBadge extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.local_fire_department, color: Colors.orange, size: fontSize + 2),
+          Icon(
+            Icons.local_fire_department,
+            color: Colors.orange,
+            size: fontSize + 2,
+          ),
           const SizedBox(width: 4),
           Text(
             '$streak',

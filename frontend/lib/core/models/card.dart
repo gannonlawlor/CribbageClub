@@ -119,10 +119,8 @@ enum Suit {
 
 @freezed
 class PlayingCard with _$PlayingCard {
-  const factory PlayingCard({
-    required Rank rank,
-    required Suit suit,
-  }) = _PlayingCard;
+  const factory PlayingCard({required Rank rank, required Suit suit}) =
+      _PlayingCard;
 
   factory PlayingCard.fromJson(Map<String, dynamic> json) =>
       _$PlayingCardFromJson(json);

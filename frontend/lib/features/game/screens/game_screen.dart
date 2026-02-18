@@ -145,10 +145,7 @@ class GameScreen extends ConsumerWidget {
     // Get crib cards: prefer current state, fall back to CribCounted history event
     final cribCards = gs.crib.isNotEmpty
         ? gs.crib
-        : gs.history
-            .whereType<CribCounted>()
-            .lastOrNull
-            ?.cribCards ?? const [];
+        : gs.history.whereType<CribCounted>().lastOrNull?.cribCards ?? const [];
     final selectedCards = ref.watch(selectedCardsProvider(gameId));
 
     return Scaffold(
@@ -203,7 +200,9 @@ class GameScreen extends ConsumerWidget {
                               Text(
                                 'Reconnecting...',
                                 style: TextStyle(
-                                    color: Colors.white, fontSize: 12),
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                ),
                               ),
                             ],
                           ),
@@ -216,8 +215,7 @@ class GameScreen extends ConsumerWidget {
                           color: Colors.red.shade800,
                           child: const Text(
                             'Connection lost. Please go back and rejoin.',
-                            style:
-                                TextStyle(color: Colors.white, fontSize: 12),
+                            style: TextStyle(color: Colors.white, fontSize: 12),
                             textAlign: TextAlign.center,
                           ),
                         ),
@@ -225,7 +223,9 @@ class GameScreen extends ConsumerWidget {
                       // Cribbage Board (compact)
                       Padding(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 2),
+                          horizontal: 12,
+                          vertical: 2,
+                        ),
                         child: CribbageBoard(
                           playerScore: player.score,
                           opponentScore: opponent.score,
@@ -236,7 +236,9 @@ class GameScreen extends ConsumerWidget {
                       // Opponent hand
                       Padding(
                         padding: const EdgeInsets.symmetric(
-                            vertical: 2, horizontal: 12),
+                          vertical: 2,
+                          horizontal: 12,
+                        ),
                         child: OpponentHand(
                           cardCount: opponent.hand.isEmpty
                               ? _estimateOpponentCards(gs, opponent.id)
@@ -247,8 +249,7 @@ class GameScreen extends ConsumerWidget {
                       // Middle area
                       Expanded(
                         child: Padding(
-                          padding:
-                              const EdgeInsets.symmetric(horizontal: 12),
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
@@ -269,8 +270,9 @@ class GameScreen extends ConsumerWidget {
                                   CutCardDisplay(cutCard: gs.cutCard),
                                   const SizedBox(width: 8),
                                   CribArea(
-                                      crib: cribCards,
-                                      revealed: cribRevealed),
+                                    crib: cribCards,
+                                    revealed: cribRevealed,
+                                  ),
                                 ],
                               ),
 
@@ -297,10 +299,9 @@ class GameScreen extends ConsumerWidget {
                         isMyTurn: isMyTurn,
                         selectedCardCount: selectedCards.length,
                         isDiscarding: gameNotifier.isDiscarding,
-                        canGo:
-                            !_canPlayAnyCard(player.hand, gs.peggingCount),
-                        onDiscard: () => _handleDiscard(
-                            ref, gs, playerId, selectedCards),
+                        canGo: !_canPlayAnyCard(player.hand, gs.peggingCount),
+                        onDiscard: () =>
+                            _handleDiscard(ref, gs, playerId, selectedCards),
                         onCut: () {
                           final n = _readNotifier(ref);
                           if (n is GameNotifier) n.cutDeck();
@@ -321,30 +322,34 @@ class GameScreen extends ConsumerWidget {
                       // Player hand
                       Padding(
                         padding: const EdgeInsets.only(
-                            bottom: 6, top: 2, left: 12, right: 12),
+                          bottom: 6,
+                          top: 2,
+                          left: 12,
+                          right: 12,
+                        ),
                         child: HandFan(
                           cards: CardUtils.sorted(player.hand),
                           selectedIndices: selectedCards,
                           enabled: isMyTurn && !gameNotifier.isDiscarding,
-                          onCardTap: (index) => _handleCardTap(context, ref,
-                              gs, playerId, index, selectedCards),
+                          onCardTap: (index) => _handleCardTap(
+                            context,
+                            ref,
+                            gs,
+                            playerId,
+                            index,
+                            selectedCards,
+                          ),
                         ),
                       ),
                     ],
                   ),
 
                   // Score popup overlay
-                  ScorePopupOverlay(
-                    gameId: gameId,
-                    playerId: playerId,
-                  ),
+                  ScorePopupOverlay(gameId: gameId, playerId: playerId),
 
                   // Dev overlay (debug builds + local games only)
                   if (kDebugMode && _isLocal)
-                    DevOverlay(
-                      gameId: gameId,
-                      playerId: playerId,
-                    ),
+                    DevOverlay(gameId: gameId, playerId: playerId),
                 ],
               ),
             ),
@@ -395,16 +400,20 @@ class GameScreen extends ConsumerWidget {
         newSelected.add(index);
       }
       ref.read(selectedCardsProvider(gameId).notifier).state = newSelected;
-    } else if (gs.stage == GameStage.pegging && gs.currentPlayerId == playerId) {
+    } else if (gs.stage == GameStage.pegging &&
+        gs.currentPlayerId == playerId) {
       final sorted = CardUtils.sorted(
-          gs.players.firstWhere((p) => p.id == playerId).hand);
+        gs.players.firstWhere((p) => p.id == playerId).hand,
+      );
       if (index >= 0 && index < sorted.length) {
         final card = sorted[index];
         if (card.rank.peggingValue + gs.peggingCount > 31) {
           ScaffoldMessenger.of(context).clearSnackBars();
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('That card would exceed 31. Try another or tap Go.'),
+              content: Text(
+                'That card would exceed 31. Try another or tap Go.',
+              ),
               duration: Duration(seconds: 2),
             ),
           );
@@ -430,7 +439,8 @@ class GameScreen extends ConsumerWidget {
     if (selected.length != 2) return;
 
     final sorted = CardUtils.sorted(
-        gs.players.firstWhere((p) => p.id == playerId).hand);
+      gs.players.firstWhere((p) => p.id == playerId).hand,
+    );
     final cardsToDiscard = selected
         .where((idx) => idx < sorted.length)
         .map((idx) => sorted[idx])
@@ -443,7 +453,12 @@ class GameScreen extends ConsumerWidget {
     if (n is LocalGameNotifier) await n.discardCards(cardsToDiscard);
   }
 
-  Widget _buildGameOver(BuildContext context, WidgetRef ref, GameState gs, String playerId) {
+  Widget _buildGameOver(
+    BuildContext context,
+    WidgetRef ref,
+    GameState gs,
+    String playerId,
+  ) {
     final winner = gs.history.whereType<GameEnded>().firstOrNull;
     final didWin = winner?.winnerPlayerId == playerId;
     final playerIndex = gs.players.indexWhere((p) => p.id == playerId);
@@ -481,21 +496,31 @@ class GameScreen extends ConsumerWidget {
             Text(
               didWin ? 'Won by $margin points' : 'Lost by $margin points',
               style: TextStyle(
-                color: didWin ? AppTheme.goldAccent.withValues(alpha: 0.8) : Colors.white54,
+                color: didWin
+                    ? AppTheme.goldAccent.withValues(alpha: 0.8)
+                    : Colors.white54,
                 fontSize: 12,
               ),
             ),
           if (handCounts.isNotEmpty || cribCounts.isNotEmpty) ...[
             const SizedBox(height: 6),
-            ...handCounts.reversed.take(2).map((e) => Text(
-              '${e.playerId == playerId ? "Your hand" : "Opponent hand"}: '
-              '${e.totalPoints} pts${_breakdownText(e.scoreBreakdown)}',
-              style: const TextStyle(color: Colors.white60, fontSize: 11),
-            )),
-            ...cribCounts.reversed.take(1).map((e) => Text(
-              'Crib: ${e.totalPoints} pts${_breakdownText(e.scoreBreakdown)}',
-              style: const TextStyle(color: Colors.white60, fontSize: 11),
-            )),
+            ...handCounts.reversed
+                .take(2)
+                .map(
+                  (e) => Text(
+                    '${e.playerId == playerId ? "Your hand" : "Opponent hand"}: '
+                    '${e.totalPoints} pts${_breakdownText(e.scoreBreakdown)}',
+                    style: const TextStyle(color: Colors.white60, fontSize: 11),
+                  ),
+                ),
+            ...cribCounts.reversed
+                .take(1)
+                .map(
+                  (e) => Text(
+                    'Crib: ${e.totalPoints} pts${_breakdownText(e.scoreBreakdown)}',
+                    style: const TextStyle(color: Colors.white60, fontSize: 11),
+                  ),
+                ),
           ],
           const SizedBox(height: 12),
           Row(
@@ -558,11 +583,11 @@ class GameScreen extends ConsumerWidget {
       final difficulty = aiPlayer?.name.contains('Medium') == true
           ? 'medium'
           : aiPlayer?.name.contains('Hard') == true
-              ? 'hard'
-              : 'basic';
+          ? 'hard'
+          : 'basic';
       final auth = ref.read(authProvider);
       final service = ref.read(localGameServiceProvider);
-      final newState = service.createGame(
+      final newState = await service.createGame(
         humanPlayerId: auth.userId ?? 'local_player',
         humanPlayerName: auth.username ?? 'Player',
         difficulty: difficulty,
@@ -579,9 +604,9 @@ class GameScreen extends ConsumerWidget {
         }
       } catch (e) {
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to create game: $e')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Failed to create game: $e')));
         }
       }
     }
@@ -671,10 +696,7 @@ class _TopBar extends StatelessWidget {
             ),
             SizedBox(
               height: 300,
-              child: HistoryLog(
-                events: events,
-                playerId: playerId,
-              ),
+              child: HistoryLog(events: events, playerId: playerId),
             ),
           ],
         ),

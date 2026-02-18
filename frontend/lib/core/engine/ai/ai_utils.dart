@@ -8,8 +8,10 @@ class AIUtils {
     if (list.isEmpty) return [];
     final head = list.first;
     final tail = list.sublist(1);
-    final withHead =
-        combinations(tail, size - 1).map((c) => [head, ...c]).toList();
+    final withHead = combinations(
+      tail,
+      size - 1,
+    ).map((c) => [head, ...c]).toList();
     final withoutHead = combinations(tail, size);
     return [...withHead, ...withoutHead];
   }

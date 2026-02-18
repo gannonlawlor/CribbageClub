@@ -46,9 +46,7 @@ class ReplaySnapshotBuilder {
     final hands = <String, List<PlayingCard>>{
       for (final id in playerIds) id: [],
     };
-    final scores = <String, int>{
-      for (final id in playerIds) id: 0,
-    };
+    final scores = <String, int>{for (final id in playerIds) id: 0};
     PlayingCard? cutCard;
     var playedCards = <PlayingCard>[];
     var peggingCount = 0;
@@ -68,65 +66,77 @@ class ReplaySnapshotBuilder {
       final event = events[i];
 
       if (event is RoundStarted) {
-          // Reset for new round
-          for (final id in playerIds) {
-            hands[id] = [];
-          }
-          cutCard = null;
-          playedCards = [];
-          peggingCount = 0;
-          cribCards = [];
-          cribRevealed = false;
-          roundNumber = event.roundNumber;
-          eventDescription = 'Round ${event.roundNumber} started';
+        // Reset for new round
+        for (final id in playerIds) {
+          hands[id] = [];
+        }
+        cutCard = null;
+        playedCards = [];
+        peggingCount = 0;
+        cribCards = [];
+        cribRevealed = false;
+        roundNumber = event.roundNumber;
+        eventDescription = 'Round ${event.roundNumber} started';
       } else if (event is CardsDealt) {
-          for (final entry in event.dealtHands.entries) {
-            hands[entry.key] = List.from(entry.value);
-          }
-          eventDescription = 'Cards dealt';
+        for (final entry in event.dealtHands.entries) {
+          hands[entry.key] = List.from(entry.value);
+        }
+        eventDescription = 'Cards dealt';
       } else if (event is DeckCut) {
-          cutCard = event.cutCard;
-          dealerPlayerId = playerIds.firstWhere(
-              (id) => id != event.cuttingPlayerId,
-              orElse: () => playerIds.first);
-          if (event.dealerScoredNobs) {
-            scores[dealerPlayerId] = (scores[dealerPlayerId] ?? 0) + 2;
-            eventDescription = '${getName(event.cuttingPlayerId)} cut ${event.cutCard.rank.display}${event.cutCard.suit.symbol} — His Nobs! +2 for dealer';
-          } else {
-            eventDescription = '${getName(event.cuttingPlayerId)} cut ${event.cutCard.rank.display}${event.cutCard.suit.symbol}';
-          }
+        cutCard = event.cutCard;
+        dealerPlayerId = playerIds.firstWhere(
+          (id) => id != event.cuttingPlayerId,
+          orElse: () => playerIds.first,
+        );
+        if (event.dealerScoredNobs) {
+          scores[dealerPlayerId] = (scores[dealerPlayerId] ?? 0) + 2;
+          eventDescription =
+              '${getName(event.cuttingPlayerId)} cut ${event.cutCard.rank.display}${event.cutCard.suit.symbol} — His Nobs! +2 for dealer';
+        } else {
+          eventDescription =
+              '${getName(event.cuttingPlayerId)} cut ${event.cutCard.rank.display}${event.cutCard.suit.symbol}';
+        }
       } else if (event is CardPlayed) {
-          hands[event.playerId]?.remove(event.card);
-          playedCards = [...playedCards, event.card];
-          peggingCount = event.newCount;
-          scores[event.playerId] = (scores[event.playerId] ?? 0) + event.pointsScored;
-          eventDescription = '${getName(event.playerId)} played ${event.card.rank.display}${event.card.suit.symbol} (count: ${event.newCount})';
-          if (event.pointsScored > 0) {
-            eventDescription += ' — ${event.pointsScored} pts${event.scoringReason != null ? ' (${event.scoringReason})' : ''}';
-          }
+        hands[event.playerId]?.remove(event.card);
+        playedCards = [...playedCards, event.card];
+        peggingCount = event.newCount;
+        scores[event.playerId] =
+            (scores[event.playerId] ?? 0) + event.pointsScored;
+        eventDescription =
+            '${getName(event.playerId)} played ${event.card.rank.display}${event.card.suit.symbol} (count: ${event.newCount})';
+        if (event.pointsScored > 0) {
+          eventDescription +=
+              ' — ${event.pointsScored} pts${event.scoringReason != null ? ' (${event.scoringReason})' : ''}';
+        }
       } else if (event is GoAnnounced) {
-          scores[event.playerId] = (scores[event.playerId] ?? 0) + event.pointsScored;
-          eventDescription = '${getName(event.playerId)} says "Go"';
-          if (event.pointsScored > 0) {
-            eventDescription += ' — ${event.pointsScored} pts';
-          }
+        scores[event.playerId] =
+            (scores[event.playerId] ?? 0) + event.pointsScored;
+        eventDescription = '${getName(event.playerId)} says "Go"';
+        if (event.pointsScored > 0) {
+          eventDescription += ' — ${event.pointsScored} pts';
+        }
       } else if (event is PeggingEnded) {
-          playedCards = [];
-          peggingCount = 0;
-          eventDescription = 'Pegging ended';
+        playedCards = [];
+        peggingCount = 0;
+        eventDescription = 'Pegging ended';
       } else if (event is HandCounted) {
-          hands[event.playerId] = List.from(event.hand);
-          scores[event.playerId] = (scores[event.playerId] ?? 0) + event.totalPoints;
-          eventDescription = '${getName(event.playerId)} hand: ${event.totalPoints} pts${_breakdownText(event.scoreBreakdown)}';
+        hands[event.playerId] = List.from(event.hand);
+        scores[event.playerId] =
+            (scores[event.playerId] ?? 0) + event.totalPoints;
+        eventDescription =
+            '${getName(event.playerId)} hand: ${event.totalPoints} pts${_breakdownText(event.scoreBreakdown)}';
       } else if (event is CribCounted) {
-          cribCards = List.from(event.cribCards);
-          cribRevealed = true;
-          scores[event.dealerPlayerId] = (scores[event.dealerPlayerId] ?? 0) + event.totalPoints;
-          eventDescription = '${getName(event.dealerPlayerId)} crib: ${event.totalPoints} pts${_breakdownText(event.scoreBreakdown)}';
+        cribCards = List.from(event.cribCards);
+        cribRevealed = true;
+        scores[event.dealerPlayerId] =
+            (scores[event.dealerPlayerId] ?? 0) + event.totalPoints;
+        eventDescription =
+            '${getName(event.dealerPlayerId)} crib: ${event.totalPoints} pts${_breakdownText(event.scoreBreakdown)}';
       } else if (event is GameEnded) {
-          isGameOver = true;
-          winnerPlayerId = event.winnerPlayerId;
-          eventDescription = '${getName(event.winnerPlayerId)} wins with ${event.finalScore} points!';
+        isGameOver = true;
+        winnerPlayerId = event.winnerPlayerId;
+        eventDescription =
+            '${getName(event.winnerPlayerId)} wins with ${event.finalScore} points!';
       }
     }
 

@@ -6,9 +6,9 @@ class Deck {
   final List<PlayingCard> _cards;
 
   Deck([List<PlayingCard>? existingCards])
-      : _cards = existingCards != null
-            ? List.of(existingCards)
-            : _createShuffledDeck();
+    : _cards = existingCards != null
+          ? List.of(existingCards)
+          : _createShuffledDeck();
 
   PlayingCard draw() => _cards.removeAt(0);
 

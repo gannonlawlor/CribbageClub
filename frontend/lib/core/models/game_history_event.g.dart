@@ -8,7 +8,7 @@ part of 'game_history_event.dart';
 
 _$RoundStartedImpl _$$RoundStartedImplFromJson(Map<String, dynamic> json) =>
     _$RoundStartedImpl(
-      timestamp: json['timestamp'] as String,
+      timestamp: json['timestamp'] as String? ?? '',
       roundNumber: (json['roundNumber'] as num).toInt(),
       $type: json['type'] as String?,
     );
@@ -22,7 +22,7 @@ Map<String, dynamic> _$$RoundStartedImplToJson(_$RoundStartedImpl instance) =>
 
 _$CardsDealtImpl _$$CardsDealtImplFromJson(Map<String, dynamic> json) =>
     _$CardsDealtImpl(
-      timestamp: json['timestamp'] as String,
+      timestamp: json['timestamp'] as String? ?? '',
       dealtHands:
           (json['dealtHands'] as Map<String, dynamic>?)?.map(
             (k, e) => MapEntry(
@@ -45,7 +45,7 @@ Map<String, dynamic> _$$CardsDealtImplToJson(_$CardsDealtImpl instance) =>
 
 _$DeckCutImpl _$$DeckCutImplFromJson(Map<String, dynamic> json) =>
     _$DeckCutImpl(
-      timestamp: json['timestamp'] as String,
+      timestamp: json['timestamp'] as String? ?? '',
       cutCard: PlayingCard.fromJson(json['cutCard'] as Map<String, dynamic>),
       cuttingPlayerId: json['cuttingPlayerId'] as String,
       dealerScoredNobs: json['dealerScoredNobs'] as bool? ?? false,
@@ -63,7 +63,7 @@ Map<String, dynamic> _$$DeckCutImplToJson(_$DeckCutImpl instance) =>
 
 _$CardPlayedImpl _$$CardPlayedImplFromJson(Map<String, dynamic> json) =>
     _$CardPlayedImpl(
-      timestamp: json['timestamp'] as String,
+      timestamp: json['timestamp'] as String? ?? '',
       playerId: json['playerId'] as String,
       card: PlayingCard.fromJson(json['card'] as Map<String, dynamic>),
       newCount: (json['newCount'] as num).toInt(),
@@ -85,7 +85,7 @@ Map<String, dynamic> _$$CardPlayedImplToJson(_$CardPlayedImpl instance) =>
 
 _$GoAnnouncedImpl _$$GoAnnouncedImplFromJson(Map<String, dynamic> json) =>
     _$GoAnnouncedImpl(
-      timestamp: json['timestamp'] as String,
+      timestamp: json['timestamp'] as String? ?? '',
       playerId: json['playerId'] as String,
       pointsScored: (json['pointsScored'] as num?)?.toInt() ?? 0,
       $type: json['type'] as String?,
@@ -101,7 +101,7 @@ Map<String, dynamic> _$$GoAnnouncedImplToJson(_$GoAnnouncedImpl instance) =>
 
 _$PeggingEndedImpl _$$PeggingEndedImplFromJson(Map<String, dynamic> json) =>
     _$PeggingEndedImpl(
-      timestamp: json['timestamp'] as String,
+      timestamp: json['timestamp'] as String? ?? '',
       $type: json['type'] as String?,
     );
 
@@ -110,7 +110,7 @@ Map<String, dynamic> _$$PeggingEndedImplToJson(_$PeggingEndedImpl instance) =>
 
 _$HandCountedImpl _$$HandCountedImplFromJson(Map<String, dynamic> json) =>
     _$HandCountedImpl(
-      timestamp: json['timestamp'] as String,
+      timestamp: json['timestamp'] as String? ?? '',
       playerId: json['playerId'] as String,
       hand:
           (json['hand'] as List<dynamic>?)
@@ -136,7 +136,7 @@ Map<String, dynamic> _$$HandCountedImplToJson(_$HandCountedImpl instance) =>
 
 _$CribCountedImpl _$$CribCountedImplFromJson(Map<String, dynamic> json) =>
     _$CribCountedImpl(
-      timestamp: json['timestamp'] as String,
+      timestamp: json['timestamp'] as String? ?? '',
       dealerPlayerId: json['dealerPlayerId'] as String,
       totalPoints: (json['totalPoints'] as num).toInt(),
       scoreBreakdown: ScoreBreakdown.fromJson(
@@ -162,7 +162,7 @@ Map<String, dynamic> _$$CribCountedImplToJson(_$CribCountedImpl instance) =>
 
 _$GameEndedImpl _$$GameEndedImplFromJson(Map<String, dynamic> json) =>
     _$GameEndedImpl(
-      timestamp: json['timestamp'] as String,
+      timestamp: json['timestamp'] as String? ?? '',
       winnerPlayerId: json['winnerPlayerId'] as String,
       finalScore: (json['finalScore'] as num).toInt(),
       $type: json['type'] as String?,

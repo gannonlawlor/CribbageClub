@@ -24,10 +24,9 @@ class GameAnimationController extends ChangeNotifier {
     // Detect stage changes
     final currentStage = newState.stage.name;
     if (_lastStage != null && _lastStage != currentStage) {
-      newEvents.add(StageChangedEvent(
-        oldStage: _lastStage!,
-        newStage: currentStage,
-      ));
+      newEvents.add(
+        StageChangedEvent(oldStage: _lastStage!, newStage: currentStage),
+      );
     }
     _lastStage = currentStage;
 
@@ -48,7 +47,11 @@ class GameAnimationController extends ChangeNotifier {
       // First pass: extract scoring context from history events
       for (final event in additions) {
         switch (event) {
-          case CardPlayed(:final playerId, :final pointsScored, :final scoringReason):
+          case CardPlayed(
+            :final playerId,
+            :final pointsScored,
+            :final scoringReason,
+          ):
             if (pointsScored > 0) {
               scoringContext[playerId] = _ScoringContext(
                 source: ScoreSource.pegging,
@@ -106,14 +109,16 @@ class GameAnimationController extends ChangeNotifier {
       final oldScore = _lastScores[player.id] ?? 0;
       if (player.score != oldScore) {
         final ctx = scoringContext[player.id];
-        newEvents.add(ScoreChangedEvent(
-          playerId: player.id,
-          oldScore: oldScore,
-          newScore: player.score,
-          reason: ctx?.reason,
-          breakdown: ctx?.breakdown,
-          source: ctx?.source,
-        ));
+        newEvents.add(
+          ScoreChangedEvent(
+            playerId: player.id,
+            oldScore: oldScore,
+            newScore: player.score,
+            reason: ctx?.reason,
+            breakdown: ctx?.breakdown,
+            source: ctx?.source,
+          ),
+        );
       }
     }
     _lastScores = {for (final p in newState.players) p.id: p.score};
@@ -127,8 +132,10 @@ class GameAnimationController extends ChangeNotifier {
     return switch (event) {
       CardsDealt() => const CardsDealtEvent(cardCount: 6),
       DeckCut(:final cutCard) => CutCardRevealedEvent(card: cutCard),
-      CardPlayed(:final playerId, :final card) =>
-        CardPlayedAnimEvent(playerId: playerId, card: card),
+      CardPlayed(:final playerId, :final card) => CardPlayedAnimEvent(
+        playerId: playerId,
+        card: card,
+      ),
       CribCounted() => const CribRevealedEvent(),
       RoundStarted() => null,
       GoAnnounced() => null,
@@ -162,9 +169,5 @@ class _ScoringContext {
   final String? reason;
   final dynamic breakdown;
 
-  const _ScoringContext({
-    required this.source,
-    this.reason,
-    this.breakdown,
-  });
+  const _ScoringContext({required this.source, this.reason, this.breakdown});
 }

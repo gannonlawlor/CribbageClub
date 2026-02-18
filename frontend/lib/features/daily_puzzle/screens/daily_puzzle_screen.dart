@@ -12,8 +12,18 @@ import '../widgets/keep_rank_tile.dart';
 import '../widgets/streak_badge.dart';
 
 const _months = [
-  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
 ];
 
 String _formatDate(DateTime d) => '${_months[d.month - 1]} ${d.day}, ${d.year}';
@@ -98,7 +108,10 @@ class _PlayingView extends ConsumerWidget {
                     ),
                     Text(
                       dateStr,
-                      style: const TextStyle(color: Colors.white54, fontSize: 14),
+                      style: const TextStyle(
+                        color: Colors.white54,
+                        fontSize: 14,
+                      ),
                     ),
                   ],
                 ),
@@ -196,7 +209,10 @@ class _RevealedView extends ConsumerWidget {
                     ),
                     Text(
                       dateStr,
-                      style: const TextStyle(color: Colors.white54, fontSize: 14),
+                      style: const TextStyle(
+                        color: Colors.white54,
+                        fontSize: 14,
+                      ),
                     ),
                   ],
                 ),
@@ -226,7 +242,9 @@ class _RevealedView extends ConsumerWidget {
               child: Column(
                 children: [
                   Text(
-                    isOptimalPick ? 'Optimal!' : 'Your pick: #$playerRank of 15',
+                    isOptimalPick
+                        ? 'Optimal!'
+                        : 'Your pick: #$playerRank of 15',
                     style: TextStyle(
                       color: isOptimalPick ? Colors.green : Colors.white,
                       fontSize: 20,
@@ -239,13 +257,18 @@ class _RevealedView extends ConsumerWidget {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.local_fire_department,
-                              color: Colors.orange, size: 20),
+                          const Icon(
+                            Icons.local_fire_department,
+                            color: Colors.orange,
+                            size: 20,
+                          ),
                           const SizedBox(width: 4),
                           Text(
                             '${state.streak} day streak!',
                             style: const TextStyle(
-                                color: Colors.orange, fontSize: 16),
+                              color: Colors.orange,
+                              fontSize: 16,
+                            ),
                           ),
                         ],
                       ),
@@ -259,7 +282,9 @@ class _RevealedView extends ConsumerWidget {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Text(
-            puzzle.isDealer ? 'Dealer (crib is yours)' : 'Non-dealer (crib is opponent\'s)',
+            puzzle.isDealer
+                ? 'Dealer (crib is yours)'
+                : 'Non-dealer (crib is opponent\'s)',
             style: const TextStyle(color: Colors.white54, fontSize: 13),
           ),
         ),
@@ -271,7 +296,8 @@ class _RevealedView extends ConsumerWidget {
             itemCount: results.length,
             itemBuilder: (context, index) {
               final option = results[index];
-              final isPlayerPick = playerRank != null && option.rank == playerRank;
+              final isPlayerPick =
+                  playerRank != null && option.rank == playerRank;
               return KeepRankTile(
                 option: option,
                 isPlayerPick: isPlayerPick,
@@ -314,7 +340,11 @@ class _RevealedView extends ConsumerWidget {
     );
   }
 
-  void _shareResult(BuildContext context, DailyPuzzleState state, DailyPuzzle puzzle) {
+  void _shareResult(
+    BuildContext context,
+    DailyPuzzleState state,
+    DailyPuzzle puzzle,
+  ) {
     final dateStr = _formatDate(puzzle.date);
     final rank = state.playerRank ?? 0;
     final streak = state.streak;

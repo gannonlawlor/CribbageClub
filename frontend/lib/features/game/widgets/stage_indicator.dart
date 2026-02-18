@@ -46,7 +46,9 @@ class StageIndicator extends StatelessWidget {
       duration: const Duration(milliseconds: 300),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
       decoration: BoxDecoration(
-        color: isMyTurn ? AppTheme.goldAccent.withValues(alpha: 0.2) : Colors.black26,
+        color: isMyTurn
+            ? AppTheme.goldAccent.withValues(alpha: 0.2)
+            : Colors.black26,
         borderRadius: BorderRadius.circular(16),
         border: isMyTurn
             ? Border.all(color: AppTheme.goldAccent.withValues(alpha: 0.5))

@@ -5,7 +5,9 @@ import '../../../config/theme.dart';
 import '../../../core/auth/auth_provider.dart';
 import '../../../core/models/game_state.dart';
 
-final _gameHistoryProvider = FutureProvider.autoDispose<List<GameState>>((ref) async {
+final _gameHistoryProvider = FutureProvider.autoDispose<List<GameState>>((
+  ref,
+) async {
   final restClient = ref.read(restClientProvider);
   return restClient.getMyGameHistory();
 });
@@ -60,9 +62,14 @@ class GameHistoryScreen extends ConsumerWidget {
             itemBuilder: (context, index) {
               final game = games[index];
               final playerId = auth.userId ?? '';
-              final playerIndex = game.players.indexWhere((p) => p.id == playerId);
-              final player = playerIndex >= 0 ? game.players[playerIndex] : game.players[0];
-              final opponent = game.players[playerIndex >= 0 ? 1 - playerIndex : 1];
+              final playerIndex = game.players.indexWhere(
+                (p) => p.id == playerId,
+              );
+              final player = playerIndex >= 0
+                  ? game.players[playerIndex]
+                  : game.players[0];
+              final opponent =
+                  game.players[playerIndex >= 0 ? 1 - playerIndex : 1];
               final isWinner = player.score > opponent.score;
 
               return Padding(
@@ -74,12 +81,17 @@ class GameHistoryScreen extends ConsumerWidget {
                     borderRadius: BorderRadius.circular(8),
                     onTap: () => context.go('/game/${game.gameId}'),
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
                       child: Row(
                         children: [
                           Icon(
                             isWinner ? Icons.emoji_events : Icons.close,
-                            color: isWinner ? AppTheme.goldAccent : Colors.redAccent,
+                            color: isWinner
+                                ? AppTheme.goldAccent
+                                : Colors.redAccent,
                             size: 24,
                           ),
                           const SizedBox(width: 12),
@@ -89,11 +101,17 @@ class GameHistoryScreen extends ConsumerWidget {
                               children: [
                                 Text(
                                   'vs ${opponent.name}',
-                                  style: const TextStyle(color: Colors.white, fontSize: 14),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 14,
+                                  ),
                                 ),
                                 Text(
                                   '${player.score} - ${opponent.score}',
-                                  style: const TextStyle(color: Colors.white54, fontSize: 12),
+                                  style: const TextStyle(
+                                    color: Colors.white54,
+                                    fontSize: 12,
+                                  ),
                                 ),
                               ],
                             ),
@@ -101,24 +119,42 @@ class GameHistoryScreen extends ConsumerWidget {
                           Text(
                             isWinner ? 'Won' : 'Lost',
                             style: TextStyle(
-                              color: isWinner ? AppTheme.goldAccent : Colors.redAccent,
+                              color: isWinner
+                                  ? AppTheme.goldAccent
+                                  : Colors.redAccent,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                           const SizedBox(width: 8),
                           IconButton(
-                            icon: const Icon(Icons.analytics, size: 18, color: Colors.white38),
+                            icon: const Icon(
+                              Icons.analytics,
+                              size: 18,
+                              color: Colors.white38,
+                            ),
                             tooltip: 'Analyze',
                             padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                            onPressed: () => context.go('/analysis/${game.gameId}'),
+                            constraints: const BoxConstraints(
+                              minWidth: 32,
+                              minHeight: 32,
+                            ),
+                            onPressed: () =>
+                                context.go('/analysis/${game.gameId}'),
                           ),
                           IconButton(
-                            icon: const Icon(Icons.replay, size: 18, color: Colors.white38),
+                            icon: const Icon(
+                              Icons.replay,
+                              size: 18,
+                              color: Colors.white38,
+                            ),
                             tooltip: 'Replay',
                             padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                            onPressed: () => context.go('/replay/${game.gameId}'),
+                            constraints: const BoxConstraints(
+                              minWidth: 32,
+                              minHeight: 32,
+                            ),
+                            onPressed: () =>
+                                context.go('/replay/${game.gameId}'),
                           ),
                         ],
                       ),

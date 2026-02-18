@@ -127,6 +127,6 @@ final puzzlePersistenceProvider = Provider<PuzzlePersistence>((ref) {
 
 final dailyPuzzleProvider =
     StateNotifierProvider<DailyPuzzleNotifier, DailyPuzzleState>((ref) {
-  final persistence = ref.read(puzzlePersistenceProvider);
-  return DailyPuzzleNotifier(persistence);
-});
+      final persistence = ref.read(puzzlePersistenceProvider);
+      return DailyPuzzleNotifier(persistence);
+    });

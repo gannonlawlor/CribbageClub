@@ -8,29 +8,35 @@ import '../../../core/models/friend.dart';
 import '../../../core/models/lobby.dart';
 
 // Providers
-final _friendsProvider = FutureProvider.autoDispose<List<FriendInfo>>((ref) async {
+final _friendsProvider = FutureProvider.autoDispose<List<FriendInfo>>((
+  ref,
+) async {
   final restClient = ref.read(restClientProvider);
   return restClient.getFriends();
 });
 
-final _incomingRequestsProvider = FutureProvider.autoDispose<List<FriendRequestInfo>>((ref) async {
-  final restClient = ref.read(restClientProvider);
-  return restClient.getIncomingFriendRequests();
-});
+final _incomingRequestsProvider =
+    FutureProvider.autoDispose<List<FriendRequestInfo>>((ref) async {
+      final restClient = ref.read(restClientProvider);
+      return restClient.getIncomingFriendRequests();
+    });
 
-final _incomingChallengesProvider = FutureProvider.autoDispose<List<Lobby>>((ref) async {
+final _incomingChallengesProvider = FutureProvider.autoDispose<List<Lobby>>((
+  ref,
+) async {
   final restClient = ref.read(restClientProvider);
   return restClient.getIncomingChallenges();
 });
 
 final _searchQueryProvider = StateProvider.autoDispose<String>((ref) => '');
 
-final _searchResultsProvider = FutureProvider.autoDispose<List<UserSearchResult>>((ref) async {
-  final query = ref.watch(_searchQueryProvider);
-  if (query.length < 2) return [];
-  final restClient = ref.read(restClientProvider);
-  return restClient.searchUsers(query);
-});
+final _searchResultsProvider =
+    FutureProvider.autoDispose<List<UserSearchResult>>((ref) async {
+      final query = ref.watch(_searchQueryProvider);
+      if (query.length < 2) return [];
+      final restClient = ref.read(restClientProvider);
+      return restClient.searchUsers(query);
+    });
 
 class FriendsScreen extends ConsumerStatefulWidget {
   const FriendsScreen({super.key});
@@ -74,11 +80,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen>
       ),
       body: TabBarView(
         controller: _tabController,
-        children: const [
-          _FriendsTab(),
-          _RequestsTab(),
-          _FindTab(),
-        ],
+        children: const [_FriendsTab(), _RequestsTab(), _FindTab()],
       ),
     );
   }
@@ -127,8 +129,10 @@ class _FriendsTab extends ConsumerWidget {
       },
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (error, _) => Center(
-        child: Text('Failed to load friends: $error',
-            style: const TextStyle(color: Colors.redAccent)),
+        child: Text(
+          'Failed to load friends: $error',
+          style: const TextStyle(color: Colors.redAccent),
+        ),
       ),
     );
   }
@@ -154,9 +158,14 @@ class _FriendTile extends ConsumerWidget {
           context: context,
           builder: (ctx) => AlertDialog(
             backgroundColor: AppTheme.feltGreenDark,
-            title: const Text('Remove Friend', style: TextStyle(color: Colors.white)),
-            content: Text('Remove ${friend.displayName ?? friend.username} from your friends?',
-                style: const TextStyle(color: Colors.white70)),
+            title: const Text(
+              'Remove Friend',
+              style: TextStyle(color: Colors.white),
+            ),
+            content: Text(
+              'Remove ${friend.displayName ?? friend.username} from your friends?',
+              style: const TextStyle(color: Colors.white70),
+            ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop(false),
@@ -164,7 +173,10 @@ class _FriendTile extends ConsumerWidget {
               ),
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop(true),
-                child: const Text('Remove', style: TextStyle(color: Colors.redAccent)),
+                child: const Text(
+                  'Remove',
+                  style: TextStyle(color: Colors.redAccent),
+                ),
               ),
             ],
           ),
@@ -213,7 +225,10 @@ class _FriendTile extends ConsumerWidget {
                     if (friend.displayName != null)
                       Text(
                         friend.username,
-                        style: const TextStyle(color: Colors.white54, fontSize: 12),
+                        style: const TextStyle(
+                          color: Colors.white54,
+                          fontSize: 12,
+                        ),
                       ),
                   ],
                 ),
@@ -223,7 +238,10 @@ class _FriendTile extends ConsumerWidget {
                 icon: const Icon(Icons.sports_esports, size: 16),
                 label: const Text('Challenge'),
                 style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                   textStyle: const TextStyle(fontSize: 12),
                 ),
               ),
@@ -270,7 +288,11 @@ class _RequestsTab extends ConsumerWidget {
           // Incoming friend requests
           const Text(
             'Friend Requests',
-            style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(height: 8),
           requests.when(
@@ -278,18 +300,26 @@ class _RequestsTab extends ConsumerWidget {
               if (list.isEmpty) {
                 return const Padding(
                   padding: EdgeInsets.symmetric(vertical: 16),
-                  child: Text('No pending requests', style: TextStyle(color: Colors.white38)),
+                  child: Text(
+                    'No pending requests',
+                    style: TextStyle(color: Colors.white38),
+                  ),
                 );
               }
               return Column(
-                children: list.map((r) => _FriendRequestTile(request: r)).toList(),
+                children: list
+                    .map((r) => _FriendRequestTile(request: r))
+                    .toList(),
               );
             },
             loading: () => const Padding(
               padding: EdgeInsets.symmetric(vertical: 16),
               child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
             ),
-            error: (e, _) => Text('Error: $e', style: const TextStyle(color: Colors.redAccent)),
+            error: (e, _) => Text(
+              'Error: $e',
+              style: const TextStyle(color: Colors.redAccent),
+            ),
           ),
 
           const SizedBox(height: 24),
@@ -297,7 +327,11 @@ class _RequestsTab extends ConsumerWidget {
           // Incoming challenges
           const Text(
             'Challenges',
-            style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(height: 8),
           challenges.when(
@@ -305,18 +339,26 @@ class _RequestsTab extends ConsumerWidget {
               if (list.isEmpty) {
                 return const Padding(
                   padding: EdgeInsets.symmetric(vertical: 16),
-                  child: Text('No pending challenges', style: TextStyle(color: Colors.white38)),
+                  child: Text(
+                    'No pending challenges',
+                    style: TextStyle(color: Colors.white38),
+                  ),
                 );
               }
               return Column(
-                children: list.map((c) => _ChallengeTile(challenge: c)).toList(),
+                children: list
+                    .map((c) => _ChallengeTile(challenge: c))
+                    .toList(),
               );
             },
             loading: () => const Padding(
               padding: EdgeInsets.symmetric(vertical: 16),
               child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
             ),
-            error: (e, _) => Text('Error: $e', style: const TextStyle(color: Colors.redAccent)),
+            error: (e, _) => Text(
+              'Error: $e',
+              style: const TextStyle(color: Colors.redAccent),
+            ),
           ),
         ],
       ),
@@ -353,7 +395,10 @@ class _FriendRequestTile extends ConsumerWidget {
                   if (request.fromDisplayName != null)
                     Text(
                       request.fromUsername,
-                      style: const TextStyle(color: Colors.white54, fontSize: 12),
+                      style: const TextStyle(
+                        color: Colors.white54,
+                        fontSize: 12,
+                      ),
                     ),
                 ],
               ),
@@ -382,9 +427,9 @@ class _FriendRequestTile extends ConsumerWidget {
       ref.invalidate(_friendsProvider);
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to accept: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to accept: $e')));
       }
     }
   }
@@ -396,9 +441,9 @@ class _FriendRequestTile extends ConsumerWidget {
       ref.invalidate(_incomingRequestsProvider);
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to decline: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to decline: $e')));
       }
     }
   }
@@ -425,7 +470,11 @@ class _ChallengeTile extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
           children: [
-            const Icon(Icons.sports_esports, color: AppTheme.goldAccent, size: 20),
+            const Icon(
+              Icons.sports_esports,
+              color: AppTheme.goldAccent,
+              size: 20,
+            ),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
@@ -436,7 +485,10 @@ class _ChallengeTile extends ConsumerWidget {
             ElevatedButton(
               onPressed: () => _accept(context, ref),
               style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 textStyle: const TextStyle(fontSize: 12),
               ),
               child: const Text('Accept'),
@@ -444,7 +496,10 @@ class _ChallengeTile extends ConsumerWidget {
             const SizedBox(width: 8),
             TextButton(
               onPressed: () => _decline(context, ref),
-              child: const Text('Decline', style: TextStyle(color: Colors.white54, fontSize: 12)),
+              child: const Text(
+                'Decline',
+                style: TextStyle(color: Colors.white54, fontSize: 12),
+              ),
             ),
           ],
         ),
@@ -552,7 +607,10 @@ class _FindTabState extends ConsumerState<_FindTab> {
             data: (list) {
               if (list.isEmpty && query.length >= 2) {
                 return const Center(
-                  child: Text('No users found', style: TextStyle(color: Colors.white54)),
+                  child: Text(
+                    'No users found',
+                    style: TextStyle(color: Colors.white54),
+                  ),
                 );
               }
               return ListView.builder(
@@ -562,10 +620,13 @@ class _FindTabState extends ConsumerState<_FindTab> {
                     _SearchResultTile(result: list[index]),
               );
             },
-            loading: () => const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+            loading: () =>
+                const Center(child: CircularProgressIndicator(strokeWidth: 2)),
             error: (e, _) => Center(
-              child: Text('Search failed: $e',
-                  style: const TextStyle(color: Colors.redAccent)),
+              child: Text(
+                'Search failed: $e',
+                style: const TextStyle(color: Colors.redAccent),
+              ),
             ),
           ),
         ),
@@ -609,7 +670,10 @@ class _SearchResultTile extends ConsumerWidget {
                   if (result.displayName != null)
                     Text(
                       result.username,
-                      style: const TextStyle(color: Colors.white54, fontSize: 12),
+                      style: const TextStyle(
+                        color: Colors.white54,
+                        fontSize: 12,
+                      ),
                     ),
                 ],
               ),
@@ -644,15 +708,15 @@ class _SearchResultTile extends ConsumerWidget {
       await restClient.sendFriendRequest(result.username);
       ref.invalidate(_searchResultsProvider);
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Friend request sent!')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Friend request sent!')));
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to send request: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to send request: $e')));
       }
     }
   }
