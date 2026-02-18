@@ -34,7 +34,7 @@ class StageIndicator extends StatelessWidget {
             ? 'Play a card or tap Go if you can\'t play'
             : 'Waiting for opponent...';
       case GameStage.counting:
-        return isMyTurn ? 'Tap to count your hand' : 'Waiting for count...';
+        return isMyTurn ? 'Count your cards!' : 'Waiting for count...';
       case GameStage.gameOver:
         return 'Game Over!';
     }

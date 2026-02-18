@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../config/theme.dart';
 import '../../../core/engine/local_game_service.dart';
 import '../../../core/models/card.dart';
 import '../../../core/models/game_action.dart';
@@ -14,6 +15,7 @@ class LocalGameNotifier extends StateNotifier<GameNotifierState> {
   final String _playerId;
   final GameAnimationController animationController;
   final GameFeedbackService _feedbackService;
+  bool _disposed = false;
 
   LocalGameNotifier({
     required this.gameId,
@@ -43,49 +45,75 @@ class LocalGameNotifier extends StateNotifier<GameNotifierState> {
     }
   }
 
-  void _applyAction(GameAction action) {
+  /// Apply a human action, show the intermediate state, then delay before
+  /// processing AI responses to simulate "thinking".
+  Future<void> _applyActionWithDelay(GameAction action) async {
     try {
-      final newState = _service.applyHumanAction(action);
-      state = GameNotifierState(gameState: newState);
-      _notifyAnimation(newState);
+      // Apply the human action and show intermediate state immediately
+      final intermediate = _service.applyActionOnly(action);
+      state = GameNotifierState(gameState: intermediate);
+      _notifyAnimation(intermediate);
+
+      // If it's now the AI's turn, wait then process
+      if (intermediate.currentPlayerId?.startsWith('ai_') == true) {
+        await Future.delayed(AppTheme.aiThinkingDelay);
+        if (_disposed) return;
+        final finalState = _service.processAI();
+        state = GameNotifierState(gameState: finalState);
+        _notifyAnimation(finalState);
+      }
     } catch (e) {
-      state = state.copyWith(error: 'Action failed: $e');
+      if (!_disposed) {
+        state = state.copyWith(error: 'Action failed: $e');
+      }
     }
   }
 
-  void discardCards(List<PlayingCard> cards) {
+  void discardCards(List<PlayingCard> cards) async {
     if (state.isDiscarding) return;
     state = state.copyWith(isDiscarding: true, error: null);
     try {
-      GameState? newState;
+      // Apply both discards without AI processing
+      GameState? intermediate;
       for (final card in cards) {
-        newState = _service.applyHumanAction(
+        intermediate = _service.applyActionOnly(
           GameAction.discardToCrib(playerId: _playerId, card: card),
         );
       }
-      if (newState != null) {
-        state = GameNotifierState(gameState: newState);
-        _notifyAnimation(newState);
+      if (intermediate != null) {
+        state = GameNotifierState(gameState: intermediate);
+        _notifyAnimation(intermediate);
+
+        // If AI needs to act (discard + possibly cut), delay then process
+        if (intermediate.currentPlayerId?.startsWith('ai_') == true) {
+          await Future.delayed(AppTheme.aiThinkingDelay);
+          if (_disposed) return;
+          final finalState = _service.processAI();
+          state = GameNotifierState(gameState: finalState);
+          _notifyAnimation(finalState);
+        }
       }
     } catch (e) {
-      state = state.copyWith(isDiscarding: false, error: 'Discard failed: $e');
+      if (!_disposed) {
+        state = state.copyWith(isDiscarding: false, error: 'Discard failed: $e');
+      }
     }
   }
 
   void playCard(PlayingCard card) {
-    _applyAction(GameAction.playCard(playerId: _playerId, card: card));
+    _applyActionWithDelay(GameAction.playCard(playerId: _playerId, card: card));
   }
 
   void cutDeck() {
-    _applyAction(GameAction.cutDeck(playerId: _playerId));
+    _applyActionWithDelay(GameAction.cutDeck(playerId: _playerId));
   }
 
   void sayGo() {
-    _applyAction(GameAction.go(playerId: _playerId));
+    _applyActionWithDelay(GameAction.go(playerId: _playerId));
   }
 
   void countHand() {
-    _applyAction(GameAction.countHand(playerId: _playerId));
+    _applyActionWithDelay(GameAction.countHand(playerId: _playerId));
   }
 
   void clearError() {
@@ -108,6 +136,7 @@ class LocalGameNotifier extends StateNotifier<GameNotifierState> {
 
   @override
   void dispose() {
+    _disposed = true;
     animationController.dispose();
     super.dispose();
   }

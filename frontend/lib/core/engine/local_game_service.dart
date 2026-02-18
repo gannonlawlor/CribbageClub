@@ -57,6 +57,23 @@ class LocalGameService {
     return _processAIActions();
   }
 
+  /// Apply a human action without processing AI responses.
+  /// Returns the intermediate state after the action.
+  GameState applyActionOnly(GameAction action) {
+    final actionJson = jsonEncode(action.toJson());
+    rust.engineApplyActionJson(
+      engine: _engine!,
+      actionJson: actionJson,
+    );
+    final json = rust.engineCurrentStateJson(engine: _engine!);
+    return GameState.fromJson(jsonDecode(json) as Map<String, dynamic>);
+  }
+
+  /// Process pending AI actions and return the resulting state.
+  GameState processAI() {
+    return _processAIActions();
+  }
+
   bool get hasActiveGame => _engine != null;
 
   GameState? get currentState {
