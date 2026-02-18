@@ -1,5 +1,10 @@
 package com.jackabee.cribbageclubserver.service
 
+import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.jackabee.cribbageclubserver.bridge.CribbageEngineLib
+import com.jackabee.cribbageclubserver.bridge.RustEngineAdapter
 import com.jackabee.cribbageclubserver.model.card.Card
 import com.jackabee.cribbageclubserver.model.card.Rank
 import com.jackabee.cribbageclubserver.model.card.Suit
@@ -8,6 +13,7 @@ import com.jackabee.cribbageclubserver.model.game.GameHistoryEvent.ScoreBreakdow
 import com.jackabee.cribbageclubserver.model.game.GameStage
 import com.jackabee.cribbageclubserver.model.game.GameState
 import com.jackabee.cribbageclubserver.model.player.Player
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.mockito.Mockito.mock
@@ -18,8 +24,22 @@ import kotlin.test.assertTrue
 
 class AnalysisServiceTest {
 
+    companion object {
+        private lateinit var adapter: RustEngineAdapter
+
+        @JvmStatic
+        @BeforeAll
+        fun setup() {
+            val lib = CribbageEngineLib.load()
+            val objectMapper = jacksonObjectMapper()
+                .registerModule(JavaTimeModule())
+                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+            adapter = RustEngineAdapter(lib, objectMapper)
+        }
+    }
+
     private val gameService = mock(GameService::class.java)
-    private val analysisService = AnalysisService(gameService)
+    private val analysisService = AnalysisService(gameService, adapter)
 
     private val p1 = "player1"
     private val p2 = "player2"

@@ -1,8 +1,9 @@
 package com.jackabee.cribbageclubserver.service
 
+import com.jackabee.cribbageclubserver.bridge.RustEngineAdapter
 import com.jackabee.cribbageclubserver.entity.PlayerStatsEntity
+import com.jackabee.cribbageclubserver.model.rating.Glicko2Rating
 import com.jackabee.cribbageclubserver.repository.PlayerStatsRepository
-import com.jackabee.cribbageclubserver.utils.Glicko2Calculator
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -10,7 +11,8 @@ import java.time.Instant
 
 @Service
 class PlayerStatsService(
-    private val playerStatsRepository: PlayerStatsRepository
+    private val playerStatsRepository: PlayerStatsRepository,
+    private val rustEngineAdapter: RustEngineAdapter
 ) {
     private val logger = LoggerFactory.getLogger(PlayerStatsService::class.java)
 
@@ -55,15 +57,15 @@ class PlayerStatsService(
         val isRated = !winnerId.startsWith("ai_") && !winnerId.startsWith("guest_") &&
                 !loserId.startsWith("ai_") && !loserId.startsWith("guest_")
         if (isRated) {
-            val winnerRating = Glicko2Calculator.Rating(
+            val winnerRating = Glicko2Rating(
                 winnerStats.rating, winnerStats.ratingDeviation, winnerStats.ratingVolatility
             )
-            val loserRating = Glicko2Calculator.Rating(
+            val loserRating = Glicko2Rating(
                 loserStats.rating, loserStats.ratingDeviation, loserStats.ratingVolatility
             )
 
-            val winnerResult = Glicko2Calculator.calculateNewRating(winnerRating, loserRating, 1.0)
-            val loserResult = Glicko2Calculator.calculateNewRating(loserRating, winnerRating, 0.0)
+            val winnerResult = rustEngineAdapter.calculateGlicko2(winnerRating, loserRating, 1.0)
+            val loserResult = rustEngineAdapter.calculateGlicko2(loserRating, winnerRating, 0.0)
 
             winnerStats.rating = winnerResult.newRating
             winnerStats.ratingDeviation = winnerResult.newDeviation

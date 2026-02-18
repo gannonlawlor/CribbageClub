@@ -1,7 +1,14 @@
 package com.jackabee.cribbageclubserver.model.analysis
 
 import com.jackabee.cribbageclubserver.model.card.Card
-import com.jackabee.cribbageclubserver.utils.DiscardAnalyzer
+
+data class DiscardOption(
+    val keep: List<Card>,
+    val discard: List<Card>,
+    val expectedHandValue: Double,
+    val expectedCribValue: Double,
+    val expectedCombinedValue: Double
+)
 
 data class GameAnalysis(
     val gameId: String,
@@ -23,7 +30,7 @@ data class PlayerRoundAnalysis(
     val discarded: List<Card>,
     val actualHandScore: Int,
     val actualCribScore: Int?,
-    val optimalDiscard: DiscardAnalyzer.DiscardOption,
-    val playerDiscard: DiscardAnalyzer.DiscardOption,
+    val optimalDiscard: DiscardOption,
+    val playerDiscard: DiscardOption,
     val evDifference: Double
 )

@@ -1,7 +1,13 @@
 package com.jackabee.cribbageclubserver.service
 
+import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.jackabee.cribbageclubserver.bridge.CribbageEngineLib
+import com.jackabee.cribbageclubserver.bridge.RustEngineAdapter
 import com.jackabee.cribbageclubserver.entity.PlayerStatsEntity
 import com.jackabee.cribbageclubserver.repository.PlayerStatsRepository
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.*
 import java.util.Optional
@@ -9,8 +15,22 @@ import kotlin.test.assertEquals
 
 class PlayerStatsServiceTest {
 
+    companion object {
+        private lateinit var adapter: RustEngineAdapter
+
+        @JvmStatic
+        @BeforeAll
+        fun setup() {
+            val lib = CribbageEngineLib.load()
+            val objectMapper = jacksonObjectMapper()
+                .registerModule(JavaTimeModule())
+                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+            adapter = RustEngineAdapter(lib, objectMapper)
+        }
+    }
+
     private val repository: PlayerStatsRepository = mock()
-    private val service = PlayerStatsService(repository)
+    private val service = PlayerStatsService(repository, adapter)
 
     @Test
     fun `getStats returns existing stats`() {
