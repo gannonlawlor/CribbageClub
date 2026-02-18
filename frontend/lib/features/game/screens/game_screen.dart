@@ -769,7 +769,7 @@ class _TopBar extends StatelessWidget {
             icon: const Icon(Icons.arrow_back, color: Colors.white70, size: 20),
             onPressed: onBack,
             padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+            constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
           ),
           Expanded(
             child: ScoreDisplay(
@@ -783,20 +783,20 @@ class _TopBar extends StatelessWidget {
               icon: const Icon(Icons.warning, color: Colors.amber, size: 20),
               onPressed: onError,
               padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+              constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
             ),
           if (isOnlineGame && !isGameOver)
             IconButton(
               icon: const Icon(Icons.flag, color: Colors.white54, size: 20),
               onPressed: onResign,
               padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+              constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
             ),
           IconButton(
             icon: const Icon(Icons.history, color: Colors.white54, size: 20),
             onPressed: () => _showHistorySheet(context),
             padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+            constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
           ),
         ],
       ),

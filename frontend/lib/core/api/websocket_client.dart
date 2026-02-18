@@ -247,6 +247,19 @@ class WebSocketClient {
     _pendingSubscriptions.remove(key);
   }
 
+  /// Re-initiate connection if disconnected or failed (e.g. after app resume).
+  /// No-ops if already connected or reconnecting.
+  void reconnectIfNeeded() {
+    if (isConnected || _status == ConnectionStatus.connecting ||
+        _status == ConnectionStatus.reconnecting) {
+      return;
+    }
+    if (_onConnectCallback == null || _onErrorCallback == null) return;
+    _reconnectAttempts = 0;
+    _setStatus(ConnectionStatus.connecting);
+    _doConnect(onConnect: _onConnectCallback!, onError: _onErrorCallback!);
+  }
+
   void disconnect() {
     _reconnectTimer?.cancel();
     _reconnectTimer = null;
