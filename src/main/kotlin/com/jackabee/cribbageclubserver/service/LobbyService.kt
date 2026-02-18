@@ -83,6 +83,42 @@ class LobbyService(
     }
 
     /**
+     * Lists public, non-challenge lobbies that are waiting for players (for lobby browser).
+     *
+     * @return List of public non-challenge lobbies in WAITING status
+     */
+    fun listPublicWaitingLobbies(): List<Lobby> {
+        return lobbyRepository.findByStatusAndIsPrivateFalseAndChallengedUserIdIsNull(LobbyStatus.WAITING.name)
+            .map { toLobby(it) }
+    }
+
+    /**
+     * Quick-match: finds a waiting public non-challenge lobby or creates one.
+     * If a match is found, joins it (auto-starting if full). Otherwise creates a new public lobby.
+     *
+     * @param userId The ID of the player
+     * @param username The name of the player
+     * @return The join result (lobby + optional gameState if auto-started)
+     */
+    @Transactional
+    fun quickMatch(userId: String, username: String): JoinByCodeResult {
+        val waitingLobbies = lobbyRepository
+            .findByStatusAndIsPrivateFalseAndChallengedUserIdIsNull(LobbyStatus.WAITING.name)
+            .map { toLobby(it) }
+            .filter { lobby -> lobby.players.none { it.id == userId } }
+
+        if (waitingLobbies.isNotEmpty()) {
+            val match = waitingLobbies.first()
+            logger.info("Quick-match: user {} joining existing lobby {}", username, match.id)
+            return joinLobbyById(match.id, userId, username)
+        }
+
+        val lobby = createLobby("Quick Game", userId, username, isPrivate = false)
+        logger.info("Quick-match: user {} created new lobby {}", username, lobby.id)
+        return JoinByCodeResult(lobby = lobby)
+    }
+
+    /**
      * Joins a player to a lobby.
      *
      * @param lobbyId The ID of the lobby to join
