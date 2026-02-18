@@ -74,6 +74,13 @@ sealed class GameHistoryEvent with _$GameHistoryEvent {
     required int finalScore,
   }) = GameEnded;
 
+  @FreezedUnionValue('GameForfeited')
+  const factory GameHistoryEvent.gameForfeited({
+    @Default('') String timestamp,
+    required String forfeitingPlayerId,
+    required String reason,
+  }) = GameForfeited;
+
   factory GameHistoryEvent.fromJson(Map<String, dynamic> json) =>
       _$GameHistoryEventFromJson(json);
 }

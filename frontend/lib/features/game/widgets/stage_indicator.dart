@@ -26,15 +26,15 @@ class StageIndicator extends StatelessWidget {
         final cribOwner = isDealer ? 'your' : "opponent's";
         return isMyTurn
             ? 'Discard 2 to $cribOwner crib ($selectedCardCount/2 selected)'
-            : 'Waiting for ${currentPlayerName ?? "opponent"} to discard...';
+            : 'Discard to $cribOwner crib';
       case GameStage.cutting:
-        return isMyTurn ? 'Tap to cut the deck' : 'Waiting for cut...';
+        return isMyTurn ? 'Tap to cut the deck' : 'Cutting the deck';
       case GameStage.pegging:
         return isMyTurn
             ? 'Play a card or tap Go if you can\'t play'
-            : 'Waiting for opponent...';
+            : 'Pegging';
       case GameStage.counting:
-        return isMyTurn ? 'Count your cards!' : 'Waiting for count...';
+        return isMyTurn ? 'Count your cards!' : 'Counting';
       case GameStage.gameOver:
         return 'Game Over!';
     }

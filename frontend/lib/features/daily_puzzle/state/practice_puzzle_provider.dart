@@ -72,6 +72,7 @@ class PracticePuzzleNotifier extends StateNotifier<PracticePuzzleState> {
     final isDealer = seed % 2 == 0;
     final puzzle = DailyPuzzle(
       date: DateTime.now(),
+      index: 0,
       hand: hand,
       isDealer: isDealer,
     );

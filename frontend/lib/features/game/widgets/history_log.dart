@@ -54,6 +54,8 @@ class HistoryLog extends StatelessWidget {
         '${_playerLabel(dealerPlayerId)} counted $totalPoints in crib${_breakdownSummary(scoreBreakdown)}',
       GameEnded(:final winnerPlayerId, :final finalScore) =>
         '${_playerLabel(winnerPlayerId)} wins with $finalScore!',
+      GameForfeited(:final forfeitingPlayerId, :final reason) =>
+        '${_playerLabel(forfeitingPlayerId)} forfeited ($reason)',
     };
   }
 

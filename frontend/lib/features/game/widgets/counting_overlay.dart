@@ -286,6 +286,131 @@ class _CountingOverlayState extends State<CountingOverlay> {
     );
   }
 
+  void _onNumberTap(int digit) {
+    setState(() {
+      final newValue = _guessValue * 10 + digit;
+      if (newValue <= 29) {
+        _guessValue = newValue;
+      }
+    });
+  }
+
+  void _onBackspace() {
+    setState(() {
+      _guessValue = _guessValue ~/ 10;
+    });
+  }
+
+  Widget _buildNumberPad(VoidCallback onSubmit) {
+    Widget numButton(int digit) {
+      return Expanded(
+        child: Padding(
+          padding: const EdgeInsets.all(2),
+          child: Material(
+            color: Colors.white.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(8),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(8),
+              onTap: () => _onNumberTap(digit),
+              child: Container(
+                height: 44,
+                alignment: Alignment.center,
+                child: Text(
+                  '$digit',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        // Display
+        Container(
+          width: 80,
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          margin: const EdgeInsets.only(bottom: 10),
+          decoration: BoxDecoration(
+            color: Colors.black26,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.white24),
+          ),
+          child: Text(
+            '$_guessValue',
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        // Number rows
+        Row(children: [numButton(1), numButton(2), numButton(3)]),
+        Row(children: [numButton(4), numButton(5), numButton(6)]),
+        Row(children: [numButton(7), numButton(8), numButton(9)]),
+        Row(
+          children: [
+            // Backspace
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(2),
+                child: Material(
+                  color: Colors.white.withValues(alpha: 0.07),
+                  borderRadius: BorderRadius.circular(8),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(8),
+                    onTap: _onBackspace,
+                    child: Container(
+                      height: 44,
+                      alignment: Alignment.center,
+                      child: const Icon(
+                        Icons.backspace_outlined,
+                        color: Colors.white70,
+                        size: 22,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            numButton(0),
+            // Enter
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(2),
+                child: Material(
+                  color: AppTheme.goldAccent.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(8),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(8),
+                    onTap: onSubmit,
+                    child: Container(
+                      height: 44,
+                      alignment: Alignment.center,
+                      child: const Icon(
+                        Icons.check,
+                        color: AppTheme.goldAccent,
+                        size: 24,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
   Widget _buildInput({
     required String title,
     required List<PlayingCard> cards,
@@ -303,67 +428,15 @@ class _CountingOverlayState extends State<CountingOverlay> {
             fontWeight: FontWeight.bold,
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
         _buildCardRow(cards, cutCard),
-        const SizedBox(height: 20),
+        const SizedBox(height: 12),
         const Text(
           'How many points?',
           style: TextStyle(color: Colors.white70, fontSize: 14),
         ),
-        const SizedBox(height: 12),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            IconButton(
-              onPressed: _guessValue > 0
-                  ? () => setState(() => _guessValue--)
-                  : null,
-              icon: const Icon(Icons.remove_circle_outline),
-              color: Colors.white,
-              disabledColor: Colors.white24,
-              iconSize: 32,
-            ),
-            const SizedBox(width: 16),
-            Container(
-              width: 60,
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.black26,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.white24),
-              ),
-              child: Text(
-                '$_guessValue',
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            const SizedBox(width: 16),
-            IconButton(
-              onPressed: _guessValue < 29
-                  ? () => setState(() => _guessValue++)
-                  : null,
-              icon: const Icon(Icons.add_circle_outline),
-              color: Colors.white,
-              disabledColor: Colors.white24,
-              iconSize: 32,
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        ElevatedButton(
-          onPressed: onSubmit,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppTheme.goldAccent,
-            foregroundColor: Colors.black87,
-            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 10),
-          ),
-          child: const Text('Submit'),
-        ),
+        const SizedBox(height: 8),
+        _buildNumberPad(onSubmit),
       ],
     );
   }

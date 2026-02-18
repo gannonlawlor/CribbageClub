@@ -6,6 +6,7 @@ import '../models/card.dart';
 import '../models/friend.dart';
 import '../models/game_action.dart';
 import '../models/game_analysis.dart';
+import '../models/game_response.dart';
 import '../models/game_state.dart';
 import '../models/import_games.dart';
 import '../models/join_by_code_result.dart';
@@ -115,17 +116,22 @@ class RestClient {
     return GameState.fromJson(response.data as Map<String, dynamic>);
   }
 
-  Future<GameState> getGameState(String gameId) async {
+  Future<GameResponse> getGameState(String gameId) async {
     final response = await _dio.get('/api/games/$gameId');
-    return GameState.fromJson(response.data as Map<String, dynamic>);
+    return GameResponse.fromJson(response.data as Map<String, dynamic>);
   }
 
-  Future<GameState> applyAction(String gameId, GameAction action) async {
+  Future<GameResponse> applyAction(String gameId, GameAction action) async {
     final response = await _dio.post(
       '/api/games/$gameId/actions',
       data: action.toJson(),
     );
-    return GameState.fromJson(response.data as Map<String, dynamic>);
+    return GameResponse.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  Future<GameResponse> resignGame(String gameId) async {
+    final response = await _dio.post('/api/games/$gameId/resign');
+    return GameResponse.fromJson(response.data as Map<String, dynamic>);
   }
 
   Future<List<GameState>> listGames() async {

@@ -20,7 +20,8 @@ import java.time.Instant
     JsonSubTypes.Type(value = GameHistoryEvent.PeggingEnded::class, name = "PeggingEnded"),
     JsonSubTypes.Type(value = GameHistoryEvent.HandCounted::class, name = "HandCounted"),
     JsonSubTypes.Type(value = GameHistoryEvent.CribCounted::class, name = "CribCounted"),
-    JsonSubTypes.Type(value = GameHistoryEvent.GameEnded::class, name = "GameEnded")
+    JsonSubTypes.Type(value = GameHistoryEvent.GameEnded::class, name = "GameEnded"),
+    JsonSubTypes.Type(value = GameHistoryEvent.GameForfeited::class, name = "GameForfeited")
 )
 sealed class GameHistoryEvent {
     abstract val timestamp: Instant
@@ -108,6 +109,15 @@ sealed class GameHistoryEvent {
         override val timestamp: Instant = Instant.now(),
         val winnerPlayerId: String,
         val finalScore: Int
+    ) : GameHistoryEvent()
+
+    /**
+     * A player forfeited the game (resigned, timed out, or disconnected)
+     */
+    data class GameForfeited(
+        override val timestamp: Instant = Instant.now(),
+        val forfeitingPlayerId: String,
+        val reason: String
     ) : GameHistoryEvent()
 
     /**

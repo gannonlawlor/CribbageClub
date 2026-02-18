@@ -33,67 +33,67 @@ final routerProvider = Provider<GoRouter>((ref) {
       return null;
     },
     routes: [
-      GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
-      GoRoute(path: '/', builder: (context, state) => const HomeScreen()),
+      GoRoute(path: '/login', pageBuilder: (context, state) => const NoTransitionPage(child: LoginScreen())),
+      GoRoute(path: '/', pageBuilder: (context, state) => const NoTransitionPage(child: HomeScreen())),
       GoRoute(
         path: '/game/:gameId',
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final gameId = state.pathParameters['gameId']!;
-          return GameScreen(gameId: gameId);
+          return NoTransitionPage(child: GameScreen(gameId: gameId));
         },
       ),
       GoRoute(
         path: '/upgrade',
-        builder: (context, state) => const UpgradeScreen(),
+        pageBuilder: (context, state) => const NoTransitionPage(child: UpgradeScreen()),
       ),
       GoRoute(
         path: '/history',
-        builder: (context, state) => const GameHistoryScreen(),
+        pageBuilder: (context, state) => const NoTransitionPage(child: GameHistoryScreen()),
       ),
       GoRoute(
         path: '/leaderboard',
-        builder: (context, state) => const LeaderboardScreen(),
+        pageBuilder: (context, state) => const NoTransitionPage(child: LeaderboardScreen()),
       ),
       GoRoute(
         path: '/friends',
-        builder: (context, state) => const FriendsScreen(),
+        pageBuilder: (context, state) => const NoTransitionPage(child: FriendsScreen()),
       ),
       GoRoute(
         path: '/lobbies',
-        builder: (context, state) => const LobbyBrowserScreen(),
+        pageBuilder: (context, state) => const NoTransitionPage(child: LobbyBrowserScreen()),
       ),
       GoRoute(
         path: '/lobby/:lobbyId',
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final lobbyId = state.pathParameters['lobbyId']!;
-          return LobbyWaitingScreen(lobbyId: lobbyId);
+          return NoTransitionPage(child: LobbyWaitingScreen(lobbyId: lobbyId));
         },
       ),
       GoRoute(
         path: '/analysis/:gameId',
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final gameId = state.pathParameters['gameId']!;
-          return AnalysisScreen(gameId: gameId);
+          return NoTransitionPage(child: AnalysisScreen(gameId: gameId));
         },
       ),
       GoRoute(
         path: '/replay/:gameId',
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final gameId = state.pathParameters['gameId']!;
-          return ReplayScreen(gameId: gameId);
+          return NoTransitionPage(child: ReplayScreen(gameId: gameId));
         },
       ),
       GoRoute(
         path: '/puzzle',
-        builder: (context, state) => const PuzzleScreen(),
+        pageBuilder: (context, state) => const NoTransitionPage(child: PuzzleScreen()),
       ),
       GoRoute(
         path: '/daily-puzzle',
-        builder: (context, state) => const DailyPuzzleScreen(),
+        pageBuilder: (context, state) => const NoTransitionPage(child: DailyPuzzleScreen()),
       ),
       GoRoute(
         path: '/practice-puzzle',
-        builder: (context, state) => const PracticePuzzleScreen(),
+        pageBuilder: (context, state) => const NoTransitionPage(child: PracticePuzzleScreen()),
       ),
     ],
     errorBuilder: (context, state) =>

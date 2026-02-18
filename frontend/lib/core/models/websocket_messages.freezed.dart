@@ -211,6 +211,11 @@ GameStateUpdateMessage _$GameStateUpdateMessageFromJson(
 mixin _$GameStateUpdateMessage {
   String get gameId => throw _privateConstructorUsedError;
   GameState get gameState => throw _privateConstructorUsedError;
+  String? get turnStartedAt => throw _privateConstructorUsedError;
+  int get turnTimeLimitMs => throw _privateConstructorUsedError;
+  int get player1TimeBankMs => throw _privateConstructorUsedError;
+  int get player2TimeBankMs => throw _privateConstructorUsedError;
+  bool get isTimed => throw _privateConstructorUsedError;
   int? get timestamp => throw _privateConstructorUsedError;
 
   /// Serializes this GameStateUpdateMessage to a JSON map.
@@ -230,7 +235,16 @@ abstract class $GameStateUpdateMessageCopyWith<$Res> {
     $Res Function(GameStateUpdateMessage) then,
   ) = _$GameStateUpdateMessageCopyWithImpl<$Res, GameStateUpdateMessage>;
   @useResult
-  $Res call({String gameId, GameState gameState, int? timestamp});
+  $Res call({
+    String gameId,
+    GameState gameState,
+    String? turnStartedAt,
+    int turnTimeLimitMs,
+    int player1TimeBankMs,
+    int player2TimeBankMs,
+    bool isTimed,
+    int? timestamp,
+  });
 
   $GameStateCopyWith<$Res> get gameState;
 }
@@ -255,6 +269,11 @@ class _$GameStateUpdateMessageCopyWithImpl<
   $Res call({
     Object? gameId = null,
     Object? gameState = null,
+    Object? turnStartedAt = freezed,
+    Object? turnTimeLimitMs = null,
+    Object? player1TimeBankMs = null,
+    Object? player2TimeBankMs = null,
+    Object? isTimed = null,
     Object? timestamp = freezed,
   }) {
     return _then(
@@ -267,6 +286,26 @@ class _$GameStateUpdateMessageCopyWithImpl<
                 ? _value.gameState
                 : gameState // ignore: cast_nullable_to_non_nullable
                       as GameState,
+            turnStartedAt: freezed == turnStartedAt
+                ? _value.turnStartedAt
+                : turnStartedAt // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            turnTimeLimitMs: null == turnTimeLimitMs
+                ? _value.turnTimeLimitMs
+                : turnTimeLimitMs // ignore: cast_nullable_to_non_nullable
+                      as int,
+            player1TimeBankMs: null == player1TimeBankMs
+                ? _value.player1TimeBankMs
+                : player1TimeBankMs // ignore: cast_nullable_to_non_nullable
+                      as int,
+            player2TimeBankMs: null == player2TimeBankMs
+                ? _value.player2TimeBankMs
+                : player2TimeBankMs // ignore: cast_nullable_to_non_nullable
+                      as int,
+            isTimed: null == isTimed
+                ? _value.isTimed
+                : isTimed // ignore: cast_nullable_to_non_nullable
+                      as bool,
             timestamp: freezed == timestamp
                 ? _value.timestamp
                 : timestamp // ignore: cast_nullable_to_non_nullable
@@ -296,7 +335,16 @@ abstract class _$$GameStateUpdateMessageImplCopyWith<$Res>
   ) = __$$GameStateUpdateMessageImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({String gameId, GameState gameState, int? timestamp});
+  $Res call({
+    String gameId,
+    GameState gameState,
+    String? turnStartedAt,
+    int turnTimeLimitMs,
+    int player1TimeBankMs,
+    int player2TimeBankMs,
+    bool isTimed,
+    int? timestamp,
+  });
 
   @override
   $GameStateCopyWith<$Res> get gameState;
@@ -319,6 +367,11 @@ class __$$GameStateUpdateMessageImplCopyWithImpl<$Res>
   $Res call({
     Object? gameId = null,
     Object? gameState = null,
+    Object? turnStartedAt = freezed,
+    Object? turnTimeLimitMs = null,
+    Object? player1TimeBankMs = null,
+    Object? player2TimeBankMs = null,
+    Object? isTimed = null,
     Object? timestamp = freezed,
   }) {
     return _then(
@@ -331,6 +384,26 @@ class __$$GameStateUpdateMessageImplCopyWithImpl<$Res>
             ? _value.gameState
             : gameState // ignore: cast_nullable_to_non_nullable
                   as GameState,
+        turnStartedAt: freezed == turnStartedAt
+            ? _value.turnStartedAt
+            : turnStartedAt // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        turnTimeLimitMs: null == turnTimeLimitMs
+            ? _value.turnTimeLimitMs
+            : turnTimeLimitMs // ignore: cast_nullable_to_non_nullable
+                  as int,
+        player1TimeBankMs: null == player1TimeBankMs
+            ? _value.player1TimeBankMs
+            : player1TimeBankMs // ignore: cast_nullable_to_non_nullable
+                  as int,
+        player2TimeBankMs: null == player2TimeBankMs
+            ? _value.player2TimeBankMs
+            : player2TimeBankMs // ignore: cast_nullable_to_non_nullable
+                  as int,
+        isTimed: null == isTimed
+            ? _value.isTimed
+            : isTimed // ignore: cast_nullable_to_non_nullable
+                  as bool,
         timestamp: freezed == timestamp
             ? _value.timestamp
             : timestamp // ignore: cast_nullable_to_non_nullable
@@ -346,6 +419,11 @@ class _$GameStateUpdateMessageImpl implements _GameStateUpdateMessage {
   const _$GameStateUpdateMessageImpl({
     required this.gameId,
     required this.gameState,
+    this.turnStartedAt,
+    this.turnTimeLimitMs = 30000,
+    this.player1TimeBankMs = 120000,
+    this.player2TimeBankMs = 120000,
+    this.isTimed = false,
     this.timestamp,
   });
 
@@ -357,11 +435,25 @@ class _$GameStateUpdateMessageImpl implements _GameStateUpdateMessage {
   @override
   final GameState gameState;
   @override
+  final String? turnStartedAt;
+  @override
+  @JsonKey()
+  final int turnTimeLimitMs;
+  @override
+  @JsonKey()
+  final int player1TimeBankMs;
+  @override
+  @JsonKey()
+  final int player2TimeBankMs;
+  @override
+  @JsonKey()
+  final bool isTimed;
+  @override
   final int? timestamp;
 
   @override
   String toString() {
-    return 'GameStateUpdateMessage(gameId: $gameId, gameState: $gameState, timestamp: $timestamp)';
+    return 'GameStateUpdateMessage(gameId: $gameId, gameState: $gameState, turnStartedAt: $turnStartedAt, turnTimeLimitMs: $turnTimeLimitMs, player1TimeBankMs: $player1TimeBankMs, player2TimeBankMs: $player2TimeBankMs, isTimed: $isTimed, timestamp: $timestamp)';
   }
 
   @override
@@ -372,13 +464,32 @@ class _$GameStateUpdateMessageImpl implements _GameStateUpdateMessage {
             (identical(other.gameId, gameId) || other.gameId == gameId) &&
             (identical(other.gameState, gameState) ||
                 other.gameState == gameState) &&
+            (identical(other.turnStartedAt, turnStartedAt) ||
+                other.turnStartedAt == turnStartedAt) &&
+            (identical(other.turnTimeLimitMs, turnTimeLimitMs) ||
+                other.turnTimeLimitMs == turnTimeLimitMs) &&
+            (identical(other.player1TimeBankMs, player1TimeBankMs) ||
+                other.player1TimeBankMs == player1TimeBankMs) &&
+            (identical(other.player2TimeBankMs, player2TimeBankMs) ||
+                other.player2TimeBankMs == player2TimeBankMs) &&
+            (identical(other.isTimed, isTimed) || other.isTimed == isTimed) &&
             (identical(other.timestamp, timestamp) ||
                 other.timestamp == timestamp));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, gameId, gameState, timestamp);
+  int get hashCode => Object.hash(
+    runtimeType,
+    gameId,
+    gameState,
+    turnStartedAt,
+    turnTimeLimitMs,
+    player1TimeBankMs,
+    player2TimeBankMs,
+    isTimed,
+    timestamp,
+  );
 
   /// Create a copy of GameStateUpdateMessage
   /// with the given fields replaced by the non-null parameter values.
@@ -402,6 +513,11 @@ abstract class _GameStateUpdateMessage implements GameStateUpdateMessage {
   const factory _GameStateUpdateMessage({
     required final String gameId,
     required final GameState gameState,
+    final String? turnStartedAt,
+    final int turnTimeLimitMs,
+    final int player1TimeBankMs,
+    final int player2TimeBankMs,
+    final bool isTimed,
     final int? timestamp,
   }) = _$GameStateUpdateMessageImpl;
 
@@ -412,6 +528,16 @@ abstract class _GameStateUpdateMessage implements GameStateUpdateMessage {
   String get gameId;
   @override
   GameState get gameState;
+  @override
+  String? get turnStartedAt;
+  @override
+  int get turnTimeLimitMs;
+  @override
+  int get player1TimeBankMs;
+  @override
+  int get player2TimeBankMs;
+  @override
+  bool get isTimed;
   @override
   int? get timestamp;
 

@@ -18,4 +18,7 @@ interface GameRepository : JpaRepository<GameEntity, String> {
     fun findCompletedGamesByPlayer(playerId: String): List<GameEntity>
 
     fun findByOriginalLocalGameId(originalLocalGameId: String): GameEntity?
+
+    @Query("SELECT g FROM GameEntity g WHERE g.winnerId IS NULL AND g.isAIGame = false AND g.turnStartedAt IS NOT NULL")
+    fun findActiveTimedGames(): List<GameEntity>
 }

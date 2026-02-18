@@ -35,6 +35,8 @@ GameHistoryEvent _$GameHistoryEventFromJson(Map<String, dynamic> json) {
       return CribCounted.fromJson(json);
     case 'GameEnded':
       return GameEnded.fromJson(json);
+    case 'GameForfeited':
+      return GameForfeited.fromJson(json);
 
     default:
       throw CheckedFromJsonException(
@@ -102,6 +104,12 @@ mixin _$GameHistoryEvent {
       int finalScore,
     )
     gameEnded,
+    required TResult Function(
+      String timestamp,
+      String forfeitingPlayerId,
+      String reason,
+    )
+    gameForfeited,
   }) => throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
@@ -148,6 +156,12 @@ mixin _$GameHistoryEvent {
     cribCounted,
     TResult? Function(String timestamp, String winnerPlayerId, int finalScore)?
     gameEnded,
+    TResult? Function(
+      String timestamp,
+      String forfeitingPlayerId,
+      String reason,
+    )?
+    gameForfeited,
   }) => throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
@@ -194,6 +208,12 @@ mixin _$GameHistoryEvent {
     cribCounted,
     TResult Function(String timestamp, String winnerPlayerId, int finalScore)?
     gameEnded,
+    TResult Function(
+      String timestamp,
+      String forfeitingPlayerId,
+      String reason,
+    )?
+    gameForfeited,
     required TResult orElse(),
   }) => throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -207,6 +227,7 @@ mixin _$GameHistoryEvent {
     required TResult Function(HandCounted value) handCounted,
     required TResult Function(CribCounted value) cribCounted,
     required TResult Function(GameEnded value) gameEnded,
+    required TResult Function(GameForfeited value) gameForfeited,
   }) => throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult? mapOrNull<TResult extends Object?>({
@@ -219,6 +240,7 @@ mixin _$GameHistoryEvent {
     TResult? Function(HandCounted value)? handCounted,
     TResult? Function(CribCounted value)? cribCounted,
     TResult? Function(GameEnded value)? gameEnded,
+    TResult? Function(GameForfeited value)? gameForfeited,
   }) => throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult maybeMap<TResult extends Object?>({
@@ -231,6 +253,7 @@ mixin _$GameHistoryEvent {
     TResult Function(HandCounted value)? handCounted,
     TResult Function(CribCounted value)? cribCounted,
     TResult Function(GameEnded value)? gameEnded,
+    TResult Function(GameForfeited value)? gameForfeited,
     required TResult orElse(),
   }) => throw _privateConstructorUsedError;
 
@@ -425,6 +448,12 @@ class _$RoundStartedImpl implements RoundStarted {
       int finalScore,
     )
     gameEnded,
+    required TResult Function(
+      String timestamp,
+      String forfeitingPlayerId,
+      String reason,
+    )
+    gameForfeited,
   }) {
     return roundStarted(timestamp, roundNumber);
   }
@@ -475,6 +504,12 @@ class _$RoundStartedImpl implements RoundStarted {
     cribCounted,
     TResult? Function(String timestamp, String winnerPlayerId, int finalScore)?
     gameEnded,
+    TResult? Function(
+      String timestamp,
+      String forfeitingPlayerId,
+      String reason,
+    )?
+    gameForfeited,
   }) {
     return roundStarted?.call(timestamp, roundNumber);
   }
@@ -525,6 +560,12 @@ class _$RoundStartedImpl implements RoundStarted {
     cribCounted,
     TResult Function(String timestamp, String winnerPlayerId, int finalScore)?
     gameEnded,
+    TResult Function(
+      String timestamp,
+      String forfeitingPlayerId,
+      String reason,
+    )?
+    gameForfeited,
     required TResult orElse(),
   }) {
     if (roundStarted != null) {
@@ -545,6 +586,7 @@ class _$RoundStartedImpl implements RoundStarted {
     required TResult Function(HandCounted value) handCounted,
     required TResult Function(CribCounted value) cribCounted,
     required TResult Function(GameEnded value) gameEnded,
+    required TResult Function(GameForfeited value) gameForfeited,
   }) {
     return roundStarted(this);
   }
@@ -561,6 +603,7 @@ class _$RoundStartedImpl implements RoundStarted {
     TResult? Function(HandCounted value)? handCounted,
     TResult? Function(CribCounted value)? cribCounted,
     TResult? Function(GameEnded value)? gameEnded,
+    TResult? Function(GameForfeited value)? gameForfeited,
   }) {
     return roundStarted?.call(this);
   }
@@ -577,6 +620,7 @@ class _$RoundStartedImpl implements RoundStarted {
     TResult Function(HandCounted value)? handCounted,
     TResult Function(CribCounted value)? cribCounted,
     TResult Function(GameEnded value)? gameEnded,
+    TResult Function(GameForfeited value)? gameForfeited,
     required TResult orElse(),
   }) {
     if (roundStarted != null) {
@@ -769,6 +813,12 @@ class _$CardsDealtImpl implements CardsDealt {
       int finalScore,
     )
     gameEnded,
+    required TResult Function(
+      String timestamp,
+      String forfeitingPlayerId,
+      String reason,
+    )
+    gameForfeited,
   }) {
     return cardsDealt(timestamp, dealtHands);
   }
@@ -819,6 +869,12 @@ class _$CardsDealtImpl implements CardsDealt {
     cribCounted,
     TResult? Function(String timestamp, String winnerPlayerId, int finalScore)?
     gameEnded,
+    TResult? Function(
+      String timestamp,
+      String forfeitingPlayerId,
+      String reason,
+    )?
+    gameForfeited,
   }) {
     return cardsDealt?.call(timestamp, dealtHands);
   }
@@ -869,6 +925,12 @@ class _$CardsDealtImpl implements CardsDealt {
     cribCounted,
     TResult Function(String timestamp, String winnerPlayerId, int finalScore)?
     gameEnded,
+    TResult Function(
+      String timestamp,
+      String forfeitingPlayerId,
+      String reason,
+    )?
+    gameForfeited,
     required TResult orElse(),
   }) {
     if (cardsDealt != null) {
@@ -889,6 +951,7 @@ class _$CardsDealtImpl implements CardsDealt {
     required TResult Function(HandCounted value) handCounted,
     required TResult Function(CribCounted value) cribCounted,
     required TResult Function(GameEnded value) gameEnded,
+    required TResult Function(GameForfeited value) gameForfeited,
   }) {
     return cardsDealt(this);
   }
@@ -905,6 +968,7 @@ class _$CardsDealtImpl implements CardsDealt {
     TResult? Function(HandCounted value)? handCounted,
     TResult? Function(CribCounted value)? cribCounted,
     TResult? Function(GameEnded value)? gameEnded,
+    TResult? Function(GameForfeited value)? gameForfeited,
   }) {
     return cardsDealt?.call(this);
   }
@@ -921,6 +985,7 @@ class _$CardsDealtImpl implements CardsDealt {
     TResult Function(HandCounted value)? handCounted,
     TResult Function(CribCounted value)? cribCounted,
     TResult Function(GameEnded value)? gameEnded,
+    TResult Function(GameForfeited value)? gameForfeited,
     required TResult orElse(),
   }) {
     if (cardsDealt != null) {
@@ -1146,6 +1211,12 @@ class _$DeckCutImpl implements DeckCut {
       int finalScore,
     )
     gameEnded,
+    required TResult Function(
+      String timestamp,
+      String forfeitingPlayerId,
+      String reason,
+    )
+    gameForfeited,
   }) {
     return deckCut(timestamp, cutCard, cuttingPlayerId, dealerScoredNobs);
   }
@@ -1196,6 +1267,12 @@ class _$DeckCutImpl implements DeckCut {
     cribCounted,
     TResult? Function(String timestamp, String winnerPlayerId, int finalScore)?
     gameEnded,
+    TResult? Function(
+      String timestamp,
+      String forfeitingPlayerId,
+      String reason,
+    )?
+    gameForfeited,
   }) {
     return deckCut?.call(timestamp, cutCard, cuttingPlayerId, dealerScoredNobs);
   }
@@ -1246,6 +1323,12 @@ class _$DeckCutImpl implements DeckCut {
     cribCounted,
     TResult Function(String timestamp, String winnerPlayerId, int finalScore)?
     gameEnded,
+    TResult Function(
+      String timestamp,
+      String forfeitingPlayerId,
+      String reason,
+    )?
+    gameForfeited,
     required TResult orElse(),
   }) {
     if (deckCut != null) {
@@ -1266,6 +1349,7 @@ class _$DeckCutImpl implements DeckCut {
     required TResult Function(HandCounted value) handCounted,
     required TResult Function(CribCounted value) cribCounted,
     required TResult Function(GameEnded value) gameEnded,
+    required TResult Function(GameForfeited value) gameForfeited,
   }) {
     return deckCut(this);
   }
@@ -1282,6 +1366,7 @@ class _$DeckCutImpl implements DeckCut {
     TResult? Function(HandCounted value)? handCounted,
     TResult? Function(CribCounted value)? cribCounted,
     TResult? Function(GameEnded value)? gameEnded,
+    TResult? Function(GameForfeited value)? gameForfeited,
   }) {
     return deckCut?.call(this);
   }
@@ -1298,6 +1383,7 @@ class _$DeckCutImpl implements DeckCut {
     TResult Function(HandCounted value)? handCounted,
     TResult Function(CribCounted value)? cribCounted,
     TResult Function(GameEnded value)? gameEnded,
+    TResult Function(GameForfeited value)? gameForfeited,
     required TResult orElse(),
   }) {
     if (deckCut != null) {
@@ -1549,6 +1635,12 @@ class _$CardPlayedImpl implements CardPlayed {
       int finalScore,
     )
     gameEnded,
+    required TResult Function(
+      String timestamp,
+      String forfeitingPlayerId,
+      String reason,
+    )
+    gameForfeited,
   }) {
     return cardPlayed(
       timestamp,
@@ -1606,6 +1698,12 @@ class _$CardPlayedImpl implements CardPlayed {
     cribCounted,
     TResult? Function(String timestamp, String winnerPlayerId, int finalScore)?
     gameEnded,
+    TResult? Function(
+      String timestamp,
+      String forfeitingPlayerId,
+      String reason,
+    )?
+    gameForfeited,
   }) {
     return cardPlayed?.call(
       timestamp,
@@ -1663,6 +1761,12 @@ class _$CardPlayedImpl implements CardPlayed {
     cribCounted,
     TResult Function(String timestamp, String winnerPlayerId, int finalScore)?
     gameEnded,
+    TResult Function(
+      String timestamp,
+      String forfeitingPlayerId,
+      String reason,
+    )?
+    gameForfeited,
     required TResult orElse(),
   }) {
     if (cardPlayed != null) {
@@ -1690,6 +1794,7 @@ class _$CardPlayedImpl implements CardPlayed {
     required TResult Function(HandCounted value) handCounted,
     required TResult Function(CribCounted value) cribCounted,
     required TResult Function(GameEnded value) gameEnded,
+    required TResult Function(GameForfeited value) gameForfeited,
   }) {
     return cardPlayed(this);
   }
@@ -1706,6 +1811,7 @@ class _$CardPlayedImpl implements CardPlayed {
     TResult? Function(HandCounted value)? handCounted,
     TResult? Function(CribCounted value)? cribCounted,
     TResult? Function(GameEnded value)? gameEnded,
+    TResult? Function(GameForfeited value)? gameForfeited,
   }) {
     return cardPlayed?.call(this);
   }
@@ -1722,6 +1828,7 @@ class _$CardPlayedImpl implements CardPlayed {
     TResult Function(HandCounted value)? handCounted,
     TResult Function(CribCounted value)? cribCounted,
     TResult Function(GameEnded value)? gameEnded,
+    TResult Function(GameForfeited value)? gameForfeited,
     required TResult orElse(),
   }) {
     if (cardPlayed != null) {
@@ -1924,6 +2031,12 @@ class _$GoAnnouncedImpl implements GoAnnounced {
       int finalScore,
     )
     gameEnded,
+    required TResult Function(
+      String timestamp,
+      String forfeitingPlayerId,
+      String reason,
+    )
+    gameForfeited,
   }) {
     return goAnnounced(timestamp, playerId, pointsScored);
   }
@@ -1974,6 +2087,12 @@ class _$GoAnnouncedImpl implements GoAnnounced {
     cribCounted,
     TResult? Function(String timestamp, String winnerPlayerId, int finalScore)?
     gameEnded,
+    TResult? Function(
+      String timestamp,
+      String forfeitingPlayerId,
+      String reason,
+    )?
+    gameForfeited,
   }) {
     return goAnnounced?.call(timestamp, playerId, pointsScored);
   }
@@ -2024,6 +2143,12 @@ class _$GoAnnouncedImpl implements GoAnnounced {
     cribCounted,
     TResult Function(String timestamp, String winnerPlayerId, int finalScore)?
     gameEnded,
+    TResult Function(
+      String timestamp,
+      String forfeitingPlayerId,
+      String reason,
+    )?
+    gameForfeited,
     required TResult orElse(),
   }) {
     if (goAnnounced != null) {
@@ -2044,6 +2169,7 @@ class _$GoAnnouncedImpl implements GoAnnounced {
     required TResult Function(HandCounted value) handCounted,
     required TResult Function(CribCounted value) cribCounted,
     required TResult Function(GameEnded value) gameEnded,
+    required TResult Function(GameForfeited value) gameForfeited,
   }) {
     return goAnnounced(this);
   }
@@ -2060,6 +2186,7 @@ class _$GoAnnouncedImpl implements GoAnnounced {
     TResult? Function(HandCounted value)? handCounted,
     TResult? Function(CribCounted value)? cribCounted,
     TResult? Function(GameEnded value)? gameEnded,
+    TResult? Function(GameForfeited value)? gameForfeited,
   }) {
     return goAnnounced?.call(this);
   }
@@ -2076,6 +2203,7 @@ class _$GoAnnouncedImpl implements GoAnnounced {
     TResult Function(HandCounted value)? handCounted,
     TResult Function(CribCounted value)? cribCounted,
     TResult Function(GameEnded value)? gameEnded,
+    TResult Function(GameForfeited value)? gameForfeited,
     required TResult orElse(),
   }) {
     if (goAnnounced != null) {
@@ -2246,6 +2374,12 @@ class _$PeggingEndedImpl implements PeggingEnded {
       int finalScore,
     )
     gameEnded,
+    required TResult Function(
+      String timestamp,
+      String forfeitingPlayerId,
+      String reason,
+    )
+    gameForfeited,
   }) {
     return peggingEnded(timestamp);
   }
@@ -2296,6 +2430,12 @@ class _$PeggingEndedImpl implements PeggingEnded {
     cribCounted,
     TResult? Function(String timestamp, String winnerPlayerId, int finalScore)?
     gameEnded,
+    TResult? Function(
+      String timestamp,
+      String forfeitingPlayerId,
+      String reason,
+    )?
+    gameForfeited,
   }) {
     return peggingEnded?.call(timestamp);
   }
@@ -2346,6 +2486,12 @@ class _$PeggingEndedImpl implements PeggingEnded {
     cribCounted,
     TResult Function(String timestamp, String winnerPlayerId, int finalScore)?
     gameEnded,
+    TResult Function(
+      String timestamp,
+      String forfeitingPlayerId,
+      String reason,
+    )?
+    gameForfeited,
     required TResult orElse(),
   }) {
     if (peggingEnded != null) {
@@ -2366,6 +2512,7 @@ class _$PeggingEndedImpl implements PeggingEnded {
     required TResult Function(HandCounted value) handCounted,
     required TResult Function(CribCounted value) cribCounted,
     required TResult Function(GameEnded value) gameEnded,
+    required TResult Function(GameForfeited value) gameForfeited,
   }) {
     return peggingEnded(this);
   }
@@ -2382,6 +2529,7 @@ class _$PeggingEndedImpl implements PeggingEnded {
     TResult? Function(HandCounted value)? handCounted,
     TResult? Function(CribCounted value)? cribCounted,
     TResult? Function(GameEnded value)? gameEnded,
+    TResult? Function(GameForfeited value)? gameForfeited,
   }) {
     return peggingEnded?.call(this);
   }
@@ -2398,6 +2546,7 @@ class _$PeggingEndedImpl implements PeggingEnded {
     TResult Function(HandCounted value)? handCounted,
     TResult Function(CribCounted value)? cribCounted,
     TResult Function(GameEnded value)? gameEnded,
+    TResult Function(GameForfeited value)? gameForfeited,
     required TResult orElse(),
   }) {
     if (peggingEnded != null) {
@@ -2638,6 +2787,12 @@ class _$HandCountedImpl implements HandCounted {
       int finalScore,
     )
     gameEnded,
+    required TResult Function(
+      String timestamp,
+      String forfeitingPlayerId,
+      String reason,
+    )
+    gameForfeited,
   }) {
     return handCounted(timestamp, playerId, hand, totalPoints, scoreBreakdown);
   }
@@ -2688,6 +2843,12 @@ class _$HandCountedImpl implements HandCounted {
     cribCounted,
     TResult? Function(String timestamp, String winnerPlayerId, int finalScore)?
     gameEnded,
+    TResult? Function(
+      String timestamp,
+      String forfeitingPlayerId,
+      String reason,
+    )?
+    gameForfeited,
   }) {
     return handCounted?.call(
       timestamp,
@@ -2744,6 +2905,12 @@ class _$HandCountedImpl implements HandCounted {
     cribCounted,
     TResult Function(String timestamp, String winnerPlayerId, int finalScore)?
     gameEnded,
+    TResult Function(
+      String timestamp,
+      String forfeitingPlayerId,
+      String reason,
+    )?
+    gameForfeited,
     required TResult orElse(),
   }) {
     if (handCounted != null) {
@@ -2770,6 +2937,7 @@ class _$HandCountedImpl implements HandCounted {
     required TResult Function(HandCounted value) handCounted,
     required TResult Function(CribCounted value) cribCounted,
     required TResult Function(GameEnded value) gameEnded,
+    required TResult Function(GameForfeited value) gameForfeited,
   }) {
     return handCounted(this);
   }
@@ -2786,6 +2954,7 @@ class _$HandCountedImpl implements HandCounted {
     TResult? Function(HandCounted value)? handCounted,
     TResult? Function(CribCounted value)? cribCounted,
     TResult? Function(GameEnded value)? gameEnded,
+    TResult? Function(GameForfeited value)? gameForfeited,
   }) {
     return handCounted?.call(this);
   }
@@ -2802,6 +2971,7 @@ class _$HandCountedImpl implements HandCounted {
     TResult Function(HandCounted value)? handCounted,
     TResult Function(CribCounted value)? cribCounted,
     TResult Function(GameEnded value)? gameEnded,
+    TResult Function(GameForfeited value)? gameForfeited,
     required TResult orElse(),
   }) {
     if (handCounted != null) {
@@ -3054,6 +3224,12 @@ class _$CribCountedImpl implements CribCounted {
       int finalScore,
     )
     gameEnded,
+    required TResult Function(
+      String timestamp,
+      String forfeitingPlayerId,
+      String reason,
+    )
+    gameForfeited,
   }) {
     return cribCounted(
       timestamp,
@@ -3110,6 +3286,12 @@ class _$CribCountedImpl implements CribCounted {
     cribCounted,
     TResult? Function(String timestamp, String winnerPlayerId, int finalScore)?
     gameEnded,
+    TResult? Function(
+      String timestamp,
+      String forfeitingPlayerId,
+      String reason,
+    )?
+    gameForfeited,
   }) {
     return cribCounted?.call(
       timestamp,
@@ -3166,6 +3348,12 @@ class _$CribCountedImpl implements CribCounted {
     cribCounted,
     TResult Function(String timestamp, String winnerPlayerId, int finalScore)?
     gameEnded,
+    TResult Function(
+      String timestamp,
+      String forfeitingPlayerId,
+      String reason,
+    )?
+    gameForfeited,
     required TResult orElse(),
   }) {
     if (cribCounted != null) {
@@ -3192,6 +3380,7 @@ class _$CribCountedImpl implements CribCounted {
     required TResult Function(HandCounted value) handCounted,
     required TResult Function(CribCounted value) cribCounted,
     required TResult Function(GameEnded value) gameEnded,
+    required TResult Function(GameForfeited value) gameForfeited,
   }) {
     return cribCounted(this);
   }
@@ -3208,6 +3397,7 @@ class _$CribCountedImpl implements CribCounted {
     TResult? Function(HandCounted value)? handCounted,
     TResult? Function(CribCounted value)? cribCounted,
     TResult? Function(GameEnded value)? gameEnded,
+    TResult? Function(GameForfeited value)? gameForfeited,
   }) {
     return cribCounted?.call(this);
   }
@@ -3224,6 +3414,7 @@ class _$CribCountedImpl implements CribCounted {
     TResult Function(HandCounted value)? handCounted,
     TResult Function(CribCounted value)? cribCounted,
     TResult Function(GameEnded value)? gameEnded,
+    TResult Function(GameForfeited value)? gameForfeited,
     required TResult orElse(),
   }) {
     if (cribCounted != null) {
@@ -3423,6 +3614,12 @@ class _$GameEndedImpl implements GameEnded {
       int finalScore,
     )
     gameEnded,
+    required TResult Function(
+      String timestamp,
+      String forfeitingPlayerId,
+      String reason,
+    )
+    gameForfeited,
   }) {
     return gameEnded(timestamp, winnerPlayerId, finalScore);
   }
@@ -3473,6 +3670,12 @@ class _$GameEndedImpl implements GameEnded {
     cribCounted,
     TResult? Function(String timestamp, String winnerPlayerId, int finalScore)?
     gameEnded,
+    TResult? Function(
+      String timestamp,
+      String forfeitingPlayerId,
+      String reason,
+    )?
+    gameForfeited,
   }) {
     return gameEnded?.call(timestamp, winnerPlayerId, finalScore);
   }
@@ -3523,6 +3726,12 @@ class _$GameEndedImpl implements GameEnded {
     cribCounted,
     TResult Function(String timestamp, String winnerPlayerId, int finalScore)?
     gameEnded,
+    TResult Function(
+      String timestamp,
+      String forfeitingPlayerId,
+      String reason,
+    )?
+    gameForfeited,
     required TResult orElse(),
   }) {
     if (gameEnded != null) {
@@ -3543,6 +3752,7 @@ class _$GameEndedImpl implements GameEnded {
     required TResult Function(HandCounted value) handCounted,
     required TResult Function(CribCounted value) cribCounted,
     required TResult Function(GameEnded value) gameEnded,
+    required TResult Function(GameForfeited value) gameForfeited,
   }) {
     return gameEnded(this);
   }
@@ -3559,6 +3769,7 @@ class _$GameEndedImpl implements GameEnded {
     TResult? Function(HandCounted value)? handCounted,
     TResult? Function(CribCounted value)? cribCounted,
     TResult? Function(GameEnded value)? gameEnded,
+    TResult? Function(GameForfeited value)? gameForfeited,
   }) {
     return gameEnded?.call(this);
   }
@@ -3575,6 +3786,7 @@ class _$GameEndedImpl implements GameEnded {
     TResult Function(HandCounted value)? handCounted,
     TResult Function(CribCounted value)? cribCounted,
     TResult Function(GameEnded value)? gameEnded,
+    TResult Function(GameForfeited value)? gameForfeited,
     required TResult orElse(),
   }) {
     if (gameEnded != null) {
@@ -3609,5 +3821,372 @@ abstract class GameEnded implements GameHistoryEvent {
   @override
   @JsonKey(includeFromJson: false, includeToJson: false)
   _$$GameEndedImplCopyWith<_$GameEndedImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class _$$GameForfeitedImplCopyWith<$Res>
+    implements $GameHistoryEventCopyWith<$Res> {
+  factory _$$GameForfeitedImplCopyWith(
+    _$GameForfeitedImpl value,
+    $Res Function(_$GameForfeitedImpl) then,
+  ) = __$$GameForfeitedImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({String timestamp, String forfeitingPlayerId, String reason});
+}
+
+/// @nodoc
+class __$$GameForfeitedImplCopyWithImpl<$Res>
+    extends _$GameHistoryEventCopyWithImpl<$Res, _$GameForfeitedImpl>
+    implements _$$GameForfeitedImplCopyWith<$Res> {
+  __$$GameForfeitedImplCopyWithImpl(
+    _$GameForfeitedImpl _value,
+    $Res Function(_$GameForfeitedImpl) _then,
+  ) : super(_value, _then);
+
+  /// Create a copy of GameHistoryEvent
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? timestamp = null,
+    Object? forfeitingPlayerId = null,
+    Object? reason = null,
+  }) {
+    return _then(
+      _$GameForfeitedImpl(
+        timestamp: null == timestamp
+            ? _value.timestamp
+            : timestamp // ignore: cast_nullable_to_non_nullable
+                  as String,
+        forfeitingPlayerId: null == forfeitingPlayerId
+            ? _value.forfeitingPlayerId
+            : forfeitingPlayerId // ignore: cast_nullable_to_non_nullable
+                  as String,
+        reason: null == reason
+            ? _value.reason
+            : reason // ignore: cast_nullable_to_non_nullable
+                  as String,
+      ),
+    );
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$GameForfeitedImpl implements GameForfeited {
+  const _$GameForfeitedImpl({
+    this.timestamp = '',
+    required this.forfeitingPlayerId,
+    required this.reason,
+    final String? $type,
+  }) : $type = $type ?? 'GameForfeited';
+
+  factory _$GameForfeitedImpl.fromJson(Map<String, dynamic> json) =>
+      _$$GameForfeitedImplFromJson(json);
+
+  @override
+  @JsonKey()
+  final String timestamp;
+  @override
+  final String forfeitingPlayerId;
+  @override
+  final String reason;
+
+  @JsonKey(name: 'type')
+  final String $type;
+
+  @override
+  String toString() {
+    return 'GameHistoryEvent.gameForfeited(timestamp: $timestamp, forfeitingPlayerId: $forfeitingPlayerId, reason: $reason)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$GameForfeitedImpl &&
+            (identical(other.timestamp, timestamp) ||
+                other.timestamp == timestamp) &&
+            (identical(other.forfeitingPlayerId, forfeitingPlayerId) ||
+                other.forfeitingPlayerId == forfeitingPlayerId) &&
+            (identical(other.reason, reason) || other.reason == reason));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode =>
+      Object.hash(runtimeType, timestamp, forfeitingPlayerId, reason);
+
+  /// Create a copy of GameHistoryEvent
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$GameForfeitedImplCopyWith<_$GameForfeitedImpl> get copyWith =>
+      __$$GameForfeitedImplCopyWithImpl<_$GameForfeitedImpl>(this, _$identity);
+
+  @override
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function(String timestamp, int roundNumber) roundStarted,
+    required TResult Function(
+      String timestamp,
+      Map<String, List<PlayingCard>> dealtHands,
+    )
+    cardsDealt,
+    required TResult Function(
+      String timestamp,
+      PlayingCard cutCard,
+      String cuttingPlayerId,
+      bool dealerScoredNobs,
+    )
+    deckCut,
+    required TResult Function(
+      String timestamp,
+      String playerId,
+      PlayingCard card,
+      int newCount,
+      int pointsScored,
+      String? scoringReason,
+    )
+    cardPlayed,
+    required TResult Function(
+      String timestamp,
+      String playerId,
+      int pointsScored,
+    )
+    goAnnounced,
+    required TResult Function(String timestamp) peggingEnded,
+    required TResult Function(
+      String timestamp,
+      String playerId,
+      List<PlayingCard> hand,
+      int totalPoints,
+      ScoreBreakdown scoreBreakdown,
+    )
+    handCounted,
+    required TResult Function(
+      String timestamp,
+      String dealerPlayerId,
+      int totalPoints,
+      ScoreBreakdown scoreBreakdown,
+      List<PlayingCard> cribCards,
+    )
+    cribCounted,
+    required TResult Function(
+      String timestamp,
+      String winnerPlayerId,
+      int finalScore,
+    )
+    gameEnded,
+    required TResult Function(
+      String timestamp,
+      String forfeitingPlayerId,
+      String reason,
+    )
+    gameForfeited,
+  }) {
+    return gameForfeited(timestamp, forfeitingPlayerId, reason);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function(String timestamp, int roundNumber)? roundStarted,
+    TResult? Function(
+      String timestamp,
+      Map<String, List<PlayingCard>> dealtHands,
+    )?
+    cardsDealt,
+    TResult? Function(
+      String timestamp,
+      PlayingCard cutCard,
+      String cuttingPlayerId,
+      bool dealerScoredNobs,
+    )?
+    deckCut,
+    TResult? Function(
+      String timestamp,
+      String playerId,
+      PlayingCard card,
+      int newCount,
+      int pointsScored,
+      String? scoringReason,
+    )?
+    cardPlayed,
+    TResult? Function(String timestamp, String playerId, int pointsScored)?
+    goAnnounced,
+    TResult? Function(String timestamp)? peggingEnded,
+    TResult? Function(
+      String timestamp,
+      String playerId,
+      List<PlayingCard> hand,
+      int totalPoints,
+      ScoreBreakdown scoreBreakdown,
+    )?
+    handCounted,
+    TResult? Function(
+      String timestamp,
+      String dealerPlayerId,
+      int totalPoints,
+      ScoreBreakdown scoreBreakdown,
+      List<PlayingCard> cribCards,
+    )?
+    cribCounted,
+    TResult? Function(String timestamp, String winnerPlayerId, int finalScore)?
+    gameEnded,
+    TResult? Function(
+      String timestamp,
+      String forfeitingPlayerId,
+      String reason,
+    )?
+    gameForfeited,
+  }) {
+    return gameForfeited?.call(timestamp, forfeitingPlayerId, reason);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function(String timestamp, int roundNumber)? roundStarted,
+    TResult Function(
+      String timestamp,
+      Map<String, List<PlayingCard>> dealtHands,
+    )?
+    cardsDealt,
+    TResult Function(
+      String timestamp,
+      PlayingCard cutCard,
+      String cuttingPlayerId,
+      bool dealerScoredNobs,
+    )?
+    deckCut,
+    TResult Function(
+      String timestamp,
+      String playerId,
+      PlayingCard card,
+      int newCount,
+      int pointsScored,
+      String? scoringReason,
+    )?
+    cardPlayed,
+    TResult Function(String timestamp, String playerId, int pointsScored)?
+    goAnnounced,
+    TResult Function(String timestamp)? peggingEnded,
+    TResult Function(
+      String timestamp,
+      String playerId,
+      List<PlayingCard> hand,
+      int totalPoints,
+      ScoreBreakdown scoreBreakdown,
+    )?
+    handCounted,
+    TResult Function(
+      String timestamp,
+      String dealerPlayerId,
+      int totalPoints,
+      ScoreBreakdown scoreBreakdown,
+      List<PlayingCard> cribCards,
+    )?
+    cribCounted,
+    TResult Function(String timestamp, String winnerPlayerId, int finalScore)?
+    gameEnded,
+    TResult Function(
+      String timestamp,
+      String forfeitingPlayerId,
+      String reason,
+    )?
+    gameForfeited,
+    required TResult orElse(),
+  }) {
+    if (gameForfeited != null) {
+      return gameForfeited(timestamp, forfeitingPlayerId, reason);
+    }
+    return orElse();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(RoundStarted value) roundStarted,
+    required TResult Function(CardsDealt value) cardsDealt,
+    required TResult Function(DeckCut value) deckCut,
+    required TResult Function(CardPlayed value) cardPlayed,
+    required TResult Function(GoAnnounced value) goAnnounced,
+    required TResult Function(PeggingEnded value) peggingEnded,
+    required TResult Function(HandCounted value) handCounted,
+    required TResult Function(CribCounted value) cribCounted,
+    required TResult Function(GameEnded value) gameEnded,
+    required TResult Function(GameForfeited value) gameForfeited,
+  }) {
+    return gameForfeited(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(RoundStarted value)? roundStarted,
+    TResult? Function(CardsDealt value)? cardsDealt,
+    TResult? Function(DeckCut value)? deckCut,
+    TResult? Function(CardPlayed value)? cardPlayed,
+    TResult? Function(GoAnnounced value)? goAnnounced,
+    TResult? Function(PeggingEnded value)? peggingEnded,
+    TResult? Function(HandCounted value)? handCounted,
+    TResult? Function(CribCounted value)? cribCounted,
+    TResult? Function(GameEnded value)? gameEnded,
+    TResult? Function(GameForfeited value)? gameForfeited,
+  }) {
+    return gameForfeited?.call(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(RoundStarted value)? roundStarted,
+    TResult Function(CardsDealt value)? cardsDealt,
+    TResult Function(DeckCut value)? deckCut,
+    TResult Function(CardPlayed value)? cardPlayed,
+    TResult Function(GoAnnounced value)? goAnnounced,
+    TResult Function(PeggingEnded value)? peggingEnded,
+    TResult Function(HandCounted value)? handCounted,
+    TResult Function(CribCounted value)? cribCounted,
+    TResult Function(GameEnded value)? gameEnded,
+    TResult Function(GameForfeited value)? gameForfeited,
+    required TResult orElse(),
+  }) {
+    if (gameForfeited != null) {
+      return gameForfeited(this);
+    }
+    return orElse();
+  }
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$GameForfeitedImplToJson(this);
+  }
+}
+
+abstract class GameForfeited implements GameHistoryEvent {
+  const factory GameForfeited({
+    final String timestamp,
+    required final String forfeitingPlayerId,
+    required final String reason,
+  }) = _$GameForfeitedImpl;
+
+  factory GameForfeited.fromJson(Map<String, dynamic> json) =
+      _$GameForfeitedImpl.fromJson;
+
+  @override
+  String get timestamp;
+  String get forfeitingPlayerId;
+  String get reason;
+
+  /// Create a copy of GameHistoryEvent
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$GameForfeitedImplCopyWith<_$GameForfeitedImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

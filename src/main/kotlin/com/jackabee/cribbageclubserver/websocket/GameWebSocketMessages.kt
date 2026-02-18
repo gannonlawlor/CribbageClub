@@ -2,6 +2,7 @@ package com.jackabee.cribbageclubserver.websocket
 
 import com.jackabee.cribbageclubserver.model.action.GameAction
 import com.jackabee.cribbageclubserver.model.game.GameState
+import java.time.Instant
 
 /**
  * WebSocket message types for game communication
@@ -25,6 +26,11 @@ data class LeaveGameMessage(
 data class GameStateUpdateMessage(
     val gameId: String,
     val gameState: GameState,
+    val turnStartedAt: Instant? = null,
+    val turnTimeLimitMs: Long = 30000,
+    val player1TimeBankMs: Long = 120000,
+    val player2TimeBankMs: Long = 120000,
+    val isTimed: Boolean = false,
     val timestamp: Long = System.currentTimeMillis()
 )
 
