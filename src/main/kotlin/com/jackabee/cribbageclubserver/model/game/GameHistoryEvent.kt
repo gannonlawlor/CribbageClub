@@ -1,5 +1,6 @@
 package com.jackabee.cribbageclubserver.model.game
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.jackabee.cribbageclubserver.model.card.Card
@@ -112,6 +113,7 @@ sealed class GameHistoryEvent {
     /**
      * Breakdown of how points were scored in hand or crib counting
      */
+    @JsonIgnoreProperties(ignoreUnknown = true)
     data class ScoreBreakdown(
         val fifteens: Int = 0,
         val pairs: Int = 0,
