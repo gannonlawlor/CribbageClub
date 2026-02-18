@@ -69,8 +69,9 @@ class CardWidget extends StatelessWidget {
     final rankText = card!.rank.display;
     final suitText = card!.suit.symbol;
     return Padding(
-      padding: EdgeInsets.all(3 * scale),
+      padding: EdgeInsets.all(2 * scale),
       child: Stack(
+        clipBehavior: Clip.hardEdge,
         children: [
           // Top-left: rank + suit
           Positioned(
