@@ -5,8 +5,6 @@ import org.slf4j.LoggerFactory
 import org.springframework.messaging.handler.annotation.MessageMapping
 import org.springframework.messaging.handler.annotation.Payload
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor
-import org.springframework.messaging.simp.SimpMessagingTemplate
-import org.springframework.messaging.simp.annotation.SendToUser
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.CrossOrigin
 
@@ -14,7 +12,7 @@ import org.springframework.web.bind.annotation.CrossOrigin
 @CrossOrigin
 class GameWebSocketController(
     private val gameService: GameService,
-    private val messagingTemplate: SimpMessagingTemplate,
+    private val webSocketService: GameWebSocketService,
     private val sessionRegistry: WebSocketSessionRegistry
 ) {
     private val logger = LoggerFactory.getLogger(GameWebSocketController::class.java)
@@ -27,26 +25,15 @@ class GameWebSocketController(
         try {
             // Apply the action to the game
             val updatedGameState = gameService.applyHumanAction(message.gameId, message.action)
-            
-            // Broadcast the updated game state to all subscribers of this game
-            val updateMessage = GameStateUpdateMessage(
-                gameId = message.gameId,
-                gameState = updatedGameState
-            )
-            
-            messagingTemplate.convertAndSend("/topic/game/${message.gameId}", updateMessage)
-            
+
+            // Broadcast the filtered game state to each player
+            webSocketService.broadcastGameStateUpdate(message.gameId, updatedGameState)
+
         } catch (e: Exception) {
-            // Send error message back to the sender
-            val errorMessage = GameErrorMessage(
-                gameId = message.gameId,
-                error = e.message ?: "Unknown error occurred"
-            )
-            
-            messagingTemplate.convertAndSendToUser(
+            webSocketService.sendErrorToPlayer(
                 headerAccessor.sessionId!!,
-                "/queue/errors",
-                errorMessage
+                message.gameId,
+                e.message ?: "Unknown error occurred"
             )
         }
     }
@@ -59,7 +46,7 @@ class GameWebSocketController(
         try {
             // Get current game state
             val gameState = gameService.getGameState(message.gameId)
-            
+
             // Register session for disconnect cleanup
             sessionRegistry.register(
                 headerAccessor.sessionId!!,
@@ -67,38 +54,22 @@ class GameWebSocketController(
                 message.playerName,
                 message.gameId
             )
-            
-            // Send current game state to the joining player
-            val updateMessage = GameStateUpdateMessage(
-                gameId = message.gameId,
-                gameState = gameState
-            )
-            
-            messagingTemplate.convertAndSendToUser(
+
+            // Send filtered game state to the joining player
+            webSocketService.sendGameStateToPlayer(
                 headerAccessor.sessionId!!,
-                "/queue/game-state",
-                updateMessage
+                message.gameId,
+                gameState
             )
-            
+
             // Notify other players about the new connection
-            val joinMessage = PlayerJoinedMessage(
-                gameId = message.gameId,
-                playerId = message.playerId,
-                playerName = message.playerName
-            )
-            
-            messagingTemplate.convertAndSend("/topic/game/${message.gameId}/players", joinMessage)
-            
+            webSocketService.broadcastPlayerJoined(message.gameId, message.playerId, message.playerName)
+
         } catch (e: Exception) {
-            val errorMessage = GameErrorMessage(
-                gameId = message.gameId,
-                error = e.message ?: "Failed to join game"
-            )
-            
-            messagingTemplate.convertAndSendToUser(
+            webSocketService.sendErrorToPlayer(
                 headerAccessor.sessionId!!,
-                "/queue/errors",
-                errorMessage
+                message.gameId,
+                e.message ?: "Failed to join game"
             )
         }
     }
@@ -111,15 +82,10 @@ class GameWebSocketController(
         try {
             // Unregister session from registry
             sessionRegistry.unregister(headerAccessor.sessionId!!)
-            
+
             // Notify other players about the disconnection
-            val leaveMessage = PlayerLeftMessage(
-                gameId = message.gameId,
-                playerId = message.playerId
-            )
-            
-            messagingTemplate.convertAndSend("/topic/game/${message.gameId}/players", leaveMessage)
-            
+            webSocketService.broadcastPlayerLeft(message.gameId, message.playerId)
+
         } catch (e: Exception) {
             // Log error but don't send back to client since they're leaving
             logger.warn("Error handling leave game: {}", e.message)
@@ -133,28 +99,19 @@ class GameWebSocketController(
     fun handleGetGameState(@Payload gameId: String, headerAccessor: SimpMessageHeaderAccessor) {
         try {
             val gameState = gameService.getGameState(gameId)
-            
-            val updateMessage = GameStateUpdateMessage(
-                gameId = gameId,
-                gameState = gameState
-            )
-            
-            messagingTemplate.convertAndSendToUser(
+
+            // Send filtered game state to the requesting player
+            webSocketService.sendGameStateToPlayer(
                 headerAccessor.sessionId!!,
-                "/queue/game-state",
-                updateMessage
+                gameId,
+                gameState
             )
-            
+
         } catch (e: Exception) {
-            val errorMessage = GameErrorMessage(
-                gameId = gameId,
-                error = e.message ?: "Failed to get game state"
-            )
-            
-            messagingTemplate.convertAndSendToUser(
+            webSocketService.sendErrorToPlayer(
                 headerAccessor.sessionId!!,
-                "/queue/errors",
-                errorMessage
+                gameId,
+                e.message ?: "Failed to get game state"
             )
         }
     }

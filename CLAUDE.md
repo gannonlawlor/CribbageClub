@@ -110,11 +110,4 @@ Dealer rotates each round via `GameState.dealerIndex`.
 
 ## Remaining Work
 
-See the plan in the PR description or conversation for full details. Key remaining areas:
-- User accounts, authentication (JWT), and authorization
-- AI difficulty levels (medium/hard implementations)
-- WebSocket session cleanup on disconnect
-- Game/lobby timeout and scheduled cleanup
-- Player stats tracking
-- API documentation (OpenAPI/Swagger)
-- Dockerfile for deployment
+See [TODO.md](TODO.md) for the full prioritized task list with subtasks.

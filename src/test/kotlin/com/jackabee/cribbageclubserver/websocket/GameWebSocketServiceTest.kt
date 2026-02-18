@@ -12,7 +12,8 @@ import org.springframework.messaging.simp.SimpMessagingTemplate
 class GameWebSocketServiceTest {
 
     private val messagingTemplate = mock<SimpMessagingTemplate>()
-    private val webSocketService = GameWebSocketService(messagingTemplate)
+    private val sessionRegistry = WebSocketSessionRegistry()
+    private val webSocketService = GameWebSocketService(messagingTemplate, sessionRegistry)
 
     @Test
     fun `should broadcast game state update`() {
