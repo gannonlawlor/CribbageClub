@@ -17,6 +17,7 @@ class DailyPuzzleState {
   final List<int?> playerRanks;
   final List<double?> playerScores;
   final List<List<KeepOption>?> allResults;
+  final List<List<PlayingCard>?> playerKeeps;
 
   const DailyPuzzleState({
     this.puzzleSet,
@@ -28,6 +29,7 @@ class DailyPuzzleState {
     this.playerRanks = const [null, null, null, null, null],
     this.playerScores = const [null, null, null, null, null],
     this.allResults = const [null, null, null, null, null],
+    this.playerKeeps = const [null, null, null, null, null],
   });
 
   DailyPuzzle? get currentPuzzle {
@@ -62,6 +64,7 @@ class DailyPuzzleState {
     List<int?>? playerRanks,
     List<double?>? playerScores,
     List<List<KeepOption>?>? allResults,
+    List<List<PlayingCard>?>? playerKeeps,
   }) {
     return DailyPuzzleState(
       puzzleSet: puzzleSet ?? this.puzzleSet,
@@ -73,6 +76,7 @@ class DailyPuzzleState {
       playerRanks: playerRanks ?? this.playerRanks,
       playerScores: playerScores ?? this.playerScores,
       allResults: allResults ?? this.allResults,
+      playerKeeps: playerKeeps ?? this.playerKeeps,
     );
   }
 }
@@ -93,6 +97,7 @@ class DailyPuzzleNotifier extends StateNotifier<DailyPuzzleState> {
     final ranks = List<int?>.from(progress.ranks);
     final scores = List<double?>.from(progress.scores);
     final allResults = List<List<KeepOption>?>.from(progress.allResults);
+    final keeps = List<List<PlayingCard>?>.from(progress.keeps);
 
     final allComplete = progress.nextIndex >= n;
 
@@ -106,6 +111,7 @@ class DailyPuzzleNotifier extends StateNotifier<DailyPuzzleState> {
         playerRanks: ranks,
         playerScores: scores,
         allResults: allResults,
+        playerKeeps: keeps,
       );
     } else {
       state = DailyPuzzleState(
@@ -117,7 +123,20 @@ class DailyPuzzleNotifier extends StateNotifier<DailyPuzzleState> {
         playerRanks: ranks,
         playerScores: scores,
         allResults: allResults,
+        playerKeeps: keeps,
       );
+    }
+
+    // Re-run analysis for any puzzles that have keeps but no results
+    for (var i = 0; i < n; i++) {
+      if (keeps[i] != null && allResults[i] == null) {
+        _runAnalysisInBackground(
+          puzzleSet.puzzles[i],
+          keeps[i]!,
+          i,
+          today,
+        );
+      }
     }
   }
 
@@ -133,73 +152,103 @@ class DailyPuzzleNotifier extends StateNotifier<DailyPuzzleState> {
   }
 
   /// Submits the current keep selection.
-  /// Returns the player's rank (1 = optimal) for the UI to display briefly.
-  Future<int?> submitKeep() async {
+  /// Saves the keep immediately and advances to the next puzzle.
+  /// Analysis runs in the background and updates state when complete.
+  Future<void> submitKeep() async {
     final puzzle = state.currentPuzzle;
-    if (state.selectedCards.length != 4 || puzzle == null) return null;
+    if (state.selectedCards.length != 4 || puzzle == null) return;
 
-    final results = PuzzleGenerator.evaluateAllKeeps(
-      puzzle.hand,
-      puzzle.isDealer,
-    );
-    puzzle.results = results;
-
-    // Find player's rank and score
-    final playerKeep = state.selectedCards;
-    int? playerRank;
-    double? playerScore;
-    for (final option in results) {
-      if (option.keep.toSet().containsAll(playerKeep) &&
-          playerKeep.containsAll(option.keep)) {
-        playerRank = option.rank;
-        playerScore = option.netScore;
-        break;
-      }
-    }
-
+    final keep = state.selectedCards.toList();
     final idx = state.currentPuzzleIndex;
     final date = puzzle.date;
 
-    // Persist this puzzle's result (including full analysis for instant reload)
-    await _persistence.savePuzzleResult(
-      date,
-      idx,
-      playerRank ?? 0,
-      playerScore ?? 0,
-      results,
-    );
+    // Save keep immediately
+    await _persistence.savePlayerKeep(date, idx, keep);
 
-    final ranks = List<int?>.from(state.playerRanks);
-    final scores = List<double?>.from(state.playerScores);
-    final allResults = List<List<KeepOption>?>.from(state.allResults);
-    ranks[idx] = playerRank;
-    scores[idx] = playerScore;
-    allResults[idx] = results;
+    // Update state — advance immediately with no analysis feedback
+    final keeps = List<List<PlayingCard>?>.from(state.playerKeeps);
+    keeps[idx] = keep;
 
-    // Auto-advance: skip revealed phase and go straight to next puzzle or summary
     if (state.isLastPuzzle) {
-      await _persistence.finalizeDayResults(date);
-      final streak = await _persistence.getStreak();
       state = state.copyWith(
         phase: PuzzlePhase.summary,
-        streak: streak,
         completedToday: true,
-        playerRanks: ranks,
-        playerScores: scores,
-        allResults: allResults,
+        selectedCards: {},
+        playerKeeps: keeps,
       );
     } else {
       state = state.copyWith(
         currentPuzzleIndex: state.currentPuzzleIndex + 1,
         selectedCards: {},
         phase: PuzzlePhase.playing,
+        playerKeeps: keeps,
+      );
+    }
+
+    // Run analysis in background (after UI has advanced)
+    _runAnalysisInBackground(puzzle, keep, idx, date);
+  }
+
+  void _runAnalysisInBackground(
+    DailyPuzzle puzzle,
+    List<PlayingCard> keep,
+    int idx,
+    DateTime date,
+  ) {
+    // Use Future() to push to next event loop iteration (after frame renders)
+    Future(() async {
+      final results = PuzzleGenerator.evaluateAllKeeps(
+        puzzle.hand,
+        puzzle.isDealer,
+      );
+
+      // Find player's rank and score
+      final keepSet = keep.toSet();
+      int? playerRank;
+      double? playerScore;
+      for (final option in results) {
+        if (option.keep.toSet().containsAll(keepSet) &&
+            keepSet.containsAll(option.keep)) {
+          playerRank = option.rank;
+          playerScore = option.netScore;
+          break;
+        }
+      }
+
+      // Persist analysis results
+      await _persistence.savePuzzleResult(
+        date,
+        idx,
+        playerRank ?? 0,
+        playerScore ?? 0,
+        results,
+      );
+
+      // Update state with results
+      if (!mounted) return;
+      final ranks = List<int?>.from(state.playerRanks);
+      final scores = List<double?>.from(state.playerScores);
+      final allResults = List<List<KeepOption>?>.from(state.allResults);
+      ranks[idx] = playerRank;
+      scores[idx] = playerScore;
+      allResults[idx] = results;
+
+      state = state.copyWith(
         playerRanks: ranks,
         playerScores: scores,
         allResults: allResults,
       );
-    }
 
-    return playerRank;
+      // If all puzzles have results and we're on summary, finalize streak
+      if (allResults.every((r) => r != null) &&
+          state.phase == PuzzlePhase.summary) {
+        await _persistence.finalizeDayResults(date);
+        final streak = await _persistence.getStreak();
+        if (mounted) {
+          state = state.copyWith(streak: streak);
+        }
+      }
+    });
   }
 }
 

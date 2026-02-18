@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../core/models/card.dart';
 import '../models/daily_puzzle.dart';
 import 'puzzle_generator.dart';
 
@@ -9,12 +10,14 @@ class PuzzleProgress {
   final List<int?> ranks;
   final List<double?> scores;
   final List<List<KeepOption>?> allResults;
+  final List<List<PlayingCard>?> keeps;
   final int nextIndex;
 
   const PuzzleProgress({
     required this.ranks,
     required this.scores,
     required this.allResults,
+    required this.keeps,
     required this.nextIndex,
   });
 }
@@ -28,6 +31,27 @@ class PuzzlePersistence {
   Future<SharedPreferences> get _preferences async {
     _prefs ??= await SharedPreferences.getInstance();
     return _prefs!;
+  }
+
+  /// Save the player's keep selection immediately (before analysis runs).
+  Future<void> savePlayerKeep(
+    DateTime date,
+    int index,
+    List<PlayingCard> keep,
+  ) async {
+    final prefs = await _preferences;
+    final dateStr = _formatDate(date);
+    final n = PuzzleGenerator.puzzlesPerDay;
+
+    final keeps = _loadKeeps(prefs, _keepsKey(dateStr), n);
+    keeps[index] = keep;
+
+    await prefs.setString(
+      _keepsKey(dateStr),
+      jsonEncode(
+        keeps.map((k) => k?.map((c) => c.toJson()).toList()).toList(),
+      ),
+    );
   }
 
   /// Save a single puzzle result within the daily set.
@@ -103,10 +127,12 @@ class PuzzlePersistence {
     final ranks = _loadNullableIntList(prefs, _ranksKey(dateStr), n);
     final scores = _loadNullableDoubleList(prefs, _scoresKey(dateStr), n);
     final allResults = _loadResults(prefs, _resultsKey(dateStr), n);
+    final keeps = _loadKeeps(prefs, _keepsKey(dateStr), n);
 
+    // Completion is determined by keeps (not ranks, which arrive later)
     var nextIndex = n; // all complete
     for (var i = 0; i < n; i++) {
-      if (ranks[i] == null) {
+      if (keeps[i] == null) {
         nextIndex = i;
         break;
       }
@@ -116,6 +142,7 @@ class PuzzlePersistence {
       ranks: ranks,
       scores: scores,
       allResults: allResults,
+      keeps: keeps,
       nextIndex: nextIndex,
     );
   }
@@ -135,6 +162,7 @@ class PuzzlePersistence {
   String _ranksKey(String dateStr) => 'daily_puzzle_ranks_$dateStr';
   String _scoresKey(String dateStr) => 'daily_puzzle_scores_$dateStr';
   String _resultsKey(String dateStr) => 'daily_puzzle_results_$dateStr';
+  String _keepsKey(String dateStr) => 'daily_puzzle_keeps_$dateStr';
 
   // --- List helpers ---
 
@@ -206,6 +234,32 @@ class PuzzlePersistence {
       results.add(null);
     }
     return results;
+  }
+
+  List<List<PlayingCard>?> _loadKeeps(
+    SharedPreferences prefs,
+    String key,
+    int length,
+  ) {
+    final raw = prefs.getString(key);
+    if (raw == null) return List.filled(length, null);
+    final list = jsonDecode(raw) as List;
+    final keeps = <List<PlayingCard>?>[];
+    for (final item in list) {
+      if (item == null) {
+        keeps.add(null);
+      } else {
+        keeps.add(
+          (item as List)
+              .map((c) => PlayingCard.fromJson(c as Map<String, dynamic>))
+              .toList(),
+        );
+      }
+    }
+    while (keeps.length < length) {
+      keeps.add(null);
+    }
+    return keeps;
   }
 
   // --- Date helpers ---

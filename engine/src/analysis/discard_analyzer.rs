@@ -3,6 +3,7 @@ use std::collections::HashSet;
 use rand::seq::SliceRandom;
 use rand::rngs::StdRng;
 use rand::SeedableRng;
+use serde::Serialize;
 
 use crate::ai::ai_utils::combinations;
 use crate::card::{Card, Rank, Suit};
@@ -160,5 +161,96 @@ fn suit_ordinal(suit: Suit) -> u8 {
         Suit::Diamonds => 1,
         Suit::Hearts => 2,
         Suit::Spades => 3,
+    }
+}
+
+// ── Explain Keep ──────────────────────────────────────────────────────
+
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct KeepExplanation {
+    pub guaranteed_points: HandPatterns,
+    pub cut_scores: Vec<CutScore>,
+    pub average_hand_score: f64,
+    pub average_crib_score: f64,
+    pub is_dealer: bool,
+}
+
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct HandPatterns {
+    pub fifteens: i32,
+    pub pairs: i32,
+    pub runs: i32,
+    pub flush: bool,
+    pub total: i32,
+}
+
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CutScore {
+    pub card: Card,
+    pub total_score: i32,
+}
+
+/// Explain why a particular keep is good/bad by breaking down guaranteed
+/// hand patterns, per-cut scores, and crib impact.
+pub fn explain_keep(hand: &[Card], keep: &[Card], is_dealer: bool) -> KeepExplanation {
+    assert!(hand.len() == 6, "Hand must have exactly 6 cards");
+    assert!(keep.len() == 4, "Keep must have exactly 4 cards");
+
+    // Guaranteed points: score the 4 kept cards alone (no cut)
+    let fifteens = scoring::count_15s(keep);
+    let pairs = scoring::count_pairs(keep);
+    let runs = scoring::count_runs(keep);
+    let flush = keep.iter().all(|c| c.suit == keep[0].suit);
+    let flush_pts = if flush { 4 } else { 0 };
+    let total = fifteens + pairs + runs + flush_pts;
+
+    let guaranteed_points = HandPatterns {
+        fifteens,
+        pairs,
+        runs,
+        flush,
+        total,
+    };
+
+    // Per-cut scores and average
+    let hand_set: HashSet<Card> = hand.iter().copied().collect();
+    let mut cut_scores = Vec::new();
+    let mut hand_total: i32 = 0;
+
+    for card in all_cards() {
+        if hand_set.contains(&card) {
+            continue;
+        }
+        let score = scoring::calculate_hand_score(keep, card, false);
+        cut_scores.push(CutScore {
+            card,
+            total_score: score,
+        });
+        hand_total += score;
+    }
+
+    cut_scores.sort_by(|a, b| b.total_score.cmp(&a.total_score));
+
+    let cut_count = cut_scores.len() as f64;
+    let average_hand_score = if cut_count > 0.0 {
+        hand_total as f64 / cut_count
+    } else {
+        0.0
+    };
+
+    // Crib average
+    let keep_set: HashSet<Card> = keep.iter().copied().collect();
+    let discard: Vec<Card> = hand.iter().filter(|c| !keep_set.contains(c)).copied().collect();
+    let average_crib_score = expected_crib_value(&discard, &hand_set);
+
+    KeepExplanation {
+        guaranteed_points,
+        cut_scores,
+        average_hand_score,
+        average_crib_score,
+        is_dealer,
     }
 }

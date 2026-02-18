@@ -66,7 +66,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.11.1';
 
   @override
-  int get rustContentHash => 1218932981;
+  int get rustContentHash => 877538062;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -123,6 +123,12 @@ abstract class RustLibApi extends BaseApi {
   });
 
   RustGameEngine crateApiSimpleEngineRestore({required String stateJson});
+
+  String crateApiSimpleExplainKeepJson({
+    required String handJson,
+    required String keepJson,
+    required bool isDealer,
+  });
 
   String crateApiSimpleGlicko2CalculateJson({
     required double playerRating,
@@ -462,6 +468,38 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: "engine_restore", argNames: ["stateJson"]);
 
   @override
+  String crateApiSimpleExplainKeepJson({
+    required String handJson,
+    required String keepJson,
+    required bool isDealer,
+  }) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(handJson, serializer);
+          sse_encode_String(keepJson, serializer);
+          sse_encode_bool(isDealer, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 10)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiSimpleExplainKeepJsonConstMeta,
+        argValues: [handJson, keepJson, isDealer],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiSimpleExplainKeepJsonConstMeta =>
+      const TaskConstMeta(
+        debugName: "explain_keep_json",
+        argNames: ["handJson", "keepJson", "isDealer"],
+      );
+
+  @override
   String crateApiSimpleGlicko2CalculateJson({
     required double playerRating,
     required double playerDeviation,
@@ -482,7 +520,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           sse_encode_f_64(opponentDeviation, serializer);
           sse_encode_f_64(opponentVolatility, serializer);
           sse_encode_f_64(score, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 10)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 11)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_String,
@@ -523,7 +561,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 11)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 12)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_unit,
