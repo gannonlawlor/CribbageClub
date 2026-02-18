@@ -169,6 +169,21 @@ class HomeScreen extends ConsumerWidget {
                       child: ElevatedButton.icon(
                         onPressed: isCreating
                             ? null
+                            : () => _quickMatch(context, ref),
+                        icon: const Icon(Icons.flash_on, size: 24),
+                        label: const Text(
+                          'Quick Game',
+                          style: TextStyle(fontSize: 18),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 56,
+                      child: ElevatedButton.icon(
+                        onPressed: isCreating
+                            ? null
                             : () => _showDifficultyPicker(context, ref),
                         icon: const Icon(Icons.smart_toy, size: 24),
                         label: const Text(
@@ -226,6 +241,25 @@ class HomeScreen extends ConsumerWidget {
                         icon: const Icon(Icons.all_inclusive, size: 24),
                         label: const Text(
                           'Practice Puzzles',
+                          style: TextStyle(fontSize: 18),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          side: const BorderSide(color: Colors.white38),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 56,
+                      child: OutlinedButton.icon(
+                        onPressed: isCreating
+                            ? null
+                            : () => _browseLobbies(context, ref),
+                        icon: const Icon(Icons.list, size: 24),
+                        label: const Text(
+                          'Browse Lobbies',
                           style: TextStyle(fontSize: 18),
                         ),
                         style: OutlinedButton.styleFrom(
@@ -379,6 +413,38 @@ class HomeScreen extends ConsumerWidget {
     if (context.mounted) {
       context.go('/game/${state.gameId}');
     }
+  }
+
+  Future<void> _quickMatch(BuildContext context, WidgetRef ref) async {
+    final authed = await AuthRequired.ensureAuthenticated(context, ref);
+    if (!authed || !context.mounted) return;
+
+    ref.read(_isCreatingGameProvider.notifier).state = true;
+    try {
+      final restClient = ref.read(restClientProvider);
+      final result = await restClient.quickMatch();
+      if (context.mounted) {
+        if (result.gameState != null) {
+          context.go('/game/${result.gameState!.gameId}');
+        } else {
+          context.go('/lobby/${result.lobby.id}');
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Quick match failed: $e')));
+      }
+    } finally {
+      ref.read(_isCreatingGameProvider.notifier).state = false;
+    }
+  }
+
+  Future<void> _browseLobbies(BuildContext context, WidgetRef ref) async {
+    final authed = await AuthRequired.ensureAuthenticated(context, ref);
+    if (!authed || !context.mounted) return;
+    context.go('/lobbies');
   }
 
   Future<void> _createPrivateGame(BuildContext context, WidgetRef ref) async {

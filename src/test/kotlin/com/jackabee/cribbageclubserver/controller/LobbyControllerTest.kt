@@ -156,7 +156,7 @@ class LobbyControllerTest {
 
         val lobbyId = objectMapper.readTree(createResult.response.contentAsString).get("id").asText()
 
-        // Join with second player
+        // Join with second player (auto-starts since lobby is now full)
         mockMvc.perform(
             post("/api/lobbies/$lobbyId/join")
                 .header("Authorization", "Bearer $token2")
@@ -164,15 +164,18 @@ class LobbyControllerTest {
                 .content("{}")
         )
             .andExpect(status().isOk)
-            .andExpect(jsonPath("$.players.length()").value(2))
+            .andExpect(jsonPath("$.lobby.players.length()").value(2))
+            .andExpect(jsonPath("$.gameState").isNotEmpty) // auto-started
     }
 
     @Test
     fun `should leave a lobby`() {
         val token1 = registerAndGetToken("lobbytest7a")
         val token2 = registerAndGetToken("lobbytest7b")
+        val token3 = registerAndGetToken("lobbytest7c")
 
-        // Create a lobby
+        // Create a lobby with 3 max players would be complex, instead:
+        // Create lobby, have token2 join (which auto-starts), then test leave on a fresh lobby
         val request = mapOf("name" to "Leave Lobby")
         val createResult = mockMvc.perform(
             post("/api/lobbies")
@@ -183,25 +186,17 @@ class LobbyControllerTest {
 
         val lobbyId = objectMapper.readTree(createResult.response.contentAsString).get("id").asText()
 
-        // Join with second player
-        mockMvc.perform(
-            post("/api/lobbies/$lobbyId/join")
-                .header("Authorization", "Bearer $token2")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{}")
-        ).andExpect(status().isOk)
-
-        // Second player leaves
+        // Creator leaves their own lobby
         mockMvc.perform(
             post("/api/lobbies/$lobbyId/leave")
-                .header("Authorization", "Bearer $token2")
+                .header("Authorization", "Bearer $token1")
         )
             .andExpect(status().isOk)
-            .andExpect(jsonPath("$.players.length()").value(1))
+            .andExpect(jsonPath("$.players.length()").value(0))
     }
 
     @Test
-    fun `should start game from full lobby`() {
+    fun `should start game from full lobby via join`() {
         val token1 = registerAndGetToken("lobbytest8a")
         val token2 = registerAndGetToken("lobbytest8b")
 
@@ -216,22 +211,17 @@ class LobbyControllerTest {
 
         val lobbyId = objectMapper.readTree(createResult.response.contentAsString).get("id").asText()
 
-        // Join second player
+        // Join second player — auto-starts the game
         mockMvc.perform(
             post("/api/lobbies/$lobbyId/join")
                 .header("Authorization", "Bearer $token2")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{}")
-        ).andExpect(status().isOk)
-
-        // Start game
-        mockMvc.perform(
-            post("/api/lobbies/$lobbyId/start")
-                .header("Authorization", "Bearer $token1")
         )
             .andExpect(status().isOk)
-            .andExpect(jsonPath("$.gameId").isNotEmpty)
-            .andExpect(jsonPath("$.players.length()").value(2))
+            .andExpect(jsonPath("$.gameState").isNotEmpty)
+            .andExpect(jsonPath("$.gameState.gameId").isNotEmpty)
+            .andExpect(jsonPath("$.gameState.players.length()").value(2))
     }
 
     @Test

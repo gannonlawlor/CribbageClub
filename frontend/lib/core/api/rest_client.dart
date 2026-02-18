@@ -210,6 +210,24 @@ class RestClient {
     await _dio.post('/api/lobbies/$lobbyId/leave');
   }
 
+  Future<JoinByCodeResult> quickMatch() async {
+    final response = await _dio.post('/api/lobbies/quick-match');
+    return JoinByCodeResult.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  Future<List<Lobby>> listPublicLobbies() async {
+    final response = await _dio.get('/api/lobbies/public');
+    final list = response.data as List<dynamic>;
+    return list
+        .map((json) => Lobby.fromJson(json as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<JoinByCodeResult> joinLobby(String lobbyId) async {
+    final response = await _dio.post('/api/lobbies/$lobbyId/join');
+    return JoinByCodeResult.fromJson(response.data as Map<String, dynamic>);
+  }
+
   // Friends
 
   Future<List<UserSearchResult>> searchUsers(String query) async {

@@ -30,6 +30,26 @@ class LobbyController(
         return lobbyService.listWaitingLobbies()
     }
 
+    @Operation(summary = "List public non-challenge lobbies waiting for players")
+    @GetMapping("/public")
+    fun getPublicLobbies(
+        @RequestAttribute("isGuest") isGuest: Boolean
+    ): List<Lobby> {
+        require(!isGuest) { "Guests cannot browse public lobbies" }
+        return lobbyService.listPublicWaitingLobbies()
+    }
+
+    @Operation(summary = "Quick-match: find or create a public lobby")
+    @PostMapping("/quick-match")
+    fun quickMatch(
+        @RequestAttribute("userId") userId: String,
+        @RequestAttribute("username") username: String,
+        @RequestAttribute("isGuest") isGuest: Boolean
+    ): LobbyService.JoinByCodeResult {
+        require(!isGuest) { "Guests cannot use quick match" }
+        return lobbyService.quickMatch(userId, username)
+    }
+
     @Operation(summary = "Get a lobby by ID")
     @GetMapping("/{lobbyId}")
     fun getLobby(@PathVariable lobbyId: String): ResponseEntity<Lobby> {
@@ -56,7 +76,7 @@ class LobbyController(
         )
     }
 
-    @Operation(summary = "Join a lobby by ID")
+    @Operation(summary = "Join a lobby by ID (auto-starts if full)")
     @PostMapping("/{lobbyId}/join")
     fun joinLobby(
         @PathVariable lobbyId: String,
@@ -64,13 +84,13 @@ class LobbyController(
         @RequestAttribute("username") username: String,
         @RequestAttribute("isGuest") isGuest: Boolean,
         @RequestBody(required = false) request: JoinLobbyRequest?
-    ): Lobby {
+    ): LobbyService.JoinByCodeResult {
         if (isGuest) {
             val lobby = lobbyService.getLobby(lobbyId)
                 ?: throw IllegalArgumentException("Lobby not found")
             require(lobby.isPrivate) { "Guests can only join private lobbies" }
         }
-        return lobbyService.joinLobby(
+        return lobbyService.joinLobbyById(
             lobbyId = lobbyId,
             playerId = userId,
             playerName = request?.playerName ?: username
