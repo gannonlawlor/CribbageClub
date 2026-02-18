@@ -6,6 +6,7 @@ import '../../../config/theme.dart';
 import '../../../core/auth/auth_provider.dart';
 import '../../../core/models/game_history_event.dart';
 import '../../../core/models/game_state.dart';
+import '../../../core/services/local_game_history_provider.dart';
 import '../../game/state/game_providers.dart';
 import '../../game/widgets/card_widget.dart';
 import '../../game/widgets/cribbage_board.dart';
@@ -146,8 +147,11 @@ class ReplayNotifier extends StateNotifier<ReplayState> {
 final _replayGameStateProvider = FutureProvider.family
     .autoDispose<GameState, String>((ref, gameId) async {
       if (isLocalGame(gameId)) {
+        // Try in-memory active game first
         final notifierState = ref.read(localGameNotifierProvider(gameId));
-        final gs = notifierState.gameState;
+        var gs = notifierState.gameState;
+        // Fall back to persisted storage
+        gs ??= await ref.read(persistedGameStateProvider(gameId).future);
         if (gs == null) throw Exception('Local game not found');
         return gs;
       } else {

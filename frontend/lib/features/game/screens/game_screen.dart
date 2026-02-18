@@ -10,6 +10,7 @@ import '../../../core/models/game_history_event.dart';
 import '../../../core/models/game_state.dart';
 import '../../../core/models/player.dart';
 import '../../../core/models/score_breakdown.dart';
+import '../../../core/services/local_game_history_provider.dart';
 import '../../../shared/utils/card_utils.dart';
 import '../state/game_providers.dart';
 import '../state/local_game_notifier.dart';
@@ -24,6 +25,9 @@ import '../widgets/score_display.dart';
 import '../widgets/dev_overlay.dart';
 import '../widgets/score_popup_overlay.dart';
 import '../widgets/stage_indicator.dart';
+
+/// Tracks which local game IDs have already been saved to history (prevents duplicate saves on rebuild).
+final _savedLocalGamesProvider = StateProvider<Set<String>>((ref) => {});
 
 class GameScreen extends ConsumerWidget {
   final String gameId;
@@ -102,6 +106,19 @@ class GameScreen extends ConsumerWidget {
     }
 
     final gs = gameNotifier.gameState!;
+
+    // Auto-save completed local games to history
+    if (_isLocal && gs.stage == GameStage.gameOver) {
+      final savedIds = ref.read(_savedLocalGamesProvider);
+      if (!savedIds.contains(gs.gameId)) {
+        ref.read(_savedLocalGamesProvider.notifier).state = {...savedIds, gs.gameId};
+        Future.microtask(() async {
+          final service = ref.read(localGameHistoryServiceProvider);
+          await service.saveCompletedGame(gs);
+          ref.invalidate(localGameHistoryProvider);
+        });
+      }
+    }
 
     // Guard: empty players list
     if (gs.players.isEmpty) {
@@ -450,7 +467,7 @@ class GameScreen extends ConsumerWidget {
 
     final n = _readNotifier(ref);
     if (n is GameNotifier) await n.discardCards(cardsToDiscard);
-    if (n is LocalGameNotifier) await n.discardCards(cardsToDiscard);
+    if (n is LocalGameNotifier) n.discardCards(cardsToDiscard);
   }
 
   Widget _buildGameOver(
@@ -587,7 +604,7 @@ class GameScreen extends ConsumerWidget {
           : 'basic';
       final auth = ref.read(authProvider);
       final service = ref.read(localGameServiceProvider);
-      final newState = await service.createGame(
+      final newState = service.createGame(
         humanPlayerId: auth.userId ?? 'local_player',
         humanPlayerName: auth.username ?? 'Player',
         difficulty: difficulty,
