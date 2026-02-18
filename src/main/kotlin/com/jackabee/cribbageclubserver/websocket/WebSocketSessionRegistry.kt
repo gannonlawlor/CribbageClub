@@ -21,6 +21,30 @@ class WebSocketSessionRegistry {
 
     private val sessions = ConcurrentHashMap<String, SessionInfo>()
 
+    // Connection-level tracking for online status (independent of game sessions)
+    private val connectedUsers = ConcurrentHashMap<String, String>() // sessionId → playerId
+    private val userSessions = ConcurrentHashMap<String, MutableSet<String>>() // playerId → sessionIds
+
+    fun registerConnection(sessionId: String, playerId: String) {
+        connectedUsers[sessionId] = playerId
+        userSessions.computeIfAbsent(playerId) { ConcurrentHashMap.newKeySet() }.add(sessionId)
+        logger.debug("Registered connection {} for user {}", sessionId, playerId)
+    }
+
+    fun unregisterConnection(sessionId: String) {
+        val playerId = connectedUsers.remove(sessionId) ?: return
+        userSessions[playerId]?.let { sessionSet ->
+            sessionSet.remove(sessionId)
+            if (sessionSet.isEmpty()) {
+                userSessions.remove(playerId)
+            }
+        }
+        logger.debug("Unregistered connection {} for user {}", sessionId, playerId)
+    }
+
+    fun isUserOnline(userId: String): Boolean =
+        userSessions[userId]?.isNotEmpty() == true
+
     fun register(sessionId: String, playerId: String, playerName: String, gameId: String) {
         val info = SessionInfo(sessionId, playerId, playerName, gameId)
         sessions[sessionId] = info

@@ -18,6 +18,30 @@ class GameHistoryScreen extends ConsumerWidget {
     final history = ref.watch(_gameHistoryProvider);
     final auth = ref.watch(authProvider);
 
+    if (!auth.isLoggedIn) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Game History')),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.lock_outline, size: 48, color: Colors.white38),
+              const SizedBox(height: 16),
+              const Text(
+                'Log in to see your game history',
+                style: TextStyle(color: Colors.white54, fontSize: 16),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () => context.go('/login'),
+                child: const Text('Log In'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(title: const Text('Game History')),
       body: history.when(

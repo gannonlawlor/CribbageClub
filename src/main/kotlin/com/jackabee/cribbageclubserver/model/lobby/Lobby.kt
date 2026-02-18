@@ -11,7 +11,8 @@ data class Lobby(
     val createdAt: Instant = Instant.now(),
     val gameId: String? = null,
     val isPrivate: Boolean = false,
-    val inviteCode: String? = null
+    val inviteCode: String? = null,
+    val challengedUserId: String? = null
 ) {
     val isReady: Boolean get() = players.size == maxPlayers
     val hasSpace: Boolean get() = players.size < maxPlayers

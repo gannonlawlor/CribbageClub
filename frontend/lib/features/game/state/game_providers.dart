@@ -2,11 +2,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/api/rest_client.dart';
 import '../../../core/api/websocket_client.dart';
 import '../../../core/auth/auth_provider.dart';
+import '../../../core/engine/local_game_service.dart';
 import '../../../core/models/card.dart';
 import '../../../core/models/game_action.dart';
 import '../../../core/models/game_state.dart';
 import '../../../core/services/game_feedback_service.dart';
 import '../animation/game_animation_controller.dart';
+import 'local_game_notifier.dart';
 
 // WebSocket client singleton
 final webSocketClientProvider = Provider<WebSocketClient>((ref) {
@@ -314,3 +316,29 @@ final gameNotifierProvider =
 // Track selected cards during discard phase
 final selectedCardsProvider =
     StateProvider.family<Set<int>, String>((ref, gameId) => {});
+
+// ── Local (offline AI) game providers ───────────────────────────────────
+
+bool isLocalGame(String gameId) => gameId.startsWith('local_');
+
+/// Holds the LocalGameService instance for the active local game.
+final localGameServiceProvider = Provider<LocalGameService>((ref) {
+  return LocalGameService();
+});
+
+final localGameNotifierProvider =
+    StateNotifierProvider.family<LocalGameNotifier, GameNotifierState, String>(
+  (ref, gameId) {
+    final service = ref.read(localGameServiceProvider);
+    final animController = ref.read(gameAnimationProvider(gameId));
+    final feedbackService = ref.read(gameFeedbackServiceProvider(gameId));
+    final auth = ref.read(authProvider);
+    return LocalGameNotifier(
+      gameId: gameId,
+      service: service,
+      playerId: auth.userId ?? 'local_player',
+      animationController: animController,
+      feedbackService: feedbackService,
+    );
+  },
+);

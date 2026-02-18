@@ -3,13 +3,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../config/theme.dart';
 import '../../../core/auth/auth_provider.dart';
+import '../../../core/engine/local_game_service.dart';
 import '../../../core/models/game_state.dart';
+import '../../../core/providers/notification_provider.dart';
+import '../../../shared/widgets/auth_required.dart';
 import '../../../shared/widgets/loading_overlay.dart';
+import '../../game/state/game_providers.dart';
 
 final _isCreatingGameProvider = StateProvider<bool>((ref) => false);
 
-// Active games provider — fetches from /api/games/me
+// Active games provider — fetches from /api/games/me (only when logged in)
 final _activeGamesProvider = FutureProvider.autoDispose<List<GameState>>((ref) async {
+  final auth = ref.read(authProvider);
+  if (!auth.isLoggedIn) return [];
   final restClient = ref.read(restClientProvider);
   return restClient.getMyActiveGames();
 });
@@ -27,7 +33,15 @@ class HomeScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Cribbage Club'),
         actions: [
-          if (auth.username != null)
+          if (auth.isLoggedIn && auth.isGuest)
+            TextButton(
+              onPressed: () => context.go('/upgrade'),
+              child: const Text(
+                'Upgrade',
+                style: TextStyle(color: AppTheme.goldAccent),
+              ),
+            ),
+          if (auth.isLoggedIn && auth.username != null)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12),
               child: Center(
@@ -37,10 +51,18 @@ class HomeScreen extends ConsumerWidget {
                 ),
               ),
             ),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () => ref.read(authProvider.notifier).logout(),
-          ),
+          if (auth.isLoggedIn)
+            IconButton(
+              icon: const Icon(Icons.logout),
+              onPressed: () => ref.read(authProvider.notifier).logout(),
+            ),
+          if (!auth.isLoggedIn)
+            TextButton.icon(
+              onPressed: () => context.go('/login'),
+              icon: const Icon(Icons.login, size: 18),
+              label: const Text('Log In'),
+              style: TextButton.styleFrom(foregroundColor: AppTheme.goldAccent),
+            ),
         ],
       ),
       body: LoadingOverlay(
@@ -55,7 +77,7 @@ class HomeScreen extends ConsumerWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     // Guest upgrade banner
-                    if (auth.isGuest) ...[
+                    if (auth.isLoggedIn && auth.isGuest) ...[
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(16),
@@ -88,37 +110,38 @@ class HomeScreen extends ConsumerWidget {
                       const SizedBox(height: 24),
                     ],
 
-                    // Active games section
-                    activeGames.when(
-                      data: (games) {
-                        if (games.isEmpty) return const SizedBox.shrink();
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Continue Game',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
+                    // Active games section (only when logged in)
+                    if (auth.isLoggedIn)
+                      activeGames.when(
+                        data: (games) {
+                          if (games.isEmpty) return const SizedBox.shrink();
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Continue Game',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 8),
-                            ...games.map((game) => _ActiveGameTile(game: game)),
-                            const SizedBox(height: 24),
-                          ],
-                        );
-                      },
-                      loading: () => const Padding(
-                        padding: EdgeInsets.only(bottom: 24),
-                        child: SizedBox(
-                          height: 24,
-                          width: 24,
-                          child: CircularProgressIndicator(strokeWidth: 2),
+                              const SizedBox(height: 8),
+                              ...games.map((game) => _ActiveGameTile(game: game)),
+                              const SizedBox(height: 24),
+                            ],
+                          );
+                        },
+                        loading: () => const Padding(
+                          padding: EdgeInsets.only(bottom: 24),
+                          child: SizedBox(
+                            height: 24,
+                            width: 24,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
                         ),
+                        error: (_, _) => const SizedBox.shrink(),
                       ),
-                      error: (_, _) => const SizedBox.shrink(),
-                    ),
 
                     const Icon(
                       Icons.style,
@@ -132,7 +155,7 @@ class HomeScreen extends ConsumerWidget {
                       child: ElevatedButton.icon(
                         onPressed: isCreating
                             ? null
-                            : () => _createAIGame(context, ref),
+                            : () => _showDifficultyPicker(context, ref),
                         icon: const Icon(Icons.smart_toy, size: 24),
                         label: const Text(
                           'Play vs AI',
@@ -182,6 +205,10 @@ class HomeScreen extends ConsumerWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
+                        if (auth.isLoggedIn && !auth.isGuest)
+                          _FriendsButton(),
+                        if (auth.isLoggedIn && !auth.isGuest)
+                          const SizedBox(width: 16),
                         TextButton.icon(
                           onPressed: () => context.go('/history'),
                           icon: const Icon(Icons.history, size: 18),
@@ -207,26 +234,81 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _createAIGame(BuildContext context, WidgetRef ref) async {
-    ref.read(_isCreatingGameProvider.notifier).state = true;
-    try {
-      final restClient = ref.read(restClientProvider);
-      final gameState = await restClient.createAIGame();
-      if (context.mounted) {
-        context.go('/game/${gameState.gameId}');
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to create game: $e')),
-        );
-      }
-    } finally {
-      ref.read(_isCreatingGameProvider.notifier).state = false;
-    }
+  void _showDifficultyPicker(BuildContext context, WidgetRef ref) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppTheme.feltGreenDark,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Padding(
+              padding: EdgeInsets.all(16),
+              child: Text(
+                'Choose Difficulty',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            _DifficultyTile(
+              label: 'Easy',
+              description: 'Basic heuristics',
+              icon: Icons.sentiment_satisfied,
+              onTap: () {
+                Navigator.pop(ctx);
+                _createLocalAIGame(context, ref, 'basic');
+              },
+            ),
+            _DifficultyTile(
+              label: 'Medium',
+              description: 'Optimizes hand scoring',
+              icon: Icons.psychology,
+              onTap: () {
+                Navigator.pop(ctx);
+                _createLocalAIGame(context, ref, 'medium');
+              },
+            ),
+            _DifficultyTile(
+              label: 'Hard',
+              description: 'Hand + crib optimization, advanced pegging',
+              icon: Icons.local_fire_department,
+              onTap: () {
+                Navigator.pop(ctx);
+                _createLocalAIGame(context, ref, 'hard');
+              },
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _createLocalAIGame(
+    BuildContext context,
+    WidgetRef ref,
+    String difficulty,
+  ) {
+    final auth = ref.read(authProvider);
+    final service = ref.read(localGameServiceProvider);
+    final state = service.createGame(
+      humanPlayerId: auth.userId ?? 'local_player',
+      humanPlayerName: auth.username ?? 'Player',
+      difficulty: difficulty,
+    );
+    context.go('/game/${state.gameId}');
   }
 
   Future<void> _createPrivateGame(BuildContext context, WidgetRef ref) async {
+    final authed = await AuthRequired.ensureAuthenticated(context, ref);
+    if (!authed || !context.mounted) return;
+
     ref.read(_isCreatingGameProvider.notifier).state = true;
     try {
       final auth = ref.read(authProvider);
@@ -249,8 +331,12 @@ class HomeScreen extends ConsumerWidget {
     }
   }
 
-  void _showJoinByCodeDialog(BuildContext context, WidgetRef ref) {
+  void _showJoinByCodeDialog(BuildContext context, WidgetRef ref) async {
+    final authed = await AuthRequired.ensureAuthenticated(context, ref);
+    if (!authed || !context.mounted) return;
+
     final codeController = TextEditingController();
+    if (!context.mounted) return;
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -318,6 +404,51 @@ class HomeScreen extends ConsumerWidget {
     } finally {
       ref.read(_isCreatingGameProvider.notifier).state = false;
     }
+  }
+}
+
+class _DifficultyTile extends StatelessWidget {
+  final String label;
+  final String description;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _DifficultyTile({
+    required this.label,
+    required this.description,
+    required this.icon,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: Icon(icon, color: AppTheme.goldAccent),
+      title: Text(label, style: const TextStyle(color: Colors.white)),
+      subtitle: Text(description, style: const TextStyle(color: Colors.white54, fontSize: 12)),
+      trailing: const Icon(Icons.chevron_right, color: Colors.white38),
+      onTap: onTap,
+    );
+  }
+}
+
+class _FriendsButton extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final notifCount = ref.watch(notificationCountProvider);
+    final total = notifCount.whenOrNull(data: (n) => n.total) ?? 0;
+
+    return TextButton.icon(
+      onPressed: () => context.go('/friends'),
+      icon: Badge(
+        isLabelVisible: total > 0,
+        label: Text('$total', style: const TextStyle(fontSize: 10)),
+        backgroundColor: Colors.redAccent,
+        child: const Icon(Icons.people, size: 18),
+      ),
+      label: const Text('Friends'),
+      style: TextButton.styleFrom(foregroundColor: Colors.white70),
+    );
   }
 }
 

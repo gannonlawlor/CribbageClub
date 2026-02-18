@@ -218,6 +218,7 @@ mixin _$Lobby {
   String? get gameId => throw _privateConstructorUsedError;
   bool get isPrivate => throw _privateConstructorUsedError;
   String? get inviteCode => throw _privateConstructorUsedError;
+  String? get challengedUserId => throw _privateConstructorUsedError;
 
   /// Serializes this Lobby to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -243,6 +244,7 @@ abstract class $LobbyCopyWith<$Res> {
     String? gameId,
     bool isPrivate,
     String? inviteCode,
+    String? challengedUserId,
   });
 }
 
@@ -270,6 +272,7 @@ class _$LobbyCopyWithImpl<$Res, $Val extends Lobby>
     Object? gameId = freezed,
     Object? isPrivate = null,
     Object? inviteCode = freezed,
+    Object? challengedUserId = freezed,
   }) {
     return _then(
       _value.copyWith(
@@ -309,6 +312,10 @@ class _$LobbyCopyWithImpl<$Res, $Val extends Lobby>
                 ? _value.inviteCode
                 : inviteCode // ignore: cast_nullable_to_non_nullable
                       as String?,
+            challengedUserId: freezed == challengedUserId
+                ? _value.challengedUserId
+                : challengedUserId // ignore: cast_nullable_to_non_nullable
+                      as String?,
           )
           as $Val,
     );
@@ -333,6 +340,7 @@ abstract class _$$LobbyImplCopyWith<$Res> implements $LobbyCopyWith<$Res> {
     String? gameId,
     bool isPrivate,
     String? inviteCode,
+    String? challengedUserId,
   });
 }
 
@@ -359,6 +367,7 @@ class __$$LobbyImplCopyWithImpl<$Res>
     Object? gameId = freezed,
     Object? isPrivate = null,
     Object? inviteCode = freezed,
+    Object? challengedUserId = freezed,
   }) {
     return _then(
       _$LobbyImpl(
@@ -398,6 +407,10 @@ class __$$LobbyImplCopyWithImpl<$Res>
             ? _value.inviteCode
             : inviteCode // ignore: cast_nullable_to_non_nullable
                   as String?,
+        challengedUserId: freezed == challengedUserId
+            ? _value.challengedUserId
+            : challengedUserId // ignore: cast_nullable_to_non_nullable
+                  as String?,
       ),
     );
   }
@@ -416,6 +429,7 @@ class _$LobbyImpl implements _Lobby {
     this.gameId,
     this.isPrivate = false,
     this.inviteCode,
+    this.challengedUserId,
   }) : _players = players;
 
   factory _$LobbyImpl.fromJson(Map<String, dynamic> json) =>
@@ -449,10 +463,12 @@ class _$LobbyImpl implements _Lobby {
   final bool isPrivate;
   @override
   final String? inviteCode;
+  @override
+  final String? challengedUserId;
 
   @override
   String toString() {
-    return 'Lobby(id: $id, name: $name, players: $players, maxPlayers: $maxPlayers, status: $status, createdAt: $createdAt, gameId: $gameId, isPrivate: $isPrivate, inviteCode: $inviteCode)';
+    return 'Lobby(id: $id, name: $name, players: $players, maxPlayers: $maxPlayers, status: $status, createdAt: $createdAt, gameId: $gameId, isPrivate: $isPrivate, inviteCode: $inviteCode, challengedUserId: $challengedUserId)';
   }
 
   @override
@@ -472,7 +488,9 @@ class _$LobbyImpl implements _Lobby {
             (identical(other.isPrivate, isPrivate) ||
                 other.isPrivate == isPrivate) &&
             (identical(other.inviteCode, inviteCode) ||
-                other.inviteCode == inviteCode));
+                other.inviteCode == inviteCode) &&
+            (identical(other.challengedUserId, challengedUserId) ||
+                other.challengedUserId == challengedUserId));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -488,6 +506,7 @@ class _$LobbyImpl implements _Lobby {
     gameId,
     isPrivate,
     inviteCode,
+    challengedUserId,
   );
 
   /// Create a copy of Lobby
@@ -515,6 +534,7 @@ abstract class _Lobby implements Lobby {
     final String? gameId,
     final bool isPrivate,
     final String? inviteCode,
+    final String? challengedUserId,
   }) = _$LobbyImpl;
 
   factory _Lobby.fromJson(Map<String, dynamic> json) = _$LobbyImpl.fromJson;
@@ -537,6 +557,8 @@ abstract class _Lobby implements Lobby {
   bool get isPrivate;
   @override
   String? get inviteCode;
+  @override
+  String? get challengedUserId;
 
   /// Create a copy of Lobby
   /// with the given fields replaced by the non-null parameter values.
