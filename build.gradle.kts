@@ -73,3 +73,8 @@ tasks.withType<Test> {
     systemProperty("jna.library.path", libDir)
     useJUnitPlatform()
 }
+
+tasks.named<org.springframework.boot.gradle.tasks.run.BootRun>("bootRun") {
+    val libDir = file("engine/target/release").absolutePath
+    systemProperty("jna.library.path", libDir)
+}
