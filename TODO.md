@@ -1,13 +1,13 @@
-# TODO — CribbageClubServer
+# TODO — CribbageClub
 
-## 1. Security — Player-Visible Game State
+## ~~1. Security — Player-Visible Game State~~ ✅
 
-Full game state (opponent's hand, remaining deck) is sent to all clients. A player can inspect network traffic to see the opponent's cards.
+~~Full game state (opponent's hand, remaining deck) is sent to all clients. A player can inspect network traffic to see the opponent's cards.~~
 
-- [ ] Create a `PlayerGameView` DTO that filters state per-player (own hand only, no `remainingDeck`)
-- [ ] Update `GameWebSocketService` to send player-specific views instead of full state
-- [ ] Update `GameController.getGame()` to accept a player ID and return filtered state
-- [ ] Add tests verifying opponents cannot see each other's hands
+- [x] Create a `PlayerGameView` DTO that filters state per-player (own hand only, no `remainingDeck`)
+- [x] Update `GameWebSocketService` to send player-specific views instead of full state
+- [x] Update `GameController.getGame()` to accept a player ID and return filtered state
+- [x] Add tests verifying opponents cannot see each other's hands
 
 ## 2. Security — WebSocket Authentication
 

@@ -52,7 +52,7 @@ CI runs backend on ubuntu-latest with JDK 21 (see `.github/workflows/copilot-set
 
 ### Monorepo Layout
 ```
-CribbageClubServer/
+CribbageClub/
 ├── src/                          # Spring Boot backend
 ├── frontend/                     # Flutter app (iOS, Android, Web)
 ├── CLAUDE.md                     # This file
@@ -155,5 +155,5 @@ Dealer rotates each round via `GameState.dealerIndex`.
 
 ## Remaining Work
 
-- **Backend:** See [TODO.md](TODO.md) for the prioritized task list. Key frontend-blocking items: CORS config (#7c), PlayerGameView DTO (#1), WebSocket auth (#2).
+- **Backend:** See [TODO.md](TODO.md) for the prioritized task list. Key frontend-blocking items: CORS config (#7c), WebSocket auth (#2). ~~PlayerGameView DTO (#1)~~ is done.
 - **Frontend:** See [FRONTEND.md](FRONTEND.md) for the phased development plan (Phase 1–5).
