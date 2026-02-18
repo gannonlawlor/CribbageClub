@@ -143,9 +143,11 @@ class DailyPuzzleNotifier extends StateNotifier<DailyPuzzleState> {
     state = state.copyWith(selectedCards: selected);
   }
 
-  Future<void> submitKeep() async {
+  /// Submits the current keep selection.
+  /// Returns the player's rank (1 = optimal) for the UI to display briefly.
+  Future<int?> submitKeep() async {
     final puzzle = state.currentPuzzle;
-    if (state.selectedCards.length != 4 || puzzle == null) return;
+    if (state.selectedCards.length != 4 || puzzle == null) return null;
 
     final results = PuzzleGenerator.evaluateAllKeeps(
       puzzle.hand,
@@ -184,32 +186,30 @@ class DailyPuzzleNotifier extends StateNotifier<DailyPuzzleState> {
     scores[idx] = playerScore;
     allResults[idx] = results;
 
-    state = state.copyWith(
-      phase: PuzzlePhase.revealed,
-      playerRanks: ranks,
-      playerScores: scores,
-      allResults: allResults,
-    );
-  }
-
-  Future<void> nextPuzzle() async {
+    // Auto-advance: skip revealed phase and go straight to next puzzle or summary
     if (state.isLastPuzzle) {
-      // All done — finalize streak and show summary
-      final date = state.puzzleSet!.date;
       await _persistence.finalizeDayResults(date);
       final streak = await _persistence.getStreak();
       state = state.copyWith(
         phase: PuzzlePhase.summary,
         streak: streak,
         completedToday: true,
+        playerRanks: ranks,
+        playerScores: scores,
+        allResults: allResults,
       );
     } else {
       state = state.copyWith(
         currentPuzzleIndex: state.currentPuzzleIndex + 1,
         selectedCards: {},
         phase: PuzzlePhase.playing,
+        playerRanks: ranks,
+        playerScores: scores,
+        allResults: allResults,
       );
     }
+
+    return playerRank;
   }
 }
 

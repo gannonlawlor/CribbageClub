@@ -13,6 +13,7 @@ import '../models/join_by_code_result.dart';
 import '../models/leaderboard_entry.dart';
 import '../models/lobby.dart';
 import '../models/puzzle.dart';
+import '../models/profile_response.dart';
 import '../models/stats_response.dart';
 
 class RestClient {
@@ -329,6 +330,13 @@ class RestClient {
 
   Future<void> saveGameAnalysis(String gameId, GameAnalysis analysis) async {
     await _dio.post('/api/games/$gameId/analysis', data: analysis.toJson());
+  }
+
+  // Profiles
+
+  Future<ProfileResponse> getProfile(String userId) async {
+    final response = await _dio.get('/api/profiles/$userId');
+    return ProfileResponse.fromJson(response.data as Map<String, dynamic>);
   }
 
   // Stats

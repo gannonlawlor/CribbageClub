@@ -7,7 +7,6 @@ import '../../../core/models/card.dart';
 import '../../game/widgets/card_widget.dart';
 import '../services/puzzle_generator.dart';
 import '../state/puzzle_provider.dart';
-import '../widgets/keep_rank_tile.dart';
 import '../widgets/puzzle_summary.dart';
 import '../widgets/streak_badge.dart';
 
@@ -65,10 +64,7 @@ class _DailyPuzzleScreenState extends ConsumerState<DailyPuzzleScreen> {
                         PuzzlePhase.playing => _PlayingView(
                             key: ValueKey('playing_${state.currentPuzzleIndex}'),
                           ),
-                        PuzzlePhase.revealed => _RevealedView(
-                            key: ValueKey('revealed_${state.currentPuzzleIndex}'),
-                          ),
-                        PuzzlePhase.summary => PuzzleSummary(
+                        PuzzlePhase.revealed || PuzzlePhase.summary => PuzzleSummary(
                             key: const ValueKey('summary'),
                             puzzleSet: puzzleSet,
                             playerScores: state.playerScores,
@@ -248,172 +244,32 @@ class _PlayingView extends ConsumerWidget {
             height: 56,
             child: ElevatedButton(
               onPressed: canSubmit
-                  ? () => ref.read(dailyPuzzleProvider.notifier).submitKeep()
+                  ? () async {
+                      final rank = await ref
+                          .read(dailyPuzzleProvider.notifier)
+                          .submitKeep();
+                      if (rank != null && context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              rank == 1 ? 'Optimal!' : 'Your pick: #$rank of 15',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            backgroundColor: rank == 1
+                                ? Colors.green.withValues(alpha: 0.9)
+                                : Colors.blueGrey.withValues(alpha: 0.9),
+                            duration: const Duration(seconds: 2),
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                      }
+                    }
                   : null,
               child: const Text('Submit', style: TextStyle(fontSize: 18)),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _RevealedView extends ConsumerWidget {
-  const _RevealedView({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(dailyPuzzleProvider);
-    final puzzle = state.currentPuzzle!;
-    final idx = state.currentPuzzleIndex;
-    final results = state.allResults[idx]!;
-    final dateStr = _formatDate(puzzle.date);
-    final playerRank = state.playerRanks[idx];
-    final isOptimalPick = playerRank == 1;
-    final puzzleNum = idx + 1;
-    final total = PuzzleGenerator.puzzlesPerDay;
-
-    return Column(
-      children: [
-        // Header
-        Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.arrow_back, color: Colors.white),
-                onPressed: () => context.go('/'),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        const Text(
-                          'Daily Challenge',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          '$puzzleNum/$total',
-                          style: const TextStyle(
-                            color: Colors.white54,
-                            fontSize: 16,
-                          ),
-                        ),
-                      ],
-                    ),
-                    Text(
-                      dateStr,
-                      style: const TextStyle(
-                        color: Colors.white54,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              if (state.streak > 0) StreakBadge(streak: state.streak),
-            ],
-          ),
-        ),
-        // Progress dots
-        _ProgressDots(
-          total: total,
-          current: idx,
-          ranks: state.playerRanks,
-        ),
-        const SizedBox(height: 8),
-        // Result banner
-        if (playerRank != null)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                color: isOptimalPick
-                    ? Colors.green.withValues(alpha: 0.15)
-                    : Colors.white.withValues(alpha: 0.08),
-                border: Border.all(
-                  color: isOptimalPick
-                      ? Colors.green.withValues(alpha: 0.5)
-                      : Colors.white24,
-                ),
-              ),
-              child: Text(
-                isOptimalPick
-                    ? 'Optimal!'
-                    : 'Your pick: #$playerRank of 15',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: isOptimalPick ? Colors.green : Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-        const SizedBox(height: 8),
-        // Dealer context
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Text(
-            puzzle.isDealer
-                ? 'Dealer (crib is yours)'
-                : 'Non-dealer (crib is opponent\'s)',
-            style: const TextStyle(color: Colors.white54, fontSize: 13),
-          ),
-        ),
-        const SizedBox(height: 4),
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 24),
-          child: Text(
-            'Average points per hand across all possible cut cards.',
-            style: TextStyle(color: Colors.white38, fontSize: 12),
-            textAlign: TextAlign.center,
-          ),
-        ),
-        const SizedBox(height: 4),
-        // Results list
-        Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: results.length,
-            itemBuilder: (context, index) {
-              final option = results[index];
-              final isPlayerPick =
-                  playerRank != null && option.rank == playerRank;
-              return KeepRankTile(
-                option: option,
-                isPlayerPick: isPlayerPick,
-                isOptimal: option.rank == 1,
-              );
-            },
-          ),
-        ),
-        // Next / See Results button
-        Padding(
-          padding: const EdgeInsets.all(16),
-          child: SizedBox(
-            width: double.infinity,
-            height: 56,
-            child: ElevatedButton(
-              onPressed: () {
-                ref.read(dailyPuzzleProvider.notifier).nextPuzzle();
-              },
-              child: Text(
-                state.isLastPuzzle ? 'See Results' : 'Next Puzzle',
-                style: const TextStyle(fontSize: 18),
-              ),
             ),
           ),
         ),

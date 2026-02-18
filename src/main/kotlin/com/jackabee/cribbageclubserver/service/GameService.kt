@@ -378,7 +378,8 @@ class GameService(
                         winnerId = winner.id,
                         loserId = loser.id,
                         winnerScore = winner.score,
-                        loserScore = loser.score
+                        loserScore = loser.score,
+                        isAIGame = entity.isAIGame
                     )
                 }
 
@@ -571,7 +572,8 @@ class GameService(
                     winnerId = winner.id,
                     loserId = loser.id,
                     winnerScore = winner.score,
-                    loserScore = loser.score
+                    loserScore = loser.score,
+                    isAIGame = entity.isAIGame
                 )
             }
         }

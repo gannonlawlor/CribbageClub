@@ -48,9 +48,14 @@ class HomeScreen extends ConsumerWidget {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12),
               child: Center(
-                child: Text(
-                  auth.username!,
-                  style: const TextStyle(color: AppTheme.goldAccent),
+                child: GestureDetector(
+                  onTap: auth.userId != null
+                      ? () => context.push('/profile/${auth.userId}')
+                      : null,
+                  child: Text(
+                    auth.username!,
+                    style: const TextStyle(color: AppTheme.goldAccent),
+                  ),
                 ),
               ),
             ),
