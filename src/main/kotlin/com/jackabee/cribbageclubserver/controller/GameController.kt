@@ -62,9 +62,25 @@ class GameController(
 
     @Operation(summary = "List all active games")
     @GetMapping
-    fun listGames(): Map<String, GameState> {
+    fun listGames(@RequestAttribute("userId") userId: String): Map<String, GameState> {
         return gameService.listGames().mapValues { (_, state) ->
-            GameStateFilter.forPlayer(state, "")
+            GameStateFilter.forPlayer(state, userId)
+        }
+    }
+
+    @Operation(summary = "Get active games for the authenticated user")
+    @GetMapping("/me")
+    fun getMyActiveGames(@RequestAttribute("userId") userId: String): List<GameState> {
+        return gameService.findActiveGamesByPlayer(userId).map { state ->
+            GameStateFilter.forPlayer(state, userId)
+        }
+    }
+
+    @Operation(summary = "Get completed game history for the authenticated user")
+    @GetMapping("/me/history")
+    fun getMyGameHistory(@RequestAttribute("userId") userId: String): List<GameState> {
+        return gameService.findCompletedGamesByPlayer(userId).map { state ->
+            GameStateFilter.forPlayer(state, userId)
         }
     }
 }

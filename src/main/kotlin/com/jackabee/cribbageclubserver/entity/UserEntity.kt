@@ -8,16 +8,19 @@ import java.time.Instant
 class UserEntity(
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    val id: String? = null,
+    var id: String? = null,
 
     @Column(nullable = false, unique = true)
-    val username: String,
+    var username: String,
 
-    @Column(nullable = false)
-    val passwordHash: String,
+    @Column(nullable = true)
+    var passwordHash: String? = null,
 
     @Column(nullable = true)
     var displayName: String? = null,
+
+    @Column(nullable = false)
+    var isGuest: Boolean = false,
 
     @Column(nullable = false)
     val createdAt: Instant = Instant.now(),

@@ -17,13 +17,14 @@ class JwtService(
         Keys.hmacShaKeyFor(secret.toByteArray())
     }
 
-    fun generateToken(userId: String, username: String): String {
+    fun generateToken(userId: String, username: String, isGuest: Boolean = false): String {
         val now = Date()
         val expiry = Date(now.time + expirationMs)
 
         return Jwts.builder()
             .subject(userId)
             .claim("username", username)
+            .claim("isGuest", isGuest)
             .issuedAt(now)
             .expiration(expiry)
             .signWith(key)
@@ -43,6 +44,14 @@ class JwtService(
             getClaims(token)?.get("username", String::class.java)
         } catch (e: Exception) {
             null
+        }
+    }
+
+    fun isGuestFromToken(token: String): Boolean {
+        return try {
+            getClaims(token)?.get("isGuest", java.lang.Boolean::class.java)?.booleanValue() ?: false
+        } catch (e: Exception) {
+            false
         }
     }
 

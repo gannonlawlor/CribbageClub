@@ -22,21 +22,34 @@ class LobbyService(
 ) {
     private val logger = LoggerFactory.getLogger(LobbyService::class.java)
 
+    companion object {
+        private const val INVITE_CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+        private const val INVITE_CODE_LENGTH = 4
+    }
+
     /**
      * Creates a new lobby.
      *
      * @param name The name of the lobby
      * @param creatorId The ID of the player creating the lobby
      * @param creatorName The name of the player creating the lobby
+     * @param isPrivate Whether the lobby is private (invite-only)
      * @return The created lobby
      */
-    fun createLobby(name: String, creatorId: String, creatorName: String): Lobby {
+    fun createLobby(name: String, creatorId: String, creatorName: String, isPrivate: Boolean = false): Lobby {
         val lobbyId = generateLobbyId()
         val creator = LobbyPlayer(creatorId, creatorName)
-        val lobby = Lobby(id = lobbyId, name = name, players = listOf(creator))
+        val inviteCode = if (isPrivate) generateInviteCode() else null
+        val lobby = Lobby(
+            id = lobbyId,
+            name = name,
+            players = listOf(creator),
+            isPrivate = isPrivate,
+            inviteCode = inviteCode
+        )
 
         saveLobbyEntity(lobby)
-        logger.info("Created lobby {} by {}", lobbyId, creatorName)
+        logger.info("Created {} lobby {} by {}", if (isPrivate) "private" else "public", lobbyId, creatorName)
         return lobby
     }
 
@@ -61,12 +74,12 @@ class LobbyService(
     }
 
     /**
-     * Lists lobbies that are waiting for players.
+     * Lists public lobbies that are waiting for players.
      *
-     * @return List of lobbies in WAITING status
+     * @return List of public lobbies in WAITING status
      */
     fun listWaitingLobbies(): List<Lobby> {
-        return lobbyRepository.findByStatus(LobbyStatus.WAITING.name).map { toLobby(it) }
+        return lobbyRepository.findByStatusAndIsPrivateFalse(LobbyStatus.WAITING.name).map { toLobby(it) }
     }
 
     /**
@@ -87,6 +100,38 @@ class LobbyService(
         saveLobbyEntity(updatedLobby)
         logger.info("Player {} joined lobby {}", playerName, lobbyId)
         return updatedLobby
+    }
+
+    /**
+     * Joins a player to a private lobby by invite code and auto-starts if full.
+     *
+     * @param inviteCode The invite code for the private lobby
+     * @param playerId The ID of the player joining
+     * @param playerName The name of the player joining
+     * @return The game state if auto-started, or the updated lobby
+     */
+    @Transactional
+    fun joinLobbyByCode(inviteCode: String, playerId: String, playerName: String): JoinByCodeResult {
+        val entity = lobbyRepository.findByInviteCode(inviteCode.uppercase())
+            ?: throw IllegalArgumentException("Invalid invite code")
+        val lobby = toLobby(entity)
+        require(lobby.status == LobbyStatus.WAITING) { "Lobby is not accepting players" }
+
+        val player = LobbyPlayer(playerId, playerName)
+        val updatedLobby = lobby.addPlayer(player)
+        saveLobbyEntity(updatedLobby)
+
+        // Auto-start if full
+        if (updatedLobby.isReady) {
+            val gamePlayers = updatedLobby.players.map { Player(it.id, it.name) }
+            val gameState = gameService.createGame(gamePlayers)
+            val startedLobby = updatedLobby.startGame(gameState.gameId)
+            saveLobbyEntity(startedLobby)
+            logger.info("Auto-started game {} from private lobby {}", gameState.gameId, lobby.id)
+            return JoinByCodeResult(lobby = startedLobby, gameState = gameState)
+        }
+
+        return JoinByCodeResult(lobby = updatedLobby)
     }
 
     /**
@@ -189,6 +234,8 @@ class LobbyService(
                 maxPlayers = lobby.maxPlayers,
                 status = lobby.status.name,
                 gameId = lobby.gameId,
+                isPrivate = lobby.isPrivate,
+                inviteCode = lobby.inviteCode,
                 createdAt = lobby.createdAt,
                 updatedAt = Instant.now(),
                 playersJson = objectMapper.writeValueAsString(lobby.players)
@@ -206,11 +253,30 @@ class LobbyService(
             maxPlayers = entity.maxPlayers,
             status = LobbyStatus.valueOf(entity.status),
             createdAt = entity.createdAt,
-            gameId = entity.gameId
+            gameId = entity.gameId,
+            isPrivate = entity.isPrivate,
+            inviteCode = entity.inviteCode
         )
     }
 
     private fun generateLobbyId(): String {
         return "lobby_${System.currentTimeMillis()}_${Random.nextInt(1000, 9999)}"
     }
+
+    private fun generateInviteCode(): String {
+        repeat(10) {
+            val code = "CRIB-" + (1..INVITE_CODE_LENGTH)
+                .map { INVITE_CODE_CHARS[Random.nextInt(INVITE_CODE_CHARS.length)] }
+                .joinToString("")
+            if (lobbyRepository.findByInviteCode(code) == null) {
+                return code
+            }
+        }
+        throw IllegalStateException("Failed to generate unique invite code")
+    }
+
+    data class JoinByCodeResult(
+        val lobby: Lobby,
+        val gameState: com.jackabee.cribbageclubserver.model.game.GameState? = null
+    )
 }

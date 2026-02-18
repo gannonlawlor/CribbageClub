@@ -107,6 +107,8 @@ class Game private constructor(
      * @param playerId The ID of the player who is discarding
      * @param card The card to discard
      */
+    private val keepCards = cardsPerHand - 2 // each player keeps 4
+
     private fun discardToCrib(playerId: String, card: Card) {
         require(state.stage == GameStage.DISCARDING_TO_CRIB) { "Not in discard phase" }
 
@@ -119,9 +121,20 @@ class Game private constructor(
         val updatedPlayer = player.copy(hand = player.hand - card)
         val updatedPlayers = state.players.toMutableList().apply { set(playerIndex, updatedPlayer) }
 
+        // If this player has finished discarding, switch to the other player
+        // so the AI turn loop can process their discards
+        val nextPlayerId = if (updatedPlayer.hand.size == keepCards) {
+            val otherIndex = (playerIndex + 1) % state.players.size
+            val other = state.players[otherIndex]
+            if (other.hand.size > keepCards) other.id else state.currentPlayerId
+        } else {
+            state.currentPlayerId
+        }
+
         state = state.copy(
             players = updatedPlayers,
-            crib = state.crib + card
+            crib = state.crib + card,
+            currentPlayerId = nextPlayerId
         )
 
         if (state.crib.size == players.size * 2) {

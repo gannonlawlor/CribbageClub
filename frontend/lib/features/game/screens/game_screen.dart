@@ -183,6 +183,7 @@ class GameScreen extends ConsumerWidget {
                     StageIndicator(
                       stage: gs.stage,
                       isMyTurn: isMyTurn,
+                      isDealer: isDealer,
                       currentPlayerName: opponent.name,
                       selectedCardCount: selectedCards.length,
                     ),
@@ -228,7 +229,7 @@ class GameScreen extends ConsumerWidget {
               stage: gs.stage,
               isMyTurn: isMyTurn,
               selectedCardCount: selectedCards.length,
-              isDiscarding: ref.read(gameNotifierProvider(gameId).notifier).isDiscarding,
+              isDiscarding: gameNotifier.isDiscarding,
               canGo: !_canPlayAnyCard(player.hand, gs.peggingCount),
               onDiscard: () => _handleDiscard(ref, gs, playerId, selectedCards),
               onCut: () =>
@@ -245,7 +246,7 @@ class GameScreen extends ConsumerWidget {
               child: HandFan(
                 cards: CardUtils.sorted(player.hand),
                 selectedIndices: selectedCards,
-                enabled: isMyTurn,
+                enabled: isMyTurn && !gameNotifier.isDiscarding,
                 onCardTap: (index) =>
                     _handleCardTap(context, ref, gs, playerId, index, selectedCards),
               ),
@@ -278,6 +279,9 @@ class GameScreen extends ConsumerWidget {
     int index,
     Set<int> selected,
   ) {
+    // Block all card interaction while discard is in flight
+    if (ref.read(gameNotifierProvider(gameId)).isDiscarding) return;
+
     if (gs.stage == GameStage.discardingToCrib) {
       final newSelected = Set<int>.from(selected);
       if (newSelected.contains(index)) {

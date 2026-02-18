@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component
 
 /**
  * Intercepts STOMP CONNECT frames to validate the JWT token.
- * On successful validation, stores userId and username in the session
+ * On successful validation, stores userId, username, and isGuest in the session
  * attributes so downstream message handlers can trust the identity.
  */
 @Component
@@ -45,6 +45,7 @@ class StompAuthChannelInterceptor(
 
         val userId = jwtService.getUserIdFromToken(token)
         val username = jwtService.getUsernameFromToken(token)
+        val isGuest = jwtService.isGuestFromToken(token)
         if (userId == null || username == null) {
             logger.warn("WebSocket CONNECT rejected: could not extract identity from token")
             throw IllegalArgumentException("Invalid JWT token claims")
@@ -54,6 +55,7 @@ class StompAuthChannelInterceptor(
         val sessionAttributes = accessor.sessionAttributes ?: mutableMapOf()
         sessionAttributes["userId"] = userId
         sessionAttributes["username"] = username
+        sessionAttributes["isGuest"] = isGuest
         accessor.sessionAttributes = sessionAttributes
 
         // Set the authenticated user principal on the message

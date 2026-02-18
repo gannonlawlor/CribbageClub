@@ -57,7 +57,7 @@ class PlayerStatsService(
     }
 
     fun getLeaderboard(): List<PlayerStatsEntity> {
-        return playerStatsRepository.findTop10ExcludingPrefix("ai_%")
+        return playerStatsRepository.findTop10ExcludingPrefixes("ai_%", "guest_%")
     }
 
     private fun getOrCreate(playerId: String): PlayerStatsEntity {
