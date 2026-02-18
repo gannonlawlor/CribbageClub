@@ -6,12 +6,14 @@ class StageIndicator extends StatelessWidget {
   final GameStage stage;
   final bool isMyTurn;
   final String? currentPlayerName;
+  final int selectedCardCount;
 
   const StageIndicator({
     super.key,
     required this.stage,
     required this.isMyTurn,
     this.currentPlayerName,
+    this.selectedCardCount = 0,
   });
 
   String get _message {
@@ -20,12 +22,14 @@ class StageIndicator extends StatelessWidget {
         return 'Dealing cards...';
       case GameStage.discardingToCrib:
         return isMyTurn
-            ? 'Select 2 cards to discard to the crib'
+            ? 'Select 2 cards to discard ($selectedCardCount/2 selected)'
             : 'Waiting for ${currentPlayerName ?? "opponent"} to discard...';
       case GameStage.cutting:
         return isMyTurn ? 'Tap to cut the deck' : 'Waiting for cut...';
       case GameStage.pegging:
-        return isMyTurn ? 'Your turn to play a card' : 'Waiting for opponent...';
+        return isMyTurn
+            ? 'Play a card or tap Go if you can\'t play'
+            : 'Waiting for opponent...';
       case GameStage.counting:
         return isMyTurn ? 'Tap to count your hand' : 'Waiting for count...';
       case GameStage.gameOver:
@@ -35,7 +39,8 @@ class StageIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       decoration: BoxDecoration(
         color: isMyTurn ? AppTheme.goldAccent.withValues(alpha: 0.2) : Colors.black26,

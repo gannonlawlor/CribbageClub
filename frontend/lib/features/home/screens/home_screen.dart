@@ -3,9 +3,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../config/theme.dart';
 import '../../../core/auth/auth_provider.dart';
+import '../../../core/models/game_state.dart';
 import '../../../shared/widgets/loading_overlay.dart';
 
 final _isCreatingGameProvider = StateProvider<bool>((ref) => false);
+
+// Active games provider — fetches on each home screen visit
+final _activeGamesProvider = FutureProvider.autoDispose<List<GameState>>((ref) async {
+  final restClient = ref.read(restClientProvider);
+  final games = await restClient.listGames();
+  // Filter to only in-progress games (not game over)
+  return games.where((g) => g.stage != GameStage.gameOver).toList();
+});
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -14,6 +23,7 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final auth = ref.watch(authProvider);
     final isCreating = ref.watch(_isCreatingGameProvider);
+    final activeGames = ref.watch(_activeGamesProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -45,6 +55,38 @@ class HomeScreen extends ConsumerWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  // Active games section
+                  activeGames.when(
+                    data: (games) {
+                      if (games.isEmpty) return const SizedBox.shrink();
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Continue Game',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          ...games.map((game) => _ActiveGameTile(game: game)),
+                          const SizedBox(height: 24),
+                        ],
+                      );
+                    },
+                    loading: () => const Padding(
+                      padding: EdgeInsets.only(bottom: 24),
+                      child: SizedBox(
+                        height: 24,
+                        width: 24,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    ),
+                    error: (_, _) => const SizedBox.shrink(),
+                  ),
+
                   const Icon(
                     Icons.style,
                     size: 100,
@@ -113,5 +155,57 @@ class HomeScreen extends ConsumerWidget {
     } finally {
       ref.read(_isCreatingGameProvider.notifier).state = false;
     }
+  }
+}
+
+class _ActiveGameTile extends ConsumerWidget {
+  final GameState game;
+
+  const _ActiveGameTile({required this.game});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final auth = ref.watch(authProvider);
+    final playerId = auth.userId ?? '';
+    final playerIndex = game.players.indexWhere((p) => p.id == playerId);
+    final player = playerIndex >= 0 ? game.players[playerIndex] : game.players[0];
+    final opponent = game.players[playerIndex >= 0 ? 1 - playerIndex : 1];
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Material(
+        color: Colors.white10,
+        borderRadius: BorderRadius.circular(8),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(8),
+          onTap: () => context.go('/game/${game.gameId}'),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Row(
+              children: [
+                const Icon(Icons.play_arrow, color: AppTheme.goldAccent, size: 20),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'vs ${opponent.name}',
+                        style: const TextStyle(color: Colors.white, fontSize: 14),
+                      ),
+                      Text(
+                        '${game.stage.displayName} — ${player.score} to ${opponent.score}',
+                        style: const TextStyle(color: Colors.white54, fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.chevron_right, color: Colors.white38),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }

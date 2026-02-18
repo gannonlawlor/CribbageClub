@@ -74,6 +74,14 @@ class RestClient {
     return GameState.fromJson(response.data as Map<String, dynamic>);
   }
 
+  Future<List<GameState>> listGames() async {
+    final response = await _dio.get('/api/games');
+    final list = response.data as List<dynamic>;
+    return list
+        .map((json) => GameState.fromJson(json as Map<String, dynamic>))
+        .toList();
+  }
+
   Future<void> deleteGame(String gameId) async {
     await _dio.delete('/api/games/$gameId');
   }
