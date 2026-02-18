@@ -39,7 +39,7 @@ class GameEntity(
     @Column(nullable = true)
     var currentPlayerId: String? = null,
 
-    @Column(nullable = false)
+    @Column(name = "is_ai_game", nullable = false)
     var isAIGame: Boolean = false,
 
     @Column(nullable = true)
