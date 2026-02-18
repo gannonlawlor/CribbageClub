@@ -173,7 +173,7 @@ class _AnalysisContent extends StatelessWidget {
                     value: '$optimalCount/${myAnalyses.length}',
                   ),
                   _SummaryChip(
-                    label: 'EV Lost',
+                    label: 'Avg Pts Lost',
                     value: totalEvLost.toStringAsFixed(1),
                     color: totalEvLost < 2.0
                         ? Colors.greenAccent
@@ -395,7 +395,7 @@ class _RoundCardState extends State<_RoundCard> {
                 Text(
                   evDiff < 0.01
                       ? 'Optimal play!'
-                      : 'EV difference: ${evDiff.toStringAsFixed(2)}',
+                      : '${evDiff.toStringAsFixed(2)} avg pts below optimal',
                   style: TextStyle(color: evColor, fontWeight: FontWeight.w600),
                 ),
                 if (myAnalysis.actualHandScore > 0) ...[
@@ -506,7 +506,7 @@ class _DiscardComparison extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'EV: ${option.expectedCombinedValue.toStringAsFixed(2)}',
+            '${option.expectedCombinedValue.toStringAsFixed(2)} avg pts',
             style: const TextStyle(
               color: Colors.white,
               fontSize: 13,
@@ -514,7 +514,7 @@ class _DiscardComparison extends StatelessWidget {
             ),
           ),
           Text(
-            'Hand: ${option.expectedHandValue.toStringAsFixed(1)}  Crib: ${option.expectedCribValue.toStringAsFixed(1)}',
+            'hand ${option.expectedHandValue.toStringAsFixed(1)}  crib ${option.expectedCribValue > 0 ? '+' : ''}${option.expectedCribValue.toStringAsFixed(1)}',
             style: const TextStyle(color: Colors.white38, fontSize: 10),
           ),
         ],
@@ -631,7 +631,7 @@ class _OptionRow extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              'EV ${option.expectedCombinedValue.toStringAsFixed(2)}',
+              '${option.expectedCombinedValue.toStringAsFixed(2)} avg pts',
               style: const TextStyle(color: Colors.white, fontSize: 12),
             ),
           ),
