@@ -57,7 +57,7 @@ class DailyPuzzleNotifier extends StateNotifier<DailyPuzzleState> {
 
     if (completedToday) {
       // Show results if already completed today
-      final results = PuzzleGenerator.evaluateAllKeeps(
+      final results = await PuzzleGenerator.evaluateAllKeeps(
         puzzle.hand,
         puzzle.isDealer,
       );
@@ -87,7 +87,7 @@ class DailyPuzzleNotifier extends StateNotifier<DailyPuzzleState> {
     if (state.selectedCards.length != 4 || state.puzzle == null) return;
 
     final puzzle = state.puzzle!;
-    final results = PuzzleGenerator.evaluateAllKeeps(
+    final results = await PuzzleGenerator.evaluateAllKeeps(
       puzzle.hand,
       puzzle.isDealer,
     );

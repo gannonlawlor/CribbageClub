@@ -1,8 +1,9 @@
+import 'dart:convert';
 import 'dart:math';
 
-import '../../../core/engine/ai/ai_utils.dart';
-import '../../../core/engine/hand_counting.dart';
 import '../../../core/models/card.dart';
+import '../../../core/models/game_analysis.dart';
+import '../../../src/rust/api/simple.dart' as rust;
 import '../models/daily_puzzle.dart';
 
 class PuzzleGenerator {
@@ -34,114 +35,29 @@ class PuzzleGenerator {
   }
 
   /// Evaluate all 15 possible keeps and return them ranked best-to-worst.
-  static List<KeepOption> evaluateAllKeeps(
+  static Future<List<KeepOption>> evaluateAllKeeps(
     List<PlayingCard> hand,
     bool isDealer,
-  ) {
-    final keeps = AIUtils.combinations(hand, 4);
-    final handSet = hand.toSet();
-    final options = <_ScoredOption>[];
-
-    for (final keep in keeps) {
-      final keepSet = keep.toSet();
-      final discard = handSet.difference(keepSet).toList();
-      final handAvg = _averageHandScore(keep);
-      final cribAvg = _averageCribScore(discard);
-      final netScore = isDealer ? handAvg + cribAvg : handAvg - cribAvg;
-
-      options.add(
-        _ScoredOption(
-          keep: keep,
-          discard: discard,
-          averageHandScore: handAvg,
-          averageCribScore: cribAvg,
-          netScore: netScore,
-        ),
-      );
-    }
-
-    // Sort descending by net score
-    options.sort((a, b) => b.netScore.compareTo(a.netScore));
+  ) async {
+    final handJson = jsonEncode(hand.map((c) => c.toJson()).toList());
+    final resultJson = await rust.analyzeDiscardsJson(
+      handJson: handJson,
+      isDealer: isDealer,
+    );
+    final allOptions = (jsonDecode(resultJson) as List)
+        .map((o) => DiscardOption.fromJson(o as Map<String, dynamic>))
+        .toList();
 
     return [
-      for (var i = 0; i < options.length; i++)
+      for (var i = 0; i < allOptions.length; i++)
         KeepOption(
-          keep: options[i].keep,
-          discard: options[i].discard,
-          averageHandScore: options[i].averageHandScore,
-          averageCribScore: options[i].averageCribScore,
-          netScore: options[i].netScore,
+          keep: allOptions[i].keep,
+          discard: allOptions[i].discard,
+          averageHandScore: allOptions[i].expectedHandValue,
+          averageCribScore: allOptions[i].expectedCribValue,
+          netScore: allOptions[i].expectedCombinedValue,
           rank: i + 1,
         ),
     ];
   }
-
-  /// Average hand score across all possible cut cards not in the keep.
-  static double _averageHandScore(List<PlayingCard> keep) {
-    var totalScore = 0;
-    var cutCount = 0;
-
-    for (final rank in Rank.values) {
-      for (final suit in Suit.values) {
-        final cutCard = PlayingCard(rank: rank, suit: suit);
-        if (keep.contains(cutCard)) continue;
-        totalScore += HandCounting.calculateHandScore(keep, cutCard);
-        cutCount++;
-      }
-    }
-
-    return cutCount > 0 ? totalScore / cutCount : 0.0;
-  }
-
-  /// Average crib contribution from the 2 discarded cards.
-  static double _averageCribScore(List<PlayingCard> discard) {
-    if (discard.length != 2) return 0.0;
-
-    var totalScore = 0;
-    var count = 0;
-
-    for (final rank in Rank.values) {
-      for (final suit in Suit.values) {
-        final cutCard = PlayingCard(rank: rank, suit: suit);
-        if (discard.contains(cutCard)) continue;
-
-        final allCards = [...discard, cutCard];
-        var score = 0;
-
-        // 15s
-        final values = allCards.map((c) => c.rank.peggingValue).toList();
-        for (var i = 1; i < (1 << allCards.length); i++) {
-          var sum = 0;
-          for (var j = 0; j < allCards.length; j++) {
-            if ((i >> j) & 1 == 1) sum += values[j];
-          }
-          if (sum == 15) score += 2;
-        }
-
-        // Pair between discards
-        if (discard[0].rank == discard[1].rank) score += 2;
-
-        totalScore += score;
-        count++;
-      }
-    }
-
-    return count > 0 ? totalScore / count : 0.0;
-  }
-}
-
-class _ScoredOption {
-  final List<PlayingCard> keep;
-  final List<PlayingCard> discard;
-  final double averageHandScore;
-  final double averageCribScore;
-  final double netScore;
-
-  const _ScoredOption({
-    required this.keep,
-    required this.discard,
-    required this.averageHandScore,
-    required this.averageCribScore,
-    required this.netScore,
-  });
 }

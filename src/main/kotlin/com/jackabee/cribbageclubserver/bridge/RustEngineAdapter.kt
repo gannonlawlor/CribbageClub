@@ -2,10 +2,11 @@ package com.jackabee.cribbageclubserver.bridge
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.jackabee.cribbageclubserver.model.action.GameAction
+import com.jackabee.cribbageclubserver.model.analysis.DiscardOption
 import com.jackabee.cribbageclubserver.model.card.Card
 import com.jackabee.cribbageclubserver.model.game.GameState
-import com.jackabee.cribbageclubserver.utils.DiscardAnalyzer
-import com.jackabee.cribbageclubserver.utils.Glicko2Calculator
+import com.jackabee.cribbageclubserver.model.rating.Glicko2Rating
+import com.jackabee.cribbageclubserver.model.rating.Glicko2Result
 
 /**
  * Adapter between the Rust native engine (via JNA) and the existing
@@ -92,7 +93,7 @@ class RustEngineAdapter(
     }
 
     /** Analyze all discard options using the Rust engine. */
-    fun analyzeDiscards(hand: List<Card>, isDealer: Boolean): List<DiscardAnalyzer.DiscardOption> {
+    fun analyzeDiscards(hand: List<Card>, isDealer: Boolean): List<DiscardOption> {
         val handJson = objectMapper.writeValueAsString(hand)
         val resultPtr = lib.cribbage_analyze_discards(handJson, isDealer)
             ?: throw RustEngineException(readLastError() ?: "Unknown analysis error")
@@ -101,7 +102,7 @@ class RustEngineAdapter(
 
         val tree = objectMapper.readTree(json)
         return tree.map { node ->
-            DiscardAnalyzer.DiscardOption(
+            DiscardOption(
                 keep = objectMapper.convertValue(
                     node["keep"],
                     objectMapper.typeFactory.constructCollectionType(List::class.java, Card::class.java)
@@ -119,10 +120,10 @@ class RustEngineAdapter(
 
     /** Calculate Glicko-2 rating using the Rust engine. */
     fun calculateGlicko2(
-        player: Glicko2Calculator.Rating,
-        opponent: Glicko2Calculator.Rating,
+        player: Glicko2Rating,
+        opponent: Glicko2Rating,
         score: Double,
-    ): Glicko2Calculator.Result {
+    ): Glicko2Result {
         val resultPtr = lib.cribbage_glicko2_calculate(
             player.rating, player.deviation, player.volatility,
             opponent.rating, opponent.deviation, opponent.volatility,
@@ -132,7 +133,7 @@ class RustEngineAdapter(
         val json = try { resultPtr.getString(0) } finally { lib.cribbage_string_free(resultPtr) }
         val node = objectMapper.readTree(json)
 
-        return Glicko2Calculator.Result(
+        return Glicko2Result(
             newRating = node["newRating"].asDouble(),
             newDeviation = node["newDeviation"].asDouble(),
             newVolatility = node["newVolatility"].asDouble(),

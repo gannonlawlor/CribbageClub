@@ -1,16 +1,19 @@
 package com.jackabee.cribbageclubserver.service
 
+import com.jackabee.cribbageclubserver.bridge.RustEngineAdapter
 import com.jackabee.cribbageclubserver.model.analysis.GameAnalysis
 import com.jackabee.cribbageclubserver.model.analysis.PlayerRoundAnalysis
 import com.jackabee.cribbageclubserver.model.analysis.RoundAnalysis
 import com.jackabee.cribbageclubserver.model.card.Card
 import com.jackabee.cribbageclubserver.model.game.GameHistoryEvent
 import com.jackabee.cribbageclubserver.model.game.GameStage
-import com.jackabee.cribbageclubserver.utils.DiscardAnalyzer
 import org.springframework.stereotype.Service
 
 @Service
-class AnalysisService(private val gameService: GameService) {
+class AnalysisService(
+    private val gameService: GameService,
+    private val rustEngineAdapter: RustEngineAdapter
+) {
 
     fun analyzeGame(gameId: String): GameAnalysis {
         val state = gameService.getGameState(gameId)
@@ -96,7 +99,7 @@ class AnalysisService(private val gameService: GameService) {
         val discarded = dealtHand.filter { it !in keptHand }
         if (discarded.size != 2) return null
 
-        val allOptions = DiscardAnalyzer.analyzeAllDiscards(dealtHand, isDealer)
+        val allOptions = rustEngineAdapter.analyzeDiscards(dealtHand, isDealer)
         val optimalOption = allOptions.first()
         val playerOption = allOptions.find { it.discard.toSet() == discarded.toSet() }
             ?: return null

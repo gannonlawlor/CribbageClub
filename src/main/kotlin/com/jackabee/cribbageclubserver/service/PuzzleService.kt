@@ -1,14 +1,15 @@
 package com.jackabee.cribbageclubserver.service
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.jackabee.cribbageclubserver.bridge.RustEngineAdapter
 import com.jackabee.cribbageclubserver.entity.PuzzleEntity
 import com.jackabee.cribbageclubserver.entity.PuzzleSolveEntity
+import com.jackabee.cribbageclubserver.model.analysis.DiscardOption
 import com.jackabee.cribbageclubserver.model.card.Card
 import com.jackabee.cribbageclubserver.model.card.Rank
 import com.jackabee.cribbageclubserver.model.card.Suit
 import com.jackabee.cribbageclubserver.repository.PuzzleRepository
 import com.jackabee.cribbageclubserver.repository.PuzzleSolveRepository
-import com.jackabee.cribbageclubserver.utils.DiscardAnalyzer
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -20,7 +21,8 @@ import java.util.*
 class PuzzleService(
     private val puzzleRepository: PuzzleRepository,
     private val puzzleSolveRepository: PuzzleSolveRepository,
-    private val objectMapper: ObjectMapper
+    private val objectMapper: ObjectMapper,
+    private val rustEngineAdapter: RustEngineAdapter
 ) {
     private val logger = LoggerFactory.getLogger(PuzzleService::class.java)
 
@@ -61,7 +63,7 @@ class PuzzleService(
         require(chosenDiscard.size == 2) { "Must discard exactly 2 cards" }
         require(chosenDiscard.all { it in hand }) { "Discarded cards must be from the dealt hand" }
 
-        val allOptions = DiscardAnalyzer.analyzeAllDiscards(hand, puzzle.isDealer)
+        val allOptions = rustEngineAdapter.analyzeDiscards(hand, puzzle.isDealer)
         val optimalOption = allOptions.first()
         val discardedSet = chosenDiscard.toSet()
         val playerOption = allOptions.find { it.discard.toSet() == discardedSet }
@@ -99,7 +101,7 @@ class PuzzleService(
             val shuffled = allCards.toMutableList().apply { shuffle(random) }
             val hand = shuffled.take(6)
 
-            val options = DiscardAnalyzer.analyzeAllDiscards(hand, isDealer)
+            val options = rustEngineAdapter.analyzeDiscards(hand, isDealer)
             if (options.size < 2) return@repeat
 
             val evGap = options[0].expectedCombinedValue - options[1].expectedCombinedValue
@@ -122,7 +124,7 @@ class PuzzleService(
         // Fallback: use any hand if no "interesting" one found
         val shuffled = allCards.toMutableList().apply { shuffle(random) }
         val hand = shuffled.take(6)
-        val options = DiscardAnalyzer.analyzeAllDiscards(hand, isDealer)
+        val options = rustEngineAdapter.analyzeDiscards(hand, isDealer)
 
         val puzzle = PuzzleEntity(
             id = UUID.randomUUID().toString(),
@@ -150,7 +152,7 @@ data class PuzzleResponse(
 data class PuzzleSolveResponse(
     val isOptimal: Boolean,
     val evDifference: Double,
-    val yourOption: DiscardAnalyzer.DiscardOption,
-    val optimalOption: DiscardAnalyzer.DiscardOption,
-    val allOptions: List<DiscardAnalyzer.DiscardOption>
+    val yourOption: DiscardOption,
+    val optimalOption: DiscardOption,
+    val allOptions: List<DiscardOption>
 )
