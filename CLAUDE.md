@@ -1,11 +1,15 @@
-# CLAUDE.md — CribbageClubServer
+# CLAUDE.md — Cribbage Club
 
 ## Project Overview
 
-CribbageClubServer is a Spring Boot backend for a multiplayer Cribbage card game. It supports human-vs-human and human-vs-AI play over REST and WebSocket (STOMP/SockJS). The database is the source of truth for game state; in-memory `Game` objects serve as a cache for active play and are reconstructed from the DB on cache miss (e.g., after server restart).
+Cribbage Club is a cross-platform multiplayer Cribbage card game inspired by Chess.com and LiChess. The project is a monorepo containing a Spring Boot backend and a Flutter frontend.
+
+- **Backend** (`src/`): Spring Boot server handling game logic, persistence, and real-time communication. The database is the source of truth for game state; in-memory `Game` objects serve as a cache for active play and are reconstructed from the DB on cache miss (e.g., after server restart).
+- **Frontend** (`frontend/`): Flutter app targeting iOS, Android, and Web from a single codebase. See [FRONTEND.md](FRONTEND.md) for the full frontend plan, architecture, and phased development roadmap.
 
 ## Tech Stack
 
+### Backend
 - **Language:** Kotlin 1.9.25
 - **Framework:** Spring Boot 3.3.3
 - **JDK:** 21 (Amazon Corretto in CI)
@@ -14,17 +18,50 @@ CribbageClubServer is a Spring Boot backend for a multiplayer Cribbage card game
 - **Real-time:** STOMP over WebSocket with SockJS fallback
 - **Testing:** JUnit 5, Mockito, Spring Boot Test
 
+### Frontend
+- **Framework:** Flutter (iOS, Android, Web)
+- **Language:** Dart
+- **State Management:** Riverpod
+- **Routing:** GoRouter
+- **HTTP/WebSocket:** Dio + stomp_dart_client
+- **Code Generation:** freezed + json_serializable for models
+
 ## Build & Test
 
+### Backend
 ```bash
 ./gradlew build    # compile + test
 ./gradlew test     # tests only
 ```
 
-CI runs both on ubuntu-latest with JDK 21 (see `.github/workflows/copilot-setup-steps.yml`).
+### Frontend
+```bash
+cd frontend
+flutter pub get           # install dependencies
+flutter run               # run on connected device / browser
+flutter build web         # production web build
+flutter build apk         # Android APK
+flutter build ios         # iOS (requires macOS + Xcode)
+flutter test              # run tests
+dart run build_runner build  # regenerate freezed/json_serializable code
+```
+
+CI runs backend on ubuntu-latest with JDK 21 (see `.github/workflows/copilot-setup-steps.yml`).
 
 ## Project Structure
 
+### Monorepo Layout
+```
+CribbageClubServer/
+├── src/                          # Spring Boot backend
+├── frontend/                     # Flutter app (iOS, Android, Web)
+├── CLAUDE.md                     # This file
+├── TODO.md                       # Backend task list
+├── FRONTEND.md                   # Frontend plan and architecture
+└── docker-compose.yml
+```
+
+### Backend
 ```
 src/main/kotlin/com/jackabee/cribbageclubserver/
 ├── CribbageClubServerApplication.kt   # Entry point
@@ -55,6 +92,14 @@ src/main/kotlin/com/jackabee/cribbageclubserver/
 │   └── WebSocketEventHandler.kt       # Connect/disconnect events
 └── examples/                          # Usage example code
 ```
+
+### Frontend
+See [FRONTEND.md](FRONTEND.md) for the full directory structure. Key areas:
+- `frontend/lib/core/api/` — REST + STOMP WebSocket clients
+- `frontend/lib/core/models/` — Dart models mirroring backend Kotlin types (freezed)
+- `frontend/lib/features/game/` — Game screen, card widgets, cribbage board (CustomPainter)
+- `frontend/lib/features/lobby/` — Lobby browser and matchmaking
+- `frontend/lib/features/profile/` — Stats, rating, game history
 
 ## Key API Endpoints
 
@@ -110,4 +155,5 @@ Dealer rotates each round via `GameState.dealerIndex`.
 
 ## Remaining Work
 
-See [TODO.md](TODO.md) for the full prioritized task list with subtasks.
+- **Backend:** See [TODO.md](TODO.md) for the prioritized task list. Key frontend-blocking items: CORS config (#7c), PlayerGameView DTO (#1), WebSocket auth (#2).
+- **Frontend:** See [FRONTEND.md](FRONTEND.md) for the phased development plan (Phase 1–5).
