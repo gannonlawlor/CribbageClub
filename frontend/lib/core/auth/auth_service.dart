@@ -1,6 +1,20 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../config/constants.dart';
 
+class AuthData {
+  final String token;
+  final String userId;
+  final String username;
+  final bool isGuest;
+
+  const AuthData({
+    required this.token,
+    required this.userId,
+    required this.username,
+    this.isGuest = false,
+  });
+}
+
 class AuthService {
   SharedPreferences? _prefs;
 
@@ -53,5 +67,21 @@ class AuthService {
   Future<bool> isLoggedIn() async {
     final token = await getToken();
     return token != null;
+  }
+
+  Future<AuthData?> loadSavedAuth() async {
+    final prefs = await _preferences;
+    final token = prefs.getString(AppConstants.tokenKey);
+    if (token == null) return null;
+    final userId = prefs.getString(AppConstants.userIdKey);
+    final username = prefs.getString(AppConstants.usernameKey);
+    if (userId == null || username == null) return null;
+    final isGuest = prefs.getBool(AppConstants.isGuestKey) ?? false;
+    return AuthData(
+      token: token,
+      userId: userId,
+      username: username,
+      isGuest: isGuest,
+    );
   }
 }
