@@ -17,7 +17,9 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 @EnableWebSecurity
 class SecurityConfig(
     private val jwtAuthenticationFilter: JwtAuthenticationFilter,
-    private val rateLimitFilter: RateLimitFilter
+    private val rateLimitFilter: RateLimitFilter,
+    @org.springframework.beans.factory.annotation.Value("\${cors.allowed-origin-patterns}")
+    private val corsAllowedOriginPatterns: List<String>
 ) {
 
     @Bean
@@ -52,7 +54,7 @@ class SecurityConfig(
     @Bean
     fun corsConfigurationSource(): CorsConfigurationSource {
         val configuration = CorsConfiguration()
-        configuration.allowedOriginPatterns = listOf("http://localhost:*", "http://127.0.0.1:*")
+        configuration.allowedOriginPatterns = corsAllowedOriginPatterns
         configuration.allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "OPTIONS")
         configuration.allowedHeaders = listOf("*")
         configuration.allowCredentials = true
