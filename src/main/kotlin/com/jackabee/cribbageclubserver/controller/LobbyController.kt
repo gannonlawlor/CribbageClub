@@ -21,9 +21,12 @@ class LobbyController(
         return lobbyService.listLobbies()
     }
 
-    @Operation(summary = "List lobbies waiting for players")
+    @Operation(summary = "List public lobbies waiting for players")
     @GetMapping("/waiting")
-    fun getWaitingLobbies(): List<Lobby> {
+    fun getWaitingLobbies(
+        @RequestAttribute("isGuest") isGuest: Boolean
+    ): List<Lobby> {
+        require(!isGuest) { "Guests cannot browse public lobbies" }
         return lobbyService.listWaitingLobbies()
     }
 
@@ -48,22 +51,43 @@ class LobbyController(
         return lobbyService.createLobby(
             name = request.name,
             creatorId = userId,
-            creatorName = request.creatorName ?: username
+            creatorName = request.creatorName ?: username,
+            isPrivate = request.isPrivate
         )
     }
 
-    @Operation(summary = "Join a lobby")
+    @Operation(summary = "Join a lobby by ID")
     @PostMapping("/{lobbyId}/join")
     fun joinLobby(
         @PathVariable lobbyId: String,
         @RequestAttribute("userId") userId: String,
         @RequestAttribute("username") username: String,
+        @RequestAttribute("isGuest") isGuest: Boolean,
         @RequestBody(required = false) request: JoinLobbyRequest?
     ): Lobby {
+        if (isGuest) {
+            val lobby = lobbyService.getLobby(lobbyId)
+                ?: throw IllegalArgumentException("Lobby not found")
+            require(lobby.isPrivate) { "Guests can only join private lobbies" }
+        }
         return lobbyService.joinLobby(
             lobbyId = lobbyId,
             playerId = userId,
             playerName = request?.playerName ?: username
+        )
+    }
+
+    @Operation(summary = "Join a private lobby by invite code")
+    @PostMapping("/join-by-code")
+    fun joinByCode(
+        @RequestBody request: JoinByCodeRequest,
+        @RequestAttribute("userId") userId: String,
+        @RequestAttribute("username") username: String
+    ): LobbyService.JoinByCodeResult {
+        return lobbyService.joinLobbyByCode(
+            inviteCode = request.inviteCode,
+            playerId = userId,
+            playerName = request.playerName ?: username
         )
     }
 
@@ -89,9 +113,15 @@ class LobbyController(
 // Request DTOs
 data class CreateLobbyRequest(
     val name: String,
-    val creatorName: String? = null
+    val creatorName: String? = null,
+    val isPrivate: Boolean = false
 )
 
 data class JoinLobbyRequest(
+    val playerName: String? = null
+)
+
+data class JoinByCodeRequest(
+    val inviteCode: String,
     val playerName: String? = null
 )

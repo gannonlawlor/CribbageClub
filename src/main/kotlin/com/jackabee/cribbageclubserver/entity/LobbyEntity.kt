@@ -26,6 +26,12 @@ class LobbyEntity(
     var gameId: String? = null,
 
     @Column(nullable = false)
+    val isPrivate: Boolean = false,
+
+    @Column(nullable = true, unique = true)
+    val inviteCode: String? = null,
+
+    @Column(nullable = false)
     val createdAt: Instant = Instant.now(),
 
     @Column(nullable = false)

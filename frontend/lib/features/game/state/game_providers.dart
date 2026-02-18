@@ -17,12 +17,14 @@ class GameNotifierState {
   final bool isLoading;
   final String? error;
   final ConnectionStatus connectionStatus;
+  final bool isDiscarding;
 
   const GameNotifierState({
     this.gameState,
     this.isLoading = false,
     this.error,
     this.connectionStatus = ConnectionStatus.disconnected,
+    this.isDiscarding = false,
   });
 
   GameNotifierState copyWith({
@@ -30,12 +32,14 @@ class GameNotifierState {
     bool? isLoading,
     String? error,
     ConnectionStatus? connectionStatus,
+    bool? isDiscarding,
   }) {
     return GameNotifierState(
       gameState: gameState ?? this.gameState,
       isLoading: isLoading ?? this.isLoading,
       error: error,
       connectionStatus: connectionStatus ?? this.connectionStatus,
+      isDiscarding: isDiscarding ?? this.isDiscarding,
     );
   }
 }
@@ -105,6 +109,9 @@ class GameNotifier extends StateNotifier<GameNotifierState> {
     _wsClient.subscribeToGame(
       gameId,
       onStateUpdate: (newState) {
+        // Suppress WebSocket updates while a REST action is in flight
+        // to prevent stale broadcasts from overwriting authoritative REST state
+        if (_actionInFlight) return;
         state = GameNotifierState(
           gameState: newState,
           connectionStatus: state.connectionStatus,
@@ -113,12 +120,12 @@ class GameNotifier extends StateNotifier<GameNotifierState> {
     );
     _wsClient.subscribeToUserState(
       onStateUpdate: (newState) {
-        if (newState.gameId == gameId) {
-          state = GameNotifierState(
-            gameState: newState,
-            connectionStatus: state.connectionStatus,
-          );
-        }
+        if (newState.gameId != gameId) return;
+        if (_actionInFlight) return;
+        state = GameNotifierState(
+          gameState: newState,
+          connectionStatus: state.connectionStatus,
+        );
       },
     );
     _wsClient.subscribeToErrors(
@@ -132,15 +139,14 @@ class GameNotifier extends StateNotifier<GameNotifierState> {
   }
 
   // Actions - use REST for ordering guarantees
-
-  bool _isDiscarding = false;
-
-  bool get isDiscarding => _isDiscarding;
+  // Suppress WebSocket updates while REST actions are in flight
+  // to prevent stale broadcasts from creating race conditions
+  bool _actionInFlight = false;
 
   Future<void> discardCards(List<PlayingCard> cards) async {
-    if (_isDiscarding) return;
-    _isDiscarding = true;
-    state = state.copyWith(error: null);
+    if (state.isDiscarding) return;
+    _actionInFlight = true;
+    state = state.copyWith(isDiscarding: true, error: null);
     try {
       GameState? newState;
       for (final card in cards) {
@@ -156,13 +162,14 @@ class GameNotifier extends StateNotifier<GameNotifierState> {
         );
       }
     } catch (e) {
-      state = state.copyWith(error: 'Discard failed: $e');
+      state = state.copyWith(isDiscarding: false, error: 'Discard failed: $e');
     } finally {
-      _isDiscarding = false;
+      _actionInFlight = false;
     }
   }
 
   Future<void> playCard(PlayingCard card) async {
+    _actionInFlight = true;
     state = state.copyWith(error: null);
     try {
       final newState = await _restClient.applyAction(
@@ -175,10 +182,13 @@ class GameNotifier extends StateNotifier<GameNotifierState> {
       );
     } catch (e) {
       state = state.copyWith(error: 'Play card failed: $e');
+    } finally {
+      _actionInFlight = false;
     }
   }
 
   Future<void> cutDeck() async {
+    _actionInFlight = true;
     state = state.copyWith(error: null);
     try {
       final newState = await _restClient.applyAction(
@@ -191,10 +201,13 @@ class GameNotifier extends StateNotifier<GameNotifierState> {
       );
     } catch (e) {
       state = state.copyWith(error: 'Cut failed: $e');
+    } finally {
+      _actionInFlight = false;
     }
   }
 
   Future<void> sayGo() async {
+    _actionInFlight = true;
     state = state.copyWith(error: null);
     try {
       final newState = await _restClient.applyAction(
@@ -207,10 +220,13 @@ class GameNotifier extends StateNotifier<GameNotifierState> {
       );
     } catch (e) {
       state = state.copyWith(error: 'Go failed: $e');
+    } finally {
+      _actionInFlight = false;
     }
   }
 
   Future<void> countHand() async {
+    _actionInFlight = true;
     state = state.copyWith(error: null);
     try {
       final newState = await _restClient.applyAction(
@@ -223,6 +239,8 @@ class GameNotifier extends StateNotifier<GameNotifierState> {
       );
     } catch (e) {
       state = state.copyWith(error: 'Count failed: $e');
+    } finally {
+      _actionInFlight = false;
     }
   }
 

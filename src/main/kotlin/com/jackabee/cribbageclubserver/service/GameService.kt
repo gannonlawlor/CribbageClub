@@ -223,6 +223,20 @@ class GameService(
     }
 
     /**
+     * Finds active (in-progress) games for a player.
+     */
+    fun findActiveGamesByPlayer(playerId: String): List<GameState> {
+        return gameRepository?.findActiveGamesByPlayer(playerId)?.map { deserializeGameState(it) } ?: emptyList()
+    }
+
+    /**
+     * Finds completed games for a player.
+     */
+    fun findCompletedGamesByPlayer(playerId: String): List<GameState> {
+        return gameRepository?.findCompletedGamesByPlayer(playerId)?.map { deserializeGameState(it) } ?: emptyList()
+    }
+
+    /**
      * Removes games that have been inactive for longer than the given duration.
      * Finished games (GAME_OVER) are always eligible for removal.
      *

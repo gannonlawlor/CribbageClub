@@ -24,14 +24,15 @@ class JwtAuthenticationFilter(
         if (token != null && jwtService.isTokenValid(token)) {
             val userId = jwtService.getUserIdFromToken(token)
             val username = jwtService.getUsernameFromToken(token)
+            val isGuest = jwtService.isGuestFromToken(token)
 
             if (userId != null && username != null) {
                 val auth = UsernamePasswordAuthenticationToken(userId, null, emptyList())
                 SecurityContextHolder.getContext().authentication = auth
 
-                // Set userId as request attribute for easy access in controllers
                 request.setAttribute("userId", userId)
                 request.setAttribute("username", username)
+                request.setAttribute("isGuest", isGuest)
             }
         }
 

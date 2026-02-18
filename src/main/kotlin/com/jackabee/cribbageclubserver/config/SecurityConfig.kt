@@ -30,8 +30,8 @@ class SecurityConfig(
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
             .authorizeHttpRequests { auth ->
                 auth
-                    // Public auth endpoints (register, login)
-                    .requestMatchers("/api/auth/register", "/api/auth/login").permitAll()
+                    // Public auth endpoints (register, login, guest)
+                    .requestMatchers("/api/auth/register", "/api/auth/login", "/api/auth/guest").permitAll()
                     .requestMatchers("/api/stats/leaderboard").permitAll()
                     .requestMatchers("/ws/**").permitAll()
                     .requestMatchers("/actuator/**").permitAll()

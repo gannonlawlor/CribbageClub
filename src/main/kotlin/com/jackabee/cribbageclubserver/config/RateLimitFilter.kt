@@ -32,7 +32,7 @@ class RateLimitFilter(
 
     override fun shouldNotFilter(request: HttpServletRequest): Boolean {
         val path = request.requestURI
-        return !(path == "/api/auth/login" || path == "/api/auth/register")
+        return !(path == "/api/auth/login" || path == "/api/auth/register" || path == "/api/auth/guest")
     }
 
     override fun doFilterInternal(

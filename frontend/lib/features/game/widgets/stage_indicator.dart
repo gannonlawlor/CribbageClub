@@ -5,6 +5,7 @@ import '../../../core/models/game_state.dart';
 class StageIndicator extends StatelessWidget {
   final GameStage stage;
   final bool isMyTurn;
+  final bool isDealer;
   final String? currentPlayerName;
   final int selectedCardCount;
 
@@ -12,6 +13,7 @@ class StageIndicator extends StatelessWidget {
     super.key,
     required this.stage,
     required this.isMyTurn,
+    this.isDealer = false,
     this.currentPlayerName,
     this.selectedCardCount = 0,
   });
@@ -21,8 +23,9 @@ class StageIndicator extends StatelessWidget {
       case GameStage.dealing:
         return 'Dealing cards...';
       case GameStage.discardingToCrib:
+        final cribOwner = isDealer ? 'your' : "opponent's";
         return isMyTurn
-            ? 'Select 2 cards to discard ($selectedCardCount/2 selected)'
+            ? 'Discard 2 to $cribOwner crib ($selectedCardCount/2 selected)'
             : 'Waiting for ${currentPlayerName ?? "opponent"} to discard...';
       case GameStage.cutting:
         return isMyTurn ? 'Tap to cut the deck' : 'Waiting for cut...';
