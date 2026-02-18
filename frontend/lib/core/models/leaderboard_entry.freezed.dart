@@ -31,6 +31,7 @@ mixin _$LeaderboardEntry {
   int get highestGameScore => throw _privateConstructorUsedError;
   int get currentWinStreak => throw _privateConstructorUsedError;
   int get longestWinStreak => throw _privateConstructorUsedError;
+  double get rating => throw _privateConstructorUsedError;
 
   /// Serializes this LeaderboardEntry to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -60,6 +61,7 @@ abstract class $LeaderboardEntryCopyWith<$Res> {
     int highestGameScore,
     int currentWinStreak,
     int longestWinStreak,
+    double rating,
   });
 }
 
@@ -88,6 +90,7 @@ class _$LeaderboardEntryCopyWithImpl<$Res, $Val extends LeaderboardEntry>
     Object? highestGameScore = null,
     Object? currentWinStreak = null,
     Object? longestWinStreak = null,
+    Object? rating = null,
   }) {
     return _then(
       _value.copyWith(
@@ -131,6 +134,10 @@ class _$LeaderboardEntryCopyWithImpl<$Res, $Val extends LeaderboardEntry>
                 ? _value.longestWinStreak
                 : longestWinStreak // ignore: cast_nullable_to_non_nullable
                       as int,
+            rating: null == rating
+                ? _value.rating
+                : rating // ignore: cast_nullable_to_non_nullable
+                      as double,
           )
           as $Val,
     );
@@ -157,6 +164,7 @@ abstract class _$$LeaderboardEntryImplCopyWith<$Res>
     int highestGameScore,
     int currentWinStreak,
     int longestWinStreak,
+    double rating,
   });
 }
 
@@ -184,6 +192,7 @@ class __$$LeaderboardEntryImplCopyWithImpl<$Res>
     Object? highestGameScore = null,
     Object? currentWinStreak = null,
     Object? longestWinStreak = null,
+    Object? rating = null,
   }) {
     return _then(
       _$LeaderboardEntryImpl(
@@ -227,6 +236,10 @@ class __$$LeaderboardEntryImplCopyWithImpl<$Res>
             ? _value.longestWinStreak
             : longestWinStreak // ignore: cast_nullable_to_non_nullable
                   as int,
+        rating: null == rating
+            ? _value.rating
+            : rating // ignore: cast_nullable_to_non_nullable
+                  as double,
       ),
     );
   }
@@ -246,6 +259,7 @@ class _$LeaderboardEntryImpl implements _LeaderboardEntry {
     this.highestGameScore = 0,
     this.currentWinStreak = 0,
     this.longestWinStreak = 0,
+    this.rating = 1500.0,
   });
 
   factory _$LeaderboardEntryImpl.fromJson(Map<String, dynamic> json) =>
@@ -279,10 +293,13 @@ class _$LeaderboardEntryImpl implements _LeaderboardEntry {
   @override
   @JsonKey()
   final int longestWinStreak;
+  @override
+  @JsonKey()
+  final double rating;
 
   @override
   String toString() {
-    return 'LeaderboardEntry(playerId: $playerId, displayName: $displayName, gamesPlayed: $gamesPlayed, gamesWon: $gamesWon, gamesLost: $gamesLost, winRate: $winRate, averageScore: $averageScore, highestGameScore: $highestGameScore, currentWinStreak: $currentWinStreak, longestWinStreak: $longestWinStreak)';
+    return 'LeaderboardEntry(playerId: $playerId, displayName: $displayName, gamesPlayed: $gamesPlayed, gamesWon: $gamesWon, gamesLost: $gamesLost, winRate: $winRate, averageScore: $averageScore, highestGameScore: $highestGameScore, currentWinStreak: $currentWinStreak, longestWinStreak: $longestWinStreak, rating: $rating)';
   }
 
   @override
@@ -308,7 +325,8 @@ class _$LeaderboardEntryImpl implements _LeaderboardEntry {
             (identical(other.currentWinStreak, currentWinStreak) ||
                 other.currentWinStreak == currentWinStreak) &&
             (identical(other.longestWinStreak, longestWinStreak) ||
-                other.longestWinStreak == longestWinStreak));
+                other.longestWinStreak == longestWinStreak) &&
+            (identical(other.rating, rating) || other.rating == rating));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -325,6 +343,7 @@ class _$LeaderboardEntryImpl implements _LeaderboardEntry {
     highestGameScore,
     currentWinStreak,
     longestWinStreak,
+    rating,
   );
 
   /// Create a copy of LeaderboardEntry
@@ -356,6 +375,7 @@ abstract class _LeaderboardEntry implements LeaderboardEntry {
     final int highestGameScore,
     final int currentWinStreak,
     final int longestWinStreak,
+    final double rating,
   }) = _$LeaderboardEntryImpl;
 
   factory _LeaderboardEntry.fromJson(Map<String, dynamic> json) =
@@ -381,6 +401,8 @@ abstract class _LeaderboardEntry implements LeaderboardEntry {
   int get currentWinStreak;
   @override
   int get longestWinStreak;
+  @override
+  double get rating;
 
   /// Create a copy of LeaderboardEntry
   /// with the given fields replaced by the non-null parameter values.

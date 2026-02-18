@@ -19,6 +19,7 @@ _$LeaderboardEntryImpl _$$LeaderboardEntryImplFromJson(
   highestGameScore: (json['highestGameScore'] as num?)?.toInt() ?? 0,
   currentWinStreak: (json['currentWinStreak'] as num?)?.toInt() ?? 0,
   longestWinStreak: (json['longestWinStreak'] as num?)?.toInt() ?? 0,
+  rating: (json['rating'] as num?)?.toDouble() ?? 1500.0,
 );
 
 Map<String, dynamic> _$$LeaderboardEntryImplToJson(
@@ -34,4 +35,5 @@ Map<String, dynamic> _$$LeaderboardEntryImplToJson(
   'highestGameScore': instance.highestGameScore,
   'currentWinStreak': instance.currentWinStreak,
   'longestWinStreak': instance.longestWinStreak,
+  'rating': instance.rating,
 };

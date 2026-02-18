@@ -7,6 +7,8 @@ import '../../../core/models/game_state.dart';
 import '../../../core/providers/notification_provider.dart';
 import '../../../shared/widgets/auth_required.dart';
 import '../../../shared/widgets/loading_overlay.dart';
+import '../../daily_puzzle/state/puzzle_provider.dart';
+import '../../daily_puzzle/widgets/streak_badge.dart';
 import '../../game/state/game_providers.dart';
 
 final _isCreatingGameProvider = StateProvider<bool>((ref) => false);
@@ -159,6 +161,38 @@ class HomeScreen extends ConsumerWidget {
                         label: const Text(
                           'Play vs AI',
                           style: TextStyle(fontSize: 18),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 56,
+                      child: OutlinedButton.icon(
+                        onPressed: () => context.go('/daily-puzzle'),
+                        icon: const Icon(Icons.calendar_today, size: 24),
+                        label: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Text(
+                              'Daily Puzzle',
+                              style: TextStyle(fontSize: 18),
+                            ),
+                            Consumer(
+                              builder: (context, ref, _) {
+                                final streak = ref.watch(dailyPuzzleProvider).streak;
+                                if (streak <= 0) return const SizedBox.shrink();
+                                return Padding(
+                                  padding: const EdgeInsets.only(left: 8),
+                                  child: StreakBadge(streak: streak, fontSize: 12),
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          side: const BorderSide(color: Colors.orange, width: 1.5),
                         ),
                       ),
                     ),

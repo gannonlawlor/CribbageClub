@@ -2,12 +2,16 @@ import 'package:dio/dio.dart';
 import '../../config/constants.dart';
 import '../auth/auth_service.dart';
 import '../models/auth.dart';
+import '../models/card.dart';
 import '../models/friend.dart';
 import '../models/game_action.dart';
+import '../models/game_analysis.dart';
 import '../models/game_state.dart';
 import '../models/join_by_code_result.dart';
 import '../models/leaderboard_entry.dart';
 import '../models/lobby.dart';
+import '../models/puzzle.dart';
+import '../models/stats_response.dart';
 
 class RestClient {
   final Dio _dio;
@@ -241,5 +245,36 @@ class RestClient {
 
   Future<void> cancelChallenge(String lobbyId) async {
     await _dio.post('/api/challenges/$lobbyId/cancel');
+  }
+
+  // Analysis
+
+  Future<GameAnalysis> getGameAnalysis(String gameId) async {
+    final response = await _dio.get('/api/games/$gameId/analysis');
+    return GameAnalysis.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  // Stats
+
+  Future<StatsResponse> getMyStats() async {
+    final response = await _dio.get('/api/stats/me');
+    return StatsResponse.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  // Puzzles
+
+  Future<PuzzleResponse> getDailyPuzzle() async {
+    final response = await _dio.get('/api/puzzles/daily');
+    return PuzzleResponse.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  Future<PuzzleSolveResponse> solvePuzzle(
+    String puzzleId,
+    List<PlayingCard> chosenDiscard,
+  ) async {
+    final response = await _dio.post('/api/puzzles/$puzzleId/solve', data: {
+      'chosenDiscard': chosenDiscard.map((c) => c.toJson()).toList(),
+    });
+    return PuzzleSolveResponse.fromJson(response.data as Map<String, dynamic>);
   }
 }

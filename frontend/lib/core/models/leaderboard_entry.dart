@@ -16,6 +16,7 @@ class LeaderboardEntry with _$LeaderboardEntry {
     @Default(0) int highestGameScore,
     @Default(0) int currentWinStreak,
     @Default(0) int longestWinStreak,
+    @Default(1500.0) double rating,
   }) = _LeaderboardEntry;
 
   factory LeaderboardEntry.fromJson(Map<String, dynamic> json) =>
