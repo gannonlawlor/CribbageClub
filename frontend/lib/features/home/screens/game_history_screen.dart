@@ -21,18 +21,62 @@ class GameHistoryScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final localHistory = ref.watch(localGameHistoryProvider);
     final auth = ref.watch(authProvider);
-    final serverHistory = auth.isLoggedIn
-        ? ref.watch(_serverGameHistoryProvider)
-        : null;
+    final localHistory = ref.watch(localGameHistoryProvider);
 
+    // When logged in, show unified server history with optional pending-upload section
+    if (auth.isLoggedIn) {
+      final serverHistory = ref.watch(_serverGameHistoryProvider);
+
+      return Scaffold(
+        appBar: AppBar(title: const Text('Game History')),
+        body: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            // Pending upload section (local games that haven't been uploaded yet)
+            localHistory.when(
+              data: (records) {
+                if (records.isEmpty) return const SizedBox.shrink();
+                return _PendingUploadSection(records: records);
+              },
+              loading: () => const SizedBox.shrink(),
+              error: (_, __) => const SizedBox.shrink(),
+            ),
+
+            // Server game history (unified list)
+            serverHistory.when(
+              data: (games) {
+                if (games.isEmpty) {
+                  return const _SectionEmpty(
+                    message: 'No games yet. Play vs AI or online to get started!',
+                  );
+                }
+                return _ServerGamesSection(
+                  games: games,
+                  playerId: auth.userId ?? '',
+                );
+              },
+              loading: () => const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(24),
+                  child: CircularProgressIndicator(),
+                ),
+              ),
+              error: (error, _) => _SectionEmpty(
+                message: 'Failed to load game history: $error',
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Not logged in: show local games only
     return Scaffold(
       appBar: AppBar(title: const Text('Game History')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // Local games section
           localHistory.when(
             data: (records) {
               if (records.isEmpty) {
@@ -52,37 +96,6 @@ class GameHistoryScreen extends ConsumerWidget {
               message: 'Failed to load local history: $error',
             ),
           ),
-
-          // Server games section (only when logged in)
-          if (serverHistory != null) ...[
-            const SizedBox(height: 24),
-            serverHistory.when(
-              data: (games) {
-                if (games.isEmpty) {
-                  return const _SectionEmpty(
-                    message: 'No online games yet.',
-                    title: 'Online Games',
-                  );
-                }
-                return _ServerGamesSection(
-                  games: games,
-                  playerId: auth.userId ?? '',
-                );
-              },
-              loading: () => Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
-                  _SectionHeader(title: 'Online Games'),
-                  SizedBox(height: 8),
-                  Center(child: CircularProgressIndicator()),
-                ],
-              ),
-              error: (error, _) => _SectionEmpty(
-                message: 'Failed to load online history: $error',
-                title: 'Online Games',
-              ),
-            ),
-          ],
         ],
       ),
     );
@@ -109,29 +122,55 @@ class _SectionHeader extends StatelessWidget {
 
 class _SectionEmpty extends StatelessWidget {
   final String message;
-  final String? title;
 
-  const _SectionEmpty({required this.message, this.title});
+  const _SectionEmpty({required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 24),
+        child: Text(
+          message,
+          style: const TextStyle(color: Colors.white54, fontSize: 14),
+          textAlign: TextAlign.center,
+        ),
+      ),
+    );
+  }
+}
+
+class _PendingUploadSection extends StatelessWidget {
+  final List<LocalGameRecord> records;
+
+  const _PendingUploadSection({required this.records});
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (title != null) ...[
-          _SectionHeader(title: title!),
-          const SizedBox(height: 8),
-        ],
-        Center(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 24),
-            child: Text(
-              message,
-              style: const TextStyle(color: Colors.white54, fontSize: 14),
-              textAlign: TextAlign.center,
+        Row(
+          children: [
+            const Icon(Icons.cloud_upload, color: Colors.white54, size: 16),
+            const SizedBox(width: 6),
+            Text(
+              'Pending Upload (${records.length})',
+              style: const TextStyle(
+                color: Colors.white54,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
             ),
-          ),
+          ],
         ),
+        const SizedBox(height: 8),
+        for (final record in records)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: _LocalGameRow(record: record),
+          ),
+        const SizedBox(height: 16),
       ],
     );
   }
@@ -249,8 +288,6 @@ class _ServerGamesSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const _SectionHeader(title: 'Online Games'),
-        const SizedBox(height: 8),
         for (final game in games)
           Padding(
             padding: const EdgeInsets.only(bottom: 8),

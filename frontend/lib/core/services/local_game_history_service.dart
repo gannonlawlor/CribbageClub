@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/game_state.dart';
+import '../models/import_games.dart';
 import '../models/local_game_record.dart';
 
 class LocalGameHistoryService {
@@ -101,5 +102,42 @@ class LocalGameHistoryService {
     final indexJson = jsonEncode(records.map((r) => r.toJson()).toList());
     await prefs.setString(_indexKey, indexJson);
     await prefs.remove('$_stateKeyPrefix$gameId');
+  }
+
+  /// Exports all saved local games as [ImportGameRequest]s for server upload.
+  Future<List<ImportGameRequest>> exportAllForUpload() async {
+    final prefs = await _preferences;
+    final records = await getGameRecords();
+    final result = <ImportGameRequest>[];
+
+    for (final record in records) {
+      final stateStr = prefs.getString('$_stateKeyPrefix${record.gameId}');
+      if (stateStr == null) continue;
+      result.add(
+        ImportGameRequest(
+          localGameId: record.gameId,
+          stateJson: stateStr,
+          completedAt: record.completedAt.toUtc().toIso8601String(),
+        ),
+      );
+    }
+
+    return result;
+  }
+
+  /// Removes specific games from local storage (after successful upload).
+  Future<void> clearUploadedGames(List<String> localGameIds) async {
+    final prefs = await _preferences;
+    final records = await getGameRecords();
+
+    final idsToRemove = localGameIds.toSet();
+    records.removeWhere((r) => idsToRemove.contains(r.gameId));
+
+    final indexJson = jsonEncode(records.map((r) => r.toJson()).toList());
+    await prefs.setString(_indexKey, indexJson);
+
+    for (final id in localGameIds) {
+      await prefs.remove('$_stateKeyPrefix$id');
+    }
   }
 }

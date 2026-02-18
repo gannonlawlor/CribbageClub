@@ -1,0 +1,72 @@
+import 'dart:developer';
+
+import '../api/rest_client.dart';
+import '../models/import_games.dart';
+import 'local_game_history_service.dart';
+
+class GameUploadService {
+  final RestClient _restClient;
+  final LocalGameHistoryService _historyService;
+
+  GameUploadService({
+    required RestClient restClient,
+    required LocalGameHistoryService historyService,
+  }) : _restClient = restClient,
+       _historyService = historyService;
+
+  /// Uploads all local games to the server, then clears successfully
+  /// imported and duplicate games from local storage.
+  /// Best-effort: catches errors silently so auth/login is never blocked.
+  Future<void> uploadAllLocalGames() async {
+    try {
+      final games = await _historyService.exportAllForUpload();
+      if (games.isEmpty) return;
+
+      final response = await _restClient.importLocalGames(games);
+
+      // Clear both successfully imported and duplicate games from local storage
+      final idsToRemove = [
+        ...response.imported.map((m) => m.localGameId),
+        ...response.duplicates,
+      ];
+      if (idsToRemove.isNotEmpty) {
+        await _historyService.clearUploadedGames(idsToRemove);
+      }
+
+      log(
+        'Game upload complete: ${response.imported.length} imported, '
+        '${response.duplicates.length} duplicates, '
+        '${response.errors.length} errors',
+      );
+    } catch (e) {
+      log('Failed to upload local games: $e');
+    }
+  }
+
+  /// Uploads a single game immediately. On failure, the game stays
+  /// in local storage for later retry.
+  Future<void> uploadSingleGame({
+    required String gameId,
+    required String stateJson,
+    required String completedAt,
+  }) async {
+    try {
+      final request = ImportGameRequest(
+        localGameId: gameId,
+        stateJson: stateJson,
+        completedAt: completedAt,
+      );
+      final response = await _restClient.importLocalGames([request]);
+
+      final idsToRemove = [
+        ...response.imported.map((m) => m.localGameId),
+        ...response.duplicates,
+      ];
+      if (idsToRemove.isNotEmpty) {
+        await _historyService.clearUploadedGames(idsToRemove);
+      }
+    } catch (e) {
+      log('Failed to upload game $gameId: $e');
+    }
+  }
+}

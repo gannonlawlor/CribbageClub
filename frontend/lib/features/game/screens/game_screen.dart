@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -116,6 +118,17 @@ class GameScreen extends ConsumerWidget {
           final service = ref.read(localGameHistoryServiceProvider);
           await service.saveCompletedGame(gs);
           ref.invalidate(localGameHistoryProvider);
+
+          // If logged in, upload to server immediately
+          if (auth.isLoggedIn) {
+            final uploadService = ref.read(gameUploadServiceProvider);
+            await uploadService.uploadSingleGame(
+              gameId: gs.gameId,
+              stateJson: _encodeGameState(gs),
+              completedAt: DateTime.now().toUtc().toIso8601String(),
+            );
+            ref.invalidate(localGameHistoryProvider);
+          }
         });
       }
     }
@@ -721,3 +734,5 @@ class _TopBar extends StatelessWidget {
     );
   }
 }
+
+String _encodeGameState(GameState gs) => jsonEncode(gs.toJson());

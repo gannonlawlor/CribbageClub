@@ -13,11 +13,11 @@ class LocalGameService {
 
   static const _maxAIIterations = 10;
 
-  Future<GameState> createGame({
+  GameState createGame({
     required String humanPlayerId,
     required String humanPlayerName,
     required String difficulty,
-  }) async {
+  }) {
     final gameId =
         'local_${DateTime.now().millisecondsSinceEpoch}_'
         '${Random().nextInt(9000) + 1000}';
@@ -34,7 +34,7 @@ class LocalGameService {
       _ => 'easy',
     };
 
-    _engine = await rust.engineNew(
+    _engine = rust.engineNew(
       gameId: gameId,
       player1Id: humanPlayerId,
       player1Name: humanPlayerName,
@@ -48,9 +48,9 @@ class LocalGameService {
     return _processAIActions();
   }
 
-  Future<GameState> applyHumanAction(GameAction action) async {
+  GameState applyHumanAction(GameAction action) {
     final actionJson = jsonEncode(action.toJson());
-    await rust.engineApplyActionJson(
+    rust.engineApplyActionJson(
       engine: _engine!,
       actionJson: actionJson,
     );
@@ -66,9 +66,9 @@ class LocalGameService {
   }
 
   /// DEV ONLY: Set a player's score.
-  Future<void> devSetScore(String playerId, int score) async {
+  void devSetScore(String playerId, int score) {
     if (_engine == null) return;
-    await rust.engineDevSetScore(
+    rust.engineDevSetScore(
       engine: _engine!,
       playerId: playerId,
       score: score,
@@ -76,19 +76,19 @@ class LocalGameService {
   }
 
   /// DEV ONLY: Queue specific hands for next deal.
-  Future<void> devSetNextHands(Map<String, List<PlayingCard>> hands) async {
+  void devSetNextHands(Map<String, List<PlayingCard>> hands) {
     if (_engine == null) return;
     final rustHands = hands.map(
       (playerId, cards) => MapEntry(playerId, cards.map((c) => c.toJson()).toList()),
     );
-    await rust.engineDevSetNextHandsJson(
+    rust.engineDevSetNextHandsJson(
       engine: _engine!,
       handsJson: jsonEncode(rustHands),
     );
   }
 
-  Future<GameState> _processAIActions() async {
-    final stateJson = await rust.engineProcessAiJson(
+  GameState _processAIActions() {
+    final stateJson = rust.engineProcessAiJson(
       engine: _engine!,
       aiPlayerId: _aiPlayerId!,
       difficulty: _difficulty!,

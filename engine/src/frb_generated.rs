@@ -47,16 +47,15 @@ flutter_rust_bridge::frb_generated_default_handler!();
 // Section: wire_funcs
 
 fn wire__crate__api__simple__analyze_discards_json_impl(
-    port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
     rust_vec_len_: i32,
     data_len_: i32,
-) {
-    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec, _>(
         flutter_rust_bridge::for_generated::TaskInfo {
             debug_name: "analyze_discards_json",
-            port: Some(port_),
-            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+            port: None,
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync,
         },
         move || {
             let message = unsafe {
@@ -71,13 +70,11 @@ fn wire__crate__api__simple__analyze_discards_json_impl(
             let api_hand_json = <String>::sse_decode(&mut deserializer);
             let api_is_dealer = <bool>::sse_decode(&mut deserializer);
             deserializer.end();
-            move |context| {
-                transform_result_sse::<_, String>((move || {
-                    let output_ok =
-                        crate::api::simple::analyze_discards_json(api_hand_json, api_is_dealer)?;
-                    Ok(output_ok)
-                })())
-            }
+            transform_result_sse::<_, String>((move || {
+                let output_ok =
+                    crate::api::simple::analyze_discards_json(api_hand_json, api_is_dealer)?;
+                Ok(output_ok)
+            })())
         },
     )
 }
@@ -118,16 +115,15 @@ fn wire__crate__api__simple__calculate_hand_score_json_impl(
     )
 }
 fn wire__crate__api__simple__engine_apply_action_json_impl(
-    port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
     rust_vec_len_: i32,
     data_len_: i32,
-) {
-    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec, _>(
         flutter_rust_bridge::for_generated::TaskInfo {
             debug_name: "engine_apply_action_json",
-            port: Some(port_),
-            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+            port: None,
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync,
         },
         move || {
             let message = unsafe {
@@ -144,31 +140,29 @@ fn wire__crate__api__simple__engine_apply_action_json_impl(
             >>::sse_decode(&mut deserializer);
             let api_action_json = <String>::sse_decode(&mut deserializer);
             deserializer.end();
-            move |context| {
-                transform_result_sse::<_, String>((move || {
-                    let mut api_engine_guard = None;
-                    let decode_indices_ =
-                        flutter_rust_bridge::for_generated::lockable_compute_decode_order(vec![
-                            flutter_rust_bridge::for_generated::LockableOrderInfo::new(
-                                &api_engine,
-                                0,
-                                true,
-                            ),
-                        ]);
-                    for i in decode_indices_ {
-                        match i {
-                            0 => api_engine_guard = Some(api_engine.lockable_decode_sync_ref_mut()),
-                            _ => unreachable!(),
-                        }
+            transform_result_sse::<_, String>((move || {
+                let mut api_engine_guard = None;
+                let decode_indices_ =
+                    flutter_rust_bridge::for_generated::lockable_compute_decode_order(vec![
+                        flutter_rust_bridge::for_generated::LockableOrderInfo::new(
+                            &api_engine,
+                            0,
+                            true,
+                        ),
+                    ]);
+                for i in decode_indices_ {
+                    match i {
+                        0 => api_engine_guard = Some(api_engine.lockable_decode_sync_ref_mut()),
+                        _ => unreachable!(),
                     }
-                    let mut api_engine_guard = api_engine_guard.unwrap();
-                    let output_ok = crate::api::simple::engine_apply_action_json(
-                        &mut *api_engine_guard,
-                        api_action_json,
-                    )?;
-                    Ok(output_ok)
-                })())
-            }
+                }
+                let mut api_engine_guard = api_engine_guard.unwrap();
+                let output_ok = crate::api::simple::engine_apply_action_json(
+                    &mut *api_engine_guard,
+                    api_action_json,
+                )?;
+                Ok(output_ok)
+            })())
         },
     )
 }
@@ -223,16 +217,15 @@ fn wire__crate__api__simple__engine_current_state_json_impl(
     )
 }
 fn wire__crate__api__simple__engine_dev_set_next_hands_json_impl(
-    port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
     rust_vec_len_: i32,
     data_len_: i32,
-) {
-    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec, _>(
         flutter_rust_bridge::for_generated::TaskInfo {
             debug_name: "engine_dev_set_next_hands_json",
-            port: Some(port_),
-            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+            port: None,
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync,
         },
         move || {
             let message = unsafe {
@@ -249,45 +242,42 @@ fn wire__crate__api__simple__engine_dev_set_next_hands_json_impl(
             >>::sse_decode(&mut deserializer);
             let api_hands_json = <String>::sse_decode(&mut deserializer);
             deserializer.end();
-            move |context| {
-                transform_result_sse::<_, String>((move || {
-                    let mut api_engine_guard = None;
-                    let decode_indices_ =
-                        flutter_rust_bridge::for_generated::lockable_compute_decode_order(vec![
-                            flutter_rust_bridge::for_generated::LockableOrderInfo::new(
-                                &api_engine,
-                                0,
-                                true,
-                            ),
-                        ]);
-                    for i in decode_indices_ {
-                        match i {
-                            0 => api_engine_guard = Some(api_engine.lockable_decode_sync_ref_mut()),
-                            _ => unreachable!(),
-                        }
+            transform_result_sse::<_, String>((move || {
+                let mut api_engine_guard = None;
+                let decode_indices_ =
+                    flutter_rust_bridge::for_generated::lockable_compute_decode_order(vec![
+                        flutter_rust_bridge::for_generated::LockableOrderInfo::new(
+                            &api_engine,
+                            0,
+                            true,
+                        ),
+                    ]);
+                for i in decode_indices_ {
+                    match i {
+                        0 => api_engine_guard = Some(api_engine.lockable_decode_sync_ref_mut()),
+                        _ => unreachable!(),
                     }
-                    let mut api_engine_guard = api_engine_guard.unwrap();
-                    let output_ok = crate::api::simple::engine_dev_set_next_hands_json(
-                        &mut *api_engine_guard,
-                        api_hands_json,
-                    )?;
-                    Ok(output_ok)
-                })())
-            }
+                }
+                let mut api_engine_guard = api_engine_guard.unwrap();
+                let output_ok = crate::api::simple::engine_dev_set_next_hands_json(
+                    &mut *api_engine_guard,
+                    api_hands_json,
+                )?;
+                Ok(output_ok)
+            })())
         },
     )
 }
 fn wire__crate__api__simple__engine_dev_set_score_impl(
-    port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
     rust_vec_len_: i32,
     data_len_: i32,
-) {
-    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec, _>(
         flutter_rust_bridge::for_generated::TaskInfo {
             debug_name: "engine_dev_set_score",
-            port: Some(port_),
-            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+            port: None,
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync,
         },
         move || {
             let message = unsafe {
@@ -305,46 +295,43 @@ fn wire__crate__api__simple__engine_dev_set_score_impl(
             let api_player_id = <String>::sse_decode(&mut deserializer);
             let api_score = <i32>::sse_decode(&mut deserializer);
             deserializer.end();
-            move |context| {
-                transform_result_sse::<_, String>((move || {
-                    let mut api_engine_guard = None;
-                    let decode_indices_ =
-                        flutter_rust_bridge::for_generated::lockable_compute_decode_order(vec![
-                            flutter_rust_bridge::for_generated::LockableOrderInfo::new(
-                                &api_engine,
-                                0,
-                                true,
-                            ),
-                        ]);
-                    for i in decode_indices_ {
-                        match i {
-                            0 => api_engine_guard = Some(api_engine.lockable_decode_sync_ref_mut()),
-                            _ => unreachable!(),
-                        }
+            transform_result_sse::<_, String>((move || {
+                let mut api_engine_guard = None;
+                let decode_indices_ =
+                    flutter_rust_bridge::for_generated::lockable_compute_decode_order(vec![
+                        flutter_rust_bridge::for_generated::LockableOrderInfo::new(
+                            &api_engine,
+                            0,
+                            true,
+                        ),
+                    ]);
+                for i in decode_indices_ {
+                    match i {
+                        0 => api_engine_guard = Some(api_engine.lockable_decode_sync_ref_mut()),
+                        _ => unreachable!(),
                     }
-                    let mut api_engine_guard = api_engine_guard.unwrap();
-                    let output_ok = crate::api::simple::engine_dev_set_score(
-                        &mut *api_engine_guard,
-                        api_player_id,
-                        api_score,
-                    )?;
-                    Ok(output_ok)
-                })())
-            }
+                }
+                let mut api_engine_guard = api_engine_guard.unwrap();
+                let output_ok = crate::api::simple::engine_dev_set_score(
+                    &mut *api_engine_guard,
+                    api_player_id,
+                    api_score,
+                )?;
+                Ok(output_ok)
+            })())
         },
     )
 }
 fn wire__crate__api__simple__engine_new_impl(
-    port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
     rust_vec_len_: i32,
     data_len_: i32,
-) {
-    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec, _>(
         flutter_rust_bridge::for_generated::TaskInfo {
             debug_name: "engine_new",
-            port: Some(port_),
-            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+            port: None,
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync,
         },
         move || {
             let message = unsafe {
@@ -363,33 +350,30 @@ fn wire__crate__api__simple__engine_new_impl(
             let api_player2_name = <String>::sse_decode(&mut deserializer);
             let api_seed = <Option<u64>>::sse_decode(&mut deserializer);
             deserializer.end();
-            move |context| {
-                transform_result_sse::<_, String>((move || {
-                    let output_ok = crate::api::simple::engine_new(
-                        api_game_id,
-                        api_player1_id,
-                        api_player1_name,
-                        api_player2_id,
-                        api_player2_name,
-                        api_seed,
-                    )?;
-                    Ok(output_ok)
-                })())
-            }
+            transform_result_sse::<_, String>((move || {
+                let output_ok = crate::api::simple::engine_new(
+                    api_game_id,
+                    api_player1_id,
+                    api_player1_name,
+                    api_player2_id,
+                    api_player2_name,
+                    api_seed,
+                )?;
+                Ok(output_ok)
+            })())
         },
     )
 }
 fn wire__crate__api__simple__engine_process_ai_json_impl(
-    port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
     rust_vec_len_: i32,
     data_len_: i32,
-) {
-    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec, _>(
         flutter_rust_bridge::for_generated::TaskInfo {
             debug_name: "engine_process_ai_json",
-            port: Some(port_),
-            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+            port: None,
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync,
         },
         move || {
             let message = unsafe {
@@ -408,47 +392,44 @@ fn wire__crate__api__simple__engine_process_ai_json_impl(
             let api_difficulty = <String>::sse_decode(&mut deserializer);
             let api_max_iterations = <u32>::sse_decode(&mut deserializer);
             deserializer.end();
-            move |context| {
-                transform_result_sse::<_, String>((move || {
-                    let mut api_engine_guard = None;
-                    let decode_indices_ =
-                        flutter_rust_bridge::for_generated::lockable_compute_decode_order(vec![
-                            flutter_rust_bridge::for_generated::LockableOrderInfo::new(
-                                &api_engine,
-                                0,
-                                true,
-                            ),
-                        ]);
-                    for i in decode_indices_ {
-                        match i {
-                            0 => api_engine_guard = Some(api_engine.lockable_decode_sync_ref_mut()),
-                            _ => unreachable!(),
-                        }
+            transform_result_sse::<_, String>((move || {
+                let mut api_engine_guard = None;
+                let decode_indices_ =
+                    flutter_rust_bridge::for_generated::lockable_compute_decode_order(vec![
+                        flutter_rust_bridge::for_generated::LockableOrderInfo::new(
+                            &api_engine,
+                            0,
+                            true,
+                        ),
+                    ]);
+                for i in decode_indices_ {
+                    match i {
+                        0 => api_engine_guard = Some(api_engine.lockable_decode_sync_ref_mut()),
+                        _ => unreachable!(),
                     }
-                    let mut api_engine_guard = api_engine_guard.unwrap();
-                    let output_ok = crate::api::simple::engine_process_ai_json(
-                        &mut *api_engine_guard,
-                        api_ai_player_id,
-                        api_difficulty,
-                        api_max_iterations,
-                    )?;
-                    Ok(output_ok)
-                })())
-            }
+                }
+                let mut api_engine_guard = api_engine_guard.unwrap();
+                let output_ok = crate::api::simple::engine_process_ai_json(
+                    &mut *api_engine_guard,
+                    api_ai_player_id,
+                    api_difficulty,
+                    api_max_iterations,
+                )?;
+                Ok(output_ok)
+            })())
         },
     )
 }
 fn wire__crate__api__simple__engine_restore_impl(
-    port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
     rust_vec_len_: i32,
     data_len_: i32,
-) {
-    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec, _>(
         flutter_rust_bridge::for_generated::TaskInfo {
             debug_name: "engine_restore",
-            port: Some(port_),
-            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+            port: None,
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync,
         },
         move || {
             let message = unsafe {
@@ -462,12 +443,10 @@ fn wire__crate__api__simple__engine_restore_impl(
                 flutter_rust_bridge::for_generated::SseDeserializer::new(message);
             let api_state_json = <String>::sse_decode(&mut deserializer);
             deserializer.end();
-            move |context| {
-                transform_result_sse::<_, String>((move || {
-                    let output_ok = crate::api::simple::engine_restore(api_state_json)?;
-                    Ok(output_ok)
-                })())
-            }
+            transform_result_sse::<_, String>((move || {
+                let output_ok = crate::api::simple::engine_restore(api_state_json)?;
+                Ok(output_ok)
+            })())
         },
     )
 }
@@ -516,16 +495,15 @@ fn wire__crate__api__simple__glicko2_calculate_json_impl(
     )
 }
 fn wire__crate__api__simple__init_app_impl(
-    port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
     rust_vec_len_: i32,
     data_len_: i32,
-) {
-    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec, _>(
         flutter_rust_bridge::for_generated::TaskInfo {
             debug_name: "init_app",
-            port: Some(port_),
-            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+            port: None,
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync,
         },
         move || {
             let message = unsafe {
@@ -538,14 +516,12 @@ fn wire__crate__api__simple__init_app_impl(
             let mut deserializer =
                 flutter_rust_bridge::for_generated::SseDeserializer::new(message);
             deserializer.end();
-            move |context| {
-                transform_result_sse::<_, ()>((move || {
-                    let output_ok = Result::<_, ()>::Ok({
-                        crate::api::simple::init_app();
-                    })?;
-                    Ok(output_ok)
-                })())
-            }
+            transform_result_sse::<_, ()>((move || {
+                let output_ok = Result::<_, ()>::Ok({
+                    crate::api::simple::init_app();
+                })?;
+                Ok(output_ok)
+            })())
         },
     )
 }
@@ -672,28 +648,6 @@ fn pde_ffi_dispatcher_primary_impl(
 ) {
     // Codec=Pde (Serialization + dispatch), see doc to use other codecs
     match func_id {
-        1 => {
-            wire__crate__api__simple__analyze_discards_json_impl(port, ptr, rust_vec_len, data_len)
-        }
-        3 => wire__crate__api__simple__engine_apply_action_json_impl(
-            port,
-            ptr,
-            rust_vec_len,
-            data_len,
-        ),
-        5 => wire__crate__api__simple__engine_dev_set_next_hands_json_impl(
-            port,
-            ptr,
-            rust_vec_len,
-            data_len,
-        ),
-        6 => wire__crate__api__simple__engine_dev_set_score_impl(port, ptr, rust_vec_len, data_len),
-        7 => wire__crate__api__simple__engine_new_impl(port, ptr, rust_vec_len, data_len),
-        8 => {
-            wire__crate__api__simple__engine_process_ai_json_impl(port, ptr, rust_vec_len, data_len)
-        }
-        9 => wire__crate__api__simple__engine_restore_impl(port, ptr, rust_vec_len, data_len),
-        11 => wire__crate__api__simple__init_app_impl(port, ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -706,9 +660,21 @@ fn pde_ffi_dispatcher_sync_impl(
 ) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
     // Codec=Pde (Serialization + dispatch), see doc to use other codecs
     match func_id {
+        1 => wire__crate__api__simple__analyze_discards_json_impl(ptr, rust_vec_len, data_len),
         2 => wire__crate__api__simple__calculate_hand_score_json_impl(ptr, rust_vec_len, data_len),
+        3 => wire__crate__api__simple__engine_apply_action_json_impl(ptr, rust_vec_len, data_len),
         4 => wire__crate__api__simple__engine_current_state_json_impl(ptr, rust_vec_len, data_len),
+        5 => wire__crate__api__simple__engine_dev_set_next_hands_json_impl(
+            ptr,
+            rust_vec_len,
+            data_len,
+        ),
+        6 => wire__crate__api__simple__engine_dev_set_score_impl(ptr, rust_vec_len, data_len),
+        7 => wire__crate__api__simple__engine_new_impl(ptr, rust_vec_len, data_len),
+        8 => wire__crate__api__simple__engine_process_ai_json_impl(ptr, rust_vec_len, data_len),
+        9 => wire__crate__api__simple__engine_restore_impl(ptr, rust_vec_len, data_len),
         10 => wire__crate__api__simple__glicko2_calculate_json_impl(ptr, rust_vec_len, data_len),
+        11 => wire__crate__api__simple__init_app_impl(ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
