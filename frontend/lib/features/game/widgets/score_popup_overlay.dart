@@ -95,10 +95,7 @@ class _ScorePopupOverlayState extends ConsumerState<ScorePopupOverlay>
 
     return Stack(
       children: _activePopups.map((popup) {
-        return _ScorePopupWidget(
-          key: ValueKey(popup.id),
-          entry: popup,
-        );
+        return _ScorePopupWidget(key: ValueKey(popup.id), entry: popup);
       }).toList(),
     );
   }
@@ -130,33 +127,32 @@ class _ScorePopupWidget extends StatelessWidget {
     final slideUp = Tween<Offset>(
       begin: Offset.zero,
       end: const Offset(0, -0.5),
-    ).animate(CurvedAnimation(
-      parent: entry.controller,
-      curve: Curves.easeOut,
-    ));
+    ).animate(CurvedAnimation(parent: entry.controller, curve: Curves.easeOut));
 
-    final fade = Tween<double>(
-      begin: 1.0,
-      end: 0.0,
-    ).animate(CurvedAnimation(
-      parent: entry.controller,
-      // Hold fully visible for first 60%, then fade out
-      curve: const Interval(0.6, 1.0, curve: Curves.easeIn),
-    ));
+    final fade = Tween<double>(begin: 1.0, end: 0.0).animate(
+      CurvedAnimation(
+        parent: entry.controller,
+        // Hold fully visible for first 60%, then fade out
+        curve: const Interval(0.6, 1.0, curve: Curves.easeIn),
+      ),
+    );
 
     final scale = TweenSequence<double>([
       TweenSequenceItem(
-        tween: Tween(begin: 0.5, end: 1.2).chain(CurveTween(curve: Curves.easeOut)),
+        tween: Tween(
+          begin: 0.5,
+          end: 1.2,
+        ).chain(CurveTween(curve: Curves.easeOut)),
         weight: 20,
       ),
       TweenSequenceItem(
-        tween: Tween(begin: 1.2, end: 1.0).chain(CurveTween(curve: Curves.elasticOut)),
+        tween: Tween(
+          begin: 1.2,
+          end: 1.0,
+        ).chain(CurveTween(curve: Curves.elasticOut)),
         weight: 30,
       ),
-      TweenSequenceItem(
-        tween: ConstantTween(1.0),
-        weight: 50,
-      ),
+      TweenSequenceItem(tween: ConstantTween(1.0), weight: 50),
     ]).animate(entry.controller);
 
     // Position: player popups near bottom, opponent near top
@@ -170,10 +166,7 @@ class _ScorePopupWidget extends StatelessWidget {
           position: slideUp,
           child: FadeTransition(
             opacity: fade,
-            child: ScaleTransition(
-              scale: scale,
-              child: _buildContent(),
-            ),
+            child: ScaleTransition(scale: scale, child: _buildContent()),
           ),
         ),
       ),
@@ -217,7 +210,11 @@ class _ScorePopupWidget extends StatelessWidget {
               fontSize: 36,
               fontWeight: FontWeight.bold,
               shadows: [
-                Shadow(color: Colors.black54, blurRadius: 4, offset: Offset(1, 1)),
+                Shadow(
+                  color: Colors.black54,
+                  blurRadius: 4,
+                  offset: Offset(1, 1),
+                ),
               ],
             ),
           ),
@@ -229,7 +226,11 @@ class _ScorePopupWidget extends StatelessWidget {
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
                 shadows: const [
-                  Shadow(color: Colors.black54, blurRadius: 3, offset: Offset(1, 1)),
+                  Shadow(
+                    color: Colors.black54,
+                    blurRadius: 3,
+                    offset: Offset(1, 1),
+                  ),
                 ],
               ),
               textAlign: TextAlign.center,

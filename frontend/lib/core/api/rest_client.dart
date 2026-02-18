@@ -18,22 +18,26 @@ class RestClient {
   final AuthService _authService;
 
   RestClient({required AuthService authService})
-      : _authService = authService,
-        _dio = Dio(BaseOptions(
+    : _authService = authService,
+      _dio = Dio(
+        BaseOptions(
           baseUrl: AppConstants.apiBaseUrl,
           connectTimeout: AppConstants.connectTimeout,
           receiveTimeout: AppConstants.receiveTimeout,
           headers: {'Content-Type': 'application/json'},
-        )) {
-    _dio.interceptors.add(InterceptorsWrapper(
-      onRequest: (options, handler) async {
-        final token = await _authService.getToken();
-        if (token != null) {
-          options.headers['Authorization'] = 'Bearer $token';
-        }
-        handler.next(options);
-      },
-    ));
+        ),
+      ) {
+    _dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) async {
+          final token = await _authService.getToken();
+          if (token != null) {
+            options.headers['Authorization'] = 'Bearer $token';
+          }
+          handler.next(options);
+        },
+      ),
+    );
   }
 
   // Auth
@@ -48,19 +52,22 @@ class RestClient {
     String password, {
     String? displayName,
   }) async {
-    final response = await _dio.post('/api/auth/upgrade', data: {
-      'username': username,
-      'password': password,
-      'displayName': ?displayName,
-    });
+    final response = await _dio.post(
+      '/api/auth/upgrade',
+      data: {
+        'username': username,
+        'password': password,
+        'displayName': ?displayName,
+      },
+    );
     return AuthResponse.fromJson(response.data as Map<String, dynamic>);
   }
 
   Future<AuthResponse> login(String username, String password) async {
-    final response = await _dio.post('/api/auth/login', data: {
-      'username': username,
-      'password': password,
-    });
+    final response = await _dio.post(
+      '/api/auth/login',
+      data: {'username': username, 'password': password},
+    );
     return AuthResponse.fromJson(response.data as Map<String, dynamic>);
   }
 
@@ -69,21 +76,27 @@ class RestClient {
     String password, {
     String? displayName,
   }) async {
-    final response = await _dio.post('/api/auth/register', data: {
-      'username': username,
-      'password': password,
-      'displayName': ?displayName,
-    });
+    final response = await _dio.post(
+      '/api/auth/register',
+      data: {
+        'username': username,
+        'password': password,
+        'displayName': ?displayName,
+      },
+    );
     return AuthResponse.fromJson(response.data as Map<String, dynamic>);
   }
 
   // Games
 
-  Future<GameState> createAIGame({String? playerName, String? difficulty}) async {
-    final response = await _dio.post('/api/games/ai', data: {
-      'playerName': ?playerName,
-      'difficulty': ?difficulty,
-    });
+  Future<GameState> createAIGame({
+    String? playerName,
+    String? difficulty,
+  }) async {
+    final response = await _dio.post(
+      '/api/games/ai',
+      data: {'playerName': ?playerName, 'difficulty': ?difficulty},
+    );
     return GameState.fromJson(response.data as Map<String, dynamic>);
   }
 
@@ -140,20 +153,26 @@ class RestClient {
 
   // Lobbies
 
-  Future<Lobby> createLobby(String name, {String? creatorName, bool isPrivate = false}) async {
-    final response = await _dio.post('/api/lobbies', data: {
-      'name': name,
-      'creatorName': ?creatorName,
-      'isPrivate': isPrivate,
-    });
+  Future<Lobby> createLobby(
+    String name, {
+    String? creatorName,
+    bool isPrivate = false,
+  }) async {
+    final response = await _dio.post(
+      '/api/lobbies',
+      data: {'name': name, 'creatorName': ?creatorName, 'isPrivate': isPrivate},
+    );
     return Lobby.fromJson(response.data as Map<String, dynamic>);
   }
 
-  Future<JoinByCodeResult> joinByCode(String inviteCode, {String? playerName}) async {
-    final response = await _dio.post('/api/lobbies/join-by-code', data: {
-      'inviteCode': inviteCode,
-      'playerName': ?playerName,
-    });
+  Future<JoinByCodeResult> joinByCode(
+    String inviteCode, {
+    String? playerName,
+  }) async {
+    final response = await _dio.post(
+      '/api/lobbies/join-by-code',
+      data: {'inviteCode': inviteCode, 'playerName': ?playerName},
+    );
     return JoinByCodeResult.fromJson(response.data as Map<String, dynamic>);
   }
 
@@ -169,7 +188,10 @@ class RestClient {
   // Friends
 
   Future<List<UserSearchResult>> searchUsers(String query) async {
-    final response = await _dio.get('/api/friends/search', queryParameters: {'query': query});
+    final response = await _dio.get(
+      '/api/friends/search',
+      queryParameters: {'query': query},
+    );
     final list = response.data as List<dynamic>;
     return list
         .map((json) => UserSearchResult.fromJson(json as Map<String, dynamic>))
@@ -177,9 +199,10 @@ class RestClient {
   }
 
   Future<FriendRequestInfo> sendFriendRequest(String username) async {
-    final response = await _dio.post('/api/friends/requests', data: {
-      'username': username,
-    });
+    final response = await _dio.post(
+      '/api/friends/requests',
+      data: {'username': username},
+    );
     return FriendRequestInfo.fromJson(response.data as Map<String, dynamic>);
   }
 
@@ -220,9 +243,10 @@ class RestClient {
   // Challenges
 
   Future<Lobby> createChallenge(String friendUserId) async {
-    final response = await _dio.post('/api/challenges', data: {
-      'friendUserId': friendUserId,
-    });
+    final response = await _dio.post(
+      '/api/challenges',
+      data: {'friendUserId': friendUserId},
+    );
     return Lobby.fromJson(response.data as Map<String, dynamic>);
   }
 
@@ -272,9 +296,10 @@ class RestClient {
     String puzzleId,
     List<PlayingCard> chosenDiscard,
   ) async {
-    final response = await _dio.post('/api/puzzles/$puzzleId/solve', data: {
-      'chosenDiscard': chosenDiscard.map((c) => c.toJson()).toList(),
-    });
+    final response = await _dio.post(
+      '/api/puzzles/$puzzleId/solve',
+      data: {'chosenDiscard': chosenDiscard.map((c) => c.toJson()).toList()},
+    );
     return PuzzleSolveResponse.fromJson(response.data as Map<String, dynamic>);
   }
 }

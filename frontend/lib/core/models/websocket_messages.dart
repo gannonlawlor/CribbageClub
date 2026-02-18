@@ -42,9 +42,7 @@ class GameErrorMessage with _$GameErrorMessage {
 
 @freezed
 class JoinGameMessage with _$JoinGameMessage {
-  const factory JoinGameMessage({
-    required String gameId,
-  }) = _JoinGameMessage;
+  const factory JoinGameMessage({required String gameId}) = _JoinGameMessage;
 
   factory JoinGameMessage.fromJson(Map<String, dynamic> json) =>
       _$JoinGameMessageFromJson(json);

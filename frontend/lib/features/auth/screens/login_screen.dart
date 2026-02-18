@@ -15,8 +15,12 @@ class LoginScreen extends ConsumerStatefulWidget {
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _usernameController = TextEditingController(text: kDebugMode ? 'gannon' : null);
-  final _passwordController = TextEditingController(text: kDebugMode ? 'password' : null);
+  final _usernameController = TextEditingController(
+    text: kDebugMode ? 'gannon' : null,
+  );
+  final _passwordController = TextEditingController(
+    text: kDebugMode ? 'password' : null,
+  );
   bool _isRegister = false;
   bool _autovalidate = false;
 
@@ -174,7 +178,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       child: OutlinedButton.icon(
                         onPressed: auth.isLoading
                             ? null
-                            : () => ref.read(authProvider.notifier).loginAsGuest(),
+                            : () => ref
+                                  .read(authProvider.notifier)
+                                  .loginAsGuest(),
                         icon: const Icon(Icons.person_outline),
                         label: const Text('Play as Guest'),
                         style: OutlinedButton.styleFrom(

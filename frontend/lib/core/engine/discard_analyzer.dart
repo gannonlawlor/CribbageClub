@@ -35,8 +35,9 @@ class DiscardAnalyzer {
       final discard = hand.where((c) => !keep.contains(c)).toList();
       final expectedHand = _expectedHandValue(keep, handSet);
       final expectedCrib = _expectedCribValue(discard, handSet);
-      final combined =
-          isDealer ? expectedHand + expectedCrib : expectedHand - expectedCrib;
+      final combined = isDealer
+          ? expectedHand + expectedCrib
+          : expectedHand - expectedCrib;
 
       return DiscardOption(
         keep: keep,
@@ -48,13 +49,16 @@ class DiscardAnalyzer {
     }).toList();
 
     options.sort(
-        (a, b) => b.expectedCombinedValue.compareTo(a.expectedCombinedValue));
+      (a, b) => b.expectedCombinedValue.compareTo(a.expectedCombinedValue),
+    );
     return options;
   }
 
   /// Expected hand score across all possible cut cards (46 remaining).
   static double _expectedHandValue(
-      List<PlayingCard> keep, Set<PlayingCard> knownCards) {
+    List<PlayingCard> keep,
+    Set<PlayingCard> knownCards,
+  ) {
     var totalScore = 0;
     var cutCount = 0;
 
@@ -70,7 +74,9 @@ class DiscardAnalyzer {
   /// Expected crib value via full enumeration.
   /// C(46,2) opponent pairs x 44 cuts = 45,540 evaluations per option.
   static double _expectedCribValue(
-      List<PlayingCard> discard, Set<PlayingCard> knownCards) {
+    List<PlayingCard> discard,
+    Set<PlayingCard> knownCards,
+  ) {
     final remaining = _allCards.where((c) => !knownCards.contains(c)).toList();
 
     var totalScore = 0;
@@ -81,8 +87,11 @@ class DiscardAnalyzer {
         final crib = [discard[0], discard[1], remaining[i], remaining[j]];
         for (var k = 0; k < remaining.length; k++) {
           if (k == i || k == j) continue;
-          totalScore += HandCounting.calculateHandScore(crib, remaining[k],
-              isCrib: true);
+          totalScore += HandCounting.calculateHandScore(
+            crib,
+            remaining[k],
+            isCrib: true,
+          );
           count++;
         }
       }

@@ -63,11 +63,11 @@ class GameNotifier extends StateNotifier<GameNotifierState> {
     required String playerId,
     required this.animationController,
     required GameFeedbackService feedbackService,
-  })  : _restClient = restClient,
-        _wsClient = wsClient,
-        _playerId = playerId,
-        _feedbackService = feedbackService,
-        super(const GameNotifierState(isLoading: true)) {
+  }) : _restClient = restClient,
+       _wsClient = wsClient,
+       _playerId = playerId,
+       _feedbackService = feedbackService,
+       super(const GameNotifierState(isLoading: true)) {
     _init();
   }
 
@@ -283,8 +283,10 @@ class GameNotifier extends StateNotifier<GameNotifierState> {
 }
 
 // Animation controller per game
-final gameAnimationProvider =
-    Provider.family<GameAnimationController, String>((ref, gameId) {
+final gameAnimationProvider = Provider.family<GameAnimationController, String>((
+  ref,
+  gameId,
+) {
   final controller = GameAnimationController();
   ref.onDispose(() => controller.dispose());
   return controller;
@@ -293,29 +295,31 @@ final gameAnimationProvider =
 // Feedback service (sound + haptics) per game
 final gameFeedbackServiceProvider =
     Provider.family<GameFeedbackService, String>((ref, gameId) {
-  return GameFeedbackService();
-});
+      return GameFeedbackService();
+    });
 
 final gameNotifierProvider =
-    StateNotifierProvider.family<GameNotifier, GameNotifierState, String>(
-  (ref, gameId) {
-    final auth = ref.read(authProvider);
-    final animController = ref.read(gameAnimationProvider(gameId));
-    final feedbackService = ref.read(gameFeedbackServiceProvider(gameId));
-    return GameNotifier(
-      gameId: gameId,
-      restClient: ref.read(restClientProvider),
-      wsClient: ref.read(webSocketClientProvider),
-      playerId: auth.userId ?? '',
-      animationController: animController,
-      feedbackService: feedbackService,
-    );
-  },
-);
+    StateNotifierProvider.family<GameNotifier, GameNotifierState, String>((
+      ref,
+      gameId,
+    ) {
+      final auth = ref.read(authProvider);
+      final animController = ref.read(gameAnimationProvider(gameId));
+      final feedbackService = ref.read(gameFeedbackServiceProvider(gameId));
+      return GameNotifier(
+        gameId: gameId,
+        restClient: ref.read(restClientProvider),
+        wsClient: ref.read(webSocketClientProvider),
+        playerId: auth.userId ?? '',
+        animationController: animController,
+        feedbackService: feedbackService,
+      );
+    });
 
 // Track selected cards during discard phase
-final selectedCardsProvider =
-    StateProvider.family<Set<int>, String>((ref, gameId) => {});
+final selectedCardsProvider = StateProvider.family<Set<int>, String>(
+  (ref, gameId) => {},
+);
 
 // ── Local (offline AI) game providers ───────────────────────────────────
 
@@ -327,18 +331,19 @@ final localGameServiceProvider = Provider<LocalGameService>((ref) {
 });
 
 final localGameNotifierProvider =
-    StateNotifierProvider.family<LocalGameNotifier, GameNotifierState, String>(
-  (ref, gameId) {
-    final service = ref.read(localGameServiceProvider);
-    final animController = ref.read(gameAnimationProvider(gameId));
-    final feedbackService = ref.read(gameFeedbackServiceProvider(gameId));
-    final auth = ref.read(authProvider);
-    return LocalGameNotifier(
-      gameId: gameId,
-      service: service,
-      playerId: auth.userId ?? 'local_player',
-      animationController: animController,
-      feedbackService: feedbackService,
-    );
-  },
-);
+    StateNotifierProvider.family<LocalGameNotifier, GameNotifierState, String>((
+      ref,
+      gameId,
+    ) {
+      final service = ref.read(localGameServiceProvider);
+      final animController = ref.read(gameAnimationProvider(gameId));
+      final feedbackService = ref.read(gameFeedbackServiceProvider(gameId));
+      final auth = ref.read(authProvider);
+      return LocalGameNotifier(
+        gameId: gameId,
+        service: service,
+        playerId: auth.userId ?? 'local_player',
+        animationController: animController,
+        feedbackService: feedbackService,
+      );
+    });

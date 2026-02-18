@@ -86,11 +86,7 @@ class OpponentHand extends StatelessWidget {
                 Positioned(
                   left: startX + i * dims.opponentCardVisible,
                   top: 0,
-                  child: CardWidget(
-                    faceUp: false,
-                    width: cardW,
-                    height: cardH,
-                  ),
+                  child: CardWidget(faceUp: false, width: cardW, height: cardH),
                 ),
             ],
           ),

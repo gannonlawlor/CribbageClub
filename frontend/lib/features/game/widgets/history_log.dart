@@ -6,11 +6,7 @@ class HistoryLog extends StatelessWidget {
   final List<GameHistoryEvent> events;
   final String? playerId;
 
-  const HistoryLog({
-    super.key,
-    required this.events,
-    this.playerId,
-  });
+  const HistoryLog({super.key, required this.events, this.playerId});
 
   String _playerLabel(String id) {
     return id == playerId ? 'You' : 'Opponent';
@@ -30,18 +26,31 @@ class HistoryLog extends StatelessWidget {
     return switch (event) {
       RoundStarted(:final roundNumber) => 'Round $roundNumber started',
       CardsDealt() => 'Cards dealt',
-      DeckCut(:final cuttingPlayerId, :final cutCard, :final dealerScoredNobs) =>
+      DeckCut(
+        :final cuttingPlayerId,
+        :final cutCard,
+        :final dealerScoredNobs,
+      ) =>
         '${_playerLabel(cuttingPlayerId)} cut ${cutCard.rank.display}${cutCard.suit.symbol}'
-        '${dealerScoredNobs ? " - Nobs! +2" : ""}',
-      CardPlayed(:final playerId, :final card, :final newCount, :final pointsScored) =>
+            '${dealerScoredNobs ? " - Nobs! +2" : ""}',
+      CardPlayed(
+        :final playerId,
+        :final card,
+        :final newCount,
+        :final pointsScored,
+      ) =>
         '${_playerLabel(playerId)} played ${card.rank.display}${card.suit.symbol} (count: $newCount)'
-        '${pointsScored > 0 ? " +$pointsScored" : ""}',
+            '${pointsScored > 0 ? " +$pointsScored" : ""}',
       GoAnnounced(:final playerId, :final pointsScored) =>
         '${_playerLabel(playerId)} said Go${pointsScored > 0 ? " +$pointsScored" : ""}',
       PeggingEnded() => 'Pegging ended',
       HandCounted(:final playerId, :final totalPoints, :final scoreBreakdown) =>
         '${_playerLabel(playerId)} counted $totalPoints pts${_breakdownSummary(scoreBreakdown)}',
-      CribCounted(:final dealerPlayerId, :final totalPoints, :final scoreBreakdown) =>
+      CribCounted(
+        :final dealerPlayerId,
+        :final totalPoints,
+        :final scoreBreakdown,
+      ) =>
         '${_playerLabel(dealerPlayerId)} counted $totalPoints in crib${_breakdownSummary(scoreBreakdown)}',
       GameEnded(:final winnerPlayerId, :final finalScore) =>
         '${_playerLabel(winnerPlayerId)} wins with $finalScore!',

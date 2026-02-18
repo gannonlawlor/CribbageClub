@@ -19,29 +19,31 @@ class BasicAIPlayer extends AIPlayer {
 
     return switch (gameState.stage) {
       GameStage.discardingToCrib => () {
-          if (player.hand.length > 4) {
-            final cardsToDiscard =
-                chooseCardsToDiscard(player.hand, isDealer(gameState));
-            if (cardsToDiscard.isNotEmpty) {
-              return GameAction.discardToCrib(
-                playerId: playerId,
-                card: cardsToDiscard.first,
-              );
-            }
+        if (player.hand.length > 4) {
+          final cardsToDiscard = chooseCardsToDiscard(
+            player.hand,
+            isDealer(gameState),
+          );
+          if (cardsToDiscard.isNotEmpty) {
+            return GameAction.discardToCrib(
+              playerId: playerId,
+              card: cardsToDiscard.first,
+            );
           }
-          return null;
-        }(),
+        }
+        return null;
+      }(),
       GameStage.cutting => GameAction.cutDeck(playerId: playerId),
       GameStage.pegging => () {
-          final card = chooseCardToPlay(
-            player.hand,
-            gameState.playedCards,
-            gameState.peggingCount,
-          );
-          return card != null
-              ? GameAction.playCard(playerId: playerId, card: card)
-              : GameAction.go(playerId: playerId);
-        }(),
+        final card = chooseCardToPlay(
+          player.hand,
+          gameState.playedCards,
+          gameState.peggingCount,
+        );
+        return card != null
+            ? GameAction.playCard(playerId: playerId, card: card)
+            : GameAction.go(playerId: playerId);
+      }(),
       GameStage.counting => GameAction.countHand(playerId: playerId),
       _ => null,
     };
@@ -53,7 +55,9 @@ class BasicAIPlayer extends AIPlayer {
     bool isDealer,
   ) {
     if (hand.length < 2) return hand;
-    return isDealer ? _chooseDealerDiscards(hand) : _chooseNonDealerDiscards(hand);
+    return isDealer
+        ? _chooseDealerDiscards(hand)
+        : _chooseNonDealerDiscards(hand);
   }
 
   List<PlayingCard> _chooseDealerDiscards(List<PlayingCard> hand) {
@@ -91,8 +95,9 @@ class BasicAIPlayer extends AIPlayer {
     for (final card in sortedByValue) {
       if (candidates.length >= 2) break;
       final wouldMakePair = candidates.any((c) => c.rank == card.rank);
-      final wouldMake15 = candidates
-          .any((c) => c.rank.peggingValue + card.rank.peggingValue == 15);
+      final wouldMake15 = candidates.any(
+        (c) => c.rank.peggingValue + card.rank.peggingValue == 15,
+      );
       if (!wouldMakePair && !wouldMake15) {
         candidates.add(card);
       }
@@ -109,18 +114,17 @@ class BasicAIPlayer extends AIPlayer {
     List<PlayingCard> playedCards,
     int currentCount,
   ) {
-    final playable =
-        hand.where((c) => currentCount + c.rank.peggingValue <= 31).toList();
+    final playable = hand
+        .where((c) => currentCount + c.rank.peggingValue <= 31)
+        .toList();
     if (playable.isEmpty) return null;
 
     // Try 31
-    final c31 =
-        playable.where((c) => currentCount + c.rank.peggingValue == 31);
+    final c31 = playable.where((c) => currentCount + c.rank.peggingValue == 31);
     if (c31.isNotEmpty) return c31.first;
 
     // Try 15
-    final c15 =
-        playable.where((c) => currentCount + c.rank.peggingValue == 15);
+    final c15 = playable.where((c) => currentCount + c.rank.peggingValue == 15);
     if (c15.isNotEmpty) return c15.first;
 
     // Try pair
@@ -144,11 +148,13 @@ class BasicAIPlayer extends AIPlayer {
 
     if (safe.isNotEmpty) {
       return safe.reduce(
-          (a, b) => a.rank.peggingValue >= b.rank.peggingValue ? a : b);
+        (a, b) => a.rank.peggingValue >= b.rank.peggingValue ? a : b,
+      );
     }
 
     return playable.reduce(
-        (a, b) => a.rank.peggingValue <= b.rank.peggingValue ? a : b);
+      (a, b) => a.rank.peggingValue <= b.rank.peggingValue ? a : b,
+    );
   }
 
   List<List<PlayingCard>> _findFifteenCombinations(List<PlayingCard> cards) {

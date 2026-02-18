@@ -13,6 +13,5 @@ class Player with _$Player {
     @Default(0) int score,
   }) = _Player;
 
-  factory Player.fromJson(Map<String, dynamic> json) =>
-      _$PlayerFromJson(json);
+  factory Player.fromJson(Map<String, dynamic> json) => _$PlayerFromJson(json);
 }

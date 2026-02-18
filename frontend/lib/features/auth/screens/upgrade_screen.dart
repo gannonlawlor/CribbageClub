@@ -49,11 +49,13 @@ class _UpgradeScreenState extends ConsumerState<UpgradeScreen> {
     final password = _passwordController.text;
     final displayName = _displayNameController.text.trim();
 
-    ref.read(authProvider.notifier).upgradeGuest(
-      username,
-      password,
-      displayName: displayName.isEmpty ? null : displayName,
-    );
+    ref
+        .read(authProvider.notifier)
+        .upgradeGuest(
+          username,
+          password,
+          displayName: displayName.isEmpty ? null : displayName,
+        );
   }
 
   String? _validateUsername(String? value) {

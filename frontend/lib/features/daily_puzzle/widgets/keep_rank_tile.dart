@@ -56,15 +56,17 @@ class KeepRankTile extends StatelessWidget {
             ),
           ),
           // Mini cards
-          ...option.keep.map((card) => Padding(
-                padding: const EdgeInsets.only(right: 2),
-                child: CardWidget(
-                  card: card,
-                  width: 32,
-                  height: 45,
-                  enabled: false,
-                ),
-              )),
+          ...option.keep.map(
+            (card) => Padding(
+              padding: const EdgeInsets.only(right: 2),
+              child: CardWidget(
+                card: card,
+                width: 32,
+                height: 45,
+                enabled: false,
+              ),
+            ),
+          ),
           const SizedBox(width: 8),
           // Scores
           Expanded(

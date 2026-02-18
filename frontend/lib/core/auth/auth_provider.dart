@@ -51,8 +51,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
   final AuthService _authService;
   final RestClient _restClient;
 
-  AuthNotifier(this._authService, this._restClient)
-      : super(const AuthState()) {
+  AuthNotifier(this._authService, this._restClient) : super(const AuthState()) {
     _checkExistingAuth();
   }
 

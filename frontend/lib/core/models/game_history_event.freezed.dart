@@ -326,7 +326,7 @@ class __$$RoundStartedImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$RoundStartedImpl implements RoundStarted {
   const _$RoundStartedImpl({
-    required this.timestamp,
+    this.timestamp = '',
     required this.roundNumber,
     final String? $type,
   }) : $type = $type ?? 'RoundStarted';
@@ -335,6 +335,7 @@ class _$RoundStartedImpl implements RoundStarted {
       _$$RoundStartedImplFromJson(json);
 
   @override
+  @JsonKey()
   final String timestamp;
   @override
   final int roundNumber;
@@ -592,7 +593,7 @@ class _$RoundStartedImpl implements RoundStarted {
 
 abstract class RoundStarted implements GameHistoryEvent {
   const factory RoundStarted({
-    required final String timestamp,
+    final String timestamp,
     required final int roundNumber,
   }) = _$RoundStartedImpl;
 
@@ -656,7 +657,7 @@ class __$$CardsDealtImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$CardsDealtImpl implements CardsDealt {
   const _$CardsDealtImpl({
-    required this.timestamp,
+    this.timestamp = '',
     final Map<String, List<PlayingCard>> dealtHands = const {},
     final String? $type,
   }) : _dealtHands = dealtHands,
@@ -666,6 +667,7 @@ class _$CardsDealtImpl implements CardsDealt {
       _$$CardsDealtImplFromJson(json);
 
   @override
+  @JsonKey()
   final String timestamp;
   final Map<String, List<PlayingCard>> _dealtHands;
   @override
@@ -935,7 +937,7 @@ class _$CardsDealtImpl implements CardsDealt {
 
 abstract class CardsDealt implements GameHistoryEvent {
   const factory CardsDealt({
-    required final String timestamp,
+    final String timestamp,
     final Map<String, List<PlayingCard>> dealtHands,
   }) = _$CardsDealtImpl;
 
@@ -1029,7 +1031,7 @@ class __$$DeckCutImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$DeckCutImpl implements DeckCut {
   const _$DeckCutImpl({
-    required this.timestamp,
+    this.timestamp = '',
     required this.cutCard,
     required this.cuttingPlayerId,
     this.dealerScoredNobs = false,
@@ -1040,6 +1042,7 @@ class _$DeckCutImpl implements DeckCut {
       _$$DeckCutImplFromJson(json);
 
   @override
+  @JsonKey()
   final String timestamp;
   @override
   final PlayingCard cutCard;
@@ -1311,7 +1314,7 @@ class _$DeckCutImpl implements DeckCut {
 
 abstract class DeckCut implements GameHistoryEvent {
   const factory DeckCut({
-    required final String timestamp,
+    final String timestamp,
     required final PlayingCard cutCard,
     required final String cuttingPlayerId,
     final bool dealerScoredNobs,
@@ -1420,7 +1423,7 @@ class __$$CardPlayedImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$CardPlayedImpl implements CardPlayed {
   const _$CardPlayedImpl({
-    required this.timestamp,
+    this.timestamp = '',
     required this.playerId,
     required this.card,
     required this.newCount,
@@ -1433,6 +1436,7 @@ class _$CardPlayedImpl implements CardPlayed {
       _$$CardPlayedImplFromJson(json);
 
   @override
+  @JsonKey()
   final String timestamp;
   @override
   final String playerId;
@@ -1734,7 +1738,7 @@ class _$CardPlayedImpl implements CardPlayed {
 
 abstract class CardPlayed implements GameHistoryEvent {
   const factory CardPlayed({
-    required final String timestamp,
+    final String timestamp,
     required final String playerId,
     required final PlayingCard card,
     required final int newCount,
@@ -1814,7 +1818,7 @@ class __$$GoAnnouncedImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$GoAnnouncedImpl implements GoAnnounced {
   const _$GoAnnouncedImpl({
-    required this.timestamp,
+    this.timestamp = '',
     required this.playerId,
     this.pointsScored = 0,
     final String? $type,
@@ -1824,6 +1828,7 @@ class _$GoAnnouncedImpl implements GoAnnounced {
       _$$GoAnnouncedImplFromJson(json);
 
   @override
+  @JsonKey()
   final String timestamp;
   @override
   final String playerId;
@@ -2087,7 +2092,7 @@ class _$GoAnnouncedImpl implements GoAnnounced {
 
 abstract class GoAnnounced implements GameHistoryEvent {
   const factory GoAnnounced({
-    required final String timestamp,
+    final String timestamp,
     required final String playerId,
     final int pointsScored,
   }) = _$GoAnnouncedImpl;
@@ -2148,13 +2153,14 @@ class __$$PeggingEndedImplCopyWithImpl<$Res>
 /// @nodoc
 @JsonSerializable()
 class _$PeggingEndedImpl implements PeggingEnded {
-  const _$PeggingEndedImpl({required this.timestamp, final String? $type})
+  const _$PeggingEndedImpl({this.timestamp = '', final String? $type})
     : $type = $type ?? 'PeggingEnded';
 
   factory _$PeggingEndedImpl.fromJson(Map<String, dynamic> json) =>
       _$$PeggingEndedImplFromJson(json);
 
   @override
+  @JsonKey()
   final String timestamp;
 
   @JsonKey(name: 'type')
@@ -2407,8 +2413,7 @@ class _$PeggingEndedImpl implements PeggingEnded {
 }
 
 abstract class PeggingEnded implements GameHistoryEvent {
-  const factory PeggingEnded({required final String timestamp}) =
-      _$PeggingEndedImpl;
+  const factory PeggingEnded({final String timestamp}) = _$PeggingEndedImpl;
 
   factory PeggingEnded.fromJson(Map<String, dynamic> json) =
       _$PeggingEndedImpl.fromJson;
@@ -2505,7 +2510,7 @@ class __$$HandCountedImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$HandCountedImpl implements HandCounted {
   const _$HandCountedImpl({
-    required this.timestamp,
+    this.timestamp = '',
     required this.playerId,
     final List<PlayingCard> hand = const [],
     required this.totalPoints,
@@ -2518,6 +2523,7 @@ class _$HandCountedImpl implements HandCounted {
       _$$HandCountedImplFromJson(json);
 
   @override
+  @JsonKey()
   final String timestamp;
   @override
   final String playerId;
@@ -2812,7 +2818,7 @@ class _$HandCountedImpl implements HandCounted {
 
 abstract class HandCounted implements GameHistoryEvent {
   const factory HandCounted({
-    required final String timestamp,
+    final String timestamp,
     required final String playerId,
     final List<PlayingCard> hand,
     required final int totalPoints,
@@ -2918,7 +2924,7 @@ class __$$CribCountedImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$CribCountedImpl implements CribCounted {
   const _$CribCountedImpl({
-    required this.timestamp,
+    this.timestamp = '',
     required this.dealerPlayerId,
     required this.totalPoints,
     required this.scoreBreakdown,
@@ -2931,6 +2937,7 @@ class _$CribCountedImpl implements CribCounted {
       _$$CribCountedImplFromJson(json);
 
   @override
+  @JsonKey()
   final String timestamp;
   @override
   final String dealerPlayerId;
@@ -3233,7 +3240,7 @@ class _$CribCountedImpl implements CribCounted {
 
 abstract class CribCounted implements GameHistoryEvent {
   const factory CribCounted({
-    required final String timestamp,
+    final String timestamp,
     required final String dealerPlayerId,
     required final int totalPoints,
     required final ScoreBreakdown scoreBreakdown,
@@ -3311,7 +3318,7 @@ class __$$GameEndedImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$GameEndedImpl implements GameEnded {
   const _$GameEndedImpl({
-    required this.timestamp,
+    this.timestamp = '',
     required this.winnerPlayerId,
     required this.finalScore,
     final String? $type,
@@ -3321,6 +3328,7 @@ class _$GameEndedImpl implements GameEnded {
       _$$GameEndedImplFromJson(json);
 
   @override
+  @JsonKey()
   final String timestamp;
   @override
   final String winnerPlayerId;
@@ -3583,7 +3591,7 @@ class _$GameEndedImpl implements GameEnded {
 
 abstract class GameEnded implements GameHistoryEvent {
   const factory GameEnded({
-    required final String timestamp,
+    final String timestamp,
     required final String winnerPlayerId,
     required final int finalScore,
   }) = _$GameEndedImpl;

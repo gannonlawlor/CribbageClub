@@ -5,6 +5,7 @@ import 'package:cribbage_club/core/models/game_state.dart';
 import 'package:cribbage_club/core/services/game_feedback_service.dart';
 import 'package:cribbage_club/features/game/animation/game_animation_controller.dart';
 import 'package:cribbage_club/features/game/state/local_game_notifier.dart';
+import 'package:cribbage_club/src/rust/frb_generated.dart';
 
 /// Creates a notifier with fresh animation controller and feedback service.
 /// The caller is responsible for calling notifier.dispose() which also
@@ -27,6 +28,10 @@ LocalGameNotifier _createNotifier({
 }
 
 void main() {
+  setUpAll(() async {
+    await RustLib.init();
+  });
+
   group('LocalGameNotifier', () {
     test('starts with error state when service has no active game', () {
       final service = LocalGameService();
@@ -45,9 +50,9 @@ void main() {
       notifier.dispose();
     });
 
-    test('starts with valid game state when service has active game', () {
+    test('starts with valid game state when service has active game', () async {
       final service = LocalGameService();
-      final created = service.createGame(
+      final created = await service.createGame(
         humanPlayerId: 'player1',
         humanPlayerName: 'Player',
         difficulty: 'basic',
@@ -67,9 +72,9 @@ void main() {
       notifier.dispose();
     });
 
-    test('clearError removes error from state', () {
+    test('clearError removes error from state', () async {
       final service = LocalGameService();
-      service.createGame(
+      await service.createGame(
         humanPlayerId: 'player1',
         humanPlayerName: 'Player',
         difficulty: 'basic',
@@ -82,9 +87,7 @@ void main() {
       );
 
       // Force an error by trying to play a card not in hand
-      notifier.playCard(
-        const PlayingCard(rank: Rank.ace, suit: Suit.spades),
-      );
+      await notifier.playCard(const PlayingCard(rank: Rank.ace, suit: Suit.spades));
       // Whether or not it errors, clearError should reset it
       notifier.clearError();
       expect(notifier.debugState.error, isNull);
@@ -94,7 +97,7 @@ void main() {
 
     test('discardCards updates state after valid discard', () async {
       final service = LocalGameService();
-      final created = service.createGame(
+      final created = await service.createGame(
         humanPlayerId: 'player1',
         humanPlayerName: 'Player',
         difficulty: 'basic',

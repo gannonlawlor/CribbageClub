@@ -2,10 +2,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:cribbage_club/core/engine/local_game_service.dart';
 import 'package:cribbage_club/core/models/game_action.dart';
 import 'package:cribbage_club/core/models/game_state.dart';
+import 'package:cribbage_club/src/rust/frb_generated.dart';
 
 void main() {
   group('LocalGameService', () {
     late LocalGameService service;
+
+    setUpAll(() async {
+      await RustLib.init();
+    });
 
     setUp(() {
       service = LocalGameService();
@@ -19,8 +24,8 @@ void main() {
       expect(service.currentState, isNull);
     });
 
-    test('hasActiveGame is true after creating a game', () {
-      service.createGame(
+    test('hasActiveGame is true after creating a game', () async {
+      await service.createGame(
         humanPlayerId: 'player1',
         humanPlayerName: 'Player',
         difficulty: 'basic',
@@ -28,8 +33,8 @@ void main() {
       expect(service.hasActiveGame, isTrue);
     });
 
-    test('currentState is non-null after creating a game', () {
-      service.createGame(
+    test('currentState is non-null after creating a game', () async {
+      await service.createGame(
         humanPlayerId: 'player1',
         humanPlayerName: 'Player',
         difficulty: 'basic',
@@ -37,8 +42,8 @@ void main() {
       expect(service.currentState, isNotNull);
     });
 
-    test('createGame returns valid initial state', () {
-      final state = service.createGame(
+    test('createGame returns valid initial state', () async {
+      final state = await service.createGame(
         humanPlayerId: 'player1',
         humanPlayerName: 'Player',
         difficulty: 'basic',
@@ -55,25 +60,34 @@ void main() {
       expect(state.players[0].hand.length, 6);
     });
 
-    test('createGame with different difficulties sets correct AI name', () {
-      final easy = LocalGameService()..createGame(
-        humanPlayerId: 'p', humanPlayerName: 'P', difficulty: 'basic',
+    test('createGame with different difficulties sets correct AI name', () async {
+      final easyService = LocalGameService();
+      await easyService.createGame(
+        humanPlayerId: 'p',
+        humanPlayerName: 'P',
+        difficulty: 'basic',
       );
-      expect(easy.currentState!.players[1].name, 'AI (Easy)');
+      expect(easyService.currentState!.players[1].name, 'AI (Easy)');
 
-      final medium = LocalGameService()..createGame(
-        humanPlayerId: 'p', humanPlayerName: 'P', difficulty: 'medium',
+      final mediumService = LocalGameService();
+      await mediumService.createGame(
+        humanPlayerId: 'p',
+        humanPlayerName: 'P',
+        difficulty: 'medium',
       );
-      expect(medium.currentState!.players[1].name, 'AI (Medium)');
+      expect(mediumService.currentState!.players[1].name, 'AI (Medium)');
 
-      final hard = LocalGameService()..createGame(
-        humanPlayerId: 'p', humanPlayerName: 'P', difficulty: 'hard',
+      final hardService = LocalGameService();
+      await hardService.createGame(
+        humanPlayerId: 'p',
+        humanPlayerName: 'P',
+        difficulty: 'hard',
       );
-      expect(hard.currentState!.players[1].name, 'AI (Hard)');
+      expect(hardService.currentState!.players[1].name, 'AI (Hard)');
     });
 
-    test('currentState matches last created game', () {
-      final state = service.createGame(
+    test('currentState matches last created game', () async {
+      final state = await service.createGame(
         humanPlayerId: 'player1',
         humanPlayerName: 'Player',
         difficulty: 'basic',
@@ -85,8 +99,8 @@ void main() {
       expect(current.stage, state.stage);
     });
 
-    test('applyHumanAction works after creating a game', () {
-      final state = service.createGame(
+    test('applyHumanAction works after creating a game', () async {
+      final state = await service.createGame(
         humanPlayerId: 'player1',
         humanPlayerName: 'Player',
         difficulty: 'basic',
@@ -94,7 +108,7 @@ void main() {
 
       // Discard first card from hand
       final card = state.players[0].hand[0];
-      final newState = service.applyHumanAction(
+      final newState = await service.applyHumanAction(
         GameAction.discardToCrib(playerId: 'player1', card: card),
       );
 

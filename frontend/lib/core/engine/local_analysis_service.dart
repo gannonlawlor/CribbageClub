@@ -1,7 +1,9 @@
+import 'dart:convert';
+
 import '../models/card.dart';
 import '../models/game_analysis.dart';
 import '../models/game_history_event.dart';
-import 'discard_analyzer.dart';
+import '../../src/rust/api/simple.dart' as rust;
 
 /// Client-side analysis service for local AI games.
 /// Mirrors backend AnalysisService.analyzeGame() logic.
@@ -24,7 +26,8 @@ class LocalAnalysisService {
   }
 
   static List<List<GameHistoryEvent>> _splitIntoRounds(
-      List<GameHistoryEvent> history) {
+    List<GameHistoryEvent> history,
+  ) {
     final rounds = <List<GameHistoryEvent>>[];
     List<GameHistoryEvent>? current;
 
@@ -40,23 +43,23 @@ class LocalAnalysisService {
   }
 
   static Future<RoundAnalysis?> _analyzeRound(
-      List<GameHistoryEvent> events) async {
-    final roundStarted =
-        events.whereType<RoundStarted>().firstOrNull;
-    final cardsDealt =
-        events.whereType<CardsDealt>().firstOrNull;
+    List<GameHistoryEvent> events,
+  ) async {
+    final roundStarted = events.whereType<RoundStarted>().firstOrNull;
+    final cardsDealt = events.whereType<CardsDealt>().firstOrNull;
     final deckCut = events.whereType<DeckCut>().firstOrNull;
     final handsCounted = events.whereType<HandCounted>().toList();
-    final cribCounted =
-        events.whereType<CribCounted>().firstOrNull;
+    final cribCounted = events.whereType<CribCounted>().firstOrNull;
 
     if (roundStarted == null || cardsDealt == null) return null;
     if (cardsDealt.dealtHands.isEmpty) return null;
 
     final playerIds = cardsDealt.dealtHands.keys.toList();
     final dealerPlayerId = deckCut != null
-        ? playerIds.firstWhere((id) => id != deckCut.cuttingPlayerId,
-            orElse: () => playerIds.first)
+        ? playerIds.firstWhere(
+            (id) => id != deckCut.cuttingPlayerId,
+            orElse: () => playerIds.first,
+          )
         : playerIds.first;
 
     final analyses = <PlayerRoundAnalysis>[];
@@ -89,18 +92,34 @@ class LocalAnalysisService {
     final dealtHand = dealtHands[playerId];
     if (dealtHand == null || dealtHand.length != 6) return null;
 
-    final handCounted = handsCounted.where((e) => e.playerId == playerId).firstOrNull;
+    final handCounted = handsCounted
+        .where((e) => e.playerId == playerId)
+        .firstOrNull;
     final keptHand = handCounted?.hand;
     if (keptHand == null || keptHand.length != 4) return null;
 
     final discarded = dealtHand.where((c) => !keptHand.contains(c)).toList();
     if (discarded.length != 2) return null;
 
-    final allOptions =
-        await DiscardAnalyzer.analyzeAllDiscards(dealtHand, isDealer);
+    // Use Rust engine for discard analysis
+    final handJson = jsonEncode(dealtHand.map((c) => c.toJson()).toList());
+    final resultJson = await rust.analyzeDiscardsJson(
+      handJson: handJson,
+      isDealer: isDealer,
+    );
+    final allOptions = (jsonDecode(resultJson) as List)
+        .map((o) => DiscardOption.fromJson(o as Map<String, dynamic>))
+        .toList();
+
     final optimalOption = allOptions.first;
     final discardedSet = discarded.toSet();
-    final playerOption = allOptions.where((o) => o.discard.toSet().difference(discardedSet).isEmpty && discardedSet.difference(o.discard.toSet()).isEmpty).firstOrNull;
+    final playerOption = allOptions
+        .where(
+          (o) =>
+              o.discard.toSet().difference(discardedSet).isEmpty &&
+              discardedSet.difference(o.discard.toSet()).isEmpty,
+        )
+        .firstOrNull;
     if (playerOption == null) return null;
 
     return PlayerRoundAnalysis(
@@ -114,7 +133,8 @@ class LocalAnalysisService {
       optimalDiscard: optimalOption,
       playerDiscard: playerOption,
       evDifference:
-          optimalOption.expectedCombinedValue - playerOption.expectedCombinedValue,
+          optimalOption.expectedCombinedValue -
+          playerOption.expectedCombinedValue,
     );
   }
 }

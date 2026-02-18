@@ -7,10 +7,7 @@ class GameFeedbackService {
   bool soundEnabled;
   bool hapticsEnabled;
 
-  GameFeedbackService({
-    this.soundEnabled = true,
-    this.hapticsEnabled = true,
-  });
+  GameFeedbackService({this.soundEnabled = true, this.hapticsEnabled = true});
 
   /// Process an animation event and trigger appropriate feedback.
   void onEvent(AnimationEvent event) {

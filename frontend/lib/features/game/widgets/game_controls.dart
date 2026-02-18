@@ -46,8 +46,12 @@ class GameControls extends StatelessWidget {
       case GameStage.discardingToCrib:
         return [
           _ActionButton(
-            label: isDiscarding ? 'Discarding...' : 'Discard ($selectedCardCount/2)',
-            onPressed: selectedCardCount == 2 && !isDiscarding ? onDiscard : null,
+            label: isDiscarding
+                ? 'Discarding...'
+                : 'Discard ($selectedCardCount/2)',
+            onPressed: selectedCardCount == 2 && !isDiscarding
+                ? onDiscard
+                : null,
             icon: Icons.arrow_downward,
           ),
         ];
@@ -103,8 +107,9 @@ class _ActionButton extends StatelessWidget {
         icon: Icon(icon, size: 18),
         label: Text(label),
         style: ElevatedButton.styleFrom(
-          backgroundColor:
-              onPressed != null ? AppTheme.feltGreen : Colors.grey.shade700,
+          backgroundColor: onPressed != null
+              ? AppTheme.feltGreen
+              : Colors.grey.shade700,
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         ),

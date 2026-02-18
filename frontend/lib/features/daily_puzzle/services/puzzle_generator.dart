@@ -49,13 +49,15 @@ class PuzzleGenerator {
       final cribAvg = _averageCribScore(discard);
       final netScore = isDealer ? handAvg + cribAvg : handAvg - cribAvg;
 
-      options.add(_ScoredOption(
-        keep: keep,
-        discard: discard,
-        averageHandScore: handAvg,
-        averageCribScore: cribAvg,
-        netScore: netScore,
-      ));
+      options.add(
+        _ScoredOption(
+          keep: keep,
+          discard: discard,
+          averageHandScore: handAvg,
+          averageCribScore: cribAvg,
+          netScore: netScore,
+        ),
+      );
     }
 
     // Sort descending by net score

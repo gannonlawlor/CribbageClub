@@ -21,12 +21,17 @@ class LocalGameNotifier extends StateNotifier<GameNotifierState> {
     required String playerId,
     required this.animationController,
     required GameFeedbackService feedbackService,
-  })  : _service = service,
-        _playerId = playerId,
-        _feedbackService = feedbackService,
-        super(service.currentState != null
-            ? GameNotifierState(gameState: service.currentState)
-            : const GameNotifierState(error: 'Game not found. It may have been lost after a page refresh.')) {
+  }) : _service = service,
+       _playerId = playerId,
+       _feedbackService = feedbackService,
+       super(
+         service.currentState != null
+             ? GameNotifierState(gameState: service.currentState)
+             : const GameNotifierState(
+                 error:
+                     'Game not found. It may have been lost after a page refresh.',
+               ),
+       ) {
     final cs = service.currentState;
     if (cs != null) _notifyAnimation(cs);
   }
@@ -38,9 +43,9 @@ class LocalGameNotifier extends StateNotifier<GameNotifierState> {
     }
   }
 
-  void _applyAction(GameAction action) {
+  Future<void> _applyAction(GameAction action) async {
     try {
-      final newState = _service.applyHumanAction(action);
+      final newState = await _service.applyHumanAction(action);
       state = GameNotifierState(gameState: newState);
       _notifyAnimation(newState);
     } catch (e) {
@@ -54,7 +59,7 @@ class LocalGameNotifier extends StateNotifier<GameNotifierState> {
     try {
       GameState? newState;
       for (final card in cards) {
-        newState = _service.applyHumanAction(
+        newState = await _service.applyHumanAction(
           GameAction.discardToCrib(playerId: _playerId, card: card),
         );
       }
@@ -68,19 +73,19 @@ class LocalGameNotifier extends StateNotifier<GameNotifierState> {
   }
 
   Future<void> playCard(PlayingCard card) async {
-    _applyAction(GameAction.playCard(playerId: _playerId, card: card));
+    await _applyAction(GameAction.playCard(playerId: _playerId, card: card));
   }
 
   Future<void> cutDeck() async {
-    _applyAction(GameAction.cutDeck(playerId: _playerId));
+    await _applyAction(GameAction.cutDeck(playerId: _playerId));
   }
 
   Future<void> sayGo() async {
-    _applyAction(GameAction.go(playerId: _playerId));
+    await _applyAction(GameAction.go(playerId: _playerId));
   }
 
   Future<void> countHand() async {
-    _applyAction(GameAction.countHand(playerId: _playerId));
+    await _applyAction(GameAction.countHand(playerId: _playerId));
   }
 
   void clearError() {
@@ -88,8 +93,8 @@ class LocalGameNotifier extends StateNotifier<GameNotifierState> {
   }
 
   /// DEV ONLY: Set a player's score directly.
-  void devSetScore(String playerId, int score) {
-    _service.devEngine?.devSetScore(playerId, score);
+  Future<void> devSetScore(String playerId, int score) async {
+    await _service.devSetScore(playerId, score);
     final newState = _service.currentState;
     if (newState != null) {
       state = GameNotifierState(gameState: newState);
@@ -97,8 +102,8 @@ class LocalGameNotifier extends StateNotifier<GameNotifierState> {
   }
 
   /// DEV ONLY: Queue specific hands for the next deal.
-  void devSetNextHands(Map<String, List<PlayingCard>> hands) {
-    _service.devEngine?.devSetNextHands(hands);
+  Future<void> devSetNextHands(Map<String, List<PlayingCard>> hands) async {
+    await _service.devSetNextHands(hands);
   }
 
   @override

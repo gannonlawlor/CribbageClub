@@ -47,33 +47,30 @@ class AppTheme {
   static const Duration stageTransitionDuration = Duration(milliseconds: 400);
 
   static ThemeData get theme => ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: feltGreen,
-          brightness: Brightness.dark,
-        ),
-        scaffoldBackgroundColor: feltGreenDark,
-        appBarTheme: const AppBarTheme(
-          backgroundColor: feltGreenDark,
-          elevation: 0,
-        ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: feltGreen,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          ),
-        ),
-        cardTheme: const CardThemeData(
-          color: cardWhite,
-          elevation: 2,
-        ),
-        textTheme: const TextTheme(
-          headlineLarge: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
-          bodyLarge: TextStyle(color: Colors.white),
-          bodyMedium: TextStyle(color: Colors.white70),
-        ),
-      );
+    colorScheme: ColorScheme.fromSeed(
+      seedColor: feltGreen,
+      brightness: Brightness.dark,
+    ),
+    scaffoldBackgroundColor: feltGreenDark,
+    appBarTheme: const AppBarTheme(
+      backgroundColor: feltGreenDark,
+      elevation: 0,
+    ),
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: feltGreen,
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+      ),
+    ),
+    cardTheme: const CardThemeData(color: cardWhite, elevation: 2),
+    textTheme: const TextTheme(
+      headlineLarge: TextStyle(
+        color: Colors.white,
+        fontWeight: FontWeight.bold,
+      ),
+      bodyLarge: TextStyle(color: Colors.white),
+      bodyMedium: TextStyle(color: Colors.white70),
+    ),
+  );
 }

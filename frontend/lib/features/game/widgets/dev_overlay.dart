@@ -14,11 +14,7 @@ class DevOverlay extends ConsumerStatefulWidget {
   final String gameId;
   final String playerId;
 
-  const DevOverlay({
-    super.key,
-    required this.gameId,
-    required this.playerId,
-  });
+  const DevOverlay({super.key, required this.gameId, required this.playerId});
 
   @override
   ConsumerState<DevOverlay> createState() => _DevOverlayState();
@@ -51,10 +47,7 @@ class _DevOverlayState extends ConsumerState<DevOverlay>
     _slideAnimation = Tween<Offset>(
       begin: const Offset(1, 0),
       end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _animController,
-      curve: Curves.easeOut,
-    ));
+    ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeOut));
   }
 
   @override
@@ -99,8 +92,9 @@ class _DevOverlayState extends ConsumerState<DevOverlay>
             child: FloatingActionButton(
               heroTag: 'dev_toggle',
               mini: true,
-              backgroundColor:
-                  _open ? Colors.red.shade700 : Colors.orange.shade800,
+              backgroundColor: _open
+                  ? Colors.red.shade700
+                  : Colors.orange.shade800,
               onPressed: _toggle,
               child: Icon(
                 _open ? Icons.close : Icons.bug_report,
@@ -122,8 +116,7 @@ class _DevOverlayState extends ConsumerState<DevOverlay>
   }
 
   Widget _buildPanel(BuildContext context, dynamic gs) {
-    final playerIdx =
-        gs.players.indexWhere((p) => p.id == widget.playerId);
+    final playerIdx = gs.players.indexWhere((p) => p.id == widget.playerId);
     final player = playerIdx >= 0 ? gs.players[playerIdx] : gs.players[0];
     final opponent = gs.players[playerIdx >= 0 ? 1 - playerIdx : 1];
 
@@ -134,8 +127,7 @@ class _DevOverlayState extends ConsumerState<DevOverlay>
           children: [
             // Header
             Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               child: Row(
                 children: [
                   IconButton(
@@ -143,8 +135,10 @@ class _DevOverlayState extends ConsumerState<DevOverlay>
                     onPressed: _toggle,
                     iconSize: 20,
                     padding: EdgeInsets.zero,
-                    constraints:
-                        const BoxConstraints(minWidth: 32, minHeight: 32),
+                    constraints: const BoxConstraints(
+                      minWidth: 32,
+                      minHeight: 32,
+                    ),
                   ),
                   const SizedBox(width: 8),
                   const Text(
@@ -236,8 +230,7 @@ class _DevOverlayState extends ConsumerState<DevOverlay>
     );
   }
 
-  String _playerLabel(String id) =>
-      id == widget.playerId ? 'You' : 'Opponent';
+  String _playerLabel(String id) => id == widget.playerId ? 'You' : 'Opponent';
 
   String _breakdownSummary(ScoreBreakdown b) {
     final parts = <String>[];
@@ -256,7 +249,7 @@ class _DevOverlayState extends ConsumerState<DevOverlay>
       DeckCut(
         :final cuttingPlayerId,
         :final cutCard,
-        :final dealerScoredNobs
+        :final dealerScoredNobs,
       ) =>
         '${_playerLabel(cuttingPlayerId)} cut ${cutCard.rank.display}${cutCard.suit.symbol}'
             '${dealerScoredNobs ? " - Nobs! +2" : ""}',
@@ -264,7 +257,7 @@ class _DevOverlayState extends ConsumerState<DevOverlay>
         :final playerId,
         :final card,
         :final newCount,
-        :final pointsScored
+        :final pointsScored,
       ) =>
         '${_playerLabel(playerId)} played ${card.rank.display}${card.suit.symbol} (count: $newCount)'
             '${pointsScored > 0 ? " +$pointsScored" : ""}',
@@ -276,7 +269,7 @@ class _DevOverlayState extends ConsumerState<DevOverlay>
       CribCounted(
         :final dealerPlayerId,
         :final totalPoints,
-        :final scoreBreakdown
+        :final scoreBreakdown,
       ) =>
         '${_playerLabel(dealerPlayerId)} counted $totalPoints in crib${_breakdownSummary(scoreBreakdown)}',
       GameEnded(:final winnerPlayerId, :final finalScore) =>
@@ -306,24 +299,26 @@ class _DevOverlayState extends ConsumerState<DevOverlay>
               padding: const EdgeInsets.symmetric(vertical: 8),
             ),
             onPressed: () {
-              final notifier = ref
-                  .read(localGameNotifierProvider(widget.gameId).notifier);
+              final notifier = ref.read(
+                localGameNotifierProvider(widget.gameId).notifier,
+              );
+              notifier.devSetScore(player.id as String, _playerScore.round());
               notifier.devSetScore(
-                  player.id as String, _playerScore.round());
-              notifier.devSetScore(
-                  opponent.id as String, _opponentScore.round());
+                opponent.id as String,
+                _opponentScore.round(),
+              );
               // Refresh sliders from updated state
               final gs = ref
                   .read(localGameNotifierProvider(widget.gameId))
                   .gameState;
               if (gs != null) {
-                final pIdx =
-                    gs.players.indexWhere((p) => p.id == widget.playerId);
+                final pIdx = gs.players.indexWhere(
+                  (p) => p.id == widget.playerId,
+                );
                 if (pIdx >= 0) {
                   setState(() {
                     _playerScore = gs.players[pIdx].score.toDouble();
-                    _opponentScore =
-                        gs.players[1 - pIdx].score.toDouble();
+                    _opponentScore = gs.players[1 - pIdx].score.toDouble();
                   });
                 }
               }
@@ -377,11 +372,17 @@ class _DevOverlayState extends ConsumerState<DevOverlay>
         // Target toggle
         Row(
           children: [
-            _targetButton('Your Hand', _HandTarget.player,
-                _playerHandCards.length),
+            _targetButton(
+              'Your Hand',
+              _HandTarget.player,
+              _playerHandCards.length,
+            ),
             const SizedBox(width: 8),
-            _targetButton('Opp Hand', _HandTarget.opponent,
-                _opponentHandCards.length),
+            _targetButton(
+              'Opp Hand',
+              _HandTarget.opponent,
+              _opponentHandCards.length,
+            ),
           ],
         ),
         const SizedBox(height: 8),
@@ -427,20 +428,22 @@ class _DevOverlayState extends ConsumerState<DevOverlay>
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 8),
             ),
-            onPressed: (_playerHandCards.length == 6 &&
-                    _opponentHandCards.length == 6)
+            onPressed:
+                (_playerHandCards.length == 6 && _opponentHandCards.length == 6)
                 ? () {
                     final gs = ref
                         .read(localGameNotifierProvider(widget.gameId))
                         .gameState;
                     if (gs == null) return;
-                    final pIdx = gs.players
-                        .indexWhere((p) => p.id == widget.playerId);
+                    final pIdx = gs.players.indexWhere(
+                      (p) => p.id == widget.playerId,
+                    );
                     if (pIdx < 0) return;
                     final opponentId = gs.players[1 - pIdx].id;
 
                     final notifier = ref.read(
-                        localGameNotifierProvider(widget.gameId).notifier);
+                      localGameNotifierProvider(widget.gameId).notifier,
+                    );
                     notifier.devSetNextHands({
                       widget.playerId: _playerHandCards.toList(),
                       opponentId: _opponentHandCards.toList(),
@@ -448,10 +451,11 @@ class _DevOverlayState extends ConsumerState<DevOverlay>
                     setState(() => _handsQueued = true);
                   }
                 : null,
-            child: Text(_playerHandCards.length == 6 &&
-                    _opponentHandCards.length == 6
-                ? 'Queue for Next Deal'
-                : 'Select 6 cards per hand'),
+            child: Text(
+              _playerHandCards.length == 6 && _opponentHandCards.length == 6
+                  ? 'Queue for Next Deal'
+                  : 'Select 6 cards per hand',
+            ),
           ),
         ),
 
