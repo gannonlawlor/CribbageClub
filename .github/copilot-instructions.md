@@ -1,4 +1,4 @@
-# GitHub Copilot Instructions for CribbageClubServer
+# GitHub Copilot Instructions for CribbageClub
 
 This is a Kotlin/Spring Boot backend for a Cribbage club server. It manages game rooms, player actions, and the flow of a two-player cribbage game. Please follow these guidelines when contributing:
 

@@ -1,1 +1,1 @@
-rootProject.name = "CribbageClubServer"
+rootProject.name = "CribbageClub"

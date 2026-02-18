@@ -30,7 +30,7 @@ A cross-platform (iOS, Android, Web) cribbage app comparable to Chess.com and Li
 The Flutter project lives at `frontend/` in the monorepo alongside the Spring Boot backend. The toolchains are independent — Gradle ignores `frontend/`, Flutter ignores `src/`.
 
 ```
-CribbageClubServer/
+CribbageClub/
 ├── src/                          # Spring Boot backend
 ├── frontend/                     # Flutter project root
 │   ├── lib/
@@ -257,7 +257,7 @@ Ship-ready quality.
 These backend TODO items should be completed before or alongside frontend development:
 
 1. **CORS configuration** (TODO #7c) — browser clients will be blocked without this
-2. **PlayerGameView DTO** (TODO #1) — prevent opponents from seeing each other's cards in network traffic
+2. ~~**PlayerGameView DTO** (TODO #1)~~ — done (GameStateFilter now filters per-player)
 3. **WebSocket authentication** (TODO #2) — needed before multiplayer goes live
 
 ## Design Inspiration
