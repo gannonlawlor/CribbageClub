@@ -1,5 +1,9 @@
 use std::collections::HashSet;
 
+use rand::seq::SliceRandom;
+use rand::rngs::StdRng;
+use rand::SeedableRng;
+
 use crate::ai::ai_utils::combinations;
 use crate::card::{Card, Rank, Suit};
 use crate::scoring;
@@ -91,30 +95,55 @@ fn expected_hand_value(keep: &[Card], known_cards: &HashSet<Card>) -> f64 {
     }
 }
 
-/// Expected crib value via full enumeration.
-/// For the 2 discarded cards, iterate all C(46,2) opponent discard pairs
-/// from the remaining deck, then for each of the 44 remaining cut cards,
-/// score the 4-card crib.
+/// Maximum number of opponent discard pairs to sample for crib estimation.
+/// Full enumeration uses C(46,2) = 1035 pairs × 44 cuts = 45,540 evaluations
+/// per discard option. With 15 options per hand, that's ~684K evaluations —
+/// too slow for main-thread WASM. Sampling 100 pairs gives ~4,400 evaluations
+/// per option (~66K total) with sufficient accuracy for ranking.
+const MAX_CRIB_PAIR_SAMPLES: usize = 100;
+
+/// Expected crib value via sampled enumeration.
+/// For the 2 discarded cards, sample up to MAX_CRIB_PAIR_SAMPLES opponent
+/// discard pairs from the remaining deck, then for each of the remaining
+/// cut cards, score the 4-card crib.
 fn expected_crib_value(discard: &[Card], known_cards: &HashSet<Card>) -> f64 {
     let remaining: Vec<Card> = all_cards()
         .into_iter()
         .filter(|c| !known_cards.contains(c))
         .collect();
 
+    // Build all possible opponent pair indices
+    let mut pairs: Vec<(usize, usize)> = Vec::new();
+    for i in 0..remaining.len() {
+        for j in (i + 1)..remaining.len() {
+            pairs.push((i, j));
+        }
+    }
+
+    // Sample a subset for performance. Use a deterministic seed derived from
+    // the discard cards so results are reproducible for the same hand.
+    if pairs.len() > MAX_CRIB_PAIR_SAMPLES {
+        let seed = discard[0].rank.ordinal() as u64 * 1000
+            + suit_ordinal(discard[0].suit) as u64 * 100
+            + discard[1].rank.ordinal() as u64 * 10
+            + suit_ordinal(discard[1].suit) as u64;
+        let mut rng = StdRng::seed_from_u64(seed);
+        pairs.shuffle(&mut rng);
+        pairs.truncate(MAX_CRIB_PAIR_SAMPLES);
+    }
+
     let mut total_score: i64 = 0;
     let mut count: i64 = 0;
 
-    for i in 0..remaining.len() {
-        for j in (i + 1)..remaining.len() {
-            let crib = [discard[0], discard[1], remaining[i], remaining[j]];
-            for (k, &cut_card) in remaining.iter().enumerate() {
-                if k == i || k == j {
-                    continue;
-                }
-                total_score +=
-                    scoring::calculate_hand_score(&crib, cut_card, true) as i64;
-                count += 1;
+    for (i, j) in &pairs {
+        let crib = [discard[0], discard[1], remaining[*i], remaining[*j]];
+        for (k, &cut_card) in remaining.iter().enumerate() {
+            if k == *i || k == *j {
+                continue;
             }
+            total_score +=
+                scoring::calculate_hand_score(&crib, cut_card, true) as i64;
+            count += 1;
         }
     }
 
@@ -122,5 +151,14 @@ fn expected_crib_value(discard: &[Card], known_cards: &HashSet<Card>) -> f64 {
         total_score as f64 / count as f64
     } else {
         0.0
+    }
+}
+
+fn suit_ordinal(suit: Suit) -> u8 {
+    match suit {
+        Suit::Clubs => 0,
+        Suit::Diamonds => 1,
+        Suit::Hearts => 2,
+        Suit::Spades => 3,
     }
 }

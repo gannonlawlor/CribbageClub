@@ -35,12 +35,12 @@ class PuzzleGenerator {
   }
 
   /// Evaluate all 15 possible keeps and return them ranked best-to-worst.
-  static Future<List<KeepOption>> evaluateAllKeeps(
+  static List<KeepOption> evaluateAllKeeps(
     List<PlayingCard> hand,
     bool isDealer,
-  ) async {
+  ) {
     final handJson = jsonEncode(hand.map((c) => c.toJson()).toList());
-    final resultJson = await rust.analyzeDiscardsJson(
+    final resultJson = rust.analyzeDiscardsJson(
       handJson: handJson,
       isDealer: isDealer,
     );

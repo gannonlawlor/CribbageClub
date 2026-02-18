@@ -43,9 +43,9 @@ class LocalGameNotifier extends StateNotifier<GameNotifierState> {
     }
   }
 
-  Future<void> _applyAction(GameAction action) async {
+  void _applyAction(GameAction action) {
     try {
-      final newState = await _service.applyHumanAction(action);
+      final newState = _service.applyHumanAction(action);
       state = GameNotifierState(gameState: newState);
       _notifyAnimation(newState);
     } catch (e) {
@@ -53,13 +53,13 @@ class LocalGameNotifier extends StateNotifier<GameNotifierState> {
     }
   }
 
-  Future<void> discardCards(List<PlayingCard> cards) async {
+  void discardCards(List<PlayingCard> cards) {
     if (state.isDiscarding) return;
     state = state.copyWith(isDiscarding: true, error: null);
     try {
       GameState? newState;
       for (final card in cards) {
-        newState = await _service.applyHumanAction(
+        newState = _service.applyHumanAction(
           GameAction.discardToCrib(playerId: _playerId, card: card),
         );
       }
@@ -72,20 +72,20 @@ class LocalGameNotifier extends StateNotifier<GameNotifierState> {
     }
   }
 
-  Future<void> playCard(PlayingCard card) async {
-    await _applyAction(GameAction.playCard(playerId: _playerId, card: card));
+  void playCard(PlayingCard card) {
+    _applyAction(GameAction.playCard(playerId: _playerId, card: card));
   }
 
-  Future<void> cutDeck() async {
-    await _applyAction(GameAction.cutDeck(playerId: _playerId));
+  void cutDeck() {
+    _applyAction(GameAction.cutDeck(playerId: _playerId));
   }
 
-  Future<void> sayGo() async {
-    await _applyAction(GameAction.go(playerId: _playerId));
+  void sayGo() {
+    _applyAction(GameAction.go(playerId: _playerId));
   }
 
-  Future<void> countHand() async {
-    await _applyAction(GameAction.countHand(playerId: _playerId));
+  void countHand() {
+    _applyAction(GameAction.countHand(playerId: _playerId));
   }
 
   void clearError() {
@@ -93,8 +93,8 @@ class LocalGameNotifier extends StateNotifier<GameNotifierState> {
   }
 
   /// DEV ONLY: Set a player's score directly.
-  Future<void> devSetScore(String playerId, int score) async {
-    await _service.devSetScore(playerId, score);
+  void devSetScore(String playerId, int score) {
+    _service.devSetScore(playerId, score);
     final newState = _service.currentState;
     if (newState != null) {
       state = GameNotifierState(gameState: newState);
@@ -102,8 +102,8 @@ class LocalGameNotifier extends StateNotifier<GameNotifierState> {
   }
 
   /// DEV ONLY: Queue specific hands for the next deal.
-  Future<void> devSetNextHands(Map<String, List<PlayingCard>> hands) async {
-    await _service.devSetNextHands(hands);
+  void devSetNextHands(Map<String, List<PlayingCard>> hands) {
+    _service.devSetNextHands(hands);
   }
 
   @override

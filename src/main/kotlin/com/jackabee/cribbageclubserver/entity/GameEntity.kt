@@ -60,6 +60,9 @@ class GameEntity(
     @Column(columnDefinition = "TEXT")
     var stateJson: String? = null,
 
+    @Column(nullable = true)
+    var originalLocalGameId: String? = null,
+
     @Version
     var version: Long = 0
 )

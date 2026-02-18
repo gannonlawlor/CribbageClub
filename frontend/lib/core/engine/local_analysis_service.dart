@@ -10,15 +10,15 @@ import '../../src/rust/api/simple.dart' as rust;
 class LocalAnalysisService {
   LocalAnalysisService._();
 
-  static Future<GameAnalysis> analyzeGame(
+  static GameAnalysis analyzeGame(
     String gameId,
     List<GameHistoryEvent> history,
-  ) async {
+  ) {
     final roundChunks = _splitIntoRounds(history);
     final rounds = <RoundAnalysis>[];
 
     for (final events in roundChunks) {
-      final round = await _analyzeRound(events);
+      final round = _analyzeRound(events);
       if (round != null) rounds.add(round);
     }
 
@@ -42,9 +42,9 @@ class LocalAnalysisService {
     return rounds;
   }
 
-  static Future<RoundAnalysis?> _analyzeRound(
+  static RoundAnalysis? _analyzeRound(
     List<GameHistoryEvent> events,
-  ) async {
+  ) {
     final roundStarted = events.whereType<RoundStarted>().firstOrNull;
     final cardsDealt = events.whereType<CardsDealt>().firstOrNull;
     final deckCut = events.whereType<DeckCut>().firstOrNull;
@@ -64,7 +64,7 @@ class LocalAnalysisService {
 
     final analyses = <PlayerRoundAnalysis>[];
     for (final playerId in playerIds) {
-      final analysis = await _analyzePlayerRound(
+      final analysis = _analyzePlayerRound(
         playerId: playerId,
         isDealer: playerId == dealerPlayerId,
         dealtHands: cardsDealt.dealtHands,
@@ -82,13 +82,13 @@ class LocalAnalysisService {
     );
   }
 
-  static Future<PlayerRoundAnalysis?> _analyzePlayerRound({
+  static PlayerRoundAnalysis? _analyzePlayerRound({
     required String playerId,
     required bool isDealer,
     required Map<String, List<PlayingCard>> dealtHands,
     required List<HandCounted> handsCounted,
     required CribCounted? cribCounted,
-  }) async {
+  }) {
     final dealtHand = dealtHands[playerId];
     if (dealtHand == null || dealtHand.length != 6) return null;
 
@@ -103,7 +103,7 @@ class LocalAnalysisService {
 
     // Use Rust engine for discard analysis
     final handJson = jsonEncode(dealtHand.map((c) => c.toJson()).toList());
-    final resultJson = await rust.analyzeDiscardsJson(
+    final resultJson = rust.analyzeDiscardsJson(
       handJson: handJson,
       isDealer: isDealer,
     );

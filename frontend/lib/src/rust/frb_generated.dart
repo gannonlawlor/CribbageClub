@@ -55,7 +55,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
 
   @override
   Future<void> executeRustInitializers() async {
-    await api.crateApiSimpleInitApp();
+    api.crateApiSimpleInitApp();
   }
 
   @override
@@ -77,7 +77,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
 }
 
 abstract class RustLibApi extends BaseApi {
-  Future<String> crateApiSimpleAnalyzeDiscardsJson({
+  String crateApiSimpleAnalyzeDiscardsJson({
     required String handJson,
     required bool isDealer,
   });
@@ -88,25 +88,25 @@ abstract class RustLibApi extends BaseApi {
     required bool isCrib,
   });
 
-  Future<String> crateApiSimpleEngineApplyActionJson({
+  String crateApiSimpleEngineApplyActionJson({
     required RustGameEngine engine,
     required String actionJson,
   });
 
   String crateApiSimpleEngineCurrentStateJson({required RustGameEngine engine});
 
-  Future<void> crateApiSimpleEngineDevSetNextHandsJson({
+  void crateApiSimpleEngineDevSetNextHandsJson({
     required RustGameEngine engine,
     required String handsJson,
   });
 
-  Future<void> crateApiSimpleEngineDevSetScore({
+  void crateApiSimpleEngineDevSetScore({
     required RustGameEngine engine,
     required String playerId,
     required int score,
   });
 
-  Future<RustGameEngine> crateApiSimpleEngineNew({
+  RustGameEngine crateApiSimpleEngineNew({
     required String gameId,
     required String player1Id,
     required String player1Name,
@@ -115,16 +115,14 @@ abstract class RustLibApi extends BaseApi {
     BigInt? seed,
   });
 
-  Future<String> crateApiSimpleEngineProcessAiJson({
+  String crateApiSimpleEngineProcessAiJson({
     required RustGameEngine engine,
     required String aiPlayerId,
     required String difficulty,
     required int maxIterations,
   });
 
-  Future<RustGameEngine> crateApiSimpleEngineRestore({
-    required String stateJson,
-  });
+  RustGameEngine crateApiSimpleEngineRestore({required String stateJson});
 
   String crateApiSimpleGlicko2CalculateJson({
     required double playerRating,
@@ -136,7 +134,7 @@ abstract class RustLibApi extends BaseApi {
     required double score,
   });
 
-  Future<void> crateApiSimpleInitApp();
+  void crateApiSimpleInitApp();
 
   RustArcIncrementStrongCountFnType
   get rust_arc_increment_strong_count_RustGameEngine;
@@ -157,22 +155,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   });
 
   @override
-  Future<String> crateApiSimpleAnalyzeDiscardsJson({
+  String crateApiSimpleAnalyzeDiscardsJson({
     required String handJson,
     required bool isDealer,
   }) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(handJson, serializer);
           sse_encode_bool(isDealer, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 1,
-            port: port_,
-          );
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 1)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_String,
@@ -224,25 +217,20 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<String> crateApiSimpleEngineApplyActionJson({
+  String crateApiSimpleEngineApplyActionJson({
     required RustGameEngine engine,
     required String actionJson,
   }) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustGameEngine(
             engine,
             serializer,
           );
           sse_encode_String(actionJson, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 3,
-            port: port_,
-          );
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 3)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_String,
@@ -293,25 +281,20 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<void> crateApiSimpleEngineDevSetNextHandsJson({
+  void crateApiSimpleEngineDevSetNextHandsJson({
     required RustGameEngine engine,
     required String handsJson,
   }) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustGameEngine(
             engine,
             serializer,
           );
           sse_encode_String(handsJson, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 5,
-            port: port_,
-          );
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 5)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_unit,
@@ -331,14 +314,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<void> crateApiSimpleEngineDevSetScore({
+  void crateApiSimpleEngineDevSetScore({
     required RustGameEngine engine,
     required String playerId,
     required int score,
   }) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustGameEngine(
             engine,
@@ -346,12 +329,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           );
           sse_encode_String(playerId, serializer);
           sse_encode_i_32(score, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 6,
-            port: port_,
-          );
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 6)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_unit,
@@ -371,7 +349,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<RustGameEngine> crateApiSimpleEngineNew({
+  RustGameEngine crateApiSimpleEngineNew({
     required String gameId,
     required String player1Id,
     required String player1Name,
@@ -379,9 +357,9 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     required String player2Name,
     BigInt? seed,
   }) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(gameId, serializer);
           sse_encode_String(player1Id, serializer);
@@ -389,12 +367,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           sse_encode_String(player2Id, serializer);
           sse_encode_String(player2Name, serializer);
           sse_encode_opt_box_autoadd_u_64(seed, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 7,
-            port: port_,
-          );
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 7)!;
         },
         codec: SseCodec(
           decodeSuccessData:
@@ -428,15 +401,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   );
 
   @override
-  Future<String> crateApiSimpleEngineProcessAiJson({
+  String crateApiSimpleEngineProcessAiJson({
     required RustGameEngine engine,
     required String aiPlayerId,
     required String difficulty,
     required int maxIterations,
   }) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustGameEngine(
             engine,
@@ -445,12 +418,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           sse_encode_String(aiPlayerId, serializer);
           sse_encode_String(difficulty, serializer);
           sse_encode_u_32(maxIterations, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 8,
-            port: port_,
-          );
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 8)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_String,
@@ -470,20 +438,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<RustGameEngine> crateApiSimpleEngineRestore({
-    required String stateJson,
-  }) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
+  RustGameEngine crateApiSimpleEngineRestore({required String stateJson}) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(stateJson, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 9,
-            port: port_,
-          );
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 9)!;
         },
         codec: SseCodec(
           decodeSuccessData:
@@ -557,17 +518,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<void> crateApiSimpleInitApp() {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
+  void crateApiSimpleInitApp() {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 11,
-            port: port_,
-          );
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 11)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_unit,

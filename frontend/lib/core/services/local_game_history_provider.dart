@@ -1,7 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../auth/auth_provider.dart';
 import '../models/game_state.dart';
 import '../models/local_game_record.dart';
+import 'game_upload_service.dart';
 import 'local_game_history_service.dart';
 
 final localGameHistoryServiceProvider = Provider<LocalGameHistoryService>((ref) {
@@ -18,4 +20,11 @@ final persistedGameStateProvider =
     FutureProvider.family<GameState?, String>((ref, gameId) async {
   final service = ref.read(localGameHistoryServiceProvider);
   return service.getGameState(gameId);
+});
+
+final gameUploadServiceProvider = Provider<GameUploadService>((ref) {
+  return GameUploadService(
+    restClient: ref.read(restClientProvider),
+    historyService: ref.read(localGameHistoryServiceProvider),
+  );
 });

@@ -2,7 +2,11 @@ package com.jackabee.cribbageclubserver.service
 
 import com.jackabee.cribbageclubserver.bridge.RustEngine
 import com.jackabee.cribbageclubserver.bridge.RustEngineAdapter
+import com.jackabee.cribbageclubserver.controller.ImportGameRequest
+import com.jackabee.cribbageclubserver.controller.ImportGamesResponse
+import com.jackabee.cribbageclubserver.controller.ImportedGameMapping
 import com.jackabee.cribbageclubserver.entity.GameEntity
+import com.jackabee.cribbageclubserver.model.game.GameHistoryEvent
 import com.jackabee.cribbageclubserver.model.game.GameState
 import com.jackabee.cribbageclubserver.model.game.GameStage
 import com.jackabee.cribbageclubserver.model.player.Player
@@ -253,6 +257,169 @@ class GameService(
             }
         }
         return removed
+    }
+
+    /**
+     * Imports completed local games into the server database.
+     * Handles deduplication via originalLocalGameId, remaps 'local_player' IDs,
+     * and records game stats for the human player.
+     */
+    fun importLocalGames(
+        games: List<ImportGameRequest>,
+        userId: String,
+        username: String
+    ): ImportGamesResponse {
+        val mapper = objectMapper ?: throw IllegalStateException("ObjectMapper not available")
+        val repo = gameRepository ?: throw IllegalStateException("GameRepository not available")
+
+        val imported = mutableListOf<ImportedGameMapping>()
+        val duplicates = mutableListOf<String>()
+        val errors = mutableListOf<String>()
+
+        for (game in games) {
+            try {
+                // Check for duplicate via originalLocalGameId
+                val existing = repo.findByOriginalLocalGameId(game.localGameId)
+                if (existing != null) {
+                    duplicates.add(game.localGameId)
+                    continue
+                }
+
+                // Deserialize the game state
+                val state = mapper.readValue(game.stateJson, GameState::class.java)
+
+                // Only import completed games
+                if (state.stage != GameStage.GAME_OVER) {
+                    errors.add("${game.localGameId}: game is not completed (stage=${state.stage})")
+                    continue
+                }
+
+                // Remap IDs
+                val newGameId = generateGameId()
+                val remapped = remapGameState(state, newGameId, userId, username)
+
+                // Determine player order (human is player1)
+                val humanPlayer = remapped.players.first { it.id == userId }
+                val aiPlayer = remapped.players.first { it.id != userId }
+
+                // Determine timestamps
+                val completedAt = game.completedAt?.let {
+                    try { Instant.parse(it) } catch (_: Exception) { null }
+                } ?: Instant.now()
+
+                val entity = GameEntity(
+                    id = newGameId,
+                    player1Id = humanPlayer.id,
+                    player1Name = humanPlayer.name,
+                    player2Id = aiPlayer.id,
+                    player2Name = aiPlayer.name,
+                    player1Score = humanPlayer.score,
+                    player2Score = aiPlayer.score,
+                    stage = GameStage.GAME_OVER.name,
+                    currentPlayerId = remapped.currentPlayerId,
+                    isAIGame = true,
+                    aiPlayerId = aiPlayer.id,
+                    aiDifficulty = inferAiDifficulty(aiPlayer.name),
+                    winnerId = remapped.players.maxByOrNull { it.score }?.id,
+                    createdAt = completedAt,
+                    updatedAt = completedAt,
+                    stateJson = mapper.writeValueAsString(remapped),
+                    originalLocalGameId = game.localGameId,
+                )
+                repo.save(entity)
+
+                // Record stats for the human player
+                val winner = remapped.players.maxByOrNull { it.score }
+                if (winner != null && remapped.players.size == 2) {
+                    val loser = remapped.players.first { it.id != winner.id }
+                    playerStatsService?.recordGameResult(
+                        winnerId = winner.id,
+                        loserId = loser.id,
+                        winnerScore = winner.score,
+                        loserScore = loser.score
+                    )
+                }
+
+                imported.add(ImportedGameMapping(game.localGameId, newGameId))
+                logger.info("Imported local game {} as server game {}", game.localGameId, newGameId)
+            } catch (e: Exception) {
+                logger.warn("Failed to import local game {}: {}", game.localGameId, e.message)
+                errors.add("${game.localGameId}: ${e.message}")
+            }
+        }
+
+        return ImportGamesResponse(imported, duplicates, errors)
+    }
+
+    /**
+     * Remaps a locally-played GameState to use server-side IDs.
+     * Replaces 'local_player' with the authenticated user's ID/name,
+     * and updates the gameId to the new server-generated ID.
+     */
+    private fun remapGameState(
+        state: GameState,
+        newGameId: String,
+        userId: String,
+        username: String
+    ): GameState {
+        val oldLocalId = "local_player"
+        // Check if remapping is needed (games played while logged in already have real userId)
+        val needsRemap = state.players.any { it.id == oldLocalId }
+        val remapId = { id: String -> if (needsRemap && id == oldLocalId) userId else id }
+
+        val remappedPlayers = state.players.map { player ->
+            if (needsRemap && player.id == oldLocalId) {
+                Player(userId, username, player.hand, player.score)
+            } else {
+                player
+            }
+        }
+
+        val remappedHandsForCounting = state.handsForCounting.mapKeys { (key, _) -> remapId(key) }
+
+        val remappedHistory = state.history.map { event ->
+            when (event) {
+                is GameHistoryEvent.CardsDealt -> event.copy(
+                    dealtHands = event.dealtHands.mapKeys { (key, _) -> remapId(key) }
+                )
+                is GameHistoryEvent.DeckCut -> event.copy(
+                    cuttingPlayerId = remapId(event.cuttingPlayerId)
+                )
+                is GameHistoryEvent.CardPlayed -> event.copy(
+                    playerId = remapId(event.playerId)
+                )
+                is GameHistoryEvent.GoAnnounced -> event.copy(
+                    playerId = remapId(event.playerId)
+                )
+                is GameHistoryEvent.HandCounted -> event.copy(
+                    playerId = remapId(event.playerId)
+                )
+                is GameHistoryEvent.CribCounted -> event.copy(
+                    dealerPlayerId = remapId(event.dealerPlayerId)
+                )
+                is GameHistoryEvent.GameEnded -> event.copy(
+                    winnerPlayerId = remapId(event.winnerPlayerId)
+                )
+                is GameHistoryEvent.RoundStarted -> event
+                is GameHistoryEvent.PeggingEnded -> event
+            }
+        }
+
+        return state.copy(
+            gameId = newGameId,
+            players = remappedPlayers,
+            currentPlayerId = state.currentPlayerId?.let { remapId(it) },
+            handsForCounting = remappedHandsForCounting,
+            history = remappedHistory
+        )
+    }
+
+    private fun inferAiDifficulty(aiName: String): String {
+        return when {
+            aiName.contains("Hard", ignoreCase = true) -> "hard"
+            aiName.contains("Medium", ignoreCase = true) -> "medium"
+            else -> "basic"
+        }
     }
 
     /**

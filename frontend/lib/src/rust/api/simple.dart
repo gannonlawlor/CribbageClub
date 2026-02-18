@@ -9,7 +9,7 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 // These functions are ignored because they are not marked as `pub`: `parse_difficulty`
 
 /// Create a new game. Returns the engine handle.
-Future<RustGameEngine> engineNew({
+RustGameEngine engineNew({
   required String gameId,
   required String player1Id,
   required String player1Name,
@@ -26,7 +26,7 @@ Future<RustGameEngine> engineNew({
 );
 
 /// Restore a game from a serialized GameState JSON string.
-Future<RustGameEngine> engineRestore({required String stateJson}) =>
+RustGameEngine engineRestore({required String stateJson}) =>
     RustLib.instance.api.crateApiSimpleEngineRestore(stateJson: stateJson);
 
 /// Get the current game state as a JSON string.
@@ -34,7 +34,7 @@ String engineCurrentStateJson({required RustGameEngine engine}) =>
     RustLib.instance.api.crateApiSimpleEngineCurrentStateJson(engine: engine);
 
 /// Apply an action (JSON string) and return the new state as JSON.
-Future<String> engineApplyActionJson({
+String engineApplyActionJson({
   required RustGameEngine engine,
   required String actionJson,
 }) => RustLib.instance.api.crateApiSimpleEngineApplyActionJson(
@@ -43,7 +43,7 @@ Future<String> engineApplyActionJson({
 );
 
 /// Process AI actions in a loop and return the new state as JSON.
-Future<String> engineProcessAiJson({
+String engineProcessAiJson({
   required RustGameEngine engine,
   required String aiPlayerId,
   required String difficulty,
@@ -56,7 +56,7 @@ Future<String> engineProcessAiJson({
 );
 
 /// DEV ONLY: Set a player's score.
-Future<void> engineDevSetScore({
+void engineDevSetScore({
   required RustGameEngine engine,
   required String playerId,
   required int score,
@@ -67,7 +67,7 @@ Future<void> engineDevSetScore({
 );
 
 /// DEV ONLY: Set next hands (JSON map of player_id -> cards).
-Future<void> engineDevSetNextHandsJson({
+void engineDevSetNextHandsJson({
   required RustGameEngine engine,
   required String handsJson,
 }) => RustLib.instance.api.crateApiSimpleEngineDevSetNextHandsJson(
@@ -87,7 +87,7 @@ int calculateHandScoreJson({
 );
 
 /// Analyze all discard options. Returns JSON array of options.
-Future<String> analyzeDiscardsJson({
+String analyzeDiscardsJson({
   required String handJson,
   required bool isDealer,
 }) => RustLib.instance.api.crateApiSimpleAnalyzeDiscardsJson(
