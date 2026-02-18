@@ -8,6 +8,7 @@ class GameControls extends StatelessWidget {
   final int selectedCardCount;
   final bool isDiscarding;
   final bool canGo;
+  final bool showCountingOverlay;
   final VoidCallback? onDiscard;
   final VoidCallback? onCut;
   final VoidCallback? onGo;
@@ -20,6 +21,7 @@ class GameControls extends StatelessWidget {
     this.selectedCardCount = 0,
     this.isDiscarding = false,
     this.canGo = true,
+    this.showCountingOverlay = false,
     this.onDiscard,
     this.onCut,
     this.onGo,
@@ -72,6 +74,7 @@ class GameControls extends StatelessWidget {
           ),
         ];
       case GameStage.counting:
+        if (showCountingOverlay) return [];
         return [
           _ActionButton(
             label: 'Count Hand',

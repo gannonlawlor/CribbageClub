@@ -23,6 +23,7 @@ import '../widgets/game_controls.dart';
 import '../widgets/hand_fan.dart';
 import '../widgets/history_log.dart';
 import '../widgets/play_area.dart';
+import '../widgets/counting_overlay.dart';
 import '../widgets/score_display.dart';
 import '../widgets/dev_overlay.dart';
 import '../widgets/score_popup_overlay.dart';
@@ -330,6 +331,7 @@ class GameScreen extends ConsumerWidget {
                         selectedCardCount: selectedCards.length,
                         isDiscarding: gameNotifier.isDiscarding,
                         canGo: !_canPlayAnyCard(player.hand, gs.peggingCount),
+                        showCountingOverlay: gs.stage == GameStage.counting && isMyTurn,
                         onDiscard: () =>
                             _handleDiscard(ref, gs, playerId, selectedCards),
                         onCut: () {
@@ -376,6 +378,20 @@ class GameScreen extends ConsumerWidget {
 
                   // Score popup overlay
                   ScorePopupOverlay(gameId: gameId, playerId: playerId),
+
+                  // Counting overlay
+                  if (gs.stage == GameStage.counting && isMyTurn)
+                    CountingOverlay(
+                      hand: gs.handsForCounting[playerId] ?? player.hand,
+                      cutCard: gs.cutCard!,
+                      crib: isDealer ? gs.crib : [],
+                      isDealer: isDealer,
+                      onComplete: () {
+                        final n = _readNotifier(ref);
+                        if (n is GameNotifier) n.countHand();
+                        if (n is LocalGameNotifier) n.countHand();
+                      },
+                    ),
 
                   // Dev overlay (debug builds + local games only)
                   if (kDebugMode && _isLocal)
