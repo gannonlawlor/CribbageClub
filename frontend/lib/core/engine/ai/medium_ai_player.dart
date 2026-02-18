@@ -23,14 +23,13 @@ class MediumAIPlayer extends AIPlayer {
 
     return switch (gameState.stage) {
       GameStage.discardingToCrib => () {
-          final discarded = 6 - player.hand.length;
-          if (discarded < 2) {
+          if (player.hand.length > 4) {
             final cardsToDiscard =
                 chooseCardsToDiscard(player.hand, isDealer(gameState));
-            if (discarded < cardsToDiscard.length) {
+            if (cardsToDiscard.isNotEmpty) {
               return GameAction.discardToCrib(
                 playerId: playerId,
-                card: cardsToDiscard[discarded],
+                card: cardsToDiscard.first,
               );
             }
           }
