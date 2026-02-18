@@ -142,14 +142,16 @@ class _PuzzleSummaryState extends State<PuzzleSummary> {
                       ),
                     ),
                     const SizedBox(width: 4),
-                    Text(
-                      '/ ${_maxScore.toStringAsFixed(1)}',
-                      style: const TextStyle(
-                        color: Colors.white54,
-                        fontSize: 18,
+                    if (_maxScore > 0) ...[
+                      Text(
+                        '/ ${_maxScore.toStringAsFixed(1)}',
+                        style: const TextStyle(
+                          color: Colors.white54,
+                          fontSize: 18,
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 6),
+                      const SizedBox(width: 6),
+                    ],
                     const Text(
                       'avg pts',
                       style: TextStyle(color: Colors.white38, fontSize: 13),

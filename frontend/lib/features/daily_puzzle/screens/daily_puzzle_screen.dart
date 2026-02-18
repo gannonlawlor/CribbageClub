@@ -244,30 +244,7 @@ class _PlayingView extends ConsumerWidget {
             height: 56,
             child: ElevatedButton(
               onPressed: canSubmit
-                  ? () async {
-                      final rank = await ref
-                          .read(dailyPuzzleProvider.notifier)
-                          .submitKeep();
-                      if (rank != null && context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              rank == 1 ? 'Optimal!' : 'Your pick: #$rank of 15',
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            backgroundColor: rank == 1
-                                ? Colors.green.withValues(alpha: 0.9)
-                                : Colors.blueGrey.withValues(alpha: 0.9),
-                            duration: const Duration(seconds: 2),
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
-                      }
-                    }
+                  ? () => ref.read(dailyPuzzleProvider.notifier).submitKeep()
                   : null,
               child: const Text('Submit', style: TextStyle(fontSize: 18)),
             ),

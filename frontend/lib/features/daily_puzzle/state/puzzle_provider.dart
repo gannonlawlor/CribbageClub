@@ -92,20 +92,9 @@ class DailyPuzzleNotifier extends StateNotifier<DailyPuzzleState> {
     final n = PuzzleGenerator.puzzlesPerDay;
     final ranks = List<int?>.from(progress.ranks);
     final scores = List<double?>.from(progress.scores);
-    final allResults = List<List<KeepOption>?>.filled(n, null);
+    final allResults = List<List<KeepOption>?>.from(progress.allResults);
 
     final allComplete = progress.nextIndex >= n;
-
-    // If partially or fully complete, compute results for completed puzzles
-    for (var i = 0; i < progress.nextIndex && i < n; i++) {
-      final puzzle = puzzleSet.puzzles[i];
-      final results = PuzzleGenerator.evaluateAllKeeps(
-        puzzle.hand,
-        puzzle.isDealer,
-      );
-      puzzle.results = results;
-      allResults[i] = results;
-    }
 
     if (allComplete) {
       state = DailyPuzzleState(
@@ -171,12 +160,13 @@ class DailyPuzzleNotifier extends StateNotifier<DailyPuzzleState> {
     final idx = state.currentPuzzleIndex;
     final date = puzzle.date;
 
-    // Persist this puzzle's result
+    // Persist this puzzle's result (including full analysis for instant reload)
     await _persistence.savePuzzleResult(
       date,
       idx,
       playerRank ?? 0,
       playerScore ?? 0,
+      results,
     );
 
     final ranks = List<int?>.from(state.playerRanks);
