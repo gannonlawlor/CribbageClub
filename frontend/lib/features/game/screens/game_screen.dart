@@ -187,7 +187,11 @@ class GameScreen extends ConsumerWidget {
           child: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 500),
-              child: Stack(
+              child: PerimeterCribbageBoard(
+                playerScore: player.score,
+                opponentScore: opponent.score,
+                isDealer: isDealer,
+                child: Stack(
                 children: [
                   Column(
                     children: [
@@ -282,19 +286,6 @@ class GameScreen extends ConsumerWidget {
                             ],
                           ),
                         ),
-
-                      // Cribbage Board (compact)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 2,
-                        ),
-                        child: CribbageBoard(
-                          playerScore: player.score,
-                          opponentScore: opponent.score,
-                          isDealer: isDealer,
-                        ),
-                      ),
 
                       // Opponent hand
                       Padding(
@@ -429,6 +420,7 @@ class GameScreen extends ConsumerWidget {
                   if (kDebugMode && _isLocal)
                     DevOverlay(gameId: gameId, playerId: playerId),
                 ],
+              ),
               ),
             ),
           ),

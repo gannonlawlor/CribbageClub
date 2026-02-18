@@ -237,7 +237,11 @@ class _ReplayContent extends ConsumerWidget {
           child: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 500),
-              child: Column(
+              child: PerimeterCribbageBoard(
+                playerScore: myScore,
+                opponentScore: opponentScore,
+                isDealer: isDealer,
+                child: Column(
                 children: [
                   // Top bar
                   Padding(
@@ -312,19 +316,6 @@ class _ReplayContent extends ConsumerWidget {
                           onPressed: () => context.go('/analysis/$gameId'),
                         ),
                       ],
-                    ),
-                  ),
-
-                  // Cribbage Board
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 2,
-                    ),
-                    child: CribbageBoard(
-                      playerScore: myScore,
-                      opponentScore: opponentScore,
-                      isDealer: isDealer,
                     ),
                   ),
 
@@ -613,6 +604,7 @@ class _ReplayContent extends ConsumerWidget {
                     ),
                   ),
                 ],
+              ),
               ),
             ),
           ),
