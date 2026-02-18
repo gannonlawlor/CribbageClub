@@ -2,126 +2,62 @@
 
 ## Project Overview
 
-Cribbage Club is a cross-platform multiplayer Cribbage card game inspired by Chess.com and LiChess. The project is a monorepo containing a Spring Boot backend and a Flutter frontend.
+Cribbage Club is a cross-platform multiplayer Cribbage card game inspired by Chess.com and LiChess. The project is a monorepo with four sub-projects:
 
-- **Backend** (`src/`): Spring Boot server handling game logic, persistence, and real-time communication. The database is the source of truth for game state; in-memory `Game` objects serve as a cache for active play and are reconstructed from the DB on cache miss (e.g., after server restart).
-- **Frontend** (`frontend/`): Flutter app targeting iOS, Android, and Web from a single codebase. See [FRONTEND.md](FRONTEND.md) for the full frontend plan, architecture, and phased development roadmap.
+- **Backend** (`src/`): Spring Boot 3.4 server — game logic, persistence, real-time WebSocket, auth, ratings. See `src/CLAUDE.md`.
+- **Frontend** (`frontend/`): Flutter app targeting iOS, Android, and Web. See `frontend/CLAUDE.md`.
+- **Engine** (`engine/`): Rust crate powering game simulation, AI opponents, and discard analysis. See `engine/CLAUDE.md`.
+- **Landing** (`landing/`): Static marketing landing page. See `landing/CLAUDE.md`.
+
+## Monorepo Layout
+
+```
+CribbageClub/
+├── src/                          # Spring Boot backend (Kotlin)
+├── frontend/                     # Flutter app (Dart)
+├── engine/                       # Rust game engine
+├── landing/                      # Static landing page (HTML/CSS/JS)
+├── CLAUDE.md                     # This file (project overview)
+├── TODO.md                       # Backend task list (all complete)
+├── FRONTEND.md                   # Frontend plan and phased roadmap
+├── build.gradle.kts              # Backend + engine build
+├── docker-compose.yml            # Dev: PostgreSQL + app
+├── docker-compose.alpha.yml      # Alpha: Tailscale + PostgreSQL + app
+├── Dockerfile                    # Multi-stage backend container
+└── .github/workflows/ci.yml     # CI: backend build+test, frontend analyze+test
+```
 
 ## Tech Stack
 
-### Backend
-- **Language:** Kotlin 1.9.25
-- **Framework:** Spring Boot 3.3.3
-- **JDK:** 21 (Amazon Corretto in CI)
-- **Build:** Gradle 8.10 with Kotlin DSL
-- **Database:** PostgreSQL (source of truth for game/lobby state; in-memory Game objects serve as cache)
-- **Real-time:** STOMP over WebSocket with SockJS fallback
-- **Testing:** JUnit 5, Mockito, Spring Boot Test
+| Layer | Technology |
+|-------|-----------|
+| Backend | Kotlin 1.9.25, Spring Boot 3.4.13, JDK 21, PostgreSQL, Flyway, STOMP/WebSocket |
+| Frontend | Flutter/Dart 3.11+, Riverpod, GoRouter, Dio, freezed, flutter_rust_bridge |
+| Engine | Rust, serde, flutter_rust_bridge (FFI to Flutter), JNA (FFI to JVM) |
+| Infra | Docker, GitHub Actions CI, Tailscale (alpha networking) |
 
-### Frontend
-- **Framework:** Flutter (iOS, Android, Web)
-- **Language:** Dart
-- **State Management:** Riverpod
-- **Routing:** GoRouter
-- **HTTP/WebSocket:** Dio + stomp_dart_client
-- **Code Generation:** freezed + json_serializable for models
+## Build & Run
 
-## Build & Test
-
-### Backend
 ```bash
-./gradlew build    # compile + test
-./gradlew test     # tests only
-```
+# Backend (compiles Rust engine first via Gradle task)
+./gradlew build          # compile + test
+./gradlew bootRun        # run server (needs PostgreSQL on 5432)
 
-### Frontend
-```bash
+# Frontend
 cd frontend
-flutter pub get           # install dependencies
-flutter run               # run on connected device / browser
-flutter build web         # production web build
-flutter build apk         # Android APK
-flutter build ios         # iOS (requires macOS + Xcode)
-flutter test              # run tests
-dart run build_runner build  # regenerate freezed/json_serializable code
+flutter pub get          # install deps
+flutter run -d chrome    # run on web
+flutter test             # run tests
+dart run build_runner build  # regenerate freezed/json code
+
+# Engine (standalone)
+cd engine
+cargo build --release    # native library
+cargo test               # run Rust tests
+
+# Infrastructure
+docker compose up -d     # start PostgreSQL + app (dev)
 ```
-
-CI runs backend on ubuntu-latest with JDK 21 (see `.github/workflows/copilot-setup-steps.yml`).
-
-## Project Structure
-
-### Monorepo Layout
-```
-CribbageClub/
-├── src/                          # Spring Boot backend
-├── frontend/                     # Flutter app (iOS, Android, Web)
-├── CLAUDE.md                     # This file
-├── TODO.md                       # Backend task list
-├── FRONTEND.md                   # Frontend plan and architecture
-└── docker-compose.yml
-```
-
-### Backend
-```
-src/main/kotlin/com/jackabee/cribbageclubserver/
-├── CribbageClubServerApplication.kt   # Entry point
-├── config/
-│   ├── GlobalExceptionHandler.kt      # @ControllerAdvice with structured ErrorResponse
-│   ├── SecurityConfig.kt              # Spring Security (permits all, CSRF off)
-│   └── WebSocketConfig.kt             # STOMP broker at /ws
-├── controller/
-│   ├── GameController.kt              # REST: /api/games (CRUD + AI game creation)
-│   └── LobbyController.kt            # REST: /api/lobbies
-├── model/
-│   ├── action/                        # GameAction sealed class, ActionType enum
-│   ├── ai/                            # AIPlayer interface, BasicAIPlayer
-│   ├── card/                          # Card, Rank, Suit, Deck
-│   ├── game/                          # Game engine, GameState, GameStage, history
-│   ├── lobby/                         # Lobby, LobbyPlayer, LobbyStatus
-│   └── player/                        # Player data class
-├── service/
-│   ├── GameService.kt                 # Game lifecycle, AI turn processing
-│   └── LobbyService.kt               # Lobby CRUD, matchmaking
-├── utils/
-│   ├── HandCounting.kt                # Cribbage scoring (15s, pairs, runs, flushes, nobs)
-│   └── ScoreBreakdownCalculator.kt    # Detailed score breakdown
-├── websocket/
-│   ├── GameWebSocketController.kt     # STOMP message handlers
-│   ├── GameWebSocketService.kt        # Broadcast helpers
-│   ├── GameWebSocketMessages.kt       # Message DTOs
-│   └── WebSocketEventHandler.kt       # Connect/disconnect events
-└── examples/                          # Usage example code
-```
-
-### Frontend
-See [FRONTEND.md](FRONTEND.md) for the full directory structure. Key areas:
-- `frontend/lib/core/api/` — REST + STOMP WebSocket clients
-- `frontend/lib/core/models/` — Dart models mirroring backend Kotlin types (freezed)
-- `frontend/lib/features/game/` — Game screen, card widgets, cribbage board (CustomPainter)
-- `frontend/lib/features/lobby/` — Lobby browser and matchmaking
-- `frontend/lib/features/profile/` — Stats, rating, game history
-
-## Key API Endpoints
-
-### REST
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/api/games` | List all active games |
-| GET | `/api/games/{gameId}` | Get game state |
-| POST | `/api/games/ai` | Create a game against AI |
-| POST | `/api/games/{gameId}/actions` | Apply a game action |
-| DELETE | `/api/games/{gameId}` | Delete a game |
-| GET | `/api/lobbies` | List all lobbies |
-| GET | `/api/lobbies/waiting` | List lobbies waiting for players |
-| POST | `/api/lobbies` | Create a lobby |
-| POST | `/api/lobbies/{lobbyId}/join` | Join a lobby |
-| POST | `/api/lobbies/{lobbyId}/leave` | Leave a lobby |
-| POST | `/api/lobbies/{lobbyId}/start` | Start a game from lobby |
-
-### WebSocket (STOMP)
-- **Connect:** `/ws` (SockJS fallback)
-- **Send:** `/app/game/action`, `/app/game/join`, `/app/game/leave`, `/app/game/state`
-- **Subscribe:** `/topic/game/{gameId}`, `/topic/game/{gameId}/players`, `/queue/game-state`, `/queue/errors`
 
 ## Game Flow
 
@@ -132,28 +68,43 @@ See [FRONTEND.md](FRONTEND.md) for the full directory structure. Key areas:
 5. **COUNTING** — Non-dealer counts first, then dealer, then crib scored
 6. **GAME_OVER** — First player to 121 wins
 
-Dealer rotates each round via `GameState.dealerIndex`.
+## Key API Endpoints
 
-## Architecture Notes
+### REST
 
-- `Game.kt` is the core engine. It enforces rules, validates actions, and tracks history. `Game.restore(state)` reconstructs a `Game` from a persisted `GameState` (including deck state via `remainingDeck`).
-- `GameState.dealerIndex` tracks dealer rotation; non-dealer cuts and counts first. `GameState.remainingDeck` captures deck state for persistence/restoration.
-- `GameService` uses the database as source of truth with an in-memory `ConcurrentHashMap` cache. On cache miss (e.g., after restart), it calls `loadGame()` to restore from DB. Handles AI turn loops (max 10 iterations) and broadcasts state via WebSocket.
-- `LobbyService` uses the database directly (no in-memory fallback).
-- `BasicAIPlayer` uses heuristic strategies for discard and pegging decisions.
-- `GameHistoryTracker` records all visible events as a sealed-class hierarchy included in `GameState`.
-- `GlobalExceptionHandler` provides structured `ErrorResponse` JSON for all REST errors.
-- Security is currently wide open (`permitAll`); suitable for development only.
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/api/auth/guest` | Create guest account |
+| POST | `/api/auth/register` | Register with username/password |
+| POST | `/api/auth/login` | Login |
+| POST | `/api/auth/upgrade` | Upgrade guest to full account |
+| GET | `/api/games/me` | My active games |
+| GET | `/api/games/me/history` | My completed games |
+| POST | `/api/games/ai` | Create AI game (difficulty: basic/medium/hard) |
+| POST | `/api/games/{id}/actions` | Apply game action |
+| GET | `/api/games/{id}/analysis` | Get/compute discard analysis |
+| POST | `/api/games/{id}/analysis` | Upload client-computed analysis |
+| POST | `/api/games/import` | Import local games to server |
+| GET | `/api/stats/leaderboard` | Top 10 players |
+| GET | `/api/puzzles/daily` | Daily puzzle |
+
+### WebSocket (STOMP)
+
+- **Connect:** `/ws` (SockJS fallback, JWT validated on CONNECT)
+- **Send:** `/app/game/action`, `/app/game/join`, `/app/game/leave`, `/app/game/state`
+- **Subscribe:** `/topic/game/{gameId}`, `/queue/game-state`, `/queue/errors`
+
+## Architecture Highlights
+
+- **Dual engine**: Rust crate used both server-side (JNA) and client-side (flutter_rust_bridge/WASM) for game logic and analysis
+- **Analysis caching**: Local (SharedPreferences) → server (PostgreSQL) → on-device compute → cache everywhere
+- **Game state filtering**: `GameStateFilter` hides opponent hands, deck, and crib from each player's view
+- **Auth**: JWT with 90-day expiry, guest accounts, rate-limited auth endpoints
+- **Real-time**: STOMP over WebSocket with authenticated subscriptions, REST for action ordering guarantees
 
 ## Coding Conventions
 
-- Kotlin data classes for models, sealed classes for actions and history events
-- Spring `@Service` / `@RestController` / `@Configuration` annotations
-- Error handling: `require()` in game logic, `GlobalExceptionHandler` catches exceptions for REST, error messages sent to `/queue/errors` via WebSocket
-- SLF4J logging in server code (examples use println for demo output)
-- Tests use JUnit 5 assertions and Mockito for mocking services
-
-## Remaining Work
-
-- **Backend:** See [TODO.md](TODO.md) for the prioritized task list. Key frontend-blocking items: CORS config (#7c), WebSocket auth (#2). ~~PlayerGameView DTO (#1)~~ is done.
-- **Frontend:** See [FRONTEND.md](FRONTEND.md) for the phased development plan (Phase 1–5).
+- **Backend**: Kotlin data classes, sealed classes for actions/events, `require()` for validation, `@Transactional` on multi-step ops, SLF4J logging
+- **Frontend**: Riverpod manual providers (no codegen), freezed models, `isLocalGame()` prefix check for offline games, `PlayingCard` (not `Card`) to avoid Flutter widget conflict
+- **Engine**: Rust idiomatic patterns, serde for JSON, no unsafe code, exhaustive pattern matching
+- **Serialization**: Jackson `@JsonTypeInfo(property = "type")` on backend, `@FreezedUnionValue` on frontend, enums as UPPER_SNAKE
