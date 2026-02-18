@@ -46,6 +46,20 @@ class GameScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Guard: stale local game URL after app restart
+    if (_isLocal) {
+      final service = ref.read(localGameServiceProvider);
+      if (!service.hasActiveGame) {
+        Future.microtask(() => context.go('/'));
+        return Scaffold(
+          body: Container(
+            decoration: const BoxDecoration(gradient: AppTheme.feltGradient),
+            child: const Center(child: CircularProgressIndicator()),
+          ),
+        );
+      }
+    }
+
     final gameNotifier = _watchState(ref);
     final auth = ref.watch(authProvider);
 

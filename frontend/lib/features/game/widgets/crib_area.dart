@@ -37,7 +37,8 @@ class _CribAreaState extends State<CribArea> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final dims = CardDimensions(constraints.maxWidth > 0 ? constraints.maxWidth : 360);
+        final availWidth = constraints.hasBoundedWidth ? constraints.maxWidth : 360.0;
+        final dims = CardDimensions(availWidth);
         final cardW = dims.playCardWidth;
         final cardH = dims.playCardHeight;
         const count = 4;

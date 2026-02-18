@@ -49,7 +49,9 @@ class LocalGameService {
     return _processAIActions();
   }
 
-  GameState get currentState => _engine!.currentState;
+  bool get hasActiveGame => _engine != null;
+
+  GameState? get currentState => _engine?.currentState;
 
   GameState _processAIActions() {
     var state = _engine!.currentState;
