@@ -10,6 +10,7 @@ class AuthResponse with _$AuthResponse {
     required String userId,
     required String username,
     String? displayName,
+    @Default(false) bool isGuest,
   }) = _AuthResponse;
 
   factory AuthResponse.fromJson(Map<String, dynamic> json) =>
@@ -37,4 +38,16 @@ class RegisterRequest with _$RegisterRequest {
 
   factory RegisterRequest.fromJson(Map<String, dynamic> json) =>
       _$RegisterRequestFromJson(json);
+}
+
+@freezed
+class UpgradeRequest with _$UpgradeRequest {
+  const factory UpgradeRequest({
+    required String username,
+    required String password,
+    String? displayName,
+  }) = _UpgradeRequest;
+
+  factory UpgradeRequest.fromJson(Map<String, dynamic> json) =>
+      _$UpgradeRequestFromJson(json);
 }

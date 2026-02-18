@@ -25,6 +25,7 @@ mixin _$AuthResponse {
   String get userId => throw _privateConstructorUsedError;
   String get username => throw _privateConstructorUsedError;
   String? get displayName => throw _privateConstructorUsedError;
+  bool get isGuest => throw _privateConstructorUsedError;
 
   /// Serializes this AuthResponse to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -48,6 +49,7 @@ abstract class $AuthResponseCopyWith<$Res> {
     String userId,
     String username,
     String? displayName,
+    bool isGuest,
   });
 }
 
@@ -70,6 +72,7 @@ class _$AuthResponseCopyWithImpl<$Res, $Val extends AuthResponse>
     Object? userId = null,
     Object? username = null,
     Object? displayName = freezed,
+    Object? isGuest = null,
   }) {
     return _then(
       _value.copyWith(
@@ -89,6 +92,10 @@ class _$AuthResponseCopyWithImpl<$Res, $Val extends AuthResponse>
                 ? _value.displayName
                 : displayName // ignore: cast_nullable_to_non_nullable
                       as String?,
+            isGuest: null == isGuest
+                ? _value.isGuest
+                : isGuest // ignore: cast_nullable_to_non_nullable
+                      as bool,
           )
           as $Val,
     );
@@ -109,6 +116,7 @@ abstract class _$$AuthResponseImplCopyWith<$Res>
     String userId,
     String username,
     String? displayName,
+    bool isGuest,
   });
 }
 
@@ -130,6 +138,7 @@ class __$$AuthResponseImplCopyWithImpl<$Res>
     Object? userId = null,
     Object? username = null,
     Object? displayName = freezed,
+    Object? isGuest = null,
   }) {
     return _then(
       _$AuthResponseImpl(
@@ -149,6 +158,10 @@ class __$$AuthResponseImplCopyWithImpl<$Res>
             ? _value.displayName
             : displayName // ignore: cast_nullable_to_non_nullable
                   as String?,
+        isGuest: null == isGuest
+            ? _value.isGuest
+            : isGuest // ignore: cast_nullable_to_non_nullable
+                  as bool,
       ),
     );
   }
@@ -162,6 +175,7 @@ class _$AuthResponseImpl implements _AuthResponse {
     required this.userId,
     required this.username,
     this.displayName,
+    this.isGuest = false,
   });
 
   factory _$AuthResponseImpl.fromJson(Map<String, dynamic> json) =>
@@ -175,10 +189,13 @@ class _$AuthResponseImpl implements _AuthResponse {
   final String username;
   @override
   final String? displayName;
+  @override
+  @JsonKey()
+  final bool isGuest;
 
   @override
   String toString() {
-    return 'AuthResponse(token: $token, userId: $userId, username: $username, displayName: $displayName)';
+    return 'AuthResponse(token: $token, userId: $userId, username: $username, displayName: $displayName, isGuest: $isGuest)';
   }
 
   @override
@@ -191,13 +208,14 @@ class _$AuthResponseImpl implements _AuthResponse {
             (identical(other.username, username) ||
                 other.username == username) &&
             (identical(other.displayName, displayName) ||
-                other.displayName == displayName));
+                other.displayName == displayName) &&
+            (identical(other.isGuest, isGuest) || other.isGuest == isGuest));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode =>
-      Object.hash(runtimeType, token, userId, username, displayName);
+      Object.hash(runtimeType, token, userId, username, displayName, isGuest);
 
   /// Create a copy of AuthResponse
   /// with the given fields replaced by the non-null parameter values.
@@ -219,6 +237,7 @@ abstract class _AuthResponse implements AuthResponse {
     required final String userId,
     required final String username,
     final String? displayName,
+    final bool isGuest,
   }) = _$AuthResponseImpl;
 
   factory _AuthResponse.fromJson(Map<String, dynamic> json) =
@@ -232,6 +251,8 @@ abstract class _AuthResponse implements AuthResponse {
   String get username;
   @override
   String? get displayName;
+  @override
+  bool get isGuest;
 
   /// Create a copy of AuthResponse
   /// with the given fields replaced by the non-null parameter values.
@@ -609,5 +630,206 @@ abstract class _RegisterRequest implements RegisterRequest {
   @override
   @JsonKey(includeFromJson: false, includeToJson: false)
   _$$RegisterRequestImplCopyWith<_$RegisterRequestImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+UpgradeRequest _$UpgradeRequestFromJson(Map<String, dynamic> json) {
+  return _UpgradeRequest.fromJson(json);
+}
+
+/// @nodoc
+mixin _$UpgradeRequest {
+  String get username => throw _privateConstructorUsedError;
+  String get password => throw _privateConstructorUsedError;
+  String? get displayName => throw _privateConstructorUsedError;
+
+  /// Serializes this UpgradeRequest to a JSON map.
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+
+  /// Create a copy of UpgradeRequest
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  $UpgradeRequestCopyWith<UpgradeRequest> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $UpgradeRequestCopyWith<$Res> {
+  factory $UpgradeRequestCopyWith(
+    UpgradeRequest value,
+    $Res Function(UpgradeRequest) then,
+  ) = _$UpgradeRequestCopyWithImpl<$Res, UpgradeRequest>;
+  @useResult
+  $Res call({String username, String password, String? displayName});
+}
+
+/// @nodoc
+class _$UpgradeRequestCopyWithImpl<$Res, $Val extends UpgradeRequest>
+    implements $UpgradeRequestCopyWith<$Res> {
+  _$UpgradeRequestCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  /// Create a copy of UpgradeRequest
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? username = null,
+    Object? password = null,
+    Object? displayName = freezed,
+  }) {
+    return _then(
+      _value.copyWith(
+            username: null == username
+                ? _value.username
+                : username // ignore: cast_nullable_to_non_nullable
+                      as String,
+            password: null == password
+                ? _value.password
+                : password // ignore: cast_nullable_to_non_nullable
+                      as String,
+            displayName: freezed == displayName
+                ? _value.displayName
+                : displayName // ignore: cast_nullable_to_non_nullable
+                      as String?,
+          )
+          as $Val,
+    );
+  }
+}
+
+/// @nodoc
+abstract class _$$UpgradeRequestImplCopyWith<$Res>
+    implements $UpgradeRequestCopyWith<$Res> {
+  factory _$$UpgradeRequestImplCopyWith(
+    _$UpgradeRequestImpl value,
+    $Res Function(_$UpgradeRequestImpl) then,
+  ) = __$$UpgradeRequestImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({String username, String password, String? displayName});
+}
+
+/// @nodoc
+class __$$UpgradeRequestImplCopyWithImpl<$Res>
+    extends _$UpgradeRequestCopyWithImpl<$Res, _$UpgradeRequestImpl>
+    implements _$$UpgradeRequestImplCopyWith<$Res> {
+  __$$UpgradeRequestImplCopyWithImpl(
+    _$UpgradeRequestImpl _value,
+    $Res Function(_$UpgradeRequestImpl) _then,
+  ) : super(_value, _then);
+
+  /// Create a copy of UpgradeRequest
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? username = null,
+    Object? password = null,
+    Object? displayName = freezed,
+  }) {
+    return _then(
+      _$UpgradeRequestImpl(
+        username: null == username
+            ? _value.username
+            : username // ignore: cast_nullable_to_non_nullable
+                  as String,
+        password: null == password
+            ? _value.password
+            : password // ignore: cast_nullable_to_non_nullable
+                  as String,
+        displayName: freezed == displayName
+            ? _value.displayName
+            : displayName // ignore: cast_nullable_to_non_nullable
+                  as String?,
+      ),
+    );
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$UpgradeRequestImpl implements _UpgradeRequest {
+  const _$UpgradeRequestImpl({
+    required this.username,
+    required this.password,
+    this.displayName,
+  });
+
+  factory _$UpgradeRequestImpl.fromJson(Map<String, dynamic> json) =>
+      _$$UpgradeRequestImplFromJson(json);
+
+  @override
+  final String username;
+  @override
+  final String password;
+  @override
+  final String? displayName;
+
+  @override
+  String toString() {
+    return 'UpgradeRequest(username: $username, password: $password, displayName: $displayName)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$UpgradeRequestImpl &&
+            (identical(other.username, username) ||
+                other.username == username) &&
+            (identical(other.password, password) ||
+                other.password == password) &&
+            (identical(other.displayName, displayName) ||
+                other.displayName == displayName));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode => Object.hash(runtimeType, username, password, displayName);
+
+  /// Create a copy of UpgradeRequest
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$UpgradeRequestImplCopyWith<_$UpgradeRequestImpl> get copyWith =>
+      __$$UpgradeRequestImplCopyWithImpl<_$UpgradeRequestImpl>(
+        this,
+        _$identity,
+      );
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$UpgradeRequestImplToJson(this);
+  }
+}
+
+abstract class _UpgradeRequest implements UpgradeRequest {
+  const factory _UpgradeRequest({
+    required final String username,
+    required final String password,
+    final String? displayName,
+  }) = _$UpgradeRequestImpl;
+
+  factory _UpgradeRequest.fromJson(Map<String, dynamic> json) =
+      _$UpgradeRequestImpl.fromJson;
+
+  @override
+  String get username;
+  @override
+  String get password;
+  @override
+  String? get displayName;
+
+  /// Create a copy of UpgradeRequest
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$UpgradeRequestImplCopyWith<_$UpgradeRequestImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

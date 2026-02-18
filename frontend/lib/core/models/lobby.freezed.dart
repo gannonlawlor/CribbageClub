@@ -216,6 +216,8 @@ mixin _$Lobby {
   LobbyStatus get status => throw _privateConstructorUsedError;
   String get createdAt => throw _privateConstructorUsedError;
   String? get gameId => throw _privateConstructorUsedError;
+  bool get isPrivate => throw _privateConstructorUsedError;
+  String? get inviteCode => throw _privateConstructorUsedError;
 
   /// Serializes this Lobby to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -239,6 +241,8 @@ abstract class $LobbyCopyWith<$Res> {
     LobbyStatus status,
     String createdAt,
     String? gameId,
+    bool isPrivate,
+    String? inviteCode,
   });
 }
 
@@ -264,6 +268,8 @@ class _$LobbyCopyWithImpl<$Res, $Val extends Lobby>
     Object? status = null,
     Object? createdAt = null,
     Object? gameId = freezed,
+    Object? isPrivate = null,
+    Object? inviteCode = freezed,
   }) {
     return _then(
       _value.copyWith(
@@ -295,6 +301,14 @@ class _$LobbyCopyWithImpl<$Res, $Val extends Lobby>
                 ? _value.gameId
                 : gameId // ignore: cast_nullable_to_non_nullable
                       as String?,
+            isPrivate: null == isPrivate
+                ? _value.isPrivate
+                : isPrivate // ignore: cast_nullable_to_non_nullable
+                      as bool,
+            inviteCode: freezed == inviteCode
+                ? _value.inviteCode
+                : inviteCode // ignore: cast_nullable_to_non_nullable
+                      as String?,
           )
           as $Val,
     );
@@ -317,6 +331,8 @@ abstract class _$$LobbyImplCopyWith<$Res> implements $LobbyCopyWith<$Res> {
     LobbyStatus status,
     String createdAt,
     String? gameId,
+    bool isPrivate,
+    String? inviteCode,
   });
 }
 
@@ -341,6 +357,8 @@ class __$$LobbyImplCopyWithImpl<$Res>
     Object? status = null,
     Object? createdAt = null,
     Object? gameId = freezed,
+    Object? isPrivate = null,
+    Object? inviteCode = freezed,
   }) {
     return _then(
       _$LobbyImpl(
@@ -372,6 +390,14 @@ class __$$LobbyImplCopyWithImpl<$Res>
             ? _value.gameId
             : gameId // ignore: cast_nullable_to_non_nullable
                   as String?,
+        isPrivate: null == isPrivate
+            ? _value.isPrivate
+            : isPrivate // ignore: cast_nullable_to_non_nullable
+                  as bool,
+        inviteCode: freezed == inviteCode
+            ? _value.inviteCode
+            : inviteCode // ignore: cast_nullable_to_non_nullable
+                  as String?,
       ),
     );
   }
@@ -388,6 +414,8 @@ class _$LobbyImpl implements _Lobby {
     this.status = LobbyStatus.waiting,
     required this.createdAt,
     this.gameId,
+    this.isPrivate = false,
+    this.inviteCode,
   }) : _players = players;
 
   factory _$LobbyImpl.fromJson(Map<String, dynamic> json) =>
@@ -416,10 +444,15 @@ class _$LobbyImpl implements _Lobby {
   final String createdAt;
   @override
   final String? gameId;
+  @override
+  @JsonKey()
+  final bool isPrivate;
+  @override
+  final String? inviteCode;
 
   @override
   String toString() {
-    return 'Lobby(id: $id, name: $name, players: $players, maxPlayers: $maxPlayers, status: $status, createdAt: $createdAt, gameId: $gameId)';
+    return 'Lobby(id: $id, name: $name, players: $players, maxPlayers: $maxPlayers, status: $status, createdAt: $createdAt, gameId: $gameId, isPrivate: $isPrivate, inviteCode: $inviteCode)';
   }
 
   @override
@@ -435,7 +468,11 @@ class _$LobbyImpl implements _Lobby {
             (identical(other.status, status) || other.status == status) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
-            (identical(other.gameId, gameId) || other.gameId == gameId));
+            (identical(other.gameId, gameId) || other.gameId == gameId) &&
+            (identical(other.isPrivate, isPrivate) ||
+                other.isPrivate == isPrivate) &&
+            (identical(other.inviteCode, inviteCode) ||
+                other.inviteCode == inviteCode));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -449,6 +486,8 @@ class _$LobbyImpl implements _Lobby {
     status,
     createdAt,
     gameId,
+    isPrivate,
+    inviteCode,
   );
 
   /// Create a copy of Lobby
@@ -474,6 +513,8 @@ abstract class _Lobby implements Lobby {
     final LobbyStatus status,
     required final String createdAt,
     final String? gameId,
+    final bool isPrivate,
+    final String? inviteCode,
   }) = _$LobbyImpl;
 
   factory _Lobby.fromJson(Map<String, dynamic> json) = _$LobbyImpl.fromJson;
@@ -492,6 +533,10 @@ abstract class _Lobby implements Lobby {
   String get createdAt;
   @override
   String? get gameId;
+  @override
+  bool get isPrivate;
+  @override
+  String? get inviteCode;
 
   /// Create a copy of Lobby
   /// with the given fields replaced by the non-null parameter values.

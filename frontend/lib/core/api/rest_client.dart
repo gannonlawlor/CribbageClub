@@ -4,6 +4,9 @@ import '../auth/auth_service.dart';
 import '../models/auth.dart';
 import '../models/game_action.dart';
 import '../models/game_state.dart';
+import '../models/join_by_code_result.dart';
+import '../models/leaderboard_entry.dart';
+import '../models/lobby.dart';
 
 class RestClient {
   final Dio _dio;
@@ -29,6 +32,24 @@ class RestClient {
   }
 
   // Auth
+
+  Future<AuthResponse> loginAsGuest() async {
+    final response = await _dio.post('/api/auth/guest');
+    return AuthResponse.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  Future<AuthResponse> upgradeGuest(
+    String username,
+    String password, {
+    String? displayName,
+  }) async {
+    final response = await _dio.post('/api/auth/upgrade', data: {
+      'username': username,
+      'password': password,
+      'displayName': ?displayName,
+    });
+    return AuthResponse.fromJson(response.data as Map<String, dynamic>);
+  }
 
   Future<AuthResponse> login(String username, String password) async {
     final response = await _dio.post('/api/auth/login', data: {
@@ -84,5 +105,59 @@ class RestClient {
 
   Future<void> deleteGame(String gameId) async {
     await _dio.delete('/api/games/$gameId');
+  }
+
+  Future<List<GameState>> getMyActiveGames() async {
+    final response = await _dio.get('/api/games/me');
+    final list = response.data as List<dynamic>;
+    return list
+        .map((json) => GameState.fromJson(json as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<List<GameState>> getMyGameHistory() async {
+    final response = await _dio.get('/api/games/me/history');
+    final list = response.data as List<dynamic>;
+    return list
+        .map((json) => GameState.fromJson(json as Map<String, dynamic>))
+        .toList();
+  }
+
+  // Leaderboard
+
+  Future<List<LeaderboardEntry>> getLeaderboard() async {
+    final response = await _dio.get('/api/stats/leaderboard');
+    final list = response.data as List<dynamic>;
+    return list
+        .map((json) => LeaderboardEntry.fromJson(json as Map<String, dynamic>))
+        .toList();
+  }
+
+  // Lobbies
+
+  Future<Lobby> createLobby(String name, {String? creatorName, bool isPrivate = false}) async {
+    final response = await _dio.post('/api/lobbies', data: {
+      'name': name,
+      'creatorName': ?creatorName,
+      'isPrivate': isPrivate,
+    });
+    return Lobby.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  Future<JoinByCodeResult> joinByCode(String inviteCode, {String? playerName}) async {
+    final response = await _dio.post('/api/lobbies/join-by-code', data: {
+      'inviteCode': inviteCode,
+      'playerName': ?playerName,
+    });
+    return JoinByCodeResult.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  Future<Lobby> getLobby(String lobbyId) async {
+    final response = await _dio.get('/api/lobbies/$lobbyId');
+    return Lobby.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  Future<void> leaveLobby(String lobbyId) async {
+    await _dio.post('/api/lobbies/$lobbyId/leave');
   }
 }

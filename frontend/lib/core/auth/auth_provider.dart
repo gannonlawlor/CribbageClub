@@ -17,6 +17,7 @@ class AuthState {
   final String? username;
   final bool isLoading;
   final String? error;
+  final bool isGuest;
 
   const AuthState({
     this.isLoggedIn = false,
@@ -24,6 +25,7 @@ class AuthState {
     this.username,
     this.isLoading = false,
     this.error,
+    this.isGuest = false,
   });
 
   AuthState copyWith({
@@ -32,6 +34,7 @@ class AuthState {
     String? username,
     bool? isLoading,
     String? error,
+    bool? isGuest,
   }) {
     return AuthState(
       isLoggedIn: isLoggedIn ?? this.isLoggedIn,
@@ -39,6 +42,7 @@ class AuthState {
       username: username ?? this.username,
       isLoading: isLoading ?? this.isLoading,
       error: error,
+      isGuest: isGuest ?? this.isGuest,
     );
   }
 }
@@ -57,10 +61,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
     if (isLoggedIn) {
       final userId = await _authService.getUserId();
       final username = await _authService.getUsername();
+      final isGuest = await _authService.getIsGuest();
       state = AuthState(
         isLoggedIn: true,
         userId: userId,
         username: username,
+        isGuest: isGuest,
       );
     }
   }
@@ -106,6 +112,58 @@ class AuthNotifier extends StateNotifier<AuthState> {
         isLoggedIn: true,
         userId: response.userId,
         username: response.username,
+      );
+    } on DioException catch (e) {
+      final message = _extractError(e);
+      state = state.copyWith(isLoading: false, error: message);
+    }
+  }
+
+  Future<void> loginAsGuest() async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      final response = await _restClient.loginAsGuest();
+      await _authService.saveAuth(
+        token: response.token,
+        userId: response.userId,
+        username: response.username,
+        isGuest: true,
+      );
+      state = AuthState(
+        isLoggedIn: true,
+        userId: response.userId,
+        username: response.username,
+        isGuest: true,
+      );
+    } on DioException catch (e) {
+      final message = _extractError(e);
+      state = state.copyWith(isLoading: false, error: message);
+    }
+  }
+
+  Future<void> upgradeGuest(
+    String username,
+    String password, {
+    String? displayName,
+  }) async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      final response = await _restClient.upgradeGuest(
+        username,
+        password,
+        displayName: displayName,
+      );
+      await _authService.saveAuth(
+        token: response.token,
+        userId: response.userId,
+        username: response.username,
+        isGuest: false,
+      );
+      state = AuthState(
+        isLoggedIn: true,
+        userId: response.userId,
+        username: response.username,
+        isGuest: false,
       );
     } on DioException catch (e) {
       final message = _extractError(e);
