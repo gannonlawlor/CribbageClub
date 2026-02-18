@@ -5,7 +5,8 @@ import '../../config/theme.dart';
 class CardDimensions {
   final double screenWidth;
 
-  CardDimensions(this.screenWidth);
+  /// Cap at 500px to prevent oversized cards on wide screens (desktop browsers).
+  CardDimensions(double width) : screenWidth = width.clamp(0.0, 500.0);
 
   // Hand cards: ~18% screen width
   double get handCardWidth => screenWidth * 0.18;

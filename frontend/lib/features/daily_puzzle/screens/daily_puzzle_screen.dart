@@ -43,14 +43,19 @@ class _DailyPuzzleScreenState extends ConsumerState<DailyPuzzleScreen> {
       body: Container(
         decoration: const BoxDecoration(gradient: AppTheme.feltGradient),
         child: SafeArea(
-          child: puzzle == null
-              ? const Center(child: CircularProgressIndicator())
-              : AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 400),
-                  child: state.phase == PuzzlePhase.playing
-                      ? _PlayingView(key: const ValueKey('playing'))
-                      : _RevealedView(key: const ValueKey('revealed')),
-                ),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 500),
+              child: puzzle == null
+                  ? const Center(child: CircularProgressIndicator())
+                  : AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 400),
+                      child: state.phase == PuzzlePhase.playing
+                          ? _PlayingView(key: const ValueKey('playing'))
+                          : _RevealedView(key: const ValueKey('revealed')),
+                    ),
+            ),
+          ),
         ),
       ),
     );

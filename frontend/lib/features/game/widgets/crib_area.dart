@@ -35,23 +35,18 @@ class _CribAreaState extends State<CribArea> {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final availWidth = constraints.hasBoundedWidth ? constraints.maxWidth : 360.0;
-        final dims = CardDimensions(availWidth);
-        final cardW = dims.playCardWidth;
-        final cardH = dims.playCardHeight;
-        const count = 4;
-        final stackWidth = dims.cribStackWidth(count);
+    final dims = CardDimensions(MediaQuery.of(context).size.width);
+    final cardW = dims.playCardWidth;
+    final cardH = dims.playCardHeight;
+    const count = 4;
+    final stackWidth = dims.cribStackWidth(count);
 
-        return SizedBox(
-          width: stackWidth,
-          height: cardH,
-          child: Stack(
-            children: _buildCards(dims, cardW, cardH),
-          ),
-        );
-      },
+    return SizedBox(
+      width: stackWidth,
+      height: cardH,
+      child: Stack(
+        children: _buildCards(dims, cardW, cardH),
+      ),
     );
   }
 

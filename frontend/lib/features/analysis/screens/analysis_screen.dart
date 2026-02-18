@@ -48,7 +48,10 @@ class AnalysisScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: analysis.when(
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 500),
+          child: analysis.when(
         data: (data) => _AnalysisContent(
           analysis: data,
           playerId: playerId,
@@ -88,6 +91,8 @@ class AnalysisScreen extends ConsumerWidget {
               ],
             ),
           ),
+        ),
+      ),
         ),
       ),
     );
