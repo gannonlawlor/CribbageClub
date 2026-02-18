@@ -221,7 +221,10 @@ class _ReplayContent extends ConsumerWidget {
       body: Container(
         decoration: const BoxDecoration(gradient: AppTheme.feltGradient),
         child: SafeArea(
-          child: Column(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 500),
+              child: Column(
             children: [
               // Top bar
               Padding(
@@ -511,6 +514,8 @@ class _ReplayContent extends ConsumerWidget {
                 ),
               ),
             ],
+          ),
+            ),
           ),
         ),
       ),

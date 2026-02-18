@@ -153,178 +153,192 @@ class GameScreen extends ConsumerWidget {
       body: Container(
         decoration: const BoxDecoration(gradient: AppTheme.feltGradient),
         child: SafeArea(
-          child: Stack(
-            children: [
-              Column(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 500),
+              child: Stack(
                 children: [
-                  // Top bar: back + scores + history
-                  _TopBar(
-                    gameNotifier: gameNotifier,
-                    player: player,
-                    opponent: opponent,
-                    isDealer: isDealer,
-                    events: gs.history,
-                    playerId: playerId,
-                    onBack: () => context.go('/'),
-                    onError: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(gameNotifier.error!)),
-                      );
-                      final n = _readNotifier(ref);
-                      if (n is GameNotifier) n.clearError();
-                      if (n is LocalGameNotifier) n.clearError();
-                    },
-                  ),
-
-                  // Reconnecting banner
-                  if (gameNotifier.connectionStatus == ConnectionStatus.reconnecting)
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 4),
-                      color: Colors.orange.shade800,
-                      child: const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          SizedBox(
-                            width: 12,
-                            height: 12,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          ),
-                          SizedBox(width: 6),
-                          Text(
-                            'Reconnecting...',
-                            style: TextStyle(color: Colors.white, fontSize: 12),
-                          ),
-                        ],
+                  Column(
+                    children: [
+                      // Top bar: back + scores + history
+                      _TopBar(
+                        gameNotifier: gameNotifier,
+                        player: player,
+                        opponent: opponent,
+                        isDealer: isDealer,
+                        events: gs.history,
+                        playerId: playerId,
+                        onBack: () => context.go('/'),
+                        onError: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(gameNotifier.error!)),
+                          );
+                          final n = _readNotifier(ref);
+                          if (n is GameNotifier) n.clearError();
+                          if (n is LocalGameNotifier) n.clearError();
+                        },
                       ),
-                    ),
-                  if (gameNotifier.connectionStatus == ConnectionStatus.failed)
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 4),
-                      color: Colors.red.shade800,
-                      child: const Text(
-                        'Connection lost. Please go back and rejoin.',
-                        style: TextStyle(color: Colors.white, fontSize: 12),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
 
-                  // Cribbage Board (compact)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-                    child: CribbageBoard(
-                      playerScore: player.score,
-                      opponentScore: opponent.score,
-                      isDealer: isDealer,
-                    ),
-                  ),
-
-                  // Opponent hand
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 12),
-                    child: OpponentHand(
-                      cardCount: opponent.hand.isEmpty
-                          ? _estimateOpponentCards(gs, opponent.id)
-                          : opponent.hand.length,
-                    ),
-                  ),
-
-                  // Middle area
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          // Stage indicator (compact pill)
-                          StageIndicator(
-                            stage: gs.stage,
-                            isMyTurn: isMyTurn,
-                            isDealer: isDealer,
-                            currentPlayerName: opponent.name,
-                            selectedCardCount: selectedCards.length,
-                          ),
-                          const SizedBox(height: 6),
-
-                          // Cut card + crib
-                          Row(
+                      // Reconnecting banner
+                      if (gameNotifier.connectionStatus ==
+                          ConnectionStatus.reconnecting)
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          color: Colors.orange.shade800,
+                          child: const Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               SizedBox(
-                                width: MediaQuery.of(context).size.width * 0.25,
-                                child: CutCardDisplay(cutCard: gs.cutCard),
+                                width: 12,
+                                height: 12,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
                               ),
-                              const SizedBox(width: 8),
-                              CribArea(crib: cribCards, revealed: cribRevealed),
+                              SizedBox(width: 6),
+                              Text(
+                                'Reconnecting...',
+                                style: TextStyle(
+                                    color: Colors.white, fontSize: 12),
+                              ),
                             ],
                           ),
+                        ),
+                      if (gameNotifier.connectionStatus ==
+                          ConnectionStatus.failed)
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          color: Colors.red.shade800,
+                          child: const Text(
+                            'Connection lost. Please go back and rejoin.',
+                            style:
+                                TextStyle(color: Colors.white, fontSize: 12),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
 
-                          // Play area (if pegging)
-                          if (gs.stage == GameStage.pegging) ...[
-                            const SizedBox(height: 6),
-                            PlayArea(
-                              playedCards: gs.playedCards,
-                              peggingCount: gs.peggingCount,
-                            ),
-                          ],
-
-                          // Game over
-                          if (gs.stage == GameStage.gameOver)
-                            _buildGameOver(context, ref, gs, playerId),
-                        ],
+                      // Cribbage Board (compact)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 2),
+                        child: CribbageBoard(
+                          playerScore: player.score,
+                          opponentScore: opponent.score,
+                          isDealer: isDealer,
+                        ),
                       ),
-                    ),
+
+                      // Opponent hand
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 2, horizontal: 12),
+                        child: OpponentHand(
+                          cardCount: opponent.hand.isEmpty
+                              ? _estimateOpponentCards(gs, opponent.id)
+                              : opponent.hand.length,
+                        ),
+                      ),
+
+                      // Middle area
+                      Expanded(
+                        child: Padding(
+                          padding:
+                              const EdgeInsets.symmetric(horizontal: 12),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              // Stage indicator (compact pill)
+                              StageIndicator(
+                                stage: gs.stage,
+                                isMyTurn: isMyTurn,
+                                isDealer: isDealer,
+                                currentPlayerName: opponent.name,
+                                selectedCardCount: selectedCards.length,
+                              ),
+                              const SizedBox(height: 6),
+
+                              // Cut card + crib
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  CutCardDisplay(cutCard: gs.cutCard),
+                                  const SizedBox(width: 8),
+                                  CribArea(
+                                      crib: cribCards,
+                                      revealed: cribRevealed),
+                                ],
+                              ),
+
+                              // Play area (if pegging)
+                              if (gs.stage == GameStage.pegging) ...[
+                                const SizedBox(height: 6),
+                                PlayArea(
+                                  playedCards: gs.playedCards,
+                                  peggingCount: gs.peggingCount,
+                                ),
+                              ],
+
+                              // Game over
+                              if (gs.stage == GameStage.gameOver)
+                                _buildGameOver(context, ref, gs, playerId),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      // Controls
+                      GameControls(
+                        stage: gs.stage,
+                        isMyTurn: isMyTurn,
+                        selectedCardCount: selectedCards.length,
+                        isDiscarding: gameNotifier.isDiscarding,
+                        canGo:
+                            !_canPlayAnyCard(player.hand, gs.peggingCount),
+                        onDiscard: () => _handleDiscard(
+                            ref, gs, playerId, selectedCards),
+                        onCut: () {
+                          final n = _readNotifier(ref);
+                          if (n is GameNotifier) n.cutDeck();
+                          if (n is LocalGameNotifier) n.cutDeck();
+                        },
+                        onGo: () {
+                          final n = _readNotifier(ref);
+                          if (n is GameNotifier) n.sayGo();
+                          if (n is LocalGameNotifier) n.sayGo();
+                        },
+                        onCount: () {
+                          final n = _readNotifier(ref);
+                          if (n is GameNotifier) n.countHand();
+                          if (n is LocalGameNotifier) n.countHand();
+                        },
+                      ),
+
+                      // Player hand
+                      Padding(
+                        padding: const EdgeInsets.only(
+                            bottom: 6, top: 2, left: 12, right: 12),
+                        child: HandFan(
+                          cards: CardUtils.sorted(player.hand),
+                          selectedIndices: selectedCards,
+                          enabled: isMyTurn && !gameNotifier.isDiscarding,
+                          onCardTap: (index) => _handleCardTap(context, ref,
+                              gs, playerId, index, selectedCards),
+                        ),
+                      ),
+                    ],
                   ),
 
-                  // Controls
-                  GameControls(
-                    stage: gs.stage,
-                    isMyTurn: isMyTurn,
-                    selectedCardCount: selectedCards.length,
-                    isDiscarding: gameNotifier.isDiscarding,
-                    canGo: !_canPlayAnyCard(player.hand, gs.peggingCount),
-                    onDiscard: () => _handleDiscard(ref, gs, playerId, selectedCards),
-                    onCut: () {
-                      final n = _readNotifier(ref);
-                      if (n is GameNotifier) n.cutDeck();
-                      if (n is LocalGameNotifier) n.cutDeck();
-                    },
-                    onGo: () {
-                      final n = _readNotifier(ref);
-                      if (n is GameNotifier) n.sayGo();
-                      if (n is LocalGameNotifier) n.sayGo();
-                    },
-                    onCount: () {
-                      final n = _readNotifier(ref);
-                      if (n is GameNotifier) n.countHand();
-                      if (n is LocalGameNotifier) n.countHand();
-                    },
-                  ),
-
-                  // Player hand
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 6, top: 2, left: 12, right: 12),
-                    child: HandFan(
-                      cards: CardUtils.sorted(player.hand),
-                      selectedIndices: selectedCards,
-                      enabled: isMyTurn && !gameNotifier.isDiscarding,
-                      onCardTap: (index) =>
-                          _handleCardTap(context, ref, gs, playerId, index, selectedCards),
-                    ),
+                  // Score popup overlay
+                  ScorePopupOverlay(
+                    gameId: gameId,
+                    playerId: playerId,
                   ),
                 ],
               ),
-
-              // Score popup overlay
-              ScorePopupOverlay(
-                gameId: gameId,
-                playerId: playerId,
-              ),
-            ],
+            ),
           ),
         ),
       ),
