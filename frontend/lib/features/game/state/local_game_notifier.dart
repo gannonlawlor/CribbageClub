@@ -87,6 +87,20 @@ class LocalGameNotifier extends StateNotifier<GameNotifierState> {
     state = state.copyWith(error: null);
   }
 
+  /// DEV ONLY: Set a player's score directly.
+  void devSetScore(String playerId, int score) {
+    _service.devEngine?.devSetScore(playerId, score);
+    final newState = _service.currentState;
+    if (newState != null) {
+      state = GameNotifierState(gameState: newState);
+    }
+  }
+
+  /// DEV ONLY: Queue specific hands for the next deal.
+  void devSetNextHands(Map<String, List<PlayingCard>> hands) {
+    _service.devEngine?.devSetNextHands(hands);
+  }
+
   @override
   void dispose() {
     animationController.dispose();

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -20,6 +21,7 @@ import '../widgets/hand_fan.dart';
 import '../widgets/history_log.dart';
 import '../widgets/play_area.dart';
 import '../widgets/score_display.dart';
+import '../widgets/dev_overlay.dart';
 import '../widgets/score_popup_overlay.dart';
 import '../widgets/stage_indicator.dart';
 
@@ -336,6 +338,13 @@ class GameScreen extends ConsumerWidget {
                     gameId: gameId,
                     playerId: playerId,
                   ),
+
+                  // Dev overlay (debug builds + local games only)
+                  if (kDebugMode && _isLocal)
+                    DevOverlay(
+                      gameId: gameId,
+                      playerId: playerId,
+                    ),
                 ],
               ),
             ),
