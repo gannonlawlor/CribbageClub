@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/models/card.dart';
+import '../../../shared/utils/card_dimensions.dart';
 import 'card_widget.dart';
 
 class CutCardDisplay extends StatefulWidget {
@@ -19,11 +20,9 @@ class _CutCardDisplayState extends State<CutCardDisplay> {
   void didUpdateWidget(CutCardDisplay oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.cutCard != null && oldWidget.cutCard == null) {
-      // Cut card just appeared — animate the flip
       _shouldAnimate = true;
       _wasRevealed = true;
     } else if (widget.cutCard == null && _wasRevealed) {
-      // New round: reset
       _shouldAnimate = false;
       _wasRevealed = false;
     }
@@ -31,30 +30,30 @@ class _CutCardDisplayState extends State<CutCardDisplay> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        const Text(
-          'Cut Card',
-          style: TextStyle(color: Colors.white70, fontSize: 12),
-        ),
-        const SizedBox(height: 4),
-        if (_shouldAnimate)
-          FlippableCardWidget(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final dims = CardDimensions(constraints.maxWidth > 0 ? constraints.maxWidth : 360);
+        final cardW = dims.playCardWidth;
+        final cardH = dims.playCardHeight;
+
+        if (_shouldAnimate) {
+          return FlippableCardWidget(
             card: widget.cutCard,
             faceUp: widget.cutCard != null,
-            width: 50,
-            height: 75,
+            width: cardW,
+            height: cardH,
             duration: const Duration(milliseconds: 400),
-          )
-        else
-          CardWidget(
-            card: widget.cutCard,
-            faceUp: widget.cutCard != null,
-            enabled: false,
-            width: 50,
-            height: 75,
-          ),
-      ],
+          );
+        }
+
+        return CardWidget(
+          card: widget.cutCard,
+          faceUp: widget.cutCard != null,
+          enabled: false,
+          width: cardW,
+          height: cardH,
+        );
+      },
     );
   }
 }

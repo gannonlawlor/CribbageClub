@@ -33,7 +33,7 @@ class GameControls extends StatelessWidget {
     }
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: _buildButtons(),
@@ -106,7 +106,7 @@ class _ActionButton extends StatelessWidget {
           backgroundColor:
               onPressed != null ? AppTheme.feltGreen : Colors.grey.shade700,
           foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         ),
       ),
     );

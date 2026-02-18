@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../config/constants.dart';
 import '../../../config/theme.dart';
 import '../../../core/models/player.dart';
 
@@ -17,56 +16,71 @@ class ScoreDisplay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        _ScoreChip(
+          name: 'You${isDealer ? ' (D)' : ''}',
+          score: player.score,
+          color: AppTheme.pegGold,
+          isPlayer: true,
+        ),
+        const SizedBox(width: 8),
+        _ScoreChip(
+          name: '${opponent.name}${!isDealer ? ' (D)' : ''}',
+          score: opponent.score,
+          color: AppTheme.pegWhite,
+          isPlayer: false,
+        ),
+      ],
+    );
+  }
+}
+
+class _ScoreChip extends StatelessWidget {
+  final String name;
+  final int score;
+  final Color color;
+  final bool isPlayer;
+
+  const _ScoreChip({
+    required this.name,
+    required this.score,
+    required this.color,
+    required this.isPlayer,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.black26,
-        borderRadius: BorderRadius.circular(12),
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: color.withValues(alpha: 0.4), width: 1),
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          _buildPlayerScore(
-            name: 'You${isDealer ? ' (D)' : ''}',
-            score: player.score,
-            isPlayer: true,
+          Text(
+            name,
+            style: TextStyle(
+              color: color,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
           ),
-          Container(width: 1, height: 40, color: Colors.white24),
-          _buildPlayerScore(
-            name: '${opponent.name}${!isDealer ? ' (D)' : ''}',
-            score: opponent.score,
-            isPlayer: false,
+          const SizedBox(width: 6),
+          Text(
+            '$score',
+            style: TextStyle(
+              color: isPlayer ? Colors.white : Colors.white70,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildPlayerScore({
-    required String name,
-    required int score,
-    required bool isPlayer,
-  }) {
-    return Column(
-      children: [
-        Text(
-          name,
-          style: TextStyle(
-            color: isPlayer ? AppTheme.goldAccent : Colors.white70,
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          '$score / ${AppConstants.winningScore}',
-          style: TextStyle(
-            color: isPlayer ? Colors.white : Colors.white70,
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ],
     );
   }
 }

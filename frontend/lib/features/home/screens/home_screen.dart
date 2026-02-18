@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../config/theme.dart';
 import '../../../core/auth/auth_provider.dart';
-import '../../../core/engine/local_game_service.dart';
 import '../../../core/models/game_state.dart';
 import '../../../core/providers/notification_provider.dart';
 import '../../../shared/widgets/auth_required.dart';

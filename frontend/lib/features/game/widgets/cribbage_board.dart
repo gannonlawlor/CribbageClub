@@ -78,7 +78,7 @@ class _CribbageBoardState extends State<CribbageBoard>
       animation: _controller,
       builder: (context, child) {
         return CustomPaint(
-          size: const Size(double.infinity, 56),
+          size: const Size(double.infinity, 36),
           painter: _CribbageBoardPainter(
             playerScore: _playerAnim.value,
             opponentScore: _opponentAnim.value,
@@ -95,10 +95,10 @@ class _CribbageBoardPainter extends CustomPainter {
 
   static const int _totalHoles = 121;
   static const int _groupSize = 5;
-  static const double _holeRadius = 2.0;
-  static const double _pegRadius = 4.0;
-  static const double _trackPadding = 16.0;
-  static const double _trackSpacing = 6.0;
+  static const double _holeRadius = 1.5;
+  static const double _pegRadius = 3.0;
+  static const double _trackPadding = 14.0;
+  static const double _trackSpacing = 5.0;
 
   _CribbageBoardPainter({
     required this.playerScore,
@@ -159,13 +159,13 @@ class _CribbageBoardPainter extends CustomPainter {
         final x = _trackPadding + positions[m - 1];
         // Small tick above/below tracks
         canvas.drawLine(
-          Offset(x, opponentTrackY - 6),
-          Offset(x, opponentTrackY - 3),
+          Offset(x, opponentTrackY - 4),
+          Offset(x, opponentTrackY - 2),
           markerPaint,
         );
         canvas.drawLine(
-          Offset(x, playerTrackY + 3),
-          Offset(x, playerTrackY + 6),
+          Offset(x, playerTrackY + 2),
+          Offset(x, playerTrackY + 4),
           markerPaint,
         );
         // Label below the board
@@ -173,13 +173,13 @@ class _CribbageBoardPainter extends CustomPainter {
           text: '$m',
           style: TextStyle(
             color: Colors.white.withValues(alpha: 0.35),
-            fontSize: 7,
+            fontSize: 6,
           ),
         );
         textPainter.layout();
         textPainter.paint(
           canvas,
-          Offset(x - textPainter.width / 2, playerTrackY + 7),
+          Offset(x - textPainter.width / 2, playerTrackY + 5),
         );
       }
     }
@@ -189,13 +189,13 @@ class _CribbageBoardPainter extends CustomPainter {
       text: '0',
       style: TextStyle(
         color: Colors.white.withValues(alpha: 0.35),
-        fontSize: 7,
+        fontSize: 6,
       ),
     );
     textPainter.layout();
     textPainter.paint(
       canvas,
-      Offset(_trackPadding - textPainter.width / 2, playerTrackY + 7),
+      Offset(_trackPadding - textPainter.width / 2, playerTrackY + 5),
     );
 
     // Draw pegs
@@ -221,7 +221,7 @@ class _CribbageBoardPainter extends CustomPainter {
       text: 'You',
       style: TextStyle(
         color: AppTheme.pegGold.withValues(alpha: 0.7),
-        fontSize: 8,
+        fontSize: 7,
         fontWeight: FontWeight.bold,
       ),
     );
@@ -235,7 +235,7 @@ class _CribbageBoardPainter extends CustomPainter {
       text: 'Opp',
       style: TextStyle(
         color: AppTheme.pegWhite.withValues(alpha: 0.7),
-        fontSize: 8,
+        fontSize: 7,
         fontWeight: FontWeight.bold,
       ),
     );
