@@ -31,6 +31,7 @@ export interface WasmEngine {
   ): string
 
   analyze_discards_json(handJson: string, isDealer: boolean): string
+  explain_keep_json(handJson: string, keepJson: string, isDealer: boolean): string
   calculate_hand_score_json(handJson: string, cutCardJson: string, isCrib: boolean): number
   glicko2_calculate_json(
     playerRating: number,
