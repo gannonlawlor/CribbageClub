@@ -222,6 +222,23 @@ class HomeScreen extends ConsumerWidget {
                       width: double.infinity,
                       height: 56,
                       child: OutlinedButton.icon(
+                        onPressed: () => context.go('/practice-puzzle'),
+                        icon: const Icon(Icons.all_inclusive, size: 24),
+                        label: const Text(
+                          'Practice Puzzles',
+                          style: TextStyle(fontSize: 18),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          side: const BorderSide(color: Colors.white38),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 56,
+                      child: OutlinedButton.icon(
                         onPressed: isCreating
                             ? null
                             : () => _createPrivateGame(context, ref),
@@ -347,14 +364,14 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _createLocalAIGame(
+  void _createLocalAIGame(
     BuildContext context,
     WidgetRef ref,
     String difficulty,
-  ) async {
+  ) {
     final auth = ref.read(authProvider);
     final service = ref.read(localGameServiceProvider);
-    final state = await service.createGame(
+    final state = service.createGame(
       humanPlayerId: auth.userId ?? 'local_player',
       humanPlayerName: auth.username ?? 'Player',
       difficulty: difficulty,
