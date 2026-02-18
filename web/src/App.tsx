@@ -14,6 +14,7 @@ import { LeaderboardPage } from '@/features/home/LeaderboardPage'
 import { FriendsPage } from '@/features/friends/FriendsPage'
 import { LobbyBrowserPage } from '@/features/lobby/LobbyBrowserPage'
 import { LobbyWaitingPage } from '@/features/lobby/LobbyWaitingPage'
+import { JoinByCodePage } from '@/features/lobby/JoinByCodePage'
 import { ProfilePage } from '@/features/profile/ProfilePage'
 import { PuzzlePage } from '@/features/puzzle/PuzzlePage'
 
@@ -39,6 +40,7 @@ export function App() {
           <Route path="/leaderboard" element={<LeaderboardPage />} />
           <Route path="/friends" element={<FriendsPage />} />
           <Route path="/lobbies" element={<LobbyBrowserPage />} />
+          <Route path="/join" element={<JoinByCodePage />} />
           <Route path="/lobby/:lobbyId" element={<LobbyWaitingPage />} />
           <Route path="/profile/:userId" element={<ProfilePage />} />
           <Route path="/puzzle" element={<PuzzlePage />} />

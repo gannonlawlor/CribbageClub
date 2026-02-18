@@ -150,6 +150,7 @@ export function HomePage() {
             <DifficultyOption label="Quick Game" desc="Find a match instantly" onClick={handleQuickMatch} />
             <DifficultyOption label="Browse Lobbies" desc="Join an open lobby" onClick={() => { setShowOnlineOptions(false); navigate('/lobbies') }} />
             <DifficultyOption label="Create Private" desc="Invite a friend by code" onClick={handleCreatePrivate} />
+            <DifficultyOption label="Join by Code" desc="Enter an invite code" onClick={() => { setShowOnlineOptions(false); navigate('/join') }} />
           </div>
         )}
       </div>
