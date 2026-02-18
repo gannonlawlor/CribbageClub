@@ -41,11 +41,25 @@ object GameStateFilter {
             state.handsForCounting.filterKeys { it == viewingPlayerId }
         }
 
+        val filteredHistory = if (revealCrib) {
+            state.history
+        } else {
+            state.history.map { event ->
+                when (event) {
+                    is GameHistoryEvent.CardsDealt -> event.copy(
+                        dealtHands = event.dealtHands.filterKeys { it == viewingPlayerId }
+                    )
+                    else -> event
+                }
+            }
+        }
+
         return state.copy(
             players = filteredPlayers,
             remainingDeck = emptyList(),
             crib = filteredCrib,
-            handsForCounting = filteredHandsForCounting
+            handsForCounting = filteredHandsForCounting,
+            history = filteredHistory
         )
     }
 }

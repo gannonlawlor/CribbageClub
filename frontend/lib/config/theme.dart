@@ -14,6 +14,21 @@ class AppTheme {
   static const Color goldAccent = Color(0xFFFFD54F);
   static const Color selectedHighlight = Color(0x4DFFEB3B);
 
+  // Cribbage board colors
+  static const Color boardBrown = Color(0xFF5D4037);
+  static const Color boardBrownLight = Color(0xFF795548);
+  static const Color boardHole = Color(0xFF3E2723);
+  static const Color pegGold = Color(0xFFFFD54F);
+  static const Color pegWhite = Color(0xFFEEEEEE);
+
+  // Animation durations
+  static const Duration cardFlipDuration = Duration(milliseconds: 400);
+  static const Duration cardDealDuration = Duration(milliseconds: 300);
+  static const Duration cardPlayDuration = Duration(milliseconds: 250);
+  static const Duration scalBounceDuration = Duration(milliseconds: 200);
+  static const Duration cribStaggerDelay = Duration(milliseconds: 100);
+  static const Duration pegMovePerHole = Duration(milliseconds: 50);
+
   static ThemeData get theme => ThemeData(
         colorScheme: ColorScheme.fromSeed(
           seedColor: feltGreen,

@@ -5,6 +5,7 @@ import '../../../core/auth/auth_provider.dart';
 import '../../../core/models/card.dart';
 import '../../../core/models/game_action.dart';
 import '../../../core/models/game_state.dart';
+import '../animation/game_animation_controller.dart';
 
 // WebSocket client singleton
 final webSocketClientProvider = Provider<WebSocketClient>((ref) {
@@ -49,12 +50,14 @@ class GameNotifier extends StateNotifier<GameNotifierState> {
   final RestClient _restClient;
   final WebSocketClient _wsClient;
   final String _playerId;
+  final GameAnimationController animationController;
 
   GameNotifier({
     required this.gameId,
     required RestClient restClient,
     required WebSocketClient wsClient,
     required String playerId,
+    required this.animationController,
   })  : _restClient = restClient,
         _wsClient = wsClient,
         _playerId = playerId,
@@ -67,6 +70,10 @@ class GameNotifier extends StateNotifier<GameNotifierState> {
     _connectWebSocket();
   }
 
+  void _notifyAnimation(GameState newState) {
+    animationController.processStateUpdate(newState);
+  }
+
   Future<void> _loadGameState() async {
     try {
       final gameState = await _restClient.getGameState(gameId);
@@ -74,6 +81,7 @@ class GameNotifier extends StateNotifier<GameNotifierState> {
         gameState: gameState,
         connectionStatus: state.connectionStatus,
       );
+      _notifyAnimation(gameState);
     } catch (e) {
       state = GameNotifierState(error: 'Failed to load game: $e');
     }
@@ -116,6 +124,7 @@ class GameNotifier extends StateNotifier<GameNotifierState> {
           gameState: newState,
           connectionStatus: state.connectionStatus,
         );
+        _notifyAnimation(newState);
       },
     );
     _wsClient.subscribeToUserState(
@@ -126,6 +135,7 @@ class GameNotifier extends StateNotifier<GameNotifierState> {
           gameState: newState,
           connectionStatus: state.connectionStatus,
         );
+        _notifyAnimation(newState);
       },
     );
     _wsClient.subscribeToErrors(
@@ -160,6 +170,7 @@ class GameNotifier extends StateNotifier<GameNotifierState> {
           gameState: newState,
           connectionStatus: state.connectionStatus,
         );
+        _notifyAnimation(newState);
       }
     } catch (e) {
       state = state.copyWith(isDiscarding: false, error: 'Discard failed: $e');
@@ -180,6 +191,7 @@ class GameNotifier extends StateNotifier<GameNotifierState> {
         gameState: newState,
         connectionStatus: state.connectionStatus,
       );
+      _notifyAnimation(newState);
     } catch (e) {
       state = state.copyWith(error: 'Play card failed: $e');
     } finally {
@@ -199,6 +211,7 @@ class GameNotifier extends StateNotifier<GameNotifierState> {
         gameState: newState,
         connectionStatus: state.connectionStatus,
       );
+      _notifyAnimation(newState);
     } catch (e) {
       state = state.copyWith(error: 'Cut failed: $e');
     } finally {
@@ -218,6 +231,7 @@ class GameNotifier extends StateNotifier<GameNotifierState> {
         gameState: newState,
         connectionStatus: state.connectionStatus,
       );
+      _notifyAnimation(newState);
     } catch (e) {
       state = state.copyWith(error: 'Go failed: $e');
     } finally {
@@ -237,6 +251,7 @@ class GameNotifier extends StateNotifier<GameNotifierState> {
         gameState: newState,
         connectionStatus: state.connectionStatus,
       );
+      _notifyAnimation(newState);
     } catch (e) {
       state = state.copyWith(error: 'Count failed: $e');
     } finally {
@@ -253,19 +268,30 @@ class GameNotifier extends StateNotifier<GameNotifierState> {
     _wsClient.onStatusChange = null;
     _wsClient.leaveGame(gameId);
     _wsClient.unsubscribeFromGame(gameId);
+    animationController.dispose();
     super.dispose();
   }
 }
+
+// Animation controller per game
+final gameAnimationProvider =
+    Provider.family<GameAnimationController, String>((ref, gameId) {
+  final controller = GameAnimationController();
+  ref.onDispose(() => controller.dispose());
+  return controller;
+});
 
 final gameNotifierProvider =
     StateNotifierProvider.family<GameNotifier, GameNotifierState, String>(
   (ref, gameId) {
     final auth = ref.read(authProvider);
+    final animController = ref.read(gameAnimationProvider(gameId));
     return GameNotifier(
       gameId: gameId,
       restClient: ref.read(restClientProvider),
       wsClient: ref.read(webSocketClientProvider),
       playerId: auth.userId ?? '',
+      animationController: animController,
     );
   },
 );

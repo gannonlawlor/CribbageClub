@@ -16,6 +16,7 @@ sealed class GameHistoryEvent with _$GameHistoryEvent {
   @FreezedUnionValue('CardsDealt')
   const factory GameHistoryEvent.cardsDealt({
     required String timestamp,
+    @Default({}) Map<String, List<PlayingCard>> dealtHands,
   }) = CardsDealt;
 
   @FreezedUnionValue('DeckCut')
@@ -52,6 +53,7 @@ sealed class GameHistoryEvent with _$GameHistoryEvent {
   const factory GameHistoryEvent.handCounted({
     required String timestamp,
     required String playerId,
+    @Default([]) List<PlayingCard> hand,
     required int totalPoints,
     required ScoreBreakdown scoreBreakdown,
   }) = HandCounted;
@@ -62,6 +64,7 @@ sealed class GameHistoryEvent with _$GameHistoryEvent {
     required String dealerPlayerId,
     required int totalPoints,
     required ScoreBreakdown scoreBreakdown,
+    @Default([]) List<PlayingCard> cribCards,
   }) = CribCounted;
 
   @FreezedUnionValue('GameEnded')

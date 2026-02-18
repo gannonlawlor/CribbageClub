@@ -77,7 +77,7 @@ class Game private constructor(
      */
     private fun dealCards() {
         historyTracker.addEvent(GameHistoryEvent.RoundStarted(roundNumber = currentRound))
-        
+
         state = state.copy(
             stage = GameStage.DEALING,
             players = state.players.map { player ->
@@ -85,8 +85,10 @@ class Game private constructor(
             },
             currentPlayerId = state.players.first().id
         )
-        
-        historyTracker.addEvent(GameHistoryEvent.CardsDealt())
+
+        historyTracker.addEvent(GameHistoryEvent.CardsDealt(
+            dealtHands = state.players.associate { it.id to it.hand }
+        ))
         transitionToDiscarding()
     }
 
@@ -368,6 +370,7 @@ class Game private constructor(
         // Add to history
         historyTracker.addEvent(GameHistoryEvent.HandCounted(
             playerId = playerId,
+            hand = handToCount,
             totalPoints = handScore,
             scoreBreakdown = scoreBreakdown
         ))
@@ -401,7 +404,8 @@ class Game private constructor(
             historyTracker.addEvent(GameHistoryEvent.CribCounted(
                 dealerPlayerId = dealer.id,
                 totalPoints = cribScore,
-                scoreBreakdown = cribScoreBreakdown
+                scoreBreakdown = cribScoreBreakdown,
+                cribCards = state.crib
             ))
 
             // Check if dealer wins after crib
@@ -462,7 +466,9 @@ class Game private constructor(
         )
 
         historyTracker.addEvent(GameHistoryEvent.RoundStarted(roundNumber = currentRound))
-        historyTracker.addEvent(GameHistoryEvent.CardsDealt())
+        historyTracker.addEvent(GameHistoryEvent.CardsDealt(
+            dealtHands = state.players.associate { it.id to it.hand }
+        ))
         transitionToDiscarding()
     }
 }

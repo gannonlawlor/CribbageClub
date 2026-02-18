@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../../config/theme.dart';
 import '../../../core/models/card.dart';
@@ -56,31 +57,71 @@ class CardWidget extends StatelessWidget {
 
   Widget _buildFace() {
     final color = CardUtils.suitColor(card!.suit);
+    final scale = height / 90; // scale relative to default card height
+    final rankText = card!.rank.display;
+    final suitText = card!.suit.symbol;
     return Padding(
-      padding: const EdgeInsets.all(4),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      padding: EdgeInsets.all(3 * scale),
+      child: Stack(
         children: [
-          Text(
-            card!.rank.display,
-            style: TextStyle(
-              color: color,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
+          // Top-left: rank + suit
+          Positioned(
+            top: 0,
+            left: 0,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  rankText,
+                  style: TextStyle(
+                    color: color,
+                    fontSize: 14 * scale,
+                    fontWeight: FontWeight.bold,
+                    height: 1.1,
+                  ),
+                ),
+                Text(
+                  suitText,
+                  style: TextStyle(color: color, fontSize: 11 * scale, height: 1.0),
+                ),
+              ],
             ),
           ),
-          Text(
-            card!.suit.symbol,
-            style: TextStyle(color: color, fontSize: 14),
-          ),
-          const Spacer(),
+          // Center: large suit
           Center(
             child: Text(
-              card!.suit.symbol,
-              style: TextStyle(color: color, fontSize: 28),
+              suitText,
+              style: TextStyle(color: color, fontSize: 26 * scale),
             ),
           ),
-          const Spacer(),
+          // Bottom-right: rank + suit (rotated 180)
+          Positioned(
+            bottom: 0,
+            right: 0,
+            child: Transform.rotate(
+              angle: math.pi,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    rankText,
+                    style: TextStyle(
+                      color: color,
+                      fontSize: 14 * scale,
+                      fontWeight: FontWeight.bold,
+                      height: 1.1,
+                    ),
+                  ),
+                  Text(
+                    suitText,
+                    style: TextStyle(color: color, fontSize: 11 * scale, height: 1.0),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -99,6 +140,115 @@ class CardWidget extends StatelessWidget {
       child: const Center(
         child: Icon(Icons.style, color: Colors.white38, size: 30),
       ),
+    );
+  }
+}
+
+/// A card widget that animates a flip from back to face.
+/// Trigger by setting [faceUp] from false to true.
+class FlippableCardWidget extends StatefulWidget {
+  final PlayingCard? card;
+  final bool faceUp;
+  final double width;
+  final double height;
+  final Duration duration;
+  final Duration delay;
+
+  const FlippableCardWidget({
+    super.key,
+    this.card,
+    this.faceUp = false,
+    this.width = 60,
+    this.height = 90,
+    this.duration = const Duration(milliseconds: 400),
+    this.delay = Duration.zero,
+  });
+
+  @override
+  State<FlippableCardWidget> createState() => _FlippableCardWidgetState();
+}
+
+class _FlippableCardWidgetState extends State<FlippableCardWidget>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+  bool _showFace = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: widget.duration,
+      vsync: this,
+    );
+    _animation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeInOut,
+    );
+    _showFace = widget.faceUp;
+    if (widget.faceUp) {
+      _controller.value = 1.0;
+    }
+    _animation.addListener(() {
+      // Swap face/back at the halfway point
+      final shouldShowFace = _animation.value >= 0.5;
+      if (shouldShowFace != _showFace) {
+        setState(() => _showFace = shouldShowFace);
+      }
+    });
+  }
+
+  @override
+  void didUpdateWidget(FlippableCardWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.faceUp && !oldWidget.faceUp) {
+      // Flip from back to face
+      if (widget.delay > Duration.zero) {
+        Future.delayed(widget.delay, () {
+          if (mounted) _controller.forward(from: 0);
+        });
+      } else {
+        _controller.forward(from: 0);
+      }
+    } else if (!widget.faceUp && oldWidget.faceUp) {
+      // Flip from face to back
+      _controller.reverse(from: 1);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _animation,
+      builder: (context, child) {
+        // Animate 0→π/2 then π/2→0 so the card never appears mirrored.
+        // First half (0→0.5): back rotates away from viewer (0→π/2)
+        // Second half (0.5→1): face rotates toward viewer (π/2→0)
+        final value = _animation.value;
+        final angle = value <= 0.5
+            ? value * math.pi // 0 → π/2
+            : (1.0 - value) * math.pi; // π/2 → 0
+        final transform = Matrix4.identity()
+          ..setEntry(3, 2, 0.001) // perspective
+          ..rotateY(angle);
+        return Transform(
+          alignment: Alignment.center,
+          transform: transform,
+          child: CardWidget(
+            card: widget.card,
+            faceUp: _showFace,
+            enabled: false,
+            width: widget.width,
+            height: widget.height,
+          ),
+        );
+      },
     );
   }
 }
