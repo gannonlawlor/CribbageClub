@@ -195,7 +195,6 @@ class DailyPuzzleNotifier extends StateNotifier<DailyPuzzleState> {
     int idx,
     DateTime date,
   ) {
-    // Use Future() to push to next event loop iteration (after frame renders)
     Future(() async {
       final results = PuzzleGenerator.evaluateAllKeeps(
         puzzle.hand,
