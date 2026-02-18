@@ -53,6 +53,9 @@ class LocalGameService {
 
   GameState? get currentState => _engine?.currentState;
 
+  /// DEV ONLY: Direct engine access for debug tools.
+  GameEngine? get devEngine => _engine;
+
   GameState _processAIActions() {
     var state = _engine!.currentState;
     var iterations = 0;

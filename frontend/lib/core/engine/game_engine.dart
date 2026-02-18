@@ -13,6 +13,7 @@ class GameEngine {
   final List<GameHistoryEvent> _history = [];
   GameState _state;
   int _currentRound;
+  Map<String, List<PlayingCard>>? _devNextHands;
 
   static const _cardsPerHand = 6;
   static const _keepCards = 4;
@@ -80,10 +81,13 @@ class GameEngine {
       roundNumber: _currentRound,
     ));
 
+    final devHands = _devNextHands;
+    _devNextHands = null;
     _state = _state.copyWith(
       stage: GameStage.dealing,
       players: _state.players
-          .map((p) => p.copyWith(hand: _deck.drawN(_cardsPerHand)))
+          .map((p) => p.copyWith(
+              hand: devHands?[p.id] ?? _deck.drawN(_cardsPerHand)))
           .toList(),
       currentPlayerId: _state.players.first.id,
     );
@@ -170,6 +174,10 @@ class GameEngine {
       cuttingPlayerId: playerId,
       dealerScoredNobs: dealerScoredNobs,
     ));
+
+    if (dealerScoredNobs) {
+      _checkWin(_state.players[_dealerIndex()].id);
+    }
   }
 
   // ── Pegging ───────────────────────────────────────────────────────────
@@ -249,6 +257,8 @@ class GameEngine {
       scoringReason: scoringReason,
     ));
 
+    if (_checkWin(playerId)) return;
+
     if (_state.players.every((p) => p.hand.isEmpty)) {
       _addEvent(GameHistoryEvent.peggingEnded(timestamp: _now()));
       _transitionToHandCounting();
@@ -284,6 +294,8 @@ class GameEngine {
         playerId: playerId,
         pointsScored: 1,
       ));
+
+      if (_checkWin(playerId)) return;
 
       if (_state.players.every((p) => p.hand.isEmpty)) {
         _addEvent(GameHistoryEvent.peggingEnded(timestamp: _now()));
@@ -456,9 +468,12 @@ class GameEngine {
     final newDealerIndex =
         (_state.dealerIndex + 1) % _state.players.length;
 
+    final devHands = _devNextHands;
+    _devNextHands = null;
     _state = _state.copyWith(
       players: updatedPlayers
-          .map((p) => p.copyWith(hand: _deck.drawN(_cardsPerHand)))
+          .map((p) => p.copyWith(
+              hand: devHands?[p.id] ?? _deck.drawN(_cardsPerHand)))
           .toList(),
       crib: [],
       cutCard: null,
@@ -483,7 +498,37 @@ class GameEngine {
     _state = _state.copyWith(stage: GameStage.discardingToCrib);
   }
 
+  // ── Dev-only methods ─────────────────────────────────────────────────
+
+  /// DEV ONLY: Override a player's score.
+  void devSetScore(String playerId, int score) {
+    final idx = _playerIndex(playerId);
+    final updated = List.of(_state.players);
+    updated[idx] = updated[idx].copyWith(score: score);
+    _state = _state.copyWith(players: updated);
+  }
+
+  /// DEV ONLY: Store hand overrides for the next deal.
+  void devSetNextHands(Map<String, List<PlayingCard>> hands) {
+    _devNextHands = hands;
+  }
+
   // ── Helpers ───────────────────────────────────────────────────────────
+
+  /// Check if a player has reached the win score and end the game if so.
+  bool _checkWin(String playerId) {
+    final player = _state.players[_playerIndex(playerId)];
+    if (player.score >= _winScore) {
+      _state = _state.copyWith(stage: GameStage.gameOver);
+      _addEvent(GameHistoryEvent.gameEnded(
+        timestamp: _now(),
+        winnerPlayerId: playerId,
+        finalScore: player.score,
+      ));
+      return true;
+    }
+    return false;
+  }
 
   int _playerIndex(String playerId) {
     final idx = _state.players.indexWhere((p) => p.id == playerId);
