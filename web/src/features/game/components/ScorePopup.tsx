@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import type { GameHistoryEvent } from '@/models'
 
@@ -20,15 +20,17 @@ let nextId = 0
 export function ScorePopupOverlay({ history, playerId }: ScorePopupOverlayProps) {
   const [popups, setPopups] = useState<ScorePopup[]>([])
   const [lastHistoryLength, setLastHistoryLength] = useState(history.length)
+  const playerIdRef = useRef(playerId)
+  playerIdRef.current = playerId
 
   const addPopup = useCallback((points: number, eventPlayerId: string, reason?: string, source?: string) => {
     const id = nextId++
-    const isPlayer = eventPlayerId === playerId
+    const isPlayer = eventPlayerId === playerIdRef.current
     setPopups((prev) => [...prev, { id, points, reason, source, isPlayer }])
     setTimeout(() => {
       setPopups((prev) => prev.filter((p) => p.id !== id))
     }, 1800)
-  }, [playerId])
+  }, [])
 
   useEffect(() => {
     if (history.length <= lastHistoryLength) {

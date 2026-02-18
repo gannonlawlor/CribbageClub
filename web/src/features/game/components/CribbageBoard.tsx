@@ -8,12 +8,6 @@ interface CribbageBoardProps {
 
 const TOTAL_HOLES = 121
 const GROUP_SIZE = 5
-const HOLE_RADIUS = 1.4
-const PEG_RADIUS = 3.0
-const BOARD_WIDTH = 28
-const CORNER_RADIUS = 14
-const OUTER_TRACK_OFFSET = 5.0
-const INNER_TRACK_OFFSET = -5.0
 
 // Colors matching Flutter theme
 const BOARD_BROWN = '#5D4037'
@@ -21,6 +15,30 @@ const BOARD_BROWN_LIGHT = '#795548'
 const BOARD_HOLE = '#3E2723'
 const PEG_GOLD = '#FFD54F'
 const PEG_WHITE = '#EEEEEE'
+
+/** Computed dimensions proportional to canvas width */
+interface Dims {
+  boardWidth: number
+  cornerRadius: number
+  holeRadius: number
+  pegRadius: number
+  outerTrackOffset: number
+  innerTrackOffset: number
+  fontSize: number
+}
+
+function computeDims(w: number): Dims {
+  const boardWidth = w * 0.058
+  return {
+    boardWidth,
+    cornerRadius: w * 0.029,
+    holeRadius: w * 0.003,
+    pegRadius: w * 0.006,
+    outerTrackOffset: boardWidth * 0.18,
+    innerTrackOffset: boardWidth * -0.18,
+    fontSize: Math.max(w * 0.014, 6),
+  }
+}
 
 export function CribbageBoard({ playerScore, opponentScore, className = '' }: CribbageBoardProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -81,48 +99,49 @@ function draw(canvas: HTMLCanvasElement, playerScore: number, opponentScore: num
 
   const w = rect.width
   const h = rect.height
+  const dims = computeDims(w)
 
   // Draw board background (three-sided frame)
-  drawBoardBackground(ctx, w, h)
-  drawBoardBorder(ctx, w, h)
+  drawBoardBackground(ctx, w, h, dims)
+  drawBoardBorder(ctx, w, h, dims)
 
   // Calculate hole positions
-  const outerHoles = calculateHolePositions(w, h, OUTER_TRACK_OFFSET)
-  const innerHoles = calculateHolePositions(w, h, INNER_TRACK_OFFSET)
+  const outerHoles = calculateHolePositions(w, h, dims.outerTrackOffset, dims)
+  const innerHoles = calculateHolePositions(w, h, dims.innerTrackOffset, dims)
 
   // Draw holes
-  drawHoles(ctx, outerHoles)
-  drawHoles(ctx, innerHoles)
+  drawHoles(ctx, outerHoles, dims)
+  drawHoles(ctx, innerHoles, dims)
 
   // Draw milestone labels
-  drawMilestones(ctx, outerHoles, innerHoles)
+  drawMilestones(ctx, outerHoles, innerHoles, dims)
 
   // Draw pegs
   const playerPos = scoreToPosition(playerScore, outerHoles)
   const opponentPos = scoreToPosition(opponentScore, innerHoles)
-  drawPeg(ctx, opponentPos, PEG_WHITE)
-  drawPeg(ctx, playerPos, PEG_GOLD)
+  drawPeg(ctx, opponentPos, PEG_WHITE, dims)
+  drawPeg(ctx, playerPos, PEG_GOLD, dims)
 }
 
-function drawBoardBackground(ctx: CanvasRenderingContext2D, w: number, h: number) {
-  const path = buildFramePath(w, h)
-  const grad = ctx.createLinearGradient(0, 0, 0, BOARD_WIDTH)
+function drawBoardBackground(ctx: CanvasRenderingContext2D, w: number, h: number, dims: Dims) {
+  const path = buildFramePath(w, h, dims)
+  const grad = ctx.createLinearGradient(0, 0, 0, dims.boardWidth)
   grad.addColorStop(0, BOARD_BROWN_LIGHT)
   grad.addColorStop(1, BOARD_BROWN)
   ctx.fillStyle = grad
   ctx.fill(path)
 }
 
-function drawBoardBorder(ctx: CanvasRenderingContext2D, w: number, h: number) {
-  const path = buildFramePath(w, h)
+function drawBoardBorder(ctx: CanvasRenderingContext2D, w: number, h: number, dims: Dims) {
+  const path = buildFramePath(w, h, dims)
   ctx.strokeStyle = `${BOARD_HOLE}80`
   ctx.lineWidth = 1
   ctx.stroke(path)
 }
 
-function buildFramePath(w: number, h: number): Path2D {
-  const bw = BOARD_WIDTH
-  const r = CORNER_RADIUS
+function buildFramePath(w: number, h: number, dims: Dims): Path2D {
+  const bw = dims.boardWidth
+  const r = dims.cornerRadius
   const ir = Math.max(r - bw, 0)
   const path = new Path2D()
 
@@ -151,8 +170,8 @@ function buildFramePath(w: number, h: number): Path2D {
   return path
 }
 
-function segmentLengths(w: number, h: number): number[] {
-  const r = CORNER_RADIUS
+function segmentLengths(w: number, h: number, dims: Dims): number[] {
+  const r = dims.cornerRadius
   return [
     h - r,                    // left edge
     (Math.PI / 2) * r,       // top-left arc
@@ -162,14 +181,14 @@ function segmentLengths(w: number, h: number): number[] {
   ]
 }
 
-function totalPathLength(w: number, h: number): number {
-  return segmentLengths(w, h).reduce((a, b) => a + b, 0)
+function totalPathLength(w: number, h: number, dims: Dims): number {
+  return segmentLengths(w, h, dims).reduce((a, b) => a + b, 0)
 }
 
-function pathDistanceToOffset(d: number, w: number, h: number, trackOffset: number): [number, number] {
-  const r = CORNER_RADIUS
-  const center = BOARD_WIDTH / 2
-  const segs = segmentLengths(w, h)
+function pathDistanceToOffset(d: number, w: number, h: number, trackOffset: number, dims: Dims): [number, number] {
+  const r = dims.cornerRadius
+  const center = dims.boardWidth / 2
+  const segs = segmentLengths(w, h, dims)
   let remaining = d
 
   // Segment 0: Left edge (going up)
@@ -217,8 +236,8 @@ function pathDistanceToOffset(d: number, w: number, h: number, trackOffset: numb
   return [w - center + trackOffset, r + t * (h - r)]
 }
 
-function calculateHolePositions(w: number, h: number, trackOffset: number): [number, number][] {
-  const total = totalPathLength(w, h)
+function calculateHolePositions(w: number, h: number, trackOffset: number, dims: Dims): [number, number][] {
+  const total = totalPathLength(w, h, dims)
   const numGroups = Math.ceil(TOTAL_HOLES / GROUP_SIZE)
   const groupGap = 3.0
   const totalGaps = TOTAL_HOLES - 1 + (numGroups - 1) * (groupGap / 2)
@@ -243,7 +262,7 @@ function calculateHolePositions(w: number, h: number, trackOffset: number): [num
     }
   }
 
-  return linear.map((d) => pathDistanceToOffset(d, w, h, trackOffset))
+  return linear.map((d) => pathDistanceToOffset(d, w, h, trackOffset, dims))
 }
 
 function scoreToPosition(score: number, holes: [number, number][]): [number, number] {
@@ -263,11 +282,11 @@ function scoreToPosition(score: number, holes: [number, number][]): [number, num
   ]
 }
 
-function drawHoles(ctx: CanvasRenderingContext2D, holes: [number, number][]) {
+function drawHoles(ctx: CanvasRenderingContext2D, holes: [number, number][], dims: Dims) {
   ctx.fillStyle = BOARD_HOLE
   for (const [x, y] of holes) {
     ctx.beginPath()
-    ctx.arc(x, y, HOLE_RADIUS, 0, Math.PI * 2)
+    ctx.arc(x, y, dims.holeRadius, 0, Math.PI * 2)
     ctx.fill()
   }
 }
@@ -276,10 +295,11 @@ function drawMilestones(
   ctx: CanvasRenderingContext2D,
   outerHoles: [number, number][],
   innerHoles: [number, number][],
+  dims: Dims,
 ) {
   const milestones = [31, 61, 91, 121]
   ctx.fillStyle = 'rgba(255,255,255,0.45)'
-  ctx.font = 'bold 7px system-ui'
+  ctx.font = `bold ${dims.fontSize}px system-ui`
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
 
@@ -291,21 +311,22 @@ function drawMilestones(
   }
 }
 
-function drawPeg(ctx: CanvasRenderingContext2D, pos: [number, number], color: string) {
+function drawPeg(ctx: CanvasRenderingContext2D, pos: [number, number], color: string, dims: Dims) {
   const [x, y] = pos
+  const pr = dims.pegRadius
   // Glow
   ctx.beginPath()
-  ctx.arc(x, y, PEG_RADIUS + 2, 0, Math.PI * 2)
+  ctx.arc(x, y, pr + pr * 0.67, 0, Math.PI * 2)
   ctx.fillStyle = color + '4D'
   ctx.fill()
   // Body
   ctx.beginPath()
-  ctx.arc(x, y, PEG_RADIUS, 0, Math.PI * 2)
+  ctx.arc(x, y, pr, 0, Math.PI * 2)
   ctx.fillStyle = color
   ctx.fill()
   // Highlight
   ctx.beginPath()
-  ctx.arc(x - 0.7, y - 0.7, PEG_RADIUS * 0.4, 0, Math.PI * 2)
+  ctx.arc(x - pr * 0.23, y - pr * 0.23, pr * 0.4, 0, Math.PI * 2)
   ctx.fillStyle = 'rgba(255,255,255,0.5)'
   ctx.fill()
 }
