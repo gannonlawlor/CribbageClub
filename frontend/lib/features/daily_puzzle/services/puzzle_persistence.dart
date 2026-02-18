@@ -2,16 +2,19 @@ import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../models/daily_puzzle.dart';
 import 'puzzle_generator.dart';
 
 class PuzzleProgress {
   final List<int?> ranks;
   final List<double?> scores;
+  final List<List<KeepOption>?> allResults;
   final int nextIndex;
 
   const PuzzleProgress({
     required this.ranks,
     required this.scores,
+    required this.allResults,
     required this.nextIndex,
   });
 }
@@ -33,6 +36,7 @@ class PuzzlePersistence {
     int index,
     int rank,
     double score,
+    List<KeepOption> results,
   ) async {
     final prefs = await _preferences;
     final dateStr = _formatDate(date);
@@ -45,8 +49,16 @@ class PuzzlePersistence {
     ranks[index] = rank;
     scores[index] = score;
 
+    // Load existing results and store this puzzle's results
+    final allResults = _loadResults(prefs, _resultsKey(dateStr), n);
+    allResults[index] = results;
+
     await prefs.setString(_ranksKey(dateStr), jsonEncode(ranks));
     await prefs.setString(_scoresKey(dateStr), jsonEncode(scores));
+    await prefs.setString(
+      _resultsKey(dateStr),
+      jsonEncode(allResults.map((r) => r?.map((o) => o.toJson()).toList()).toList()),
+    );
   }
 
   /// Finalize the day — update streak based on whether all puzzles were rank 1.
@@ -90,6 +102,7 @@ class PuzzlePersistence {
 
     final ranks = _loadNullableIntList(prefs, _ranksKey(dateStr), n);
     final scores = _loadNullableDoubleList(prefs, _scoresKey(dateStr), n);
+    final allResults = _loadResults(prefs, _resultsKey(dateStr), n);
 
     var nextIndex = n; // all complete
     for (var i = 0; i < n; i++) {
@@ -99,7 +112,12 @@ class PuzzlePersistence {
       }
     }
 
-    return PuzzleProgress(ranks: ranks, scores: scores, nextIndex: nextIndex);
+    return PuzzleProgress(
+      ranks: ranks,
+      scores: scores,
+      allResults: allResults,
+      nextIndex: nextIndex,
+    );
   }
 
   Future<int> getStreak() async {
@@ -116,6 +134,7 @@ class PuzzlePersistence {
 
   String _ranksKey(String dateStr) => 'daily_puzzle_ranks_$dateStr';
   String _scoresKey(String dateStr) => 'daily_puzzle_scores_$dateStr';
+  String _resultsKey(String dateStr) => 'daily_puzzle_results_$dateStr';
 
   // --- List helpers ---
 
@@ -161,6 +180,32 @@ class PuzzlePersistence {
     int length,
   ) {
     return _loadNullableDoubleList(prefs, key, length);
+  }
+
+  List<List<KeepOption>?> _loadResults(
+    SharedPreferences prefs,
+    String key,
+    int length,
+  ) {
+    final raw = prefs.getString(key);
+    if (raw == null) return List.filled(length, null);
+    final list = jsonDecode(raw) as List;
+    final results = <List<KeepOption>?>[];
+    for (final item in list) {
+      if (item == null) {
+        results.add(null);
+      } else {
+        results.add(
+          (item as List)
+              .map((o) => KeepOption.fromJson(o as Map<String, dynamic>))
+              .toList(),
+        );
+      }
+    }
+    while (results.length < length) {
+      results.add(null);
+    }
+    return results;
   }
 
   // --- Date helpers ---

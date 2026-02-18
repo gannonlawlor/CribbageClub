@@ -39,4 +39,26 @@ class KeepOption {
     required this.netScore,
     required this.rank,
   });
+
+  Map<String, dynamic> toJson() => {
+    'keep': keep.map((c) => c.toJson()).toList(),
+    'discard': discard.map((c) => c.toJson()).toList(),
+    'averageHandScore': averageHandScore,
+    'averageCribScore': averageCribScore,
+    'netScore': netScore,
+    'rank': rank,
+  };
+
+  factory KeepOption.fromJson(Map<String, dynamic> json) => KeepOption(
+    keep: (json['keep'] as List)
+        .map((c) => PlayingCard.fromJson(c as Map<String, dynamic>))
+        .toList(),
+    discard: (json['discard'] as List)
+        .map((c) => PlayingCard.fromJson(c as Map<String, dynamic>))
+        .toList(),
+    averageHandScore: (json['averageHandScore'] as num).toDouble(),
+    averageCribScore: (json['averageCribScore'] as num).toDouble(),
+    netScore: (json['netScore'] as num).toDouble(),
+    rank: json['rank'] as int,
+  );
 }
