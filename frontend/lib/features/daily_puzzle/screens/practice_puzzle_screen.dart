@@ -269,6 +269,16 @@ class _RevealedView extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 8),
+        // Legend
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 24),
+          child: Text(
+            'Average points per hand across all possible cut cards.',
+            style: TextStyle(color: Colors.white38, fontSize: 12),
+            textAlign: TextAlign.center,
+          ),
+        ),
+        const SizedBox(height: 4),
         // Results list
         Expanded(
           child: ListView.builder(
