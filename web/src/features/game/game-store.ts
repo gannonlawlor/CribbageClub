@@ -80,6 +80,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
       return
     }
 
+    // Skip WebSocket for AI games — no second human player to push updates
+    const isAI = get().gameState?.players.some((p) => p.id.startsWith('ai_'))
+    if (isAI) return
+
     // Set up WebSocket subscriptions
     connectWebSocket()
 

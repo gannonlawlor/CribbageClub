@@ -19,7 +19,13 @@ export default defineConfig({
     globals: true,
     css: false,
   },
+  optimizeDeps: {
+    exclude: ['cribbage-engine'],
+  },
   server: {
+    fs: {
+      allow: ['.', '../engine/pkg'],
+    },
     proxy: {
       '/api': 'http://localhost:8080',
       '/ws': {
