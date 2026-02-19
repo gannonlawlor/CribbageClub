@@ -22,7 +22,6 @@ CribbageClub/
 ├── mobile/       # Flutter app (Dart) — iOS & Android
 ├── web/          # React SPA (TypeScript) — browser
 ├── engine/       # Rust game engine & AI
-├── landing/      # Static marketing landing page
 └── docker-compose.yml
 ```
 
