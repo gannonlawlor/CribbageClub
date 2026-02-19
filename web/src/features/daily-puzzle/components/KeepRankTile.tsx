@@ -37,6 +37,13 @@ export function KeepRankTile({ option, isPlayerPick = false, isOptimal = false, 
         ))}
       </div>
 
+      {/* Discarded cards */}
+      <div className="flex gap-0.5 ml-2 opacity-40">
+        {option.discard.map((card, i) => (
+          <CardWidget key={i} card={card} width={32} height={45} enabled={false} />
+        ))}
+      </div>
+
       <div className="flex-1" />
 
       {/* Scores */}
