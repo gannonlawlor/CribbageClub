@@ -1,4 +1,6 @@
+#[cfg(feature = "frb")]
 mod frb_generated; /* AUTO INJECTED BY flutter_rust_bridge. This line may not be accurate, and you can change it according to your needs. */
+
 pub mod card;
 pub mod deck;
 pub mod error;
@@ -13,5 +15,11 @@ pub mod scoring;
 
 pub mod ai;
 pub mod analysis;
+
+#[cfg(feature = "frb")]
 pub mod api;
+
 pub mod c_api;
+
+#[cfg(feature = "wasm-web")]
+pub mod wasm_api;

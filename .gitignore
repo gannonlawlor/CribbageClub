@@ -43,3 +43,8 @@ out/
 .env
 .env.*
 !.env.*.example
+
+### Build artifacts ###
+engine/pkg/
+engine/target/
+web/dist/

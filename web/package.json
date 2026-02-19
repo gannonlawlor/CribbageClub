@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "build:wasm": "cd ../engine && wasm-pack build --target web --release -- --no-default-features --features wasm-web",
+    "prebuild": "npm run build:wasm",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",

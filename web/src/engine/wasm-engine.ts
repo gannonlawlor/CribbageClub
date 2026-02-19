@@ -4,11 +4,9 @@
  * Wraps the Rust cribbage-engine compiled to WASM via wasm-pack.
  * All functions use JSON interchange (strings in, strings out),
  * matching the existing flutter_rust_bridge API.
- *
- * TODO: Replace this stub with actual wasm-pack imports once
- * the engine is rebuilt with wasm-bindgen instead of flutter_rust_bridge.
- * For now, this defines the interface that the rest of the app will use.
  */
+
+import init, * as wasm from 'cribbage-engine'
 
 export interface WasmEngine {
   engine_new(
@@ -18,17 +16,18 @@ export interface WasmEngine {
     player2Id: string,
     player2Name: string,
     seed?: number,
-  ): string
+  ): number
 
-  engine_restore(stateJson: string): string
-  engine_current_state_json(engineHandle: number): string
-  engine_apply_action_json(engineHandle: number, actionJson: string): string
+  engine_restore(stateJson: string): number
+  engine_current_state_json(handle: number): string
+  engine_apply_action_json(handle: number, actionJson: string): string
   engine_process_ai_json(
-    engineHandle: number,
+    handle: number,
     aiPlayerId: string,
     difficulty: string,
     maxIterations: number,
   ): string
+  engine_free(handle: number): void
 
   analyze_discards_json(handJson: string, isDealer: boolean): string
   explain_keep_json(handJson: string, keepJson: string, isDealer: boolean): string
@@ -47,11 +46,8 @@ export interface WasmEngine {
 let wasmModule: WasmEngine | null = null
 
 export async function initEngine(): Promise<void> {
-  // TODO: Import from wasm-pack output once engine is rebuilt
-  // import init, * as wasm from '../../engine/pkg/cribbage_engine'
-  // await init()
-  // wasmModule = wasm
-  console.log('[engine] WASM engine initialization placeholder — not yet wired up')
+  await init()
+  wasmModule = wasm as unknown as WasmEngine
 }
 
 export function getEngine(): WasmEngine {
