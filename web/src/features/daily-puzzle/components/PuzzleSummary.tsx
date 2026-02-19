@@ -2,8 +2,10 @@ import { useState } from 'react'
 import { CardWidget } from '@/features/game/components/CardWidget'
 import { totalScore, maxPossibleScore } from '../puzzle-store'
 import { PUZZLES_PER_DAY } from '../puzzle-generator'
+import { ExplainBottomSheet } from './ExplainBottomSheet'
 import { KeepRankTile } from './KeepRankTile'
 import { StreakBadge } from './StreakBadge'
+import type { PlayingCard } from '@/models'
 import type { DailyPuzzleSet, KeepOption } from '../models'
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
@@ -30,6 +32,13 @@ export function PuzzleSummary({
   onBackToHome,
 }: PuzzleSummaryProps) {
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null)
+  const [explainTarget, setExplainTarget] = useState<{
+    hand: PlayingCard[]
+    keep: PlayingCard[]
+    discard: PlayingCard[]
+    rank: number
+    isDealer: boolean
+  } | null>(null)
 
   const total = totalScore(playerScores)
   const max = maxPossibleScore(allResults)
@@ -109,6 +118,13 @@ export function PuzzleSummary({
             playerRank={playerRanks[index]}
             isExpanded={expandedIndex === index}
             onTap={() => setExpandedIndex(expandedIndex === index ? null : index)}
+            onExplain={(option) => setExplainTarget({
+              hand: puzzle.hand,
+              keep: option.keep,
+              discard: option.discard,
+              rank: option.rank,
+              isDealer: puzzle.isDealer,
+            })}
           />
         ))}
       </div>
@@ -128,6 +144,18 @@ export function PuzzleSummary({
           Back to Home
         </button>
       </div>
+
+      {/* Explain bottom sheet */}
+      {explainTarget && (
+        <ExplainBottomSheet
+          rank={explainTarget.rank}
+          keep={explainTarget.keep}
+          discard={explainTarget.discard}
+          hand={explainTarget.hand}
+          isDealer={explainTarget.isDealer}
+          onClose={() => setExplainTarget(null)}
+        />
+      )}
     </div>
   )
 }
@@ -142,6 +170,7 @@ function PuzzleRow({
   playerRank,
   isExpanded,
   onTap,
+  onExplain,
 }: {
   puzzleNumber: number
   isDealer: boolean
@@ -152,6 +181,7 @@ function PuzzleRow({
   playerRank: number | null
   isExpanded: boolean
   onTap: () => void
+  onExplain: (option: KeepOption) => void
 }) {
   const isOptimal = rank === 1
 
@@ -206,6 +236,7 @@ function PuzzleRow({
               option={option}
               isPlayerPick={option.rank === playerRank}
               isOptimal={option.rank === 1}
+              onExplain={() => onExplain(option)}
             />
           ))}
         </div>

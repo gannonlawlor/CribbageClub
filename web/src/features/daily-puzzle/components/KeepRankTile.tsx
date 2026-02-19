@@ -5,9 +5,10 @@ interface KeepRankTileProps {
   option: KeepOption
   isPlayerPick?: boolean
   isOptimal?: boolean
+  onExplain?: () => void
 }
 
-export function KeepRankTile({ option, isPlayerPick = false, isOptimal = false }: KeepRankTileProps) {
+export function KeepRankTile({ option, isPlayerPick = false, isOptimal = false, onExplain }: KeepRankTileProps) {
   let borderClass = ''
   let bgClass = 'bg-white/5'
 
@@ -54,6 +55,17 @@ export function KeepRankTile({ option, isPlayerPick = false, isOptimal = false }
         <div className="ml-2 text-[var(--gold)] text-sm" title="Your pick">
           &#9733;
         </div>
+      )}
+
+      {/* Info icon */}
+      {onExplain && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onExplain() }}
+          className="ml-1 text-white/30 hover:text-white/60 bg-transparent border-none cursor-pointer p-0 text-lg leading-none"
+          title="Explain this keep"
+        >
+          &#9432;
+        </button>
       )}
     </div>
   )
