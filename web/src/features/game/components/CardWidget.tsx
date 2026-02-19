@@ -28,13 +28,13 @@ export function CardWidget({
   return (
     <motion.div
       onClick={enabled && onClick ? onClick : undefined}
-      animate={{ y: selected ? -10 : 0 }}
-      transition={{ duration: 0.2 }}
+      animate={{ y: selected ? -6 : 0 }}
+      transition={{ duration: 0.15, ease: 'easeOut' }}
       style={{ width, height }}
       className={`relative rounded-md overflow-hidden select-none ${
         enabled && onClick ? 'cursor-pointer' : ''
       } ${className}`}
-      whileHover={enabled && onClick ? { y: -4, transition: { duration: 0.15 } } : undefined}
+      whileHover={enabled && onClick ? { y: -2, transition: { duration: 0.1, ease: 'easeOut' } } : undefined}
     >
       {/* Border / shadow layer */}
       <div

@@ -37,9 +37,9 @@ export function PlayArea({ playedCards, peggingCount, miniCardWidth, miniCardHei
             {playedCards.map((card, i) => (
               <motion.div
                 key={`${card.rank}-${card.suit}-${i}`}
-                initial={{ scale: 0, y: -20 }}
-                animate={{ scale: 1, y: 0 }}
-                transition={{ duration: 0.25, type: 'spring', stiffness: 300 }}
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.15, ease: 'easeOut' }}
               >
                 <MiniCard card={card} width={miniCardWidth} height={miniCardHeight} />
               </motion.div>

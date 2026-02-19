@@ -7,11 +7,9 @@ class GameControls extends StatelessWidget {
   final bool isMyTurn;
   final int selectedCardCount;
   final bool isDiscarding;
-  final bool canGo;
   final bool showCountingOverlay;
   final VoidCallback? onDiscard;
   final VoidCallback? onCut;
-  final VoidCallback? onGo;
   final VoidCallback? onCount;
 
   const GameControls({
@@ -20,11 +18,9 @@ class GameControls extends StatelessWidget {
     required this.isMyTurn,
     this.selectedCardCount = 0,
     this.isDiscarding = false,
-    this.canGo = true,
     this.showCountingOverlay = false,
     this.onDiscard,
     this.onCut,
-    this.onGo,
     this.onCount,
   });
 
@@ -66,13 +62,7 @@ class GameControls extends StatelessWidget {
           ),
         ];
       case GameStage.pegging:
-        return [
-          _ActionButton(
-            label: 'Go',
-            onPressed: canGo ? onGo : null,
-            icon: Icons.skip_next,
-          ),
-        ];
+        return [];
       case GameStage.counting:
         if (showCountingOverlay) return [];
         return [

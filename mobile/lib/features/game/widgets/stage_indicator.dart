@@ -30,9 +30,7 @@ class StageIndicator extends StatelessWidget {
       case GameStage.cutting:
         return isMyTurn ? 'Tap to cut the deck' : 'Cutting the deck';
       case GameStage.pegging:
-        return isMyTurn
-            ? 'Play a card or tap Go if you can\'t play'
-            : 'Pegging';
+        return isMyTurn ? 'Your turn to play' : 'Pegging';
       case GameStage.counting:
         return isMyTurn ? 'Count your cards!' : 'Counting';
       case GameStage.gameOver:
