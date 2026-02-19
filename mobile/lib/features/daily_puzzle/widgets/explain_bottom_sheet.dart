@@ -150,9 +150,9 @@ class _ExplainBottomSheetState extends State<ExplainBottomSheet> {
             const SizedBox(height: 12),
             // Score summary
             _ScoreSummary(explanation: _explanation!),
-            // Cut score distribution
+            // Cut score table
             const SizedBox(height: 12),
-            _CutDistribution(cutScores: _explanation!.cutScores),
+            _CutScoreTable(cutScores: _explanation!.cutScores),
           ],
         ],
       ),
@@ -233,88 +233,125 @@ class _ScoreStat extends StatelessWidget {
   }
 }
 
-class _CutDistribution extends StatelessWidget {
+class _CutScoreTable extends StatelessWidget {
   final List<CutScore> cutScores;
 
-  const _CutDistribution({required this.cutScores});
+  const _CutScoreTable({required this.cutScores});
 
   @override
   Widget build(BuildContext context) {
     if (cutScores.isEmpty) return const SizedBox.shrink();
 
-    // Build distribution: score -> count
-    final dist = <int, int>{};
-    for (final cs in cutScores) {
-      dist[cs.totalScore] = (dist[cs.totalScore] ?? 0) + 1;
-    }
+    final scores = cutScores.map((cs) => cs.totalScore).toList();
+    final minScore = scores.reduce((a, b) => a < b ? a : b);
+    final maxScore = scores.reduce((a, b) => a > b ? a : b);
+    final avgScore = scores.reduce((a, b) => a + b) / scores.length;
 
-    final maxScore = cutScores.first.totalScore;
-    final minScore = cutScores.last.totalScore;
-    final maxCount = dist.values.reduce((a, b) => a > b ? a : b);
+    final total = cutScores.length;
+    final zeroCount = scores.where((s) => s == 0).length;
+    final low = scores.where((s) => s >= 1 && s <= 3).length;
+    final mid = scores.where((s) => s >= 4 && s <= 7).length;
+    final good = scores.where((s) => s >= 8 && s <= 11).length;
+    final great = scores.where((s) => s >= 12).length;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Score distribution by cut',
+          'Score by cut card',
           style: TextStyle(color: Colors.white54, fontSize: 12),
         ),
-        const SizedBox(height: 6),
-        SizedBox(
-          height: 60,
+        const SizedBox(height: 8),
+        // Min / Avg / Max row
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(8),
+          ),
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              for (var score = minScore; score <= maxScore; score++)
-                if (dist.containsKey(score))
-                  Expanded(
-                    child: Tooltip(
-                      message: '$score pts: ${dist[score]} cuts',
-                      child: Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 0.5),
-                        height: 60 * (dist[score]! / maxCount),
-                        decoration: BoxDecoration(
-                          color: _barColor(score),
-                          borderRadius: const BorderRadius.vertical(
-                            top: Radius.circular(2),
-                          ),
-                        ),
-                      ),
-                    ),
-                  )
-                else
-                  Expanded(
-                    child: Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 0.5),
-                      height: 1,
-                      color: Colors.white10,
-                    ),
-                  ),
+              _ScoreStat(label: 'Min', value: '$minScore'),
+              _ScoreStat(label: 'Avg', value: avgScore.toStringAsFixed(1), bold: true),
+              _ScoreStat(label: 'Max', value: '$maxScore'),
             ],
           ),
         ),
-        const SizedBox(height: 2),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              '$minScore',
-              style: const TextStyle(color: Colors.white38, fontSize: 10),
-            ),
-            Text(
-              '$maxScore pts',
-              style: const TextStyle(color: Colors.white38, fontSize: 10),
-            ),
-          ],
-        ),
+        const SizedBox(height: 8),
+        // Bucket bars
+        if (great > 0) _CutBucket(label: '12+ pts', count: great, total: total, color: Colors.greenAccent),
+        if (good > 0) _CutBucket(label: '8-11 pts', count: good, total: total, color: Colors.green),
+        if (mid > 0) _CutBucket(label: '4-7 pts', count: mid, total: total, color: Colors.amber),
+        if (low > 0) _CutBucket(label: '1-3 pts', count: low, total: total, color: Colors.white60),
+        if (zeroCount > 0) _CutBucket(label: '0 pts', count: zeroCount, total: total, color: Colors.white38),
       ],
     );
   }
+}
 
-  Color _barColor(int score) {
-    if (score >= 12) return Colors.greenAccent;
-    if (score >= 8) return Colors.green;
-    if (score >= 4) return Colors.amber;
-    return Colors.white38;
+class _CutBucket extends StatelessWidget {
+  final String label;
+  final int count;
+  final int total;
+  final Color color;
+
+  const _CutBucket({
+    required this.label,
+    required this.count,
+    required this.total,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final pct = (count / total * 100).round();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 56,
+            child: Text(
+              label,
+              style: TextStyle(color: color, fontSize: 13),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: SizedBox(
+                height: 8,
+                child: Stack(
+                  children: [
+                    Container(color: Colors.white.withValues(alpha: 0.08)),
+                    FractionallySizedBox(
+                      widthFactor: count / total,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: color,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          SizedBox(
+            width: 72,
+            child: Text(
+              '$count cut${count != 1 ? 's' : ''} ($pct%)',
+              textAlign: TextAlign.right,
+              style: const TextStyle(color: Colors.white54, fontSize: 11),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

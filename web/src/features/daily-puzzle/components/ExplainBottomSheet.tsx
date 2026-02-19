@@ -88,8 +88,8 @@ export function ExplainBottomSheet({
             {/* Score summary */}
             <ScoreSummary explanation={explanation} />
 
-            {/* Cut distribution */}
-            <CutDistribution cutScores={explanation.cutScores} />
+            {/* Cut score table */}
+            <CutScoreTable cutScores={explanation.cutScores} />
           </div>
         )}
       </div>
@@ -122,51 +122,58 @@ function ScoreSummary({ explanation }: { explanation: KeepExplanation }) {
   )
 }
 
-function CutDistribution({ cutScores }: { cutScores: CutScore[] }) {
+function CutScoreTable({ cutScores }: { cutScores: CutScore[] }) {
   if (cutScores.length === 0) return null
 
-  const dist = new Map<number, number>()
-  for (const cs of cutScores) {
-    dist.set(cs.totalScore, (dist.get(cs.totalScore) ?? 0) + 1)
-  }
+  const scores = cutScores.map((cs) => cs.totalScore)
+  const minScore = Math.min(...scores)
+  const maxScore = Math.max(...scores)
+  const avgScore = scores.reduce((a, b) => a + b, 0) / scores.length
 
-  const scores = Array.from(dist.keys()).sort((a, b) => a - b)
-  const minScore = scores[0]
-  const maxScore = scores[scores.length - 1]
-  const maxCount = Math.max(...dist.values())
+  const total = cutScores.length
+  const zeroCount = scores.filter((s) => s === 0).length
+  const low = scores.filter((s) => s >= 1 && s <= 3).length
+  const mid = scores.filter((s) => s >= 4 && s <= 7).length
+  const good = scores.filter((s) => s >= 8 && s <= 11).length
+  const great = scores.filter((s) => s >= 12).length
 
   return (
     <div>
-      <div className="text-white/50 text-xs mb-1">Score distribution by cut</div>
-      <div className="flex items-end gap-px h-14">
-        {Array.from({ length: maxScore - minScore + 1 }).map((_, i) => {
-          const score = minScore + i
-          const count = dist.get(score) ?? 0
-          const height = count > 0 ? (count / maxCount) * 100 : 2
-          return (
-            <div
-              key={score}
-              className="flex-1 rounded-t-sm"
-              style={{
-                height: `${height}%`,
-                backgroundColor: count > 0 ? barColor(score) : 'rgba(255,255,255,0.05)',
-              }}
-              title={count > 0 ? `${score} pts: ${count} cuts` : ''}
-            />
-          )
-        })}
+      <div className="text-white/50 text-xs mb-2">Score by cut card</div>
+      <div className="bg-white/10 rounded-lg p-3 flex justify-evenly mb-2">
+        <div className="text-center">
+          <div className="text-white text-base">{minScore}</div>
+          <div className="text-white/40 text-xs">Min</div>
+        </div>
+        <div className="text-center">
+          <div className="text-white text-lg font-bold">{avgScore.toFixed(1)}</div>
+          <div className="text-white/40 text-xs">Avg</div>
+        </div>
+        <div className="text-center">
+          <div className="text-white text-base">{maxScore}</div>
+          <div className="text-white/40 text-xs">Max</div>
+        </div>
       </div>
-      <div className="flex justify-between">
-        <span className="text-white/40 text-[10px]">{minScore}</span>
-        <span className="text-white/40 text-[10px]">{maxScore} pts</span>
+      <div className="space-y-1">
+        {great > 0 && <CutBucket label="12+ pts" count={great} total={total} color="text-green-400" />}
+        {good > 0 && <CutBucket label="8-11 pts" count={good} total={total} color="text-green-500" />}
+        {mid > 0 && <CutBucket label="4-7 pts" count={mid} total={total} color="text-amber-400" />}
+        {low > 0 && <CutBucket label="1-3 pts" count={low} total={total} color="text-white/60" />}
+        {zeroCount > 0 && <CutBucket label="0 pts" count={zeroCount} total={total} color="text-white/40" />}
       </div>
     </div>
   )
 }
 
-function barColor(score: number): string {
-  if (score >= 12) return 'rgb(16, 185, 129)' // green-400
-  if (score >= 8) return 'rgb(34, 197, 94)' // green-500
-  if (score >= 4) return 'rgb(245, 158, 11)' // amber-500
-  return 'rgba(255, 255, 255, 0.25)'
+function CutBucket({ label, count, total, color }: { label: string; count: number; total: number; color: string }) {
+  const pct = Math.round((count / total) * 100)
+  return (
+    <div className="flex items-center gap-2 text-sm">
+      <span className={`w-16 ${color}`}>{label}</span>
+      <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
+        <div className={`h-full rounded-full bg-current ${color}`} style={{ width: `${pct}%` }} />
+      </div>
+      <span className="text-white/50 text-xs w-14 text-right">{count} cut{count !== 1 ? 's' : ''} ({pct}%)</span>
+    </div>
+  )
 }
