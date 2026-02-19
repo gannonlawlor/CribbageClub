@@ -162,6 +162,6 @@ The heaviest lift — port the **core game experience**:
 
 1. **Separate repos/directories** for web and mobile — don't try to share UI code
 2. **Thin, fast web bundle** — Lichess's board (chessground) is 10KB gzipped
-3. **Server-side rendering for landing/SEO pages** — even if the game itself is a SPA
+3. **Server-side rendering for SEO pages** — even if the game itself is a SPA
 4. **Modular UI packages** — each feature as its own module (analysis, game, puzzle)
 5. **Keep the engine in one language** — our Rust-everywhere approach is better than their 3-language duplication

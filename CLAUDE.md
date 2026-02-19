@@ -6,9 +6,8 @@ Cribbage Club is a cross-platform multiplayer Cribbage card game inspired by Che
 
 - **Backend** (`src/`): Spring Boot 3.4 server — game logic, persistence, real-time WebSocket, auth, ratings. See `src/CLAUDE.md`.
 - **Mobile** (`mobile/`): Flutter app targeting iOS and Android. See `mobile/CLAUDE.md`.
-- **Web** (`web/`): React SPA for browser play. See `web/CLAUDE.md`.
+- **Web** (`web/`): React SPA for browser play, including the marketing landing page. See `web/CLAUDE.md`.
 - **Engine** (`engine/`): Rust crate powering game simulation, AI opponents, and discard analysis. See `engine/CLAUDE.md`.
-- **Landing** (`landing/`): Static marketing landing page. See `landing/CLAUDE.md`.
 
 ## Monorepo Layout
 
@@ -18,7 +17,6 @@ CribbageClub/
 ├── mobile/                       # Flutter app (Dart) — iOS & Android
 ├── web/                          # React SPA (TypeScript) — browser
 ├── engine/                       # Rust game engine
-├── landing/                      # Static landing page (HTML/CSS/JS)
 ├── CLAUDE.md                     # This file (project overview)
 ├── TODO.md                       # Backend task list (all complete)
 ├── FRONTEND.md                   # Frontend plan and phased roadmap

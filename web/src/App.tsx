@@ -3,6 +3,7 @@ import { BrowserRouter, Route, Routes, Navigate } from 'react-router'
 import { useAuthStore } from '@/auth/auth-store'
 import { Layout } from '@/shared/Layout'
 import { HomePage } from '@/features/home/HomePage'
+import { LandingPage } from '@/features/landing/LandingPage'
 import { LoginPage } from '@/features/auth/LoginPage'
 import { UpgradePage } from '@/features/auth/UpgradePage'
 import { GamePage } from '@/features/game/GamePage'
@@ -18,6 +19,11 @@ import { JoinByCodePage } from '@/features/lobby/JoinByCodePage'
 import { ProfilePage } from '@/features/profile/ProfilePage'
 import { PuzzlePage } from '@/features/puzzle/PuzzlePage'
 
+function RootPage() {
+  const isLoggedIn = useAuthStore((s) => s.token != null)
+  return isLoggedIn ? <HomePage /> : <LandingPage />
+}
+
 export function App() {
   const loadSavedAuth = useAuthStore((s) => s.loadSavedAuth)
 
@@ -29,7 +35,7 @@ export function App() {
     <BrowserRouter>
       <Routes>
         <Route element={<Layout />}>
-          <Route path="/" element={<HomePage />} />
+          <Route path="/" element={<RootPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/upgrade" element={<UpgradePage />} />
           <Route path="/game/:gameId" element={<GamePage />} />
