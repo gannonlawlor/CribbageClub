@@ -83,8 +83,10 @@ export function ScorePopupOverlay({ history, playerId }: ScorePopupOverlayProps)
             animate={{ opacity: 1, scale: 1, y: -20 }}
             exit={{ opacity: 0, y: -40, transition: { duration: 0.5, delay: 1 } }}
             transition={{ duration: 0.3 }}
-            className={`absolute left-1/2 -translate-x-1/2 flex flex-col items-center ${
-              popup.isPlayer ? 'bottom-[40%]' : 'top-[10%]'
+            className={`absolute flex flex-col items-center ${
+              popup.isPlayer
+                ? 'right-4 top-2'
+                : 'left-4 top-2'
             }`}
           >
             {popup.source === 'hand' && (
@@ -94,7 +96,7 @@ export function ScorePopupOverlay({ history, playerId }: ScorePopupOverlayProps)
               <span className="text-[var(--gold)]/80 text-xs font-semibold">Crib</span>
             )}
             <span
-              className="text-[var(--gold)] text-4xl font-bold"
+              className={`text-4xl font-bold ${popup.isPlayer ? 'text-[var(--gold)]' : 'text-white'}`}
               style={{ textShadow: '1px 1px 4px rgba(0,0,0,0.5)' }}
             >
               +{popup.points}

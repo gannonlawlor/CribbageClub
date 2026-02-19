@@ -397,7 +397,6 @@ function DesktopGameBoard({
             onDiscard={onDiscard}
             onCut={onCut}
             onCount={onCount}
-            onResign={onResign}
           />
 
           {/* Player hand */}
@@ -440,9 +439,21 @@ function DesktopGameBoard({
               </div>
             </div>
 
-            {/* History log */}
-            <div className="flex-1 min-h-0">
-              <HistoryLog events={gameState.history} playerNames={playerNames} variant="sidebar" />
+            {/* Resign + History log */}
+            <div className="flex-1 min-h-0 flex flex-col">
+              {stage !== GameStage.GAME_OVER && onResign && (
+                <div className="flex justify-end mb-1">
+                  <button
+                    onClick={onResign}
+                    className="text-red-400/40 text-xs bg-transparent border-none cursor-pointer hover:text-red-400"
+                  >
+                    Resign
+                  </button>
+                </div>
+              )}
+              <div className="flex-1 min-h-0">
+                <HistoryLog events={gameState.history} playerNames={playerNames} variant="sidebar" />
+              </div>
             </div>
           </div>
         </div>
