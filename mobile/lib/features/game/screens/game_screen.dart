@@ -180,6 +180,28 @@ class GameScreen extends ConsumerWidget {
         : gs.history.whereType<CribCounted>().lastOrNull?.cribCards ?? const [];
     final selectedCards = ref.watch(selectedCardsProvider(gameId));
 
+    // Auto-go when player can't play during pegging
+    if (gs.stage == GameStage.pegging &&
+        isMyTurn &&
+        !_canPlayAnyCard(player.hand, gs.peggingCount)) {
+      Future.delayed(const Duration(milliseconds: 500), () {
+        // Re-read current state to guard against stale/duplicate callbacks
+        final current = _isLocal
+            ? ref.read(localGameNotifierProvider(gameId))
+            : ref.read(gameNotifierProvider(gameId));
+        final currentGs = current.gameState;
+        if (currentGs == null ||
+            currentGs.stage != GameStage.pegging ||
+            currentGs.currentPlayerId != playerId) {
+          return;
+        }
+
+        final n = _readNotifier(ref);
+        if (n is GameNotifier) n.sayGo();
+        if (n is LocalGameNotifier) n.sayGo();
+      });
+    }
+
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(gradient: AppTheme.feltGradient),
@@ -353,7 +375,6 @@ class GameScreen extends ConsumerWidget {
                         isMyTurn: isMyTurn,
                         selectedCardCount: selectedCards.length,
                         isDiscarding: gameNotifier.isDiscarding,
-                        canGo: !_canPlayAnyCard(player.hand, gs.peggingCount),
                         showCountingOverlay: gs.stage == GameStage.counting && isMyTurn,
                         onDiscard: () =>
                             _handleDiscard(ref, gs, playerId, selectedCards),
@@ -361,11 +382,6 @@ class GameScreen extends ConsumerWidget {
                           final n = _readNotifier(ref);
                           if (n is GameNotifier) n.cutDeck();
                           if (n is LocalGameNotifier) n.cutDeck();
-                        },
-                        onGo: () {
-                          final n = _readNotifier(ref);
-                          if (n is GameNotifier) n.sayGo();
-                          if (n is LocalGameNotifier) n.sayGo();
                         },
                         onCount: () {
                           final n = _readNotifier(ref);
@@ -481,9 +497,7 @@ class GameScreen extends ConsumerWidget {
           ScaffoldMessenger.of(context).clearSnackBars();
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text(
-                'That card would exceed 31. Try another or tap Go.',
-              ),
+              content: Text('That card would exceed 31.'),
               duration: Duration(seconds: 2),
             ),
           );

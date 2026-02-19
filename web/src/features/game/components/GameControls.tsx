@@ -5,10 +5,8 @@ interface GameControlsProps {
   isMyTurn: boolean
   selectedCardCount: number
   isDiscarding: boolean
-  canGo: boolean
   onDiscard?: () => void
   onCut?: () => void
-  onGo?: () => void
   onCount?: () => void
   onResign?: () => void
 }
@@ -18,10 +16,8 @@ export function GameControls({
   isMyTurn,
   selectedCardCount,
   isDiscarding,
-  canGo,
   onDiscard,
   onCut,
-  onGo,
   onCount,
   onResign,
 }: GameControlsProps) {
@@ -30,31 +26,29 @@ export function GameControls({
   }
 
   return (
-    <div className="flex gap-2 justify-center items-center flex-wrap py-1">
-      {stage === GameStage.DISCARDING_TO_CRIB && (
-        <ActionButton
-          label={isDiscarding ? 'Discarding...' : `Discard (${selectedCardCount}/2)`}
-          onClick={onDiscard}
-          disabled={selectedCardCount !== 2 || isDiscarding}
-        />
-      )}
+    <div className="flex flex-col items-center gap-1 py-1">
+      <div className="flex gap-2 justify-center items-center">
+        {stage === GameStage.DISCARDING_TO_CRIB && (
+          <ActionButton
+            label={isDiscarding ? 'Discarding...' : `Discard (${selectedCardCount}/2)`}
+            onClick={onDiscard}
+            disabled={selectedCardCount !== 2 || isDiscarding}
+          />
+        )}
 
-      {stage === GameStage.CUTTING && (
-        <ActionButton label="Cut Deck" onClick={onCut} />
-      )}
+        {stage === GameStage.CUTTING && (
+          <ActionButton label="Cut Deck" onClick={onCut} />
+        )}
 
-      {stage === GameStage.PEGGING && (
-        <ActionButton label="Go" onClick={onGo} disabled={!canGo} />
-      )}
-
-      {stage === GameStage.COUNTING && (
-        <ActionButton label="Count Hand" onClick={onCount} />
-      )}
+        {stage === GameStage.COUNTING && (
+          <ActionButton label="Count Hand" onClick={onCount} />
+        )}
+      </div>
 
       {stage !== GameStage.GAME_OVER && onResign && (
         <button
           onClick={onResign}
-          className="text-red-400/60 text-xs bg-transparent border-none cursor-pointer hover:text-red-400 ml-2"
+          className="text-red-400/40 text-xs bg-transparent border-none cursor-pointer hover:text-red-400 mt-1"
         >
           Resign
         </button>

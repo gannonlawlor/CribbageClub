@@ -21,7 +21,7 @@ function getMessage(stage: GameStage, isMyTurn: boolean, isDealer: boolean, sele
     case GameStage.CUTTING:
       return isMyTurn ? 'Tap to cut the deck' : 'Cutting the deck'
     case GameStage.PEGGING:
-      return isMyTurn ? "Play a card or tap Go if you can't play" : 'Pegging'
+      return isMyTurn ? 'Your turn to play' : 'Pegging'
     case GameStage.COUNTING:
       return isMyTurn ? 'Count your cards!' : 'Counting'
     case GameStage.GAME_OVER:
