@@ -65,6 +65,10 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.go('/'),
+        ),
         title: const Text('Friends'),
         bottom: TabBar(
           controller: _tabController,

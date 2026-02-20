@@ -29,7 +29,13 @@ class GameHistoryScreen extends ConsumerWidget {
       final serverHistory = ref.watch(_serverGameHistoryProvider);
 
       return Scaffold(
-        appBar: AppBar(title: const Text('Game History')),
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => context.go('/'),
+          ),
+          title: const Text('Game History'),
+        ),
         body: ListView(
           padding: const EdgeInsets.all(16),
           children: [
@@ -73,7 +79,13 @@ class GameHistoryScreen extends ConsumerWidget {
 
     // Not logged in: show local games only
     return Scaffold(
-      appBar: AppBar(title: const Text('Game History')),
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.go('/'),
+        ),
+        title: const Text('Game History'),
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

@@ -33,7 +33,13 @@ class _PuzzleScreenState extends ConsumerState<PuzzleScreen> {
 
     if (!auth.isLoggedIn) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Daily Puzzle')),
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => context.go('/'),
+          ),
+          title: const Text('Daily Puzzle'),
+        ),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -56,7 +62,13 @@ class _PuzzleScreenState extends ConsumerState<PuzzleScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Daily Puzzle')),
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.go('/'),
+        ),
+        title: const Text('Daily Puzzle'),
+      ),
       body: puzzleAsync.when(
         data: (puzzle) => _buildPuzzle(context, puzzle),
         loading: () => const Center(child: CircularProgressIndicator()),

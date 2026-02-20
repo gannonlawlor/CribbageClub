@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../config/theme.dart';
 import '../../../core/auth/auth_provider.dart';
 import '../../../core/models/profile_response.dart';
@@ -31,7 +32,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final isOwnProfile = auth.userId == widget.userId;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Profile')),
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.pop(),
+        ),
+        title: const Text('Profile'),
+      ),
       body: profile.when(
         data: (p) => Center(
           child: SingleChildScrollView(
