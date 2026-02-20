@@ -237,23 +237,19 @@ class _CountingOverlayState extends State<CountingOverlay> {
             const SizedBox(height: 8),
             // Divider + cut card
             Row(
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Container(
-                  width: cardW * 2,
-                  height: 1,
-                  color: Colors.white24,
+                Expanded(
+                  child: Container(height: 1, color: Colors.white24),
                 ),
-                const SizedBox(width: 8),
-                const Text(
-                  'Cut',
-                  style: TextStyle(color: Colors.white38, fontSize: 11),
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 8),
+                  child: Text(
+                    'Cut',
+                    style: TextStyle(color: Colors.white38, fontSize: 11),
+                  ),
                 ),
-                const SizedBox(width: 8),
-                Container(
-                  width: cardW * 2,
-                  height: 1,
-                  color: Colors.white24,
+                Expanded(
+                  child: Container(height: 1, color: Colors.white24),
                 ),
               ],
             ),
@@ -293,24 +289,27 @@ class _CountingOverlayState extends State<CountingOverlay> {
         _buildCardRow(cards, cutCard),
         const SizedBox(height: 24),
         Row(
-          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            ElevatedButton(
-              onPressed: onCountForMe,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.feltGreen,
-                foregroundColor: Colors.white,
+            Expanded(
+              child: ElevatedButton(
+                onPressed: onCountForMe,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.feltGreen,
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('Count for me'),
               ),
-              child: const Text('Count for me'),
             ),
             const SizedBox(width: 12),
-            ElevatedButton(
-              onPressed: onIllCount,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.goldAccent,
-                foregroundColor: Colors.black87,
+            Expanded(
+              child: ElevatedButton(
+                onPressed: onIllCount,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.goldAccent,
+                  foregroundColor: Colors.black87,
+                ),
+                child: const Text("I'll count"),
               ),
-              child: const Text("I'll count"),
             ),
           ],
         ),

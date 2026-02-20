@@ -16,8 +16,8 @@ class CardDimensions {
   double get playCardWidth => handCardWidth * 0.85;
   double get playCardHeight => playCardWidth / AppTheme.cardAspectRatio;
 
-  // Opponent/crib cards (face-down): ~11% screen width
-  double get smallCardWidth => screenWidth * 0.11;
+  // Opponent/crib cards (face-down): ~14% screen width
+  double get smallCardWidth => screenWidth * 0.14;
   double get smallCardHeight => smallCardWidth / AppTheme.cardAspectRatio;
 
   // Overlap ratios

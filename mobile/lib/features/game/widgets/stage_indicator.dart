@@ -40,43 +40,46 @@ class StageIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-      decoration: BoxDecoration(
-        color: isMyTurn
-            ? AppTheme.goldAccent.withValues(alpha: 0.2)
-            : Colors.black26,
-        borderRadius: BorderRadius.circular(16),
-        border: isMyTurn
-            ? Border.all(color: AppTheme.goldAccent.withValues(alpha: 0.5))
-            : null,
-      ),
-      child: AnimatedSwitcher(
-        duration: AppTheme.stageTransitionDuration,
-        switchInCurve: Curves.easeIn,
-        switchOutCurve: Curves.easeOut,
-        transitionBuilder: (child, animation) {
-          return FadeTransition(
-            opacity: animation,
-            child: SlideTransition(
-              position: Tween<Offset>(
-                begin: const Offset(0, 0.3),
-                end: Offset.zero,
-              ).animate(animation),
-              child: child,
+    return SizedBox(
+      width: double.infinity,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        decoration: BoxDecoration(
+          color: isMyTurn
+              ? AppTheme.goldAccent.withValues(alpha: 0.2)
+              : Colors.black26,
+          borderRadius: BorderRadius.circular(16),
+          border: isMyTurn
+              ? Border.all(color: AppTheme.goldAccent.withValues(alpha: 0.5))
+              : null,
+        ),
+        child: AnimatedSwitcher(
+          duration: AppTheme.stageTransitionDuration,
+          switchInCurve: Curves.easeIn,
+          switchOutCurve: Curves.easeOut,
+          transitionBuilder: (child, animation) {
+            return FadeTransition(
+              opacity: animation,
+              child: SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(0, 0.3),
+                  end: Offset.zero,
+                ).animate(animation),
+                child: child,
+              ),
+            );
+          },
+          child: Text(
+            _message,
+            key: ValueKey('${stage.name}_$isMyTurn'),
+            style: TextStyle(
+              color: isMyTurn ? AppTheme.goldAccent : Colors.white70,
+              fontSize: 13,
+              fontWeight: isMyTurn ? FontWeight.bold : FontWeight.normal,
             ),
-          );
-        },
-        child: Text(
-          _message,
-          key: ValueKey('${stage.name}_$isMyTurn'),
-          style: TextStyle(
-            color: isMyTurn ? AppTheme.goldAccent : Colors.white70,
-            fontSize: 13,
-            fontWeight: isMyTurn ? FontWeight.bold : FontWeight.normal,
+            textAlign: TextAlign.center,
           ),
-          textAlign: TextAlign.center,
         ),
       ),
     );
