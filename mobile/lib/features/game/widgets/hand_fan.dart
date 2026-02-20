@@ -28,9 +28,11 @@ class HandFan extends StatelessWidget {
         final dims = CardDimensions(constraints.maxWidth);
         final cardW = dims.handCardWidth;
         final cardH = dims.handCardHeight;
-        final stackWidth = dims.handStackWidth(sorted.length);
+        final available = constraints.maxWidth;
+        final visibleW = dims.handCardVisibleForCount(sorted.length, available);
+        final stackWidth = dims.handStackWidthForCount(sorted.length, available);
         // Center the stack
-        final startX = (constraints.maxWidth - stackWidth) / 2;
+        final startX = (available - stackWidth) / 2;
 
         return SizedBox(
           height: cardH + 12, // extra for selection lift
@@ -41,7 +43,7 @@ class HandFan extends StatelessWidget {
                 AnimatedPositioned(
                   duration: const Duration(milliseconds: 250),
                   curve: Curves.easeOutCubic,
-                  left: startX + i * dims.handCardVisible,
+                  left: startX + i * visibleW,
                   bottom: 0,
                   child: CardWidget(
                     card: sorted[i],
