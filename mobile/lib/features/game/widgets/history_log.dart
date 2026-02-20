@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../config/theme/app_colors.dart';
 import '../../../core/models/game_history_event.dart';
 import '../../../core/models/score_breakdown.dart';
 
@@ -65,10 +66,11 @@ class HistoryLog extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
+    final colors = context.appColors;
     return Container(
       constraints: const BoxConstraints(maxHeight: 150),
       decoration: BoxDecoration(
-        color: Colors.black26,
+        color: colors.surfaceDim,
         borderRadius: BorderRadius.circular(8),
       ),
       child: ListView.builder(
@@ -81,7 +83,7 @@ class HistoryLog extends StatelessWidget {
             padding: const EdgeInsets.symmetric(vertical: 2),
             child: Text(
               _describe(event),
-              style: const TextStyle(color: Colors.white70, fontSize: 13),
+              style: TextStyle(color: colors.textSecondary, fontSize: 13),
             ),
           );
         },

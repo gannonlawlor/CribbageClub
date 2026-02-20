@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../config/theme.dart';
+import '../../../config/theme/app_colors.dart';
 import '../../../core/auth/auth_provider.dart';
 import '../../../shared/widgets/loading_overlay.dart';
 
@@ -81,6 +81,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     final auth = ref.watch(authProvider);
 
     return Scaffold(
@@ -99,16 +100,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.style,
                       size: 80,
-                      color: AppTheme.goldAccent,
+                      color: colors.accent,
                     ),
                     const SizedBox(height: 16),
-                    const Text(
+                    Text(
                       'Cribbage Club',
                       style: TextStyle(
-                        color: Colors.white,
+                        color: colors.textPrimary,
                         fontSize: 32,
                         fontWeight: FontWeight.bold,
                       ),
@@ -117,26 +118,26 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     TextFormField(
                       controller: _usernameController,
                       validator: _validateUsername,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: 'Username',
-                        border: OutlineInputBorder(),
+                        border: const OutlineInputBorder(),
                         filled: true,
-                        fillColor: Colors.white10,
+                        fillColor: colors.surfaceDim,
                       ),
-                      style: const TextStyle(color: Colors.white),
+                      style: TextStyle(color: colors.textPrimary),
                       textInputAction: TextInputAction.next,
                     ),
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _passwordController,
                       validator: _validatePassword,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: 'Password',
-                        border: OutlineInputBorder(),
+                        border: const OutlineInputBorder(),
                         filled: true,
-                        fillColor: Colors.white10,
+                        fillColor: colors.surfaceDim,
                       ),
-                      style: const TextStyle(color: Colors.white),
+                      style: TextStyle(color: colors.textPrimary),
                       obscureText: true,
                       onFieldSubmitted: (_) => _submit(),
                     ),
@@ -144,7 +145,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       const SizedBox(height: 12),
                       Text(
                         auth.error!,
-                        style: const TextStyle(color: Colors.redAccent),
+                        style: TextStyle(color: colors.error),
                         textAlign: TextAlign.center,
                       ),
                     ],
@@ -167,11 +168,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         _isRegister
                             ? 'Already have an account? Login'
                             : "Don't have an account? Register",
-                        style: const TextStyle(color: Colors.white70),
+                        style: TextStyle(color: colors.textSecondary),
                       ),
                     ),
                     const SizedBox(height: 16),
-                    const Divider(color: Colors.white24),
+                    Divider(color: colors.divider),
                     const SizedBox(height: 16),
                     SizedBox(
                       width: double.infinity,
@@ -184,8 +185,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         icon: const Icon(Icons.person_outline),
                         label: const Text('Play as Guest'),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.white70,
-                          side: const BorderSide(color: Colors.white38),
+                          foregroundColor: colors.textSecondary,
+                          side: BorderSide(color: colors.textDisabled),
                           padding: const EdgeInsets.symmetric(vertical: 12),
                         ),
                       ),
@@ -193,9 +194,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     const SizedBox(height: 12),
                     TextButton(
                       onPressed: () => context.go('/'),
-                      child: const Text(
+                      child: Text(
                         'Skip for now',
-                        style: TextStyle(color: Colors.white38),
+                        style: TextStyle(color: colors.textDisabled),
                       ),
                     ),
                   ],

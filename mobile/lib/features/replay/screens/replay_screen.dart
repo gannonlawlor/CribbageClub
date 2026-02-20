@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../config/theme.dart';
+import '../../../config/theme/app_colors.dart';
 import '../../../core/auth/auth_provider.dart';
 import '../../../core/models/game_history_event.dart';
 import '../../../core/models/game_state.dart';
@@ -177,12 +177,13 @@ class ReplayScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.appColors;
     final gameStateAsync = ref.watch(_replayGameStateProvider(gameId));
 
     return gameStateAsync.when(
       loading: () => Scaffold(
         body: Container(
-          decoration: const BoxDecoration(gradient: AppTheme.feltGradient),
+          decoration: BoxDecoration(gradient: colors.gameGradient),
           child: const Center(child: CircularProgressIndicator()),
         ),
       ),
@@ -191,7 +192,7 @@ class ReplayScreen extends ConsumerWidget {
         body: Center(
           child: Text(
             'Failed to load: $error',
-            style: const TextStyle(color: Colors.redAccent),
+            style: TextStyle(color: colors.error),
           ),
         ),
       ),
@@ -208,6 +209,7 @@ class _ReplayContent extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.appColors;
     final replayState = ref.watch(replayNotifierProvider(gameId));
     final snapshot = replayState.snapshot;
     final playerIds = replayState.playerIds;
@@ -232,7 +234,7 @@ class _ReplayContent extends ConsumerWidget {
 
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(gradient: AppTheme.feltGradient),
+        decoration: BoxDecoration(gradient: colors.gameGradient),
         child: SafeArea(
           child: Center(
             child: ConstrainedBox(
@@ -252,9 +254,9 @@ class _ReplayContent extends ConsumerWidget {
                     child: Row(
                       children: [
                         IconButton(
-                          icon: const Icon(
+                          icon: Icon(
                             Icons.arrow_back,
-                            color: Colors.white70,
+                            color: colors.textSecondary,
                             size: 20,
                           ),
                           onPressed: () => context.go('/'),
@@ -265,40 +267,40 @@ class _ReplayContent extends ConsumerWidget {
                             children: [
                               Text(
                                 '$myName: $myScore',
-                                style: const TextStyle(
-                                  color: Colors.white,
+                                style: TextStyle(
+                                  color: colors.textPrimary,
                                   fontSize: 14,
                                 ),
                               ),
                               if (isDealer)
-                                const Padding(
-                                  padding: EdgeInsets.only(left: 4),
+                                Padding(
+                                  padding: const EdgeInsets.only(left: 4),
                                   child: Text(
                                     '(D)',
                                     style: TextStyle(
-                                      color: AppTheme.goldAccent,
+                                      color: colors.accent,
                                       fontSize: 11,
                                     ),
                                   ),
                                 ),
-                              const Text(
+                              Text(
                                 '  vs  ',
-                                style: TextStyle(color: Colors.white38),
+                                style: TextStyle(color: colors.textDisabled),
                               ),
                               Text(
                                 '$opponentName: $opponentScore',
-                                style: const TextStyle(
-                                  color: Colors.white,
+                                style: TextStyle(
+                                  color: colors.textPrimary,
                                   fontSize: 14,
                                 ),
                               ),
                               if (!isDealer && snapshot.dealerPlayerId != null)
-                                const Padding(
-                                  padding: EdgeInsets.only(left: 4),
+                                Padding(
+                                  padding: const EdgeInsets.only(left: 4),
                                   child: Text(
                                     '(D)',
                                     style: TextStyle(
-                                      color: AppTheme.goldAccent,
+                                      color: colors.accent,
                                       fontSize: 11,
                                     ),
                                   ),
@@ -307,9 +309,9 @@ class _ReplayContent extends ConsumerWidget {
                           ),
                         ),
                         IconButton(
-                          icon: const Icon(
+                          icon: Icon(
                             Icons.analytics,
-                            color: Colors.white54,
+                            color: colors.textTertiary,
                             size: 20,
                           ),
                           tooltip: 'Analysis',
@@ -330,8 +332,8 @@ class _ReplayContent extends ConsumerWidget {
                       children: [
                         Text(
                           opponentName,
-                          style: const TextStyle(
-                            color: Colors.white54,
+                          style: TextStyle(
+                            color: colors.textTertiary,
                             fontSize: 11,
                           ),
                         ),
@@ -352,8 +354,8 @@ class _ReplayContent extends ConsumerWidget {
                           if (snapshot.roundNumber > 0)
                             Text(
                               'Round ${snapshot.roundNumber}',
-                              style: const TextStyle(
-                                color: Colors.white54,
+                              style: TextStyle(
+                                color: colors.textTertiary,
                                 fontSize: 12,
                               ),
                             ),
@@ -366,10 +368,10 @@ class _ReplayContent extends ConsumerWidget {
                               if (snapshot.cutCard != null)
                                 Column(
                                   children: [
-                                    const Text(
+                                    Text(
                                       'Cut',
                                       style: TextStyle(
-                                        color: Colors.white38,
+                                        color: colors.textDisabled,
                                         fontSize: 10,
                                       ),
                                     ),
@@ -385,10 +387,10 @@ class _ReplayContent extends ConsumerWidget {
                                 const SizedBox(width: 12),
                                 Column(
                                   children: [
-                                    const Text(
+                                    Text(
                                       'Crib',
                                       style: TextStyle(
-                                        color: Colors.white38,
+                                        color: colors.textDisabled,
                                         fontSize: 10,
                                       ),
                                     ),
@@ -421,8 +423,8 @@ class _ReplayContent extends ConsumerWidget {
                             const SizedBox(height: 8),
                             Text(
                               'Count: ${snapshot.peggingCount}',
-                              style: const TextStyle(
-                                color: Colors.white70,
+                              style: TextStyle(
+                                color: colors.textSecondary,
                                 fontSize: 13,
                               ),
                             ),
@@ -450,8 +452,8 @@ class _ReplayContent extends ConsumerWidget {
                                 Icons.emoji_events,
                                 size: 36,
                                 color: snapshot.winnerPlayerId == myId
-                                    ? AppTheme.goldAccent
-                                    : Colors.white38,
+                                    ? colors.accent
+                                    : colors.textDisabled,
                               ),
                             ),
                         ],
@@ -466,10 +468,10 @@ class _ReplayContent extends ConsumerWidget {
                       horizontal: 16,
                       vertical: 8,
                     ),
-                    color: Colors.black26,
+                    color: colors.surfaceDim,
                     child: Text(
                       snapshot.eventDescription,
-                      style: const TextStyle(color: Colors.white, fontSize: 13),
+                      style: TextStyle(color: colors.textPrimary, fontSize: 13),
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -485,8 +487,8 @@ class _ReplayContent extends ConsumerWidget {
                       children: [
                         Text(
                           myName,
-                          style: const TextStyle(
-                            color: Colors.white54,
+                          style: TextStyle(
+                            color: colors.textTertiary,
                             fontSize: 11,
                           ),
                         ),
@@ -508,9 +510,9 @@ class _ReplayContent extends ConsumerWidget {
                         thumbShape: const RoundSliderThumbShape(
                           enabledThumbRadius: 6,
                         ),
-                        activeTrackColor: AppTheme.goldAccent,
-                        inactiveTrackColor: Colors.white24,
-                        thumbColor: AppTheme.goldAccent,
+                        activeTrackColor: colors.accent,
+                        inactiveTrackColor: colors.divider,
+                        thumbColor: colors.accent,
                       ),
                       child: Slider(
                         min: -1,
@@ -561,8 +563,8 @@ class _ReplayContent extends ConsumerWidget {
                           icon: Icon(
                             Icons.skip_previous,
                             color: replayState.atStart
-                                ? Colors.white24
-                                : Colors.white,
+                                ? colors.divider
+                                : colors.textPrimary,
                           ),
                         ),
                         IconButton(
@@ -573,7 +575,7 @@ class _ReplayContent extends ConsumerWidget {
                             replayState.isPlaying
                                 ? Icons.pause
                                 : Icons.play_arrow,
-                            color: Colors.white,
+                            color: colors.textPrimary,
                             size: 32,
                           ),
                         ),
@@ -588,15 +590,15 @@ class _ReplayContent extends ConsumerWidget {
                           icon: Icon(
                             Icons.skip_next,
                             color: replayState.atEnd
-                                ? Colors.white24
-                                : Colors.white,
+                                ? colors.divider
+                                : colors.textPrimary,
                           ),
                         ),
                         const Spacer(),
                         Text(
                           '${replayState.currentEventIndex + 1}/${replayState.totalEvents}',
-                          style: const TextStyle(
-                            color: Colors.white54,
+                          style: TextStyle(
+                            color: colors.textTertiary,
                             fontSize: 12,
                           ),
                         ),
@@ -654,17 +656,18 @@ class _SpeedChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration: BoxDecoration(
-          color: Colors.white12,
+          color: colors.surfaceDim,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Text(
           '${speed}x',
-          style: const TextStyle(color: Colors.white70, fontSize: 12),
+          style: TextStyle(color: colors.textSecondary, fontSize: 12),
         ),
       ),
     );

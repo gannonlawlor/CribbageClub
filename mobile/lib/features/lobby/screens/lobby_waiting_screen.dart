@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../config/theme.dart';
+import '../../../config/theme/app_colors.dart';
 import '../../../core/auth/auth_provider.dart';
 import '../../../core/models/lobby.dart';
 
@@ -73,6 +73,7 @@ class _LobbyWaitingScreenState extends ConsumerState<LobbyWaitingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Waiting for Opponent'),
@@ -89,7 +90,7 @@ class _LobbyWaitingScreenState extends ConsumerState<LobbyWaitingScreen> {
             child: _isLoading
                 ? const CircularProgressIndicator()
                 : _error != null
-                ? Text(_error!, style: const TextStyle(color: Colors.redAccent))
+                ? Text(_error!, style: TextStyle(color: colors.error))
                 : _buildLobbyContent(),
           ),
         ),
@@ -98,34 +99,35 @@ class _LobbyWaitingScreenState extends ConsumerState<LobbyWaitingScreen> {
   }
 
   Widget _buildLobbyContent() {
+    final colors = context.appColors;
     final lobby = _lobby!;
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const Icon(Icons.hourglass_top, size: 64, color: AppTheme.goldAccent),
+        Icon(Icons.hourglass_top, size: 64, color: colors.accent),
         const SizedBox(height: 24),
         Text(
           lobby.name,
-          style: const TextStyle(
-            color: Colors.white,
+          style: TextStyle(
+            color: colors.textPrimary,
             fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
         ),
         const SizedBox(height: 24),
         if (lobby.inviteCode != null) ...[
-          const Text(
+          Text(
             'Invite Code',
-            style: TextStyle(color: Colors.white54, fontSize: 14),
+            style: TextStyle(color: colors.textTertiary, fontSize: 14),
           ),
           const SizedBox(height: 8),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
             decoration: BoxDecoration(
-              color: Colors.white10,
+              color: colors.surfaceDim,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: AppTheme.goldAccent.withValues(alpha: 0.5),
+                color: colors.accent.withValues(alpha: 0.5),
               ),
             ),
             child: Row(
@@ -133,8 +135,8 @@ class _LobbyWaitingScreenState extends ConsumerState<LobbyWaitingScreen> {
               children: [
                 Text(
                   lobby.inviteCode!,
-                  style: const TextStyle(
-                    color: AppTheme.goldAccent,
+                  style: TextStyle(
+                    color: colors.accent,
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 4,
@@ -142,7 +144,7 @@ class _LobbyWaitingScreenState extends ConsumerState<LobbyWaitingScreen> {
                 ),
                 const SizedBox(width: 16),
                 IconButton(
-                  icon: const Icon(Icons.copy, color: Colors.white54),
+                  icon: Icon(Icons.copy, color: colors.textTertiary),
                   onPressed: () {
                     Clipboard.setData(ClipboardData(text: lobby.inviteCode!));
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -154,15 +156,15 @@ class _LobbyWaitingScreenState extends ConsumerState<LobbyWaitingScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Share this code with a friend',
-            style: TextStyle(color: Colors.white38, fontSize: 12),
+            style: TextStyle(color: colors.textDisabled, fontSize: 12),
           ),
         ],
         const SizedBox(height: 24),
         Text(
           'Players: ${lobby.players.length} / ${lobby.maxPlayers}',
-          style: const TextStyle(color: Colors.white70, fontSize: 16),
+          style: TextStyle(color: colors.textSecondary, fontSize: 16),
         ),
         const SizedBox(height: 8),
         ...lobby.players.map(
@@ -170,7 +172,7 @@ class _LobbyWaitingScreenState extends ConsumerState<LobbyWaitingScreen> {
             padding: const EdgeInsets.only(bottom: 4),
             child: Text(
               p.name,
-              style: const TextStyle(color: Colors.white, fontSize: 14),
+              style: TextStyle(color: colors.textPrimary, fontSize: 14),
             ),
           ),
         ),
@@ -181,16 +183,16 @@ class _LobbyWaitingScreenState extends ConsumerState<LobbyWaitingScreen> {
           child: CircularProgressIndicator(strokeWidth: 2),
         ),
         const SizedBox(height: 8),
-        const Text(
+        Text(
           'Waiting for opponent to join...',
-          style: TextStyle(color: Colors.white54),
+          style: TextStyle(color: colors.textTertiary),
         ),
         const SizedBox(height: 32),
         OutlinedButton(
           onPressed: _leaveLobby,
           style: OutlinedButton.styleFrom(
-            foregroundColor: Colors.redAccent,
-            side: const BorderSide(color: Colors.redAccent),
+            foregroundColor: colors.error,
+            side: BorderSide(color: colors.error),
           ),
           child: const Text('Cancel'),
         ),

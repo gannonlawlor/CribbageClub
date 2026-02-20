@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../config/theme.dart';
+import '../../../config/theme/app_colors.dart';
 import '../../../core/auth/auth_provider.dart';
 import '../../../core/engine/local_analysis_service.dart';
 import '../../../core/models/card.dart';
@@ -74,6 +74,7 @@ class AnalysisScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.appColors;
     final analysis = ref.watch(analysisProvider(gameId));
     final auth = ref.watch(authProvider);
     final playerId = auth.userId ?? '';
@@ -102,15 +103,15 @@ class AnalysisScreen extends ConsumerWidget {
               playerId: playerId,
               isLocal: isLocalGame(gameId),
             ),
-            loading: () => const Center(
+            loading: () => Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 16),
+                  const CircularProgressIndicator(),
+                  const SizedBox(height: 16),
                   Text(
                     'Analyzing discards...',
-                    style: TextStyle(color: Colors.white54),
+                    style: TextStyle(color: colors.textTertiary),
                   ),
                 ],
               ),
@@ -121,15 +122,15 @@ class AnalysisScreen extends ConsumerWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.error_outline,
                       size: 48,
-                      color: Colors.redAccent,
+                      color: colors.error,
                     ),
                     const SizedBox(height: 16),
                     Text(
                       'Analysis unavailable: $error',
-                      style: const TextStyle(color: Colors.redAccent),
+                      style: TextStyle(color: colors.error),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 16),
@@ -161,11 +162,13 @@ class _AnalysisContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
+
     if (analysis.rounds.isEmpty) {
-      return const Center(
+      return Center(
         child: Text(
           'No rounds with analysis data available.',
-          style: TextStyle(color: Colors.white54, fontSize: 16),
+          style: TextStyle(color: colors.textTertiary, fontSize: 16),
         ),
       );
     }
@@ -188,15 +191,15 @@ class _AnalysisContent extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white10,
+            color: colors.surfaceDim,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Column(
             children: [
-              const Text(
+              Text(
                 'Summary',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: colors.textPrimary,
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
@@ -248,19 +251,20 @@ class _SummaryChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     return Column(
       children: [
         Text(
           value,
           style: TextStyle(
-            color: color ?? Colors.white,
+            color: color ?? colors.textPrimary,
             fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
         ),
         Text(
           label,
-          style: const TextStyle(color: Colors.white54, fontSize: 12),
+          style: TextStyle(color: colors.textTertiary, fontSize: 12),
         ),
       ],
     );
@@ -287,6 +291,8 @@ class _RoundCardState extends State<_RoundCard> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
+
     // Find the player's analysis (for local games, pick the non-AI player)
     final myAnalysis = widget.round.playerAnalyses
         .where(
@@ -306,7 +312,7 @@ class _RoundCardState extends State<_RoundCard> {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white10,
+        color: colors.surfaceDim,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -319,8 +325,8 @@ class _RoundCardState extends State<_RoundCard> {
               children: [
                 Text(
                   'Round ${widget.round.roundNumber}',
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: colors.textPrimary,
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
@@ -333,22 +339,22 @@ class _RoundCardState extends State<_RoundCard> {
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
-                      color: AppTheme.goldAccent.withValues(alpha: 0.2),
+                      color: colors.accent.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(4),
                     ),
-                    child: const Text(
+                    child: Text(
                       'Dealer',
                       style: TextStyle(
-                        color: AppTheme.goldAccent,
+                        color: colors.accent,
                         fontSize: 11,
                       ),
                     ),
                   ),
                 const Spacer(),
                 if (widget.round.cutCard != null) ...[
-                  const Text(
+                  Text(
                     'Cut: ',
-                    style: TextStyle(color: Colors.white54, fontSize: 12),
+                    style: TextStyle(color: colors.textTertiary, fontSize: 12),
                   ),
                   SizedBox(
                     width: 30,
@@ -371,9 +377,9 @@ class _RoundCardState extends State<_RoundCard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Dealt Hand',
-                  style: TextStyle(color: Colors.white54, fontSize: 12),
+                  style: TextStyle(color: colors.textTertiary, fontSize: 12),
                 ),
                 const SizedBox(height: 4),
                 Wrap(
@@ -443,14 +449,14 @@ class _RoundCardState extends State<_RoundCard> {
                   const Spacer(),
                   Text(
                     'Hand: ${myAnalysis.actualHandScore} pts',
-                    style: const TextStyle(color: Colors.white54, fontSize: 12),
+                    style: TextStyle(color: colors.textTertiary, fontSize: 12),
                   ),
                 ],
                 if (myAnalysis.actualCribScore != null) ...[
                   const SizedBox(width: 8),
                   Text(
                     'Crib: ${myAnalysis.actualCribScore} pts',
-                    style: const TextStyle(color: Colors.white54, fontSize: 12),
+                    style: TextStyle(color: colors.textTertiary, fontSize: 12),
                   ),
                 ],
               ],
@@ -466,12 +472,12 @@ class _RoundCardState extends State<_RoundCard> {
                 children: [
                   Text(
                     _expanded ? 'Hide all options' : 'Show all 15 options',
-                    style: const TextStyle(color: Colors.white54, fontSize: 13),
+                    style: TextStyle(color: colors.textTertiary, fontSize: 13),
                   ),
                   const Spacer(),
                   Icon(
                     _expanded ? Icons.expand_less : Icons.expand_more,
-                    color: Colors.white54,
+                    color: colors.textTertiary,
                     size: 20,
                   ),
                 ],
@@ -507,6 +513,7 @@ class _DiscardComparison extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
@@ -524,7 +531,7 @@ class _DiscardComparison extends StatelessWidget {
           Text(
             label,
             style: TextStyle(
-              color: isOptimal ? Colors.greenAccent : Colors.white70,
+              color: isOptimal ? Colors.greenAccent : colors.textSecondary,
               fontSize: 12,
               fontWeight: FontWeight.w600,
             ),
@@ -548,15 +555,15 @@ class _DiscardComparison extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             '${option.expectedCombinedValue.toStringAsFixed(2)} avg pts',
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: colors.textPrimary,
               fontSize: 13,
               fontWeight: FontWeight.w600,
             ),
           ),
           Text(
             'hand ${option.expectedHandValue.toStringAsFixed(1)}  crib ${option.expectedCribValue > 0 ? '+' : ''}${option.expectedCribValue.toStringAsFixed(1)}',
-            style: const TextStyle(color: Colors.white38, fontSize: 10),
+            style: TextStyle(color: colors.textDisabled, fontSize: 10),
           ),
         ],
       ),
@@ -603,6 +610,8 @@ class _FullOptionsList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
+
     // Show the two key options we have
     final options = [analysis.optimalDiscard, analysis.playerDiscard];
     // Deduplicate if they're the same
@@ -613,7 +622,7 @@ class _FullOptionsList extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Divider(color: Colors.white12),
+          Divider(color: colors.surfaceDim),
           for (var i = 0; i < unique.length; i++)
             _OptionRow(
               rank: i + 1,
@@ -663,6 +672,7 @@ class _OptionRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     return GestureDetector(
       onTap: () => _showExplain(context),
       child: Padding(
@@ -674,7 +684,7 @@ class _OptionRow extends StatelessWidget {
               child: Text(
                 '#$rank',
                 style: TextStyle(
-                  color: isOptimal ? Colors.greenAccent : Colors.white54,
+                  color: isOptimal ? Colors.greenAccent : colors.textTertiary,
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                 ),
@@ -696,7 +706,7 @@ class _OptionRow extends StatelessWidget {
             Expanded(
               child: Text(
                 '${option.expectedCombinedValue.toStringAsFixed(2)} avg pts',
-                style: const TextStyle(color: Colors.white, fontSize: 12),
+                style: TextStyle(color: colors.textPrimary, fontSize: 12),
               ),
             ),
             if (isPlayerChoice)
@@ -725,9 +735,9 @@ class _OptionRow extends StatelessWidget {
                 ),
               ),
             const SizedBox(width: 4),
-            const Icon(
+            Icon(
               Icons.info_outline,
-              color: Colors.white38,
+              color: colors.textDisabled,
               size: 16,
             ),
           ],

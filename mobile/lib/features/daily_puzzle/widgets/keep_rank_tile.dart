@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../config/theme.dart';
+import '../../../config/theme/app_colors.dart';
 import '../../game/widgets/card_widget.dart';
 import '../models/daily_puzzle.dart';
 
@@ -20,14 +20,15 @@ class KeepRankTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     Color? borderColor;
     Color? bgColor;
     if (isPlayerPick && isOptimal) {
-      borderColor = AppTheme.goldAccent;
-      bgColor = AppTheme.goldAccent.withValues(alpha: 0.15);
+      borderColor = colors.accent;
+      bgColor = colors.accent.withValues(alpha: 0.15);
     } else if (isPlayerPick) {
-      borderColor = AppTheme.goldAccent;
-      bgColor = AppTheme.goldAccent.withValues(alpha: 0.1);
+      borderColor = colors.accent;
+      bgColor = colors.accent.withValues(alpha: 0.1);
     } else if (isOptimal) {
       borderColor = Colors.green;
       bgColor = Colors.green.withValues(alpha: 0.1);
@@ -53,7 +54,7 @@ class KeepRankTile extends StatelessWidget {
             child: Text(
               '#${option.rank}',
               style: TextStyle(
-                color: isOptimal ? Colors.green : Colors.white70,
+                color: isOptimal ? Colors.green : colors.textSecondary,
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
               ),
@@ -103,42 +104,42 @@ class KeepRankTile extends StatelessWidget {
                   children: [
                     Text(
                       option.netScore.toStringAsFixed(1),
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: colors.textPrimary,
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     const SizedBox(width: 3),
-                    const Text(
+                    Text(
                       'avg pts',
-                      style: TextStyle(color: Colors.white38, fontSize: 11),
+                      style: TextStyle(color: colors.textDisabled, fontSize: 11),
                     ),
                   ],
                 ),
                 Text(
                   'hand ${option.averageHandScore.toStringAsFixed(1)}'
                   '  crib ${option.averageCribScore > 0 ? '+' : ''}${option.averageCribScore.toStringAsFixed(1)}',
-                  style: const TextStyle(color: Colors.white54, fontSize: 11),
+                  style: TextStyle(color: colors.textTertiary, fontSize: 11),
                 ),
               ],
             ),
           ),
           // Info icon (when explain is available)
           if (onExplain != null)
-            const Padding(
-              padding: EdgeInsets.only(left: 6),
+            Padding(
+              padding: const EdgeInsets.only(left: 6),
               child: Icon(
                 Icons.info_outline,
-                color: Colors.white38,
+                color: colors.textDisabled,
                 size: 18,
               ),
             ),
           // Player pick indicator
           if (isPlayerPick)
-            const Padding(
-              padding: EdgeInsets.only(left: 8),
-              child: Icon(Icons.person, color: AppTheme.goldAccent, size: 18),
+            Padding(
+              padding: const EdgeInsets.only(left: 8),
+              child: Icon(Icons.person, color: colors.accent, size: 18),
             ),
         ],
       ),

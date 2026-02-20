@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../config/theme.dart';
+import '../../../config/constants.dart';
+import '../../../config/theme/app_colors.dart';
 import '../../../core/models/card.dart';
 import '../../game/widgets/card_widget.dart';
 import '../state/practice_puzzle_provider.dart';
@@ -31,12 +32,13 @@ class _PracticePuzzleScreenState extends ConsumerState<PracticePuzzleScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     final state = ref.watch(practicePuzzleProvider);
     final puzzle = state.puzzle;
 
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(gradient: AppTheme.feltGradient),
+        decoration: BoxDecoration(gradient: colors.gameGradient),
         child: SafeArea(
           child: Center(
             child: ConstrainedBox(
@@ -62,6 +64,7 @@ class _PlayingView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.appColors;
     final state = ref.watch(practicePuzzleProvider);
     final puzzle = state.puzzle!;
     final canSubmit = state.selectedCards.length == 4;
@@ -74,7 +77,7 @@ class _PlayingView extends ConsumerWidget {
           child: Row(
             children: [
               IconButton(
-                icon: const Icon(Icons.arrow_back, color: Colors.white),
+                icon: Icon(Icons.arrow_back, color: colors.textPrimary),
                 onPressed: () => context.go('/'),
               ),
               const SizedBox(width: 8),
@@ -82,18 +85,18 @@ class _PlayingView extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Practice Puzzle',
                       style: TextStyle(
-                        color: Colors.white,
+                        color: colors.textPrimary,
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     Text(
                       'Puzzle #${state.puzzleNumber}',
-                      style: const TextStyle(
-                        color: Colors.white54,
+                      style: TextStyle(
+                        color: colors.textTertiary,
                         fontSize: 14,
                       ),
                     ),
@@ -116,14 +119,14 @@ class _PlayingView extends ConsumerWidget {
             'You are ${puzzle.isDealer ? 'the dealer' : 'not the dealer'}. '
             'Choose the best 4 cards to keep.',
             textAlign: TextAlign.center,
-            style: const TextStyle(color: Colors.white70, fontSize: 16),
+            style: TextStyle(color: colors.textSecondary, fontSize: 16),
           ),
         ),
         const SizedBox(height: 8),
         Text(
           '${state.selectedCards.length}/4 selected',
           style: TextStyle(
-            color: canSubmit ? AppTheme.goldAccent : Colors.white38,
+            color: canSubmit ? colors.accent : colors.textDisabled,
             fontSize: 14,
           ),
         ),
@@ -165,6 +168,7 @@ class _RevealedView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.appColors;
     final state = ref.watch(practicePuzzleProvider);
     final puzzle = state.puzzle!;
     final results = puzzle.results!;
@@ -179,7 +183,7 @@ class _RevealedView extends ConsumerWidget {
           child: Row(
             children: [
               IconButton(
-                icon: const Icon(Icons.arrow_back, color: Colors.white),
+                icon: Icon(Icons.arrow_back, color: colors.textPrimary),
                 onPressed: () => context.go('/'),
               ),
               const SizedBox(width: 8),
@@ -187,18 +191,18 @@ class _RevealedView extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Practice Puzzle',
                       style: TextStyle(
-                        color: Colors.white,
+                        color: colors.textPrimary,
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     Text(
                       'Puzzle #${state.puzzleNumber}',
-                      style: const TextStyle(
-                        color: Colors.white54,
+                      style: TextStyle(
+                        color: colors.textTertiary,
                         fontSize: 14,
                       ),
                     ),
@@ -228,7 +232,7 @@ class _RevealedView extends ConsumerWidget {
                 border: Border.all(
                   color: isOptimalPick
                       ? Colors.green.withValues(alpha: 0.5)
-                      : Colors.white24,
+                      : colors.divider,
                 ),
               ),
               child: Column(
@@ -238,7 +242,7 @@ class _RevealedView extends ConsumerWidget {
                         ? 'Optimal!'
                         : 'Your pick: #$playerRank of 15',
                     style: TextStyle(
-                      color: isOptimalPick ? Colors.green : Colors.white,
+                      color: isOptimalPick ? Colors.green : colors.textPrimary,
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
@@ -247,8 +251,8 @@ class _RevealedView extends ConsumerWidget {
                     padding: const EdgeInsets.only(top: 8),
                     child: Text(
                       '${state.optimalCount}/${state.totalSolved} optimal',
-                      style: const TextStyle(
-                        color: Colors.white54,
+                      style: TextStyle(
+                        color: colors.textTertiary,
                         fontSize: 14,
                       ),
                     ),
@@ -265,16 +269,16 @@ class _RevealedView extends ConsumerWidget {
             puzzle.isDealer
                 ? 'Dealer (crib is yours)'
                 : 'Non-dealer (crib is opponent\'s)',
-            style: const TextStyle(color: Colors.white54, fontSize: 13),
+            style: TextStyle(color: colors.textTertiary, fontSize: 13),
           ),
         ),
         const SizedBox(height: 8),
         // Legend
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 24),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Text(
             'Average points per hand across all possible cut cards.',
-            style: TextStyle(color: Colors.white38, fontSize: 12),
+            style: TextStyle(color: colors.textDisabled, fontSize: 12),
             textAlign: TextAlign.center,
           ),
         ),
@@ -305,8 +309,8 @@ class _RevealedView extends ConsumerWidget {
                 child: OutlinedButton(
                   onPressed: () => context.go('/'),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.white,
-                    side: const BorderSide(color: Colors.white38),
+                    foregroundColor: colors.textPrimary,
+                    side: BorderSide(color: colors.textDisabled),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
                   child: const Text('Back to Home'),
@@ -344,17 +348,18 @@ class _StatsBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
         color: Colors.white.withValues(alpha: 0.1),
-        border: Border.all(color: Colors.white24),
+        border: Border.all(color: colors.divider),
       ),
       child: Text(
         '$optimalCount/$totalSolved',
-        style: const TextStyle(
-          color: AppTheme.goldAccent,
+        style: TextStyle(
+          color: colors.accent,
           fontSize: 14,
           fontWeight: FontWeight.bold,
         ),
@@ -380,7 +385,7 @@ class _CardGrid extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final cardWidth = (constraints.maxWidth - 16) / 3; // 3 cards + gaps
-        final cardHeight = cardWidth / AppTheme.cardAspectRatio;
+        final cardHeight = cardWidth / AppConstants.cardAspectRatio;
         return Column(
           children: [
             Row(

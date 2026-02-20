@@ -1,6 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import '../../../config/theme.dart';
+import '../../../config/theme/app_colors.dart';
 import '../../../core/models/card.dart';
 import '../../../shared/utils/card_utils.dart';
 
@@ -26,6 +26,7 @@ class CardWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     return GestureDetector(
       onTap: enabled ? onTap : null,
       child: AnimatedContainer(
@@ -34,16 +35,16 @@ class CardWidget extends StatelessWidget {
         height: height,
         transform: Matrix4.translationValues(0, selected ? -10 : 0, 0),
         decoration: BoxDecoration(
-          color: faceUp ? AppTheme.cardWhite : null,
+          color: faceUp ? colors.cardFace : null,
           borderRadius: BorderRadius.circular(6),
           border: Border.all(
-            color: selected ? AppTheme.goldAccent : Colors.white24,
+            color: selected ? colors.selectedBorder : colors.textDisabled.withValues(alpha: 0.3),
             width: selected ? 2.0 : 0.5,
           ),
           boxShadow: [
             if (selected)
               BoxShadow(
-                color: AppTheme.goldAccent.withValues(alpha: 0.5),
+                color: colors.selectedGlow,
                 blurRadius: 10,
                 spreadRadius: 1,
               )
@@ -57,14 +58,14 @@ class CardWidget extends StatelessWidget {
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(5),
-          child: faceUp && card != null ? _buildFace() : _buildBack(),
+          child: faceUp && card != null ? _buildFace(colors) : _buildBack(colors),
         ),
       ),
     );
   }
 
-  Widget _buildFace() {
-    final color = CardUtils.suitColor(card!.suit);
+  Widget _buildFace(AppColors colors) {
+    final color = CardUtils.suitColor(card!.suit, colors);
     final scale = height / 84;
     final rankText = card!.rank.display;
     final suitText = card!.suit.symbol;
@@ -144,11 +145,11 @@ class CardWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildBack() {
+  Widget _buildBack(AppColors colors) {
     return Container(
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF2E7D32), Color(0xFF1B5E20)],
+        gradient: LinearGradient(
+          colors: [colors.cardBackPrimary, colors.cardBackSecondary],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -158,14 +159,14 @@ class CardWidget extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(3),
           border: Border.all(
-            color: Colors.white.withValues(alpha: 0.15),
+            color: colors.cardBackDetail,
             width: 1,
           ),
         ),
         child: Center(
           child: Icon(
             Icons.style,
-            color: Colors.white.withValues(alpha: 0.2),
+            color: colors.cardBackDetail,
             size: width * 0.4,
           ),
         ),

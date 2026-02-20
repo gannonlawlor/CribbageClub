@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../config/theme.dart';
+import '../../../config/theme/app_colors.dart';
 import '../../../core/models/game_state.dart';
 
 class GameControls extends StatelessWidget {
@@ -34,12 +34,12 @@ class GameControls extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
-        children: _buildButtons(),
+        children: _buildButtons(context),
       ),
     );
   }
 
-  List<Widget> _buildButtons() {
+  List<Widget> _buildButtons(BuildContext context) {
     switch (stage) {
       case GameStage.discardingToCrib:
         return [
@@ -93,6 +93,7 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8),
       child: ElevatedButton.icon(
@@ -101,9 +102,9 @@ class _ActionButton extends StatelessWidget {
         label: Text(label),
         style: ElevatedButton.styleFrom(
           backgroundColor: onPressed != null
-              ? AppTheme.feltGreen
+              ? colors.buttonPrimary
               : Colors.grey.shade700,
-          foregroundColor: Colors.white,
+          foregroundColor: colors.accentOnSurface,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         ),
       ),

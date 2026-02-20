@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../config/theme.dart';
+import '../../../config/constants.dart';
 import '../../../core/engine/local_game_service.dart';
 import '../../../core/models/card.dart';
 import '../../../core/models/game_action.dart';
@@ -56,7 +56,7 @@ class LocalGameNotifier extends StateNotifier<GameNotifierState> {
 
       // If it's now the AI's turn, wait then process
       if (intermediate.currentPlayerId?.startsWith('ai_') == true) {
-        await Future.delayed(AppTheme.aiThinkingDelay);
+        await Future.delayed(AppConstants.aiThinkingDelay);
         if (_disposed) return;
         final finalState = _service.processAI();
         state = GameNotifierState(gameState: finalState);
@@ -86,7 +86,7 @@ class LocalGameNotifier extends StateNotifier<GameNotifierState> {
 
         // If AI needs to act (discard + possibly cut), delay then process
         if (intermediate.currentPlayerId?.startsWith('ai_') == true) {
-          await Future.delayed(AppTheme.aiThinkingDelay);
+          await Future.delayed(AppConstants.aiThinkingDelay);
           if (_disposed) return;
           final finalState = _service.processAI();
           state = GameNotifierState(gameState: finalState);

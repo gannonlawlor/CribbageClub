@@ -1,7 +1,7 @@
 import 'dart:math';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
-import '../../../config/theme.dart';
+import '../../../config/theme/app_colors.dart';
 
 /// Perimeter cribbage board that wraps around three edges (left, top, right)
 /// of its child content. The path runs from bottom-left → up → across top →
@@ -82,6 +82,7 @@ class _PerimeterCribbageBoardState extends State<PerimeterCribbageBoard>
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
@@ -89,6 +90,7 @@ class _PerimeterCribbageBoardState extends State<PerimeterCribbageBoard>
           foregroundPainter: _PerimeterBoardPainter(
             playerScore: _playerAnim.value,
             opponentScore: _opponentAnim.value,
+            colors: colors,
           ),
           child: child,
         );
@@ -108,6 +110,7 @@ class _PerimeterCribbageBoardState extends State<PerimeterCribbageBoard>
 class _PerimeterBoardPainter extends CustomPainter {
   final double playerScore;
   final double opponentScore;
+  final AppColors colors;
 
   static const int _totalHoles = 121;
   static const int _groupSize = 5;
@@ -117,12 +120,13 @@ class _PerimeterBoardPainter extends CustomPainter {
   static const double _cornerRadius = 14.0;
 
   // Track offsets from strip center line
-  static const double _outerTrackOffset = 5.0; // player (gold) — closer to edge
-  static const double _innerTrackOffset = -5.0; // opponent (white) — closer to content
+  static const double _outerTrackOffset = 5.0; // player — closer to edge
+  static const double _innerTrackOffset = -5.0; // opponent — closer to content
 
   _PerimeterBoardPainter({
     required this.playerScore,
     required this.opponentScore,
+    required this.colors,
   });
 
   @override
@@ -141,8 +145,8 @@ class _PerimeterBoardPainter extends CustomPainter {
     final playerPos = _scoreToPosition(playerScore, outerHoles);
     final opponentPos = _scoreToPosition(opponentScore, innerHoles);
 
-    _drawPeg(canvas, opponentPos, AppTheme.pegWhite);
-    _drawPeg(canvas, playerPos, AppTheme.pegGold);
+    _drawPeg(canvas, opponentPos, colors.pegOpponent);
+    _drawPeg(canvas, playerPos, colors.pegPlayer);
   }
 
   /// Draws the three-sided board frame (left, top, right) with rounded top corners.
@@ -153,7 +157,7 @@ class _PerimeterBoardPainter extends CustomPainter {
       ..shader = ui.Gradient.linear(
         Offset(0, 0),
         Offset(0, _boardWidth),
-        [AppTheme.boardBrownLight, AppTheme.boardBrown],
+        [colors.boardPrimary, colors.boardSecondary],
       );
     canvas.drawPath(path, paint);
   }
@@ -162,7 +166,7 @@ class _PerimeterBoardPainter extends CustomPainter {
     final path = _buildFramePath(size);
 
     final paint = Paint()
-      ..color = AppTheme.boardHole.withValues(alpha: 0.5)
+      ..color = colors.boardHole.withValues(alpha: 0.5)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.0;
     canvas.drawPath(path, paint);
@@ -247,8 +251,6 @@ class _PerimeterBoardPainter extends CustomPainter {
     if (remaining <= segs[0]) {
       final t = remaining / segs[0];
       final y = h - t * (h - r);
-      // Center of left strip is at x = center
-      // trackOffset: positive = toward outer (left edge of screen), negative = toward inner (content)
       return Offset(center + trackOffset, y);
     }
     remaining -= segs[0];
@@ -261,7 +263,6 @@ class _PerimeterBoardPainter extends CustomPainter {
       final cy = r;
       final pathX = cx + r * cos(angle);
       final pathY = cy + r * sin(angle);
-      // Normal points outward (away from arc center)
       final nx = cos(angle);
       final ny = sin(angle);
       return Offset(
@@ -354,7 +355,7 @@ class _PerimeterBoardPainter extends CustomPainter {
   }
 
   void _drawHoles(Canvas canvas, List<Offset> holes) {
-    final paint = Paint()..color = AppTheme.boardHole;
+    final paint = Paint()..color = colors.boardHole;
     for (final hole in holes) {
       canvas.drawCircle(hole, _holeRadius, paint);
     }
@@ -416,5 +417,6 @@ class _PerimeterBoardPainter extends CustomPainter {
   @override
   bool shouldRepaint(_PerimeterBoardPainter oldDelegate) =>
       playerScore != oldDelegate.playerScore ||
-      opponentScore != oldDelegate.opponentScore;
+      opponentScore != oldDelegate.opponentScore ||
+      colors != oldDelegate.colors;
 }

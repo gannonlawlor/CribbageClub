@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../config/theme.dart';
+import '../../../config/theme/app_colors.dart';
 import '../../../core/auth/auth_provider.dart';
 import '../../../core/models/leaderboard_entry.dart';
 
@@ -17,6 +17,7 @@ class LeaderboardScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.appColors;
     final leaderboard = ref.watch(_leaderboardProvider);
     final auth = ref.watch(authProvider);
 
@@ -33,11 +34,11 @@ class LeaderboardScreen extends ConsumerWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.lock_outline, size: 48, color: Colors.white38),
+              Icon(Icons.lock_outline, size: 48, color: colors.textDisabled),
               const SizedBox(height: 16),
-              const Text(
+              Text(
                 'Log in to see the leaderboard',
-                style: TextStyle(color: Colors.white54, fontSize: 16),
+                style: TextStyle(color: colors.textTertiary, fontSize: 16),
               ),
               const SizedBox(height: 16),
               ElevatedButton(
@@ -61,10 +62,10 @@ class LeaderboardScreen extends ConsumerWidget {
       body: leaderboard.when(
         data: (entries) {
           if (entries.isEmpty) {
-            return const Center(
+            return Center(
               child: Text(
                 'No players yet',
-                style: TextStyle(color: Colors.white54, fontSize: 16),
+                style: TextStyle(color: colors.textTertiary, fontSize: 16),
               ),
             );
           }
@@ -82,12 +83,12 @@ class LeaderboardScreen extends ConsumerWidget {
                 margin: const EdgeInsets.only(bottom: 8),
                 decoration: BoxDecoration(
                   color: isCurrentUser
-                      ? AppTheme.goldAccent.withValues(alpha: 0.15)
-                      : Colors.white10,
+                      ? colors.accent.withValues(alpha: 0.15)
+                      : colors.surfaceDim,
                   borderRadius: BorderRadius.circular(8),
                   border: isCurrentUser
                       ? Border.all(
-                          color: AppTheme.goldAccent.withValues(alpha: 0.5),
+                          color: colors.accent.withValues(alpha: 0.5),
                         )
                       : null,
                 ),
@@ -104,8 +105,8 @@ class LeaderboardScreen extends ConsumerWidget {
                           '#$rank',
                           style: TextStyle(
                             color: rank <= 3
-                                ? AppTheme.goldAccent
-                                : Colors.white54,
+                                ? colors.accent
+                                : colors.textTertiary,
                             fontWeight: rank <= 3
                                 ? FontWeight.bold
                                 : FontWeight.normal,
@@ -122,8 +123,8 @@ class LeaderboardScreen extends ConsumerWidget {
                               entry.displayName,
                               style: TextStyle(
                                 color: isCurrentUser
-                                    ? AppTheme.goldAccent
-                                    : Colors.white,
+                                    ? colors.accent
+                                    : colors.textPrimary,
                                 fontSize: 14,
                                 fontWeight: isCurrentUser
                                     ? FontWeight.bold
@@ -132,8 +133,8 @@ class LeaderboardScreen extends ConsumerWidget {
                             ),
                             Text(
                               '${entry.gamesPlayed} games played',
-                              style: const TextStyle(
-                                color: Colors.white54,
+                              style: TextStyle(
+                                color: colors.textTertiary,
                                 fontSize: 12,
                               ),
                             ),
@@ -145,16 +146,16 @@ class LeaderboardScreen extends ConsumerWidget {
                         children: [
                           Text(
                             '${entry.rating.round()}',
-                            style: const TextStyle(
-                              color: Colors.white,
+                            style: TextStyle(
+                              color: colors.textPrimary,
                               fontWeight: FontWeight.bold,
                               fontSize: 16,
                             ),
                           ),
                           Text(
                             '${(entry.winRate * 100).toStringAsFixed(0)}% win',
-                            style: const TextStyle(
-                              color: Colors.white54,
+                            style: TextStyle(
+                              color: colors.textTertiary,
                               fontSize: 12,
                             ),
                           ),
@@ -172,7 +173,7 @@ class LeaderboardScreen extends ConsumerWidget {
         error: (error, _) => Center(
           child: Text(
             'Failed to load leaderboard: $error',
-            style: const TextStyle(color: Colors.redAccent),
+            style: TextStyle(color: colors.error),
           ),
         ),
       ),

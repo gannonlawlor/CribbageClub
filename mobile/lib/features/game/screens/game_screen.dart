@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../config/theme.dart';
+import '../../../config/theme/app_colors.dart';
 import '../../../core/api/websocket_client.dart';
 import '../../../core/auth/auth_provider.dart';
 import '../../../core/models/card.dart';
@@ -56,6 +56,7 @@ class GameScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.appColors;
     // Guard: stale local game URL after app restart
     if (_isLocal) {
       final service = ref.read(localGameServiceProvider);
@@ -63,7 +64,7 @@ class GameScreen extends ConsumerWidget {
         Future.microtask(() => context.go('/'));
         return Scaffold(
           body: Container(
-            decoration: const BoxDecoration(gradient: AppTheme.feltGradient),
+            decoration: BoxDecoration(gradient: colors.gameGradient),
             child: const Center(child: CircularProgressIndicator()),
           ),
         );
@@ -76,7 +77,7 @@ class GameScreen extends ConsumerWidget {
     if (gameNotifier.isLoading) {
       return Scaffold(
         body: Container(
-          decoration: const BoxDecoration(gradient: AppTheme.feltGradient),
+          decoration: BoxDecoration(gradient: colors.gameGradient),
           child: const Center(child: CircularProgressIndicator()),
         ),
       );
@@ -85,7 +86,7 @@ class GameScreen extends ConsumerWidget {
     if (gameNotifier.error != null && gameNotifier.gameState == null) {
       return Scaffold(
         body: Container(
-          decoration: const BoxDecoration(gradient: AppTheme.feltGradient),
+          decoration: BoxDecoration(gradient: colors.gameGradient),
           child: SafeArea(
             child: Center(
               child: Column(
@@ -93,7 +94,7 @@ class GameScreen extends ConsumerWidget {
                 children: [
                   Text(
                     gameNotifier.error!,
-                    style: const TextStyle(color: Colors.redAccent),
+                    style: TextStyle(color: colors.error),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 16),
@@ -139,15 +140,15 @@ class GameScreen extends ConsumerWidget {
     if (gs.players.isEmpty) {
       return Scaffold(
         body: Container(
-          decoration: const BoxDecoration(gradient: AppTheme.feltGradient),
+          decoration: BoxDecoration(gradient: colors.gameGradient),
           child: SafeArea(
             child: Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text(
+                  Text(
                     'Invalid game state: no players found.',
-                    style: TextStyle(color: Colors.redAccent),
+                    style: TextStyle(color: colors.error),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 16),
@@ -204,7 +205,7 @@ class GameScreen extends ConsumerWidget {
 
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(gradient: AppTheme.feltGradient),
+        decoration: BoxDecoration(gradient: colors.gameGradient),
         child: SafeArea(
           child: Center(
             child: ConstrainedBox(
@@ -245,8 +246,8 @@ class GameScreen extends ConsumerWidget {
                         Container(
                           width: double.infinity,
                           padding: const EdgeInsets.symmetric(vertical: 4),
-                          color: Colors.orange.shade800,
-                          child: const Row(
+                          color: colors.warning,
+                          child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               SizedBox(
@@ -254,14 +255,14 @@ class GameScreen extends ConsumerWidget {
                                 height: 12,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
-                                  color: Colors.white,
+                                  color: colors.accentOnSurface,
                                 ),
                               ),
-                              SizedBox(width: 6),
+                              const SizedBox(width: 6),
                               Text(
                                 'Reconnecting...',
                                 style: TextStyle(
-                                  color: Colors.white,
+                                  color: colors.accentOnSurface,
                                   fontSize: 12,
                                 ),
                               ),
@@ -273,10 +274,10 @@ class GameScreen extends ConsumerWidget {
                         Container(
                           width: double.infinity,
                           padding: const EdgeInsets.symmetric(vertical: 4),
-                          color: Colors.red.shade800,
-                          child: const Text(
+                          color: colors.error,
+                          child: Text(
                             'Connection lost. Please go back and rejoin.',
-                            style: TextStyle(color: Colors.white, fontSize: 12),
+                            style: TextStyle(color: colors.accentOnSurface, fontSize: 12),
                             textAlign: TextAlign.center,
                           ),
                         ),
@@ -570,6 +571,7 @@ class GameScreen extends ConsumerWidget {
     GameState gs,
     String playerId,
   ) {
+    final colors = context.appColors;
     final winner = gs.history.whereType<GameEnded>().firstOrNull;
     final didWin = winner?.winnerPlayerId == playerId;
     final playerIndex = gs.players.indexWhere((p) => p.id == playerId);
@@ -600,13 +602,13 @@ class GameScreen extends ConsumerWidget {
           Icon(
             didWin ? Icons.emoji_events : Icons.sentiment_dissatisfied,
             size: 40,
-            color: didWin ? AppTheme.goldAccent : Colors.white38,
+            color: didWin ? colors.accent : colors.textDisabled,
           ),
           const SizedBox(height: 6),
           Text(
             didWin ? 'You Win!' : 'You Lose',
             style: TextStyle(
-              color: didWin ? AppTheme.goldAccent : Colors.white70,
+              color: didWin ? colors.accent : colors.textSecondary,
               fontSize: 24,
               fontWeight: FontWeight.bold,
             ),
@@ -616,21 +618,21 @@ class GameScreen extends ConsumerWidget {
               padding: const EdgeInsets.only(top: 2),
               child: Text(
                 forfeitText,
-                style: const TextStyle(color: Colors.white54, fontSize: 13),
+                style: TextStyle(color: colors.textTertiary, fontSize: 13),
               ),
             ),
           const SizedBox(height: 4),
           Text(
             '${player.name}: ${player.score}  -  ${opponent.name}: ${opponent.score}',
-            style: const TextStyle(color: Colors.white, fontSize: 14),
+            style: TextStyle(color: colors.textPrimary, fontSize: 14),
           ),
           if (margin > 0 && forfeit == null)
             Text(
               didWin ? 'Won by $margin points' : 'Lost by $margin points',
               style: TextStyle(
                 color: didWin
-                    ? AppTheme.goldAccent.withValues(alpha: 0.8)
-                    : Colors.white54,
+                    ? colors.accent.withValues(alpha: 0.8)
+                    : colors.textTertiary,
                 fontSize: 12,
               ),
             ),
@@ -642,7 +644,7 @@ class GameScreen extends ConsumerWidget {
                   (e) => Text(
                     '${e.playerId == playerId ? "Your hand" : "Opponent hand"}: '
                     '${e.totalPoints} pts${_breakdownText(e.scoreBreakdown)}',
-                    style: const TextStyle(color: Colors.white60, fontSize: 11),
+                    style: TextStyle(color: colors.textTertiary, fontSize: 11),
                   ),
                 ),
             ...cribCounts.reversed
@@ -650,7 +652,7 @@ class GameScreen extends ConsumerWidget {
                 .map(
                   (e) => Text(
                     'Crib: ${e.totalPoints} pts${_breakdownText(e.scoreBreakdown)}',
-                    style: const TextStyle(color: Colors.white60, fontSize: 11),
+                    style: TextStyle(color: colors.textTertiary, fontSize: 11),
                   ),
                 ),
           ],
@@ -667,8 +669,8 @@ class GameScreen extends ConsumerWidget {
               OutlinedButton(
                 onPressed: () => context.go('/'),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.white70,
-                  side: const BorderSide(color: Colors.white38),
+                  foregroundColor: colors.textSecondary,
+                  side: BorderSide(color: colors.textDisabled),
                 ),
                 child: const Text('Home'),
               ),
@@ -682,14 +684,14 @@ class GameScreen extends ConsumerWidget {
                 onPressed: () => context.go('/analysis/${gs.gameId}'),
                 icon: const Icon(Icons.analytics, size: 16),
                 label: const Text('Analyze'),
-                style: TextButton.styleFrom(foregroundColor: Colors.white54),
+                style: TextButton.styleFrom(foregroundColor: colors.textTertiary),
               ),
               const SizedBox(width: 8),
               TextButton.icon(
                 onPressed: () => context.go('/replay/${gs.gameId}'),
                 icon: const Icon(Icons.replay, size: 16),
                 label: const Text('Replay'),
-                style: TextButton.styleFrom(foregroundColor: Colors.white54),
+                style: TextButton.styleFrom(foregroundColor: colors.textTertiary),
               ),
             ],
           ),
@@ -775,12 +777,13 @@ class _TopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
       child: Row(
         children: [
           IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.white70, size: 20),
+            icon: Icon(Icons.arrow_back, color: colors.textSecondary, size: 20),
             onPressed: onBack,
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
@@ -794,20 +797,20 @@ class _TopBar extends StatelessWidget {
           ),
           if (gameNotifier.error != null)
             IconButton(
-              icon: const Icon(Icons.warning, color: Colors.amber, size: 20),
+              icon: Icon(Icons.warning, color: colors.warning, size: 20),
               onPressed: onError,
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
             ),
           if (isOnlineGame && !isGameOver)
             IconButton(
-              icon: const Icon(Icons.flag, color: Colors.white54, size: 20),
+              icon: Icon(Icons.flag, color: colors.textTertiary, size: 20),
               onPressed: onResign,
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
             ),
           IconButton(
-            icon: const Icon(Icons.history, color: Colors.white54, size: 20),
+            icon: Icon(Icons.history, color: colors.textTertiary, size: 20),
             onPressed: () => _showHistorySheet(context),
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
@@ -818,9 +821,10 @@ class _TopBar extends StatelessWidget {
   }
 
   void _showHistorySheet(BuildContext context) {
+    final colors = context.appColors;
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppTheme.feltGreenDark,
+      backgroundColor: colors.surfacePrimary,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -828,12 +832,12 @@ class _TopBar extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Padding(
-              padding: EdgeInsets.all(12),
+            Padding(
+              padding: const EdgeInsets.all(12),
               child: Text(
                 'Game History',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: colors.textPrimary,
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),

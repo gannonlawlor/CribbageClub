@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../config/theme.dart';
+import '../../../config/theme/app_colors.dart';
 import '../../../core/auth/auth_provider.dart';
 import '../../../core/models/profile_response.dart';
 
@@ -27,6 +27,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     final profile = ref.watch(_profileProvider(widget.userId));
     final auth = ref.watch(authProvider);
     final isOwnProfile = auth.userId == widget.userId;
@@ -51,11 +52,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     // Avatar circle with initials
                     CircleAvatar(
                       radius: 40,
-                      backgroundColor: AppTheme.goldAccent.withValues(alpha: 0.2),
+                      backgroundColor: colors.accent.withValues(alpha: 0.2),
                       child: Text(
                         _initials(p.displayName ?? p.username),
-                        style: const TextStyle(
-                          color: AppTheme.goldAccent,
+                        style: TextStyle(
+                          color: colors.accent,
                           fontSize: 28,
                           fontWeight: FontWeight.bold,
                         ),
@@ -65,8 +66,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     // Display name
                     Text(
                       p.displayName ?? p.username,
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: colors.textPrimary,
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
                       ),
@@ -74,16 +75,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     if (p.displayName != null)
                       Text(
                         '@${p.username}',
-                        style: const TextStyle(
-                          color: Colors.white54,
+                        style: TextStyle(
+                          color: colors.textTertiary,
                           fontSize: 14,
                         ),
                       ),
                     const SizedBox(height: 4),
                     Text(
                       'Member since ${_formatDate(p.createdAt)}',
-                      style: const TextStyle(
-                        color: Colors.white38,
+                      style: TextStyle(
+                        color: colors.textDisabled,
                         fontSize: 12,
                       ),
                     ),
@@ -97,15 +98,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     // Rating
                     Text(
                       '${p.rating.round()}',
-                      style: const TextStyle(
-                        color: AppTheme.goldAccent,
+                      style: TextStyle(
+                        color: colors.accent,
                         fontSize: 48,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const Text(
+                    Text(
                       'Rating',
-                      style: TextStyle(color: Colors.white54, fontSize: 14),
+                      style: TextStyle(color: colors.textTertiary, fontSize: 14),
                     ),
 
                     const SizedBox(height: 24),
@@ -121,10 +122,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       onSelectionChanged: (s) =>
                           setState(() => _selectedSegment = s.first),
                       style: SegmentedButton.styleFrom(
-                        foregroundColor: Colors.white70,
-                        selectedForegroundColor: AppTheme.goldAccent,
+                        foregroundColor: colors.textSecondary,
+                        selectedForegroundColor: colors.accent,
                         selectedBackgroundColor:
-                            AppTheme.goldAccent.withValues(alpha: 0.15),
+                            colors.accent.withValues(alpha: 0.15),
                       ),
                     ),
 
@@ -144,7 +145,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             padding: const EdgeInsets.all(32),
             child: Text(
               'Failed to load profile: $error',
-              style: const TextStyle(color: Colors.redAccent),
+              style: TextStyle(color: colors.error),
               textAlign: TextAlign.center,
             ),
           ),
@@ -195,23 +196,24 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Widget _buildActionButton(ProfileResponse p, WidgetRef ref) {
+    final colors = context.appColors;
     return switch (p.relationshipStatus) {
       'FRIENDS' => Chip(
-          avatar: const Icon(Icons.check, size: 16, color: Colors.greenAccent),
-          label: const Text(
+          avatar: Icon(Icons.check, size: 16, color: colors.success),
+          label: Text(
             'Friends',
-            style: TextStyle(color: Colors.white70),
+            style: TextStyle(color: colors.textSecondary),
           ),
-          backgroundColor: Colors.white10,
+          backgroundColor: colors.surfaceDim,
           side: BorderSide.none,
         ),
       'PENDING_SENT' => Chip(
-          avatar: const Icon(Icons.schedule, size: 16, color: Colors.white38),
-          label: const Text(
+          avatar: Icon(Icons.schedule, size: 16, color: colors.textDisabled),
+          label: Text(
             'Request Sent',
-            style: TextStyle(color: Colors.white54),
+            style: TextStyle(color: colors.textTertiary),
           ),
-          backgroundColor: Colors.white10,
+          backgroundColor: colors.surfaceDim,
           side: BorderSide.none,
         ),
       'PENDING_RECEIVED' => ElevatedButton.icon(
@@ -300,12 +302,13 @@ class _StatBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     return Column(
       children: [
         Text(
           value,
-          style: const TextStyle(
-            color: Colors.white,
+          style: TextStyle(
+            color: colors.textPrimary,
             fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
@@ -313,7 +316,7 @@ class _StatBox extends StatelessWidget {
         const SizedBox(height: 2),
         Text(
           label,
-          style: const TextStyle(color: Colors.white54, fontSize: 12),
+          style: TextStyle(color: colors.textTertiary, fontSize: 12),
         ),
       ],
     );

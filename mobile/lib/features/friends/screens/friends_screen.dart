@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../config/theme.dart';
+import '../../../config/theme/app_colors.dart';
 import '../../../core/auth/auth_provider.dart';
 import '../../../core/models/friend.dart';
 import '../../../core/models/lobby.dart';
@@ -63,6 +63,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen>
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -72,9 +73,9 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen>
         title: const Text('Friends'),
         bottom: TabBar(
           controller: _tabController,
-          indicatorColor: AppTheme.goldAccent,
-          labelColor: AppTheme.goldAccent,
-          unselectedLabelColor: Colors.white54,
+          indicatorColor: colors.accent,
+          labelColor: colors.accent,
+          unselectedLabelColor: colors.textTertiary,
           tabs: const [
             Tab(text: 'Friends'),
             Tab(text: 'Requests'),
@@ -98,27 +99,28 @@ class _FriendsTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.appColors;
     final friends = ref.watch(_friendsProvider);
 
     return friends.when(
       data: (list) {
         if (list.isEmpty) {
-          return const Center(
+          return Center(
             child: Padding(
-              padding: EdgeInsets.all(32),
+              padding: const EdgeInsets.all(32),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.people_outline, size: 64, color: Colors.white24),
-                  SizedBox(height: 16),
+                  Icon(Icons.people_outline, size: 64, color: colors.divider),
+                  const SizedBox(height: 16),
                   Text(
                     'No friends yet',
-                    style: TextStyle(color: Colors.white54, fontSize: 16),
+                    style: TextStyle(color: colors.textTertiary, fontSize: 16),
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   Text(
                     'Use the Find tab to search for players',
-                    style: TextStyle(color: Colors.white38, fontSize: 13),
+                    style: TextStyle(color: colors.textDisabled, fontSize: 13),
                   ),
                 ],
               ),
@@ -135,7 +137,7 @@ class _FriendsTab extends ConsumerWidget {
       error: (error, _) => Center(
         child: Text(
           'Failed to load friends: $error',
-          style: const TextStyle(color: Colors.redAccent),
+          style: TextStyle(color: colors.error),
         ),
       ),
     );
@@ -148,6 +150,7 @@ class _FriendTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.appColors;
     return Dismissible(
       key: Key(friend.friendshipId),
       direction: DismissDirection.endToStart,
@@ -155,20 +158,20 @@ class _FriendTile extends ConsumerWidget {
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 16),
         color: Colors.red.withValues(alpha: 0.3),
-        child: const Icon(Icons.person_remove, color: Colors.redAccent),
+        child: Icon(Icons.person_remove, color: colors.error),
       ),
       confirmDismiss: (direction) async {
         return await showDialog<bool>(
           context: context,
           builder: (ctx) => AlertDialog(
-            backgroundColor: AppTheme.feltGreenDark,
-            title: const Text(
+            backgroundColor: colors.surfacePrimary,
+            title: Text(
               'Remove Friend',
-              style: TextStyle(color: Colors.white),
+              style: TextStyle(color: colors.textPrimary),
             ),
             content: Text(
               'Remove ${friend.displayName ?? friend.username} from your friends?',
-              style: const TextStyle(color: Colors.white70),
+              style: TextStyle(color: colors.textSecondary),
             ),
             actions: [
               TextButton(
@@ -177,9 +180,9 @@ class _FriendTile extends ConsumerWidget {
               ),
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop(true),
-                child: const Text(
+                child: Text(
                   'Remove',
-                  style: TextStyle(color: Colors.redAccent),
+                  style: TextStyle(color: colors.error),
                 ),
               ),
             ],
@@ -204,7 +207,7 @@ class _FriendTile extends ConsumerWidget {
         child: Container(
           margin: const EdgeInsets.only(bottom: 8),
           decoration: BoxDecoration(
-            color: Colors.white10,
+            color: colors.surfaceDim,
             borderRadius: BorderRadius.circular(8),
           ),
           child: Padding(
@@ -216,7 +219,7 @@ class _FriendTile extends ConsumerWidget {
                   height: 10,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: friend.isOnline ? Colors.greenAccent : Colors.white24,
+                    color: friend.isOnline ? colors.success : colors.divider,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -226,13 +229,13 @@ class _FriendTile extends ConsumerWidget {
                     children: [
                       Text(
                         friend.displayName ?? friend.username,
-                        style: const TextStyle(color: Colors.white, fontSize: 14),
+                        style: TextStyle(color: colors.textPrimary, fontSize: 14),
                       ),
                       if (friend.displayName != null)
                         Text(
                           friend.username,
-                          style: const TextStyle(
-                            color: Colors.white54,
+                          style: TextStyle(
+                            color: colors.textTertiary,
                             fontSize: 12,
                           ),
                         ),
@@ -284,6 +287,7 @@ class _RequestsTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.appColors;
     final requests = ref.watch(_incomingRequestsProvider);
     final challenges = ref.watch(_incomingChallengesProvider);
 
@@ -293,10 +297,10 @@ class _RequestsTab extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Incoming friend requests
-          const Text(
+          Text(
             'Friend Requests',
             style: TextStyle(
-              color: Colors.white,
+              color: colors.textPrimary,
               fontSize: 16,
               fontWeight: FontWeight.bold,
             ),
@@ -305,11 +309,11 @@ class _RequestsTab extends ConsumerWidget {
           requests.when(
             data: (list) {
               if (list.isEmpty) {
-                return const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 16),
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
                   child: Text(
                     'No pending requests',
-                    style: TextStyle(color: Colors.white38),
+                    style: TextStyle(color: colors.textDisabled),
                   ),
                 );
               }
@@ -325,17 +329,17 @@ class _RequestsTab extends ConsumerWidget {
             ),
             error: (e, _) => Text(
               'Error: $e',
-              style: const TextStyle(color: Colors.redAccent),
+              style: TextStyle(color: colors.error),
             ),
           ),
 
           const SizedBox(height: 24),
 
           // Incoming challenges
-          const Text(
+          Text(
             'Challenges',
             style: TextStyle(
-              color: Colors.white,
+              color: colors.textPrimary,
               fontSize: 16,
               fontWeight: FontWeight.bold,
             ),
@@ -344,11 +348,11 @@ class _RequestsTab extends ConsumerWidget {
           challenges.when(
             data: (list) {
               if (list.isEmpty) {
-                return const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 16),
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
                   child: Text(
                     'No pending challenges',
-                    style: TextStyle(color: Colors.white38),
+                    style: TextStyle(color: colors.textDisabled),
                   ),
                 );
               }
@@ -364,7 +368,7 @@ class _RequestsTab extends ConsumerWidget {
             ),
             error: (e, _) => Text(
               'Error: $e',
-              style: const TextStyle(color: Colors.redAccent),
+              style: TextStyle(color: colors.error),
             ),
           ),
         ],
@@ -379,17 +383,18 @@ class _FriendRequestTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.appColors;
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: Colors.white10,
+        color: colors.surfaceDim,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
           children: [
-            const Icon(Icons.person_add, color: AppTheme.goldAccent, size: 20),
+            Icon(Icons.person_add, color: colors.accent, size: 20),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -397,13 +402,13 @@ class _FriendRequestTile extends ConsumerWidget {
                 children: [
                   Text(
                     request.fromDisplayName ?? request.fromUsername,
-                    style: const TextStyle(color: Colors.white, fontSize: 14),
+                    style: TextStyle(color: colors.textPrimary, fontSize: 14),
                   ),
                   if (request.fromDisplayName != null)
                     Text(
                       request.fromUsername,
-                      style: const TextStyle(
-                        color: Colors.white54,
+                      style: TextStyle(
+                        color: colors.textTertiary,
                         fontSize: 12,
                       ),
                     ),
@@ -411,12 +416,12 @@ class _FriendRequestTile extends ConsumerWidget {
               ),
             ),
             IconButton(
-              icon: const Icon(Icons.check, color: Colors.greenAccent),
+              icon: Icon(Icons.check, color: colors.success),
               onPressed: () => _accept(context, ref),
               tooltip: 'Accept',
             ),
             IconButton(
-              icon: const Icon(Icons.close, color: Colors.redAccent),
+              icon: Icon(Icons.close, color: colors.error),
               onPressed: () => _decline(context, ref),
               tooltip: 'Decline',
             ),
@@ -462,6 +467,7 @@ class _ChallengeTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.appColors;
     final challengerName = challenge.players.isNotEmpty
         ? challenge.players.first.name
         : 'Unknown';
@@ -469,24 +475,24 @@ class _ChallengeTile extends ConsumerWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: Colors.white10,
+        color: colors.surfaceDim,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppTheme.goldAccent.withValues(alpha: 0.3)),
+        border: Border.all(color: colors.accent.withValues(alpha: 0.3)),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
           children: [
-            const Icon(
+            Icon(
               Icons.sports_esports,
-              color: AppTheme.goldAccent,
+              color: colors.accent,
               size: 20,
             ),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
                 '$challengerName wants to play!',
-                style: const TextStyle(color: Colors.white, fontSize: 14),
+                style: TextStyle(color: colors.textPrimary, fontSize: 14),
               ),
             ),
             ElevatedButton(
@@ -503,9 +509,9 @@ class _ChallengeTile extends ConsumerWidget {
             const SizedBox(width: 8),
             TextButton(
               onPressed: () => _decline(context, ref),
-              child: const Text(
+              child: Text(
                 'Decline',
-                style: TextStyle(color: Colors.white54, fontSize: 12),
+                style: TextStyle(color: colors.textTertiary, fontSize: 12),
               ),
             ),
           ],
@@ -579,6 +585,7 @@ class _FindTabState extends ConsumerState<_FindTab> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     final results = ref.watch(_searchResultsProvider);
     final query = ref.watch(_searchQueryProvider);
 
@@ -590,33 +597,33 @@ class _FindTabState extends ConsumerState<_FindTab> {
             controller: _searchController,
             autofocus: true,
             onChanged: _onSearchChanged,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               hintText: 'Search by username...',
-              hintStyle: TextStyle(color: Colors.white38),
-              prefixIcon: Icon(Icons.search, color: Colors.white38),
-              border: OutlineInputBorder(),
+              hintStyle: TextStyle(color: colors.textDisabled),
+              prefixIcon: Icon(Icons.search, color: colors.textDisabled),
+              border: const OutlineInputBorder(),
               filled: true,
-              fillColor: Colors.white10,
+              fillColor: colors.surfaceDim,
             ),
-            style: const TextStyle(color: Colors.white),
+            style: TextStyle(color: colors.textPrimary),
           ),
         ),
         if (query.length < 2 && query.isNotEmpty)
-          const Padding(
-            padding: EdgeInsets.all(16),
+          Padding(
+            padding: const EdgeInsets.all(16),
             child: Text(
               'Type at least 2 characters to search',
-              style: TextStyle(color: Colors.white38),
+              style: TextStyle(color: colors.textDisabled),
             ),
           ),
         Expanded(
           child: results.when(
             data: (list) {
               if (list.isEmpty && query.length >= 2) {
-                return const Center(
+                return Center(
                   child: Text(
                     'No users found',
-                    style: TextStyle(color: Colors.white54),
+                    style: TextStyle(color: colors.textTertiary),
                   ),
                 );
               }
@@ -632,7 +639,7 @@ class _FindTabState extends ConsumerState<_FindTab> {
             error: (e, _) => Center(
               child: Text(
                 'Search failed: $e',
-                style: const TextStyle(color: Colors.redAccent),
+                style: TextStyle(color: colors.error),
               ),
             ),
           ),
@@ -648,6 +655,7 @@ class _SearchResultTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.appColors;
     final statusLabel = switch (result.relationshipStatus) {
       'FRIENDS' => 'Friends',
       'PENDING_SENT' => 'Request Sent',
@@ -661,7 +669,7 @@ class _SearchResultTile extends ConsumerWidget {
       child: Container(
         margin: const EdgeInsets.only(bottom: 8),
         decoration: BoxDecoration(
-          color: Colors.white10,
+          color: colors.surfaceDim,
           borderRadius: BorderRadius.circular(8),
         ),
         child: Padding(
@@ -674,13 +682,13 @@ class _SearchResultTile extends ConsumerWidget {
                   children: [
                     Text(
                       result.displayName ?? result.username,
-                      style: const TextStyle(color: Colors.white, fontSize: 14),
+                      style: TextStyle(color: colors.textPrimary, fontSize: 14),
                     ),
                     if (result.displayName != null)
                       Text(
                         result.username,
-                        style: const TextStyle(
-                          color: Colors.white54,
+                        style: TextStyle(
+                          color: colors.textTertiary,
                           fontSize: 12,
                         ),
                       ),
@@ -692,16 +700,16 @@ class _SearchResultTile extends ConsumerWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12),
-                    color: Colors.white10,
+                    color: colors.surfaceDim,
                   ),
                   child: Text(
                     statusLabel,
-                    style: const TextStyle(color: Colors.white54, fontSize: 11),
+                    style: TextStyle(color: colors.textTertiary, fontSize: 11),
                   ),
                 ),
               if (canAdd)
                 IconButton(
-                  icon: const Icon(Icons.person_add, color: AppTheme.goldAccent),
+                  icon: Icon(Icons.person_add, color: colors.accent),
                   onPressed: () => _sendRequest(context, ref),
                   tooltip: 'Add Friend',
                 ),

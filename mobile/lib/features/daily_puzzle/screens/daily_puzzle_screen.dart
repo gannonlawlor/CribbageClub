@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../config/theme.dart';
+import '../../../config/constants.dart';
+import '../../../config/theme/app_colors.dart';
 import '../../../core/models/card.dart';
 import '../../game/widgets/card_widget.dart';
 import '../services/puzzle_generator.dart';
@@ -46,12 +47,13 @@ class _DailyPuzzleScreenState extends ConsumerState<DailyPuzzleScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     final state = ref.watch(dailyPuzzleProvider);
     final puzzleSet = state.puzzleSet;
 
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(gradient: AppTheme.feltGradient),
+        decoration: BoxDecoration(gradient: colors.gameGradient),
         child: SafeArea(
           child: Center(
             child: ConstrainedBox(
@@ -126,6 +128,7 @@ class _PlayingView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.appColors;
     final state = ref.watch(dailyPuzzleProvider);
     final puzzle = state.currentPuzzle!;
     final dateStr = _formatDate(puzzle.date);
@@ -141,7 +144,7 @@ class _PlayingView extends ConsumerWidget {
           child: Row(
             children: [
               IconButton(
-                icon: const Icon(Icons.arrow_back, color: Colors.white),
+                icon: Icon(Icons.arrow_back, color: colors.textPrimary),
                 onPressed: () => context.go('/'),
               ),
               const SizedBox(width: 8),
@@ -151,10 +154,10 @@ class _PlayingView extends ConsumerWidget {
                   children: [
                     Row(
                       children: [
-                        const Text(
+                        Text(
                           'Daily Challenge',
                           style: TextStyle(
-                            color: Colors.white,
+                            color: colors.textPrimary,
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
                           ),
@@ -162,8 +165,8 @@ class _PlayingView extends ConsumerWidget {
                         const SizedBox(width: 8),
                         Text(
                           '$puzzleNum/$total',
-                          style: const TextStyle(
-                            color: Colors.white54,
+                          style: TextStyle(
+                            color: colors.textTertiary,
                             fontSize: 16,
                           ),
                         ),
@@ -171,8 +174,8 @@ class _PlayingView extends ConsumerWidget {
                     ),
                     Text(
                       dateStr,
-                      style: const TextStyle(
-                        color: Colors.white54,
+                      style: TextStyle(
+                        color: colors.textTertiary,
                         fontSize: 14,
                       ),
                     ),
@@ -197,14 +200,14 @@ class _PlayingView extends ConsumerWidget {
             'You are ${puzzle.isDealer ? 'the dealer' : 'not the dealer'}. '
             'Choose the best 4 cards to keep.',
             textAlign: TextAlign.center,
-            style: const TextStyle(color: Colors.white70, fontSize: 16),
+            style: TextStyle(color: colors.textSecondary, fontSize: 16),
           ),
         ),
         const SizedBox(height: 8),
         Text(
           '${state.selectedCards.length}/4 selected',
           style: TextStyle(
-            color: canSubmit ? AppTheme.goldAccent : Colors.white38,
+            color: canSubmit ? colors.accent : colors.textDisabled,
             fontSize: 14,
           ),
         ),
@@ -257,7 +260,7 @@ class _CardGrid extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final cardWidth = (constraints.maxWidth - 16) / 3; // 3 cards + gaps
-        final cardHeight = cardWidth / AppTheme.cardAspectRatio;
+        final cardHeight = cardWidth / AppConstants.cardAspectRatio;
         return Column(
           children: [
             Row(

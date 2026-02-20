@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import '../../config/theme.dart';
+import '../../config/theme/app_colors.dart';
 import '../../core/models/card.dart';
 
 class CardUtils {
   CardUtils._();
 
-  static Color suitColor(Suit suit) {
-    return suit.isRed ? AppTheme.suitRed : AppTheme.suitBlack;
+  static Color suitColor(Suit suit, AppColors colors) {
+    return suit.isRed ? colors.suitRed : colors.suitBlack;
   }
 
   static String cardLabel(PlayingCard card) {

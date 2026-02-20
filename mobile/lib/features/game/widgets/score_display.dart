@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../config/theme.dart';
+import '../../../config/theme/app_colors.dart';
 import '../../../core/models/player.dart';
 
 class ScoreDisplay extends StatelessWidget {
@@ -16,21 +16,22 @@ class ScoreDisplay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         _ScoreChip(
           name: 'You${isDealer ? ' (D)' : ''}',
           score: player.score,
-          color: AppTheme.pegGold,
-          isPlayer: true,
+          color: colors.pegPlayer,
+          textColor: colors.textPrimary,
         ),
         const SizedBox(width: 8),
         _ScoreChip(
           name: '${opponent.name}${!isDealer ? ' (D)' : ''}',
           score: opponent.score,
-          color: AppTheme.pegWhite,
-          isPlayer: false,
+          color: colors.pegOpponent,
+          textColor: colors.textSecondary,
         ),
       ],
     );
@@ -41,13 +42,13 @@ class _ScoreChip extends StatelessWidget {
   final String name;
   final int score;
   final Color color;
-  final bool isPlayer;
+  final Color textColor;
 
   const _ScoreChip({
     required this.name,
     required this.score,
     required this.color,
-    required this.isPlayer,
+    required this.textColor,
   });
 
   @override
@@ -74,7 +75,7 @@ class _ScoreChip extends StatelessWidget {
           Text(
             '$score',
             style: TextStyle(
-              color: isPlayer ? Colors.white : Colors.white70,
+              color: textColor,
               fontSize: 16,
               fontWeight: FontWeight.bold,
             ),
