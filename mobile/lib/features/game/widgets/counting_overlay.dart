@@ -207,35 +207,67 @@ class _CountingOverlayState extends State<CountingOverlay> {
   }
 
   Widget _buildCardRow(List<PlayingCard> cards, PlayingCard cutCard) {
-    const cardW = 52.0;
-    const cardH = 72.0;
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        for (final card in cards) ...[
-          CardWidget(
-            card: card,
-            faceUp: true,
-            enabled: false,
-            width: cardW,
-            height: cardH,
-          ),
-          const SizedBox(width: 4),
-        ],
-        Container(
-          width: 1,
-          height: cardH * 0.7,
-          color: Colors.white24,
-        ),
-        const SizedBox(width: 4),
-        CardWidget(
-          card: cutCard,
-          faceUp: true,
-          enabled: false,
-          width: cardW,
-          height: cardH,
-        ),
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final availW = constraints.maxWidth;
+        // Size cards to fit hand row (4 cards with 6px gaps)
+        final gap = 6.0;
+        final cardW = ((availW - (cards.length - 1) * gap) / cards.length)
+            .clamp(0.0, 70.0);
+        final cardH = cardW / AppTheme.cardAspectRatio;
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Hand cards
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                for (int i = 0; i < cards.length; i++) ...[
+                  if (i > 0) SizedBox(width: gap),
+                  CardWidget(
+                    card: cards[i],
+                    faceUp: true,
+                    enabled: false,
+                    width: cardW,
+                    height: cardH,
+                  ),
+                ],
+              ],
+            ),
+            const SizedBox(height: 8),
+            // Divider + cut card
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: cardW * 2,
+                  height: 1,
+                  color: Colors.white24,
+                ),
+                const SizedBox(width: 8),
+                const Text(
+                  'Cut',
+                  style: TextStyle(color: Colors.white38, fontSize: 11),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  width: cardW * 2,
+                  height: 1,
+                  color: Colors.white24,
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            CardWidget(
+              card: cutCard,
+              faceUp: true,
+              enabled: false,
+              width: cardW,
+              height: cardH,
+            ),
+          ],
+        );
+      },
     );
   }
 
