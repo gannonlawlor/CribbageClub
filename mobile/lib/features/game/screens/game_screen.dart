@@ -335,6 +335,7 @@ class GameScreen extends ConsumerWidget {
                                 stage: gs.stage,
                                 isMyTurn: isMyTurn,
                                 isDealer: isDealer,
+                                isLocalGame: _isLocal,
                                 currentPlayerName: opponent.name,
                                 selectedCardCount: selectedCards.length,
                               ),
