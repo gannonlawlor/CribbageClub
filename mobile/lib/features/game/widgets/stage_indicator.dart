@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../config/theme.dart';
+import '../../../config/constants.dart';
+import '../../../config/theme/app_colors.dart';
 import '../../../core/models/game_state.dart';
 
 class StageIndicator extends StatelessWidget {
@@ -40,6 +41,7 @@ class StageIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     return SizedBox(
       width: double.infinity,
       child: AnimatedContainer(
@@ -47,15 +49,15 @@ class StageIndicator extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
         decoration: BoxDecoration(
           color: isMyTurn
-              ? AppTheme.goldAccent.withValues(alpha: 0.2)
-              : Colors.black26,
+              ? colors.accentSubtle
+              : colors.surfaceDim,
           borderRadius: BorderRadius.circular(16),
           border: isMyTurn
-              ? Border.all(color: AppTheme.goldAccent.withValues(alpha: 0.5))
+              ? Border.all(color: colors.accentBorder)
               : null,
         ),
         child: AnimatedSwitcher(
-          duration: AppTheme.stageTransitionDuration,
+          duration: AppConstants.stageTransitionDuration,
           switchInCurve: Curves.easeIn,
           switchOutCurve: Curves.easeOut,
           transitionBuilder: (child, animation) {
@@ -74,7 +76,7 @@ class StageIndicator extends StatelessWidget {
             _message,
             key: ValueKey('${stage.name}_$isMyTurn'),
             style: TextStyle(
-              color: isMyTurn ? AppTheme.goldAccent : Colors.white70,
+              color: isMyTurn ? colors.accent : colors.textSecondary,
               fontSize: 13,
               fontWeight: isMyTurn ? FontWeight.bold : FontWeight.normal,
             ),

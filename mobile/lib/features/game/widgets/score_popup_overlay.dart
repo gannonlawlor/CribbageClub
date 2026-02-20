@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../config/theme.dart';
+import '../../../config/constants.dart';
+import '../../../config/theme/app_colors.dart';
 import '../animation/animation_event.dart';
 import '../state/game_providers.dart';
 
@@ -61,7 +62,7 @@ class _ScorePopupOverlayState extends ConsumerState<ScorePopupOverlay>
 
     final animController = AnimationController(
       vsync: this,
-      duration: AppTheme.scorePopupDuration,
+      duration: AppConstants.scorePopupDuration,
     );
 
     final entry = _PopupEntry(
@@ -124,6 +125,7 @@ class _ScorePopupWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     final slideUp = Tween<Offset>(
       begin: Offset.zero,
       end: const Offset(0, -0.5),
@@ -166,14 +168,14 @@ class _ScorePopupWidget extends StatelessWidget {
           position: slideUp,
           child: FadeTransition(
             opacity: fade,
-            child: ScaleTransition(scale: scale, child: _buildContent()),
+            child: ScaleTransition(scale: scale, child: _buildContent(colors)),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildContent() {
+  Widget _buildContent(AppColors colors) {
     final points = entry.event.points;
     final reason = entry.event.reason;
     final source = entry.event.source;
@@ -198,18 +200,18 @@ class _ScorePopupWidget extends StatelessWidget {
             Text(
               sourceLabel,
               style: TextStyle(
-                color: AppTheme.goldAccent.withValues(alpha: 0.8),
+                color: colors.accent.withValues(alpha: 0.8),
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
               ),
             ),
           Text(
             '+$points',
-            style: const TextStyle(
-              color: AppTheme.goldAccent,
+            style: TextStyle(
+              color: colors.accent,
               fontSize: 36,
               fontWeight: FontWeight.bold,
-              shadows: [
+              shadows: const [
                 Shadow(
                   color: Colors.black54,
                   blurRadius: 4,
@@ -222,7 +224,7 @@ class _ScorePopupWidget extends StatelessWidget {
             Text(
               reason,
               style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.9),
+                color: colors.textPrimary.withValues(alpha: 0.9),
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
                 shadows: const [

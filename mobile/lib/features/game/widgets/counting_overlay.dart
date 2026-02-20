@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../config/theme.dart';
+import '../../../config/constants.dart';
+import '../../../config/theme/app_colors.dart';
 import '../../../core/models/card.dart';
 import '../../../shared/utils/score_calculator.dart';
 import 'card_widget.dart';
@@ -91,19 +92,20 @@ class _CountingOverlayState extends State<CountingOverlay> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     return Positioned.fill(
       child: Container(
-        color: Colors.black54,
+        color: colors.scrim,
         child: Center(
           child: Container(
             margin: const EdgeInsets.all(24),
             padding: const EdgeInsets.all(20),
             constraints: const BoxConstraints(maxWidth: 400),
             decoration: BoxDecoration(
-              color: AppTheme.feltGreenDark,
+              color: colors.surfacePrimary,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: Colors.white24,
+                color: colors.divider,
                 width: 1,
               ),
               boxShadow: const [
@@ -207,6 +209,7 @@ class _CountingOverlayState extends State<CountingOverlay> {
   }
 
   Widget _buildCardRow(List<PlayingCard> cards, PlayingCard cutCard) {
+    final colors = context.appColors;
     return LayoutBuilder(
       builder: (context, constraints) {
         final availW = constraints.maxWidth;
@@ -214,7 +217,7 @@ class _CountingOverlayState extends State<CountingOverlay> {
         final gap = 6.0;
         final cardW = ((availW - (cards.length - 1) * gap) / cards.length)
             .clamp(0.0, 70.0);
-        final cardH = cardW / AppTheme.cardAspectRatio;
+        final cardH = cardW / AppConstants.cardAspectRatio;
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -239,17 +242,17 @@ class _CountingOverlayState extends State<CountingOverlay> {
             Row(
               children: [
                 Expanded(
-                  child: Container(height: 1, color: Colors.white24),
+                  child: Container(height: 1, color: colors.divider),
                 ),
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 8),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
                   child: Text(
                     'Cut',
-                    style: TextStyle(color: Colors.white38, fontSize: 11),
+                    style: TextStyle(color: colors.textDisabled, fontSize: 11),
                   ),
                 ),
                 Expanded(
-                  child: Container(height: 1, color: Colors.white24),
+                  child: Container(height: 1, color: colors.divider),
                 ),
               ],
             ),
@@ -274,13 +277,14 @@ class _CountingOverlayState extends State<CountingOverlay> {
     required VoidCallback onCountForMe,
     required VoidCallback onIllCount,
   }) {
+    final colors = context.appColors;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
           title,
-          style: const TextStyle(
-            color: Colors.white,
+          style: TextStyle(
+            color: colors.textPrimary,
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
@@ -294,8 +298,8 @@ class _CountingOverlayState extends State<CountingOverlay> {
               child: ElevatedButton(
                 onPressed: onCountForMe,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.feltGreen,
-                  foregroundColor: Colors.white,
+                  backgroundColor: colors.surfaceDim,
+                  foregroundColor: colors.textPrimary,
                 ),
                 child: const Text('Count for me'),
               ),
@@ -305,8 +309,8 @@ class _CountingOverlayState extends State<CountingOverlay> {
               child: ElevatedButton(
                 onPressed: onIllCount,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.goldAccent,
-                  foregroundColor: Colors.black87,
+                  backgroundColor: colors.accent,
+                  foregroundColor: colors.accentOnSurface,
                 ),
                 child: const Text("I'll count"),
               ),
@@ -333,12 +337,13 @@ class _CountingOverlayState extends State<CountingOverlay> {
   }
 
   Widget _buildNumberPad(VoidCallback onSubmit) {
+    final colors = context.appColors;
     Widget numButton(int digit) {
       return Expanded(
         child: Padding(
           padding: const EdgeInsets.all(2),
           child: Material(
-            color: Colors.white.withValues(alpha: 0.1),
+            color: colors.surfaceDim,
             borderRadius: BorderRadius.circular(8),
             child: InkWell(
               borderRadius: BorderRadius.circular(8),
@@ -348,8 +353,8 @@ class _CountingOverlayState extends State<CountingOverlay> {
                 alignment: Alignment.center,
                 child: Text(
                   '$digit',
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: colors.textPrimary,
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                   ),
@@ -369,15 +374,15 @@ class _CountingOverlayState extends State<CountingOverlay> {
           padding: const EdgeInsets.symmetric(vertical: 8),
           margin: const EdgeInsets.only(bottom: 10),
           decoration: BoxDecoration(
-            color: Colors.black26,
+            color: colors.surfaceDim,
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.white24),
+            border: Border.all(color: colors.divider),
           ),
           child: Text(
             '$_guessValue',
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: colors.textPrimary,
               fontSize: 28,
               fontWeight: FontWeight.bold,
             ),
@@ -394,7 +399,7 @@ class _CountingOverlayState extends State<CountingOverlay> {
               child: Padding(
                 padding: const EdgeInsets.all(2),
                 child: Material(
-                  color: Colors.white.withValues(alpha: 0.07),
+                  color: colors.surfaceDim.withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(8),
                   child: InkWell(
                     borderRadius: BorderRadius.circular(8),
@@ -402,9 +407,9 @@ class _CountingOverlayState extends State<CountingOverlay> {
                     child: Container(
                       height: 44,
                       alignment: Alignment.center,
-                      child: const Icon(
+                      child: Icon(
                         Icons.backspace_outlined,
-                        color: Colors.white70,
+                        color: colors.textSecondary,
                         size: 22,
                       ),
                     ),
@@ -418,7 +423,7 @@ class _CountingOverlayState extends State<CountingOverlay> {
               child: Padding(
                 padding: const EdgeInsets.all(2),
                 child: Material(
-                  color: AppTheme.goldAccent.withValues(alpha: 0.3),
+                  color: colors.accentSubtle,
                   borderRadius: BorderRadius.circular(8),
                   child: InkWell(
                     borderRadius: BorderRadius.circular(8),
@@ -426,9 +431,9 @@ class _CountingOverlayState extends State<CountingOverlay> {
                     child: Container(
                       height: 44,
                       alignment: Alignment.center,
-                      child: const Icon(
+                      child: Icon(
                         Icons.check,
-                        color: AppTheme.goldAccent,
+                        color: colors.accent,
                         size: 24,
                       ),
                     ),
@@ -448,13 +453,14 @@ class _CountingOverlayState extends State<CountingOverlay> {
     required PlayingCard cutCard,
     required VoidCallback onSubmit,
   }) {
+    final colors = context.appColors;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
           title,
-          style: const TextStyle(
-            color: Colors.white,
+          style: TextStyle(
+            color: colors.textPrimary,
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
@@ -462,9 +468,9 @@ class _CountingOverlayState extends State<CountingOverlay> {
         const SizedBox(height: 12),
         _buildCardRow(cards, cutCard),
         const SizedBox(height: 12),
-        const Text(
+        Text(
           'How many points?',
-          style: TextStyle(color: Colors.white70, fontSize: 14),
+          style: TextStyle(color: colors.textSecondary, fontSize: 14),
         ),
         const SizedBox(height: 8),
         _buildNumberPad(onSubmit),
@@ -481,14 +487,15 @@ class _CountingOverlayState extends State<CountingOverlay> {
     required VoidCallback onContinue,
     required String buttonLabel,
   }) {
+    final colors = context.appColors;
     final isCorrect = guess == null || guess == breakdown.totalScore;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
           title,
-          style: const TextStyle(
-            color: Colors.white,
+          style: TextStyle(
+            color: colors.textPrimary,
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
@@ -502,13 +509,13 @@ class _CountingOverlayState extends State<CountingOverlay> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
               color: isCorrect
-                  ? Colors.green.withValues(alpha: 0.2)
-                  : Colors.amber.withValues(alpha: 0.2),
+                  ? colors.success.withValues(alpha: 0.15)
+                  : colors.warning.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
                 color: isCorrect
-                    ? Colors.green.withValues(alpha: 0.5)
-                    : Colors.amber.withValues(alpha: 0.5),
+                    ? colors.success.withValues(alpha: 0.5)
+                    : colors.warning.withValues(alpha: 0.5),
               ),
             ),
             child: Text(
@@ -516,7 +523,7 @@ class _CountingOverlayState extends State<CountingOverlay> {
                   ? 'Correct! $guess points'
                   : 'You said $guess, actual is ${breakdown.totalScore}',
               style: TextStyle(
-                color: isCorrect ? Colors.greenAccent : Colors.amberAccent,
+                color: isCorrect ? colors.success : colors.warning,
                 fontSize: 15,
                 fontWeight: FontWeight.bold,
               ),
@@ -529,7 +536,7 @@ class _CountingOverlayState extends State<CountingOverlay> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.black26,
+              color: colors.surfaceDim,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Column(
@@ -542,16 +549,16 @@ class _CountingOverlayState extends State<CountingOverlay> {
                         Expanded(
                           child: Text(
                             combo.description,
-                            style: const TextStyle(
-                              color: Colors.white70,
+                            style: TextStyle(
+                              color: colors.textSecondary,
                               fontSize: 13,
                             ),
                           ),
                         ),
                         Text(
                           '+${combo.points}',
-                          style: const TextStyle(
-                            color: AppTheme.goldAccent,
+                          style: TextStyle(
+                            color: colors.accent,
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
                           ),
@@ -559,14 +566,14 @@ class _CountingOverlayState extends State<CountingOverlay> {
                       ],
                     ),
                   ),
-                const Divider(color: Colors.white24, height: 16),
+                Divider(color: colors.divider, height: 16),
                 Row(
                   children: [
-                    const Expanded(
+                    Expanded(
                       child: Text(
                         'Total',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: colors.textPrimary,
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
                         ),
@@ -574,8 +581,8 @@ class _CountingOverlayState extends State<CountingOverlay> {
                     ),
                     Text(
                       '${breakdown.totalScore}',
-                      style: const TextStyle(
-                        color: AppTheme.goldAccent,
+                      style: TextStyle(
+                        color: colors.accent,
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
@@ -589,12 +596,12 @@ class _CountingOverlayState extends State<CountingOverlay> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.black26,
+              color: colors.surfaceDim,
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Text(
+            child: Text(
               'No points — 0',
-              style: TextStyle(color: Colors.white54, fontSize: 14),
+              style: TextStyle(color: colors.textTertiary, fontSize: 14),
             ),
           ),
         ],
@@ -602,8 +609,8 @@ class _CountingOverlayState extends State<CountingOverlay> {
         ElevatedButton(
           onPressed: onContinue,
           style: ElevatedButton.styleFrom(
-            backgroundColor: AppTheme.feltGreen,
-            foregroundColor: Colors.white,
+            backgroundColor: colors.buttonPrimary,
+            foregroundColor: colors.accentOnSurface,
             padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 10),
           ),
           child: Text(buttonLabel),

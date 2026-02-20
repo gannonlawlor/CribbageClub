@@ -1,4 +1,4 @@
-import '../../config/theme.dart';
+import '../../config/constants.dart';
 
 /// Responsive card sizing based on screen width.
 /// Use via LayoutBuilder or MediaQuery to get the available width.
@@ -10,15 +10,15 @@ class CardDimensions {
 
   // Hand cards: ~22% screen width
   double get handCardWidth => screenWidth * 0.22;
-  double get handCardHeight => handCardWidth / AppTheme.cardAspectRatio;
+  double get handCardHeight => handCardWidth / AppConstants.cardAspectRatio;
 
   // Play/cut/crib cards: 85% of hand card size
   double get playCardWidth => handCardWidth * 0.85;
-  double get playCardHeight => playCardWidth / AppTheme.cardAspectRatio;
+  double get playCardHeight => playCardWidth / AppConstants.cardAspectRatio;
 
   // Opponent/crib cards (face-down): ~14% screen width
   double get smallCardWidth => screenWidth * 0.14;
-  double get smallCardHeight => smallCardWidth / AppTheme.cardAspectRatio;
+  double get smallCardHeight => smallCardWidth / AppConstants.cardAspectRatio;
 
   // Overlap ratios
   double get playOverlap => 0.50; // 50% overlap for play area

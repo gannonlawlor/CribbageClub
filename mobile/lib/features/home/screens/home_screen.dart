@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../config/theme.dart';
+import '../../../config/theme/app_colors.dart';
 import '../../../core/auth/auth_provider.dart';
 import '../../../core/models/game_state.dart';
 import '../../../core/providers/notification_provider.dart';
@@ -28,6 +28,7 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.appColors;
     final auth = ref.watch(authProvider);
     final isCreating = ref.watch(_isCreatingGameProvider);
     final activeGames = ref.watch(_activeGamesProvider);
@@ -39,9 +40,9 @@ class HomeScreen extends ConsumerWidget {
           if (auth.isLoggedIn && auth.isGuest)
             TextButton(
               onPressed: () => context.go('/upgrade'),
-              child: const Text(
+              child: Text(
                 'Upgrade',
-                style: TextStyle(color: AppTheme.goldAccent),
+                style: TextStyle(color: colors.accent),
               ),
             ),
           if (auth.isLoggedIn && auth.username != null)
@@ -54,7 +55,7 @@ class HomeScreen extends ConsumerWidget {
                       : null,
                   child: Text(
                     auth.username!,
-                    style: const TextStyle(color: AppTheme.goldAccent),
+                    style: TextStyle(color: colors.accent),
                   ),
                 ),
               ),
@@ -69,7 +70,7 @@ class HomeScreen extends ConsumerWidget {
               onPressed: () => context.go('/login'),
               icon: const Icon(Icons.login, size: 18),
               label: const Text('Log In'),
-              style: TextButton.styleFrom(foregroundColor: AppTheme.goldAccent),
+              style: TextButton.styleFrom(foregroundColor: colors.accent),
             ),
         ],
       ),
@@ -91,21 +92,21 @@ class HomeScreen extends ConsumerWidget {
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppTheme.goldAccent),
-                          color: AppTheme.goldAccent.withValues(alpha: 0.1),
+                          border: Border.all(color: colors.accent),
+                          color: colors.accent.withValues(alpha: 0.1),
                         ),
                         child: Row(
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.info_outline,
-                              color: AppTheme.goldAccent,
+                              color: colors.accent,
                             ),
                             const SizedBox(width: 12),
-                            const Expanded(
+                            Expanded(
                               child: Text(
                                 'Create an account to save your progress and stats.',
                                 style: TextStyle(
-                                  color: Colors.white70,
+                                  color: colors.textSecondary,
                                   fontSize: 13,
                                 ),
                               ),
@@ -113,10 +114,10 @@ class HomeScreen extends ConsumerWidget {
                             const SizedBox(width: 8),
                             TextButton(
                               onPressed: () => context.go('/upgrade'),
-                              child: const Text(
+                              child: Text(
                                 'Upgrade',
                                 style: TextStyle(
-                                  color: AppTheme.goldAccent,
+                                  color: colors.accent,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -135,10 +136,10 @@ class HomeScreen extends ConsumerWidget {
                           return Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
+                              Text(
                                 'Continue Game',
                                 style: TextStyle(
-                                  color: Colors.white,
+                                  color: colors.textPrimary,
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -162,10 +163,10 @@ class HomeScreen extends ConsumerWidget {
                         error: (_, _) => const SizedBox.shrink(),
                       ),
 
-                    const Icon(
+                    Icon(
                       Icons.style,
                       size: 100,
-                      color: AppTheme.goldAccent,
+                      color: colors.accent,
                     ),
                     const SizedBox(height: 32),
                     SizedBox(
@@ -229,9 +230,9 @@ class HomeScreen extends ConsumerWidget {
                           ],
                         ),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.white,
-                          side: const BorderSide(
-                            color: Colors.orange,
+                          foregroundColor: colors.textPrimary,
+                          side: BorderSide(
+                            color: colors.warning,
                             width: 1.5,
                           ),
                         ),
@@ -249,8 +250,8 @@ class HomeScreen extends ConsumerWidget {
                           style: TextStyle(fontSize: 18),
                         ),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.white,
-                          side: const BorderSide(color: Colors.white38),
+                          foregroundColor: colors.textPrimary,
+                          side: BorderSide(color: colors.textDisabled),
                         ),
                       ),
                     ),
@@ -266,7 +267,7 @@ class HomeScreen extends ConsumerWidget {
                           icon: const Icon(Icons.history, size: 18),
                           label: const Text('History'),
                           style: TextButton.styleFrom(
-                            foregroundColor: Colors.white70,
+                            foregroundColor: colors.textSecondary,
                           ),
                         ),
                         const SizedBox(width: 16),
@@ -275,7 +276,7 @@ class HomeScreen extends ConsumerWidget {
                           icon: const Icon(Icons.leaderboard, size: 18),
                           label: const Text('Leaderboard'),
                           style: TextButton.styleFrom(
-                            foregroundColor: Colors.white70,
+                            foregroundColor: colors.textSecondary,
                           ),
                         ),
                       ],
@@ -291,9 +292,10 @@ class HomeScreen extends ConsumerWidget {
   }
 
   void _showDifficultyPicker(BuildContext context, WidgetRef ref) {
+    final colors = context.appColors;
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppTheme.feltGreenDark,
+      backgroundColor: colors.surfacePrimary,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -301,12 +303,12 @@ class HomeScreen extends ConsumerWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Padding(
-              padding: EdgeInsets.all(16),
+            Padding(
+              padding: const EdgeInsets.all(16),
               child: Text(
                 'Choose Difficulty',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: colors.textPrimary,
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                 ),
@@ -347,9 +349,10 @@ class HomeScreen extends ConsumerWidget {
   }
 
   void _showOnlineOptions(BuildContext context, WidgetRef ref) {
+    final colors = context.appColors;
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppTheme.feltGreenDark,
+      backgroundColor: colors.surfacePrimary,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -357,64 +360,64 @@ class HomeScreen extends ConsumerWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Padding(
-              padding: EdgeInsets.all(16),
+            Padding(
+              padding: const EdgeInsets.all(16),
               child: Text(
                 'Play Online',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: colors.textPrimary,
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                 ),
               ),
             ),
             ListTile(
-              leading: const Icon(Icons.flash_on, color: AppTheme.goldAccent),
-              title: const Text('Quick Game',
-                  style: TextStyle(color: Colors.white)),
-              subtitle: const Text('Find a match instantly',
-                  style: TextStyle(color: Colors.white54, fontSize: 12)),
+              leading: Icon(Icons.flash_on, color: colors.accent),
+              title: Text('Quick Game',
+                  style: TextStyle(color: colors.textPrimary)),
+              subtitle: Text('Find a match instantly',
+                  style: TextStyle(color: colors.textTertiary, fontSize: 12)),
               trailing:
-                  const Icon(Icons.chevron_right, color: Colors.white38),
+                  Icon(Icons.chevron_right, color: colors.textDisabled),
               onTap: () {
                 Navigator.pop(ctx);
                 _quickMatch(context, ref);
               },
             ),
             ListTile(
-              leading: const Icon(Icons.list, color: AppTheme.goldAccent),
-              title: const Text('Browse Lobbies',
-                  style: TextStyle(color: Colors.white)),
-              subtitle: const Text('Join an open lobby',
-                  style: TextStyle(color: Colors.white54, fontSize: 12)),
+              leading: Icon(Icons.list, color: colors.accent),
+              title: Text('Browse Lobbies',
+                  style: TextStyle(color: colors.textPrimary)),
+              subtitle: Text('Join an open lobby',
+                  style: TextStyle(color: colors.textTertiary, fontSize: 12)),
               trailing:
-                  const Icon(Icons.chevron_right, color: Colors.white38),
+                  Icon(Icons.chevron_right, color: colors.textDisabled),
               onTap: () {
                 Navigator.pop(ctx);
                 _browseLobbies(context, ref);
               },
             ),
             ListTile(
-              leading: const Icon(Icons.lock, color: AppTheme.goldAccent),
-              title: const Text('Create Private Game',
-                  style: TextStyle(color: Colors.white)),
-              subtitle: const Text('Invite a friend by code',
-                  style: TextStyle(color: Colors.white54, fontSize: 12)),
+              leading: Icon(Icons.lock, color: colors.accent),
+              title: Text('Create Private Game',
+                  style: TextStyle(color: colors.textPrimary)),
+              subtitle: Text('Invite a friend by code',
+                  style: TextStyle(color: colors.textTertiary, fontSize: 12)),
               trailing:
-                  const Icon(Icons.chevron_right, color: Colors.white38),
+                  Icon(Icons.chevron_right, color: colors.textDisabled),
               onTap: () {
                 Navigator.pop(ctx);
                 _createPrivateGame(context, ref);
               },
             ),
             ListTile(
-              leading: const Icon(Icons.vpn_key, color: AppTheme.goldAccent),
-              title: const Text('Join by Code',
-                  style: TextStyle(color: Colors.white)),
-              subtitle: const Text('Enter an invite code',
-                  style: TextStyle(color: Colors.white54, fontSize: 12)),
+              leading: Icon(Icons.vpn_key, color: colors.accent),
+              title: Text('Join by Code',
+                  style: TextStyle(color: colors.textPrimary)),
+              subtitle: Text('Enter an invite code',
+                  style: TextStyle(color: colors.textTertiary, fontSize: 12)),
               trailing:
-                  const Icon(Icons.chevron_right, color: Colors.white38),
+                  Icon(Icons.chevron_right, color: colors.textDisabled),
               onTap: () {
                 Navigator.pop(ctx);
                 _showJoinByCodeDialog(context, ref);
@@ -506,29 +509,30 @@ class HomeScreen extends ConsumerWidget {
     final authed = await AuthRequired.ensureAuthenticated(context, ref);
     if (!authed || !context.mounted) return;
 
+    final colors = context.appColors;
     final codeController = TextEditingController();
     if (!context.mounted) return;
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        backgroundColor: AppTheme.feltGreenDark,
-        title: const Text(
+        backgroundColor: colors.surfacePrimary,
+        title: Text(
           'Join by Code',
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(color: colors.textPrimary),
         ),
         content: TextField(
           controller: codeController,
           autofocus: true,
           textCapitalization: TextCapitalization.characters,
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             hintText: 'Enter invite code',
-            hintStyle: TextStyle(color: Colors.white38),
-            border: OutlineInputBorder(),
+            hintStyle: TextStyle(color: colors.textDisabled),
+            border: const OutlineInputBorder(),
             filled: true,
-            fillColor: Colors.white10,
+            fillColor: colors.surfaceDim,
           ),
-          style: const TextStyle(
-            color: Colors.white,
+          style: TextStyle(
+            color: colors.textPrimary,
             fontSize: 20,
             letterSpacing: 4,
           ),
@@ -598,14 +602,15 @@ class _DifficultyTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     return ListTile(
-      leading: Icon(icon, color: AppTheme.goldAccent),
-      title: Text(label, style: const TextStyle(color: Colors.white)),
+      leading: Icon(icon, color: colors.accent),
+      title: Text(label, style: TextStyle(color: colors.textPrimary)),
       subtitle: Text(
         description,
-        style: const TextStyle(color: Colors.white54, fontSize: 12),
+        style: TextStyle(color: colors.textTertiary, fontSize: 12),
       ),
-      trailing: const Icon(Icons.chevron_right, color: Colors.white38),
+      trailing: Icon(Icons.chevron_right, color: colors.textDisabled),
       onTap: onTap,
     );
   }
@@ -614,6 +619,7 @@ class _DifficultyTile extends StatelessWidget {
 class _FriendsButton extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.appColors;
     final notifCount = ref.watch(notificationCountProvider);
     final total = notifCount.whenOrNull(data: (n) => n.total) ?? 0;
 
@@ -622,11 +628,11 @@ class _FriendsButton extends ConsumerWidget {
       icon: Badge(
         isLabelVisible: total > 0,
         label: Text('$total', style: const TextStyle(fontSize: 10)),
-        backgroundColor: Colors.redAccent,
+        backgroundColor: colors.error,
         child: const Icon(Icons.people, size: 18),
       ),
       label: const Text('Friends'),
-      style: TextButton.styleFrom(foregroundColor: Colors.white70),
+      style: TextButton.styleFrom(foregroundColor: colors.textSecondary),
     );
   }
 }
@@ -638,6 +644,7 @@ class _ActiveGameTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.appColors;
     final auth = ref.watch(authProvider);
     final playerId = auth.userId ?? '';
     final playerIndex = game.players.indexWhere((p) => p.id == playerId);
@@ -649,7 +656,7 @@ class _ActiveGameTile extends ConsumerWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Material(
-        color: Colors.white10,
+        color: colors.surfaceDim,
         borderRadius: BorderRadius.circular(8),
         child: InkWell(
           borderRadius: BorderRadius.circular(8),
@@ -658,9 +665,9 @@ class _ActiveGameTile extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.play_arrow,
-                  color: AppTheme.goldAccent,
+                  color: colors.accent,
                   size: 20,
                 ),
                 const SizedBox(width: 12),
@@ -670,22 +677,22 @@ class _ActiveGameTile extends ConsumerWidget {
                     children: [
                       Text(
                         'vs ${opponent.name}',
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: colors.textPrimary,
                           fontSize: 14,
                         ),
                       ),
                       Text(
                         '${game.stage.displayName} — ${player.score} to ${opponent.score}',
-                        style: const TextStyle(
-                          color: Colors.white54,
+                        style: TextStyle(
+                          color: colors.textTertiary,
                           fontSize: 12,
                         ),
                       ),
                     ],
                   ),
                 ),
-                const Icon(Icons.chevron_right, color: Colors.white38),
+                Icon(Icons.chevron_right, color: colors.textDisabled),
               ],
             ),
           ),

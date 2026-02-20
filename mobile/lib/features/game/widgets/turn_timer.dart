@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../../../config/theme/app_colors.dart';
 
 class TurnTimer extends StatefulWidget {
   final DateTime? turnStartedAt;
@@ -99,26 +100,27 @@ class _TurnTimerState extends State<TurnTimer> {
     }
   }
 
-  Color _getColor() {
-    if (!widget.isActivePlayer) return Colors.white38;
-    if (_inTimeBank) return Colors.red;
+  Color _getColor(AppColors colors) {
+    if (!widget.isActivePlayer) return colors.textDisabled;
+    if (_inTimeBank) return colors.error;
     final seconds = _remainingMs / 1000;
-    if (seconds <= 5) return Colors.red;
-    if (seconds <= 15) return Colors.amber;
-    return Colors.green;
+    if (seconds <= 5) return colors.error;
+    if (seconds <= 15) return colors.warning;
+    return colors.success;
   }
 
   @override
   Widget build(BuildContext context) {
     if (!widget.isTimed) return const SizedBox.shrink();
 
+    final colors = context.appColors;
     final seconds = (_remainingMs / 1000).ceil().clamp(0, 999);
     final minutes = seconds ~/ 60;
     final secs = seconds % 60;
     final displayTime = minutes > 0
         ? '$minutes:${secs.toString().padLeft(2, '0')}'
         : '${secs}s';
-    final color = _getColor();
+    final color = _getColor(colors);
     final label = _inTimeBank ? 'BANK' : '';
 
     return Container(
@@ -126,12 +128,12 @@ class _TurnTimerState extends State<TurnTimer> {
       decoration: BoxDecoration(
         color: widget.isActivePlayer
             ? color.withValues(alpha: 0.2)
-            : Colors.white.withValues(alpha: 0.05),
+            : colors.surfaceDim,
         borderRadius: BorderRadius.circular(6),
         border: Border.all(
           color: widget.isActivePlayer
               ? color.withValues(alpha: 0.6)
-              : Colors.white12,
+              : colors.divider,
           width: 1,
         ),
       ),

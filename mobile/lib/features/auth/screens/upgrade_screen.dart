@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../config/theme.dart';
+import '../../../config/theme/app_colors.dart';
 import '../../../core/auth/auth_provider.dart';
 import '../../../shared/widgets/loading_overlay.dart';
 
@@ -80,6 +80,7 @@ class _UpgradeScreenState extends ConsumerState<UpgradeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     final auth = ref.watch(authProvider);
 
     // Navigate home once upgrade succeeds (isGuest becomes false)
@@ -112,70 +113,70 @@ class _UpgradeScreenState extends ConsumerState<UpgradeScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.upgrade,
                       size: 64,
-                      color: AppTheme.goldAccent,
+                      color: colors.accent,
                     ),
                     const SizedBox(height: 16),
-                    const Text(
+                    Text(
                       'Upgrade Your Account',
                       style: TextStyle(
-                        color: Colors.white,
+                        color: colors.textPrimary,
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     const SizedBox(height: 8),
-                    const Text(
+                    Text(
                       'Save your progress and stats by creating a permanent account.',
-                      style: TextStyle(color: Colors.white70),
+                      style: TextStyle(color: colors.textSecondary),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 32),
                     TextFormField(
                       controller: _usernameController,
                       validator: _validateUsername,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: 'Username',
-                        border: OutlineInputBorder(),
+                        border: const OutlineInputBorder(),
                         filled: true,
-                        fillColor: Colors.white10,
+                        fillColor: colors.surfaceDim,
                       ),
-                      style: const TextStyle(color: Colors.white),
+                      style: TextStyle(color: colors.textPrimary),
                       textInputAction: TextInputAction.next,
                     ),
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _passwordController,
                       validator: _validatePassword,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: 'Password',
-                        border: OutlineInputBorder(),
+                        border: const OutlineInputBorder(),
                         filled: true,
-                        fillColor: Colors.white10,
+                        fillColor: colors.surfaceDim,
                       ),
-                      style: const TextStyle(color: Colors.white),
+                      style: TextStyle(color: colors.textPrimary),
                       obscureText: true,
                       textInputAction: TextInputAction.next,
                     ),
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _displayNameController,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: 'Display Name (optional)',
-                        border: OutlineInputBorder(),
+                        border: const OutlineInputBorder(),
                         filled: true,
-                        fillColor: Colors.white10,
+                        fillColor: colors.surfaceDim,
                       ),
-                      style: const TextStyle(color: Colors.white),
+                      style: TextStyle(color: colors.textPrimary),
                       onFieldSubmitted: (_) => _submit(),
                     ),
                     if (auth.error != null) ...[
                       const SizedBox(height: 12),
                       Text(
                         auth.error!,
-                        style: const TextStyle(color: Colors.redAccent),
+                        style: TextStyle(color: colors.error),
                         textAlign: TextAlign.center,
                       ),
                     ],

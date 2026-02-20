@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../config/theme.dart';
+import '../../../config/theme/app_colors.dart';
 import '../../../core/models/card.dart';
 import '../../../shared/utils/card_dimensions.dart';
 import 'card_widget.dart';
@@ -16,6 +16,7 @@ class PlayArea extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -26,13 +27,13 @@ class PlayArea extends StatelessWidget {
             key: ValueKey(peggingCount),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             decoration: BoxDecoration(
-              color: Colors.black38,
+              color: colors.surfaceDim,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(
               'Count: $peggingCount',
-              style: const TextStyle(
-                color: AppTheme.goldAccent,
+              style: TextStyle(
+                color: colors.accent,
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
               ),
@@ -49,10 +50,10 @@ class PlayArea extends StatelessWidget {
             if (playedCards.isEmpty) {
               return SizedBox(
                 height: cardH,
-                child: const Center(
+                child: Center(
                   child: Text(
                     'No cards played yet',
-                    style: TextStyle(color: Colors.white38, fontSize: 12),
+                    style: TextStyle(color: colors.textDisabled, fontSize: 12),
                   ),
                 ),
               );

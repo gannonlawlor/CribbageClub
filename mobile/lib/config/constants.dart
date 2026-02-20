@@ -23,4 +23,18 @@ class AppConstants {
   static const String userIdKey = 'user_id';
   static const String usernameKey = 'username';
   static const String isGuestKey = 'is_guest';
+
+  // Card dimensions
+  static const double cardAspectRatio = 2.5 / 3.5;
+
+  // Animation durations
+  static const Duration cardFlipDuration = Duration(milliseconds: 400);
+  static const Duration cardDealDuration = Duration(milliseconds: 300);
+  static const Duration cardPlayDuration = Duration(milliseconds: 250);
+  static const Duration scalBounceDuration = Duration(milliseconds: 200);
+  static const Duration cribStaggerDelay = Duration(milliseconds: 100);
+  static const Duration pegMovePerHole = Duration(milliseconds: 50);
+  static const Duration scorePopupDuration = Duration(milliseconds: 1800);
+  static const Duration stageTransitionDuration = Duration(milliseconds: 400);
+  static const Duration aiThinkingDelay = Duration(milliseconds: 200);
 }

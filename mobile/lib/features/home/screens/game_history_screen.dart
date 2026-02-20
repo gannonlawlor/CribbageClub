@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../config/theme.dart';
+import '../../../config/theme/app_colors.dart';
 import '../../../core/auth/auth_provider.dart';
 import '../../../core/models/game_state.dart';
 import '../../../core/models/local_game_record.dart';
@@ -46,7 +46,7 @@ class GameHistoryScreen extends ConsumerWidget {
                 return _PendingUploadSection(records: records);
               },
               loading: () => const SizedBox.shrink(),
-              error: (_, __) => const SizedBox.shrink(),
+              error: (_, _) => const SizedBox.shrink(),
             ),
 
             // Server game history (unified list)
@@ -121,10 +121,11 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     return Text(
       title,
-      style: const TextStyle(
-        color: Colors.white,
+      style: TextStyle(
+        color: colors.textPrimary,
         fontSize: 18,
         fontWeight: FontWeight.bold,
       ),
@@ -139,12 +140,13 @@ class _SectionEmpty extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 24),
         child: Text(
           message,
-          style: const TextStyle(color: Colors.white54, fontSize: 14),
+          style: TextStyle(color: colors.textTertiary, fontSize: 14),
           textAlign: TextAlign.center,
         ),
       ),
@@ -159,17 +161,18 @@ class _PendingUploadSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            const Icon(Icons.cloud_upload, color: Colors.white54, size: 16),
+            Icon(Icons.cloud_upload, color: colors.textTertiary, size: 16),
             const SizedBox(width: 6),
             Text(
               'Pending Upload (${records.length})',
-              style: const TextStyle(
-                color: Colors.white54,
+              style: TextStyle(
+                color: colors.textTertiary,
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
               ),
@@ -226,8 +229,9 @@ class _LocalGameRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     return Material(
-      color: Colors.white10,
+      color: colors.surfaceDim,
       borderRadius: BorderRadius.circular(8),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -235,7 +239,7 @@ class _LocalGameRow extends StatelessWidget {
           children: [
             Icon(
               record.isWin ? Icons.emoji_events : Icons.close,
-              color: record.isWin ? AppTheme.goldAccent : Colors.redAccent,
+              color: record.isWin ? colors.accent : colors.error,
               size: 24,
             ),
             const SizedBox(width: 12),
@@ -245,15 +249,15 @@ class _LocalGameRow extends StatelessWidget {
                 children: [
                   Text(
                     'vs AI (${record.difficulty})',
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: colors.textPrimary,
                       fontSize: 14,
                     ),
                   ),
                   Text(
                     '${record.playerScore} - ${record.opponentScore}  ·  ${_formatDate(record.completedAt)}',
-                    style: const TextStyle(
-                      color: Colors.white54,
+                    style: TextStyle(
+                      color: colors.textTertiary,
                       fontSize: 12,
                     ),
                   ),
@@ -261,10 +265,10 @@ class _LocalGameRow extends StatelessWidget {
               ),
             ),
             IconButton(
-              icon: const Icon(
+              icon: Icon(
                 Icons.analytics,
                 size: 20,
-                color: Colors.white38,
+                color: colors.textDisabled,
               ),
               tooltip: 'Analyze',
               padding: EdgeInsets.zero,
@@ -272,10 +276,10 @@ class _LocalGameRow extends StatelessWidget {
               onPressed: () => context.go('/analysis/${record.gameId}'),
             ),
             IconButton(
-              icon: const Icon(
+              icon: Icon(
                 Icons.replay,
                 size: 20,
-                color: Colors.white38,
+                color: colors.textDisabled,
               ),
               tooltip: 'Replay',
               padding: EdgeInsets.zero,
@@ -318,13 +322,14 @@ class _ServerGameRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     final playerIndex = game.players.indexWhere((p) => p.id == playerId);
     final player = playerIndex >= 0 ? game.players[playerIndex] : game.players[0];
     final opponent = game.players[playerIndex >= 0 ? 1 - playerIndex : 1];
     final isWinner = player.score > opponent.score;
 
     return Material(
-      color: Colors.white10,
+      color: colors.surfaceDim,
       borderRadius: BorderRadius.circular(8),
       child: InkWell(
         borderRadius: BorderRadius.circular(8),
@@ -335,7 +340,7 @@ class _ServerGameRow extends StatelessWidget {
             children: [
               Icon(
                 isWinner ? Icons.emoji_events : Icons.close,
-                color: isWinner ? AppTheme.goldAccent : Colors.redAccent,
+                color: isWinner ? colors.accent : colors.error,
                 size: 24,
               ),
               const SizedBox(width: 12),
@@ -345,15 +350,15 @@ class _ServerGameRow extends StatelessWidget {
                   children: [
                     Text(
                       'vs ${opponent.name}',
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: colors.textPrimary,
                         fontSize: 14,
                       ),
                     ),
                     Text(
                       '${player.score} - ${opponent.score}',
-                      style: const TextStyle(
-                        color: Colors.white54,
+                      style: TextStyle(
+                        color: colors.textTertiary,
                         fontSize: 12,
                       ),
                     ),
@@ -363,16 +368,16 @@ class _ServerGameRow extends StatelessWidget {
               Text(
                 isWinner ? 'Won' : 'Lost',
                 style: TextStyle(
-                  color: isWinner ? AppTheme.goldAccent : Colors.redAccent,
+                  color: isWinner ? colors.accent : colors.error,
                   fontWeight: FontWeight.bold,
                 ),
               ),
               const SizedBox(width: 8),
               IconButton(
-                icon: const Icon(
+                icon: Icon(
                   Icons.analytics,
                   size: 20,
-                  color: Colors.white38,
+                  color: colors.textDisabled,
                 ),
                 tooltip: 'Analyze',
                 padding: EdgeInsets.zero,
@@ -380,10 +385,10 @@ class _ServerGameRow extends StatelessWidget {
                 onPressed: () => context.go('/analysis/${game.gameId}'),
               ),
               IconButton(
-                icon: const Icon(
+                icon: Icon(
                   Icons.replay,
                   size: 20,
-                  color: Colors.white38,
+                  color: colors.textDisabled,
                 ),
                 tooltip: 'Replay',
                 padding: EdgeInsets.zero,

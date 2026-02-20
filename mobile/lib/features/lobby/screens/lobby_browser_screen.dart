@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../config/theme.dart';
+import '../../../config/theme/app_colors.dart';
 import '../../../core/auth/auth_provider.dart';
 import '../../../core/models/lobby.dart';
 import '../../../shared/widgets/loading_overlay.dart';
@@ -20,6 +20,7 @@ class LobbyBrowserScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.appColors;
     final lobbies = ref.watch(_publicLobbiesProvider);
     final isJoining = ref.watch(_isJoiningProvider);
 
@@ -48,28 +49,28 @@ class LobbyBrowserScreen extends ConsumerWidget {
                   child: lobbies.when(
                     data: (list) {
                       if (list.isEmpty) {
-                        return const Center(
+                        return Center(
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(
                                 Icons.search_off,
                                 size: 64,
-                                color: Colors.white38,
+                                color: colors.textDisabled,
                               ),
-                              SizedBox(height: 16),
+                              const SizedBox(height: 16),
                               Text(
                                 'No lobbies available',
                                 style: TextStyle(
-                                  color: Colors.white54,
+                                  color: colors.textTertiary,
                                   fontSize: 18,
                                 ),
                               ),
-                              SizedBox(height: 8),
+                              const SizedBox(height: 8),
                               Text(
                                 'Create one or try Quick Game!',
                                 style: TextStyle(
-                                  color: Colors.white38,
+                                  color: colors.textDisabled,
                                   fontSize: 14,
                                 ),
                               ),
@@ -104,7 +105,7 @@ class LobbyBrowserScreen extends ConsumerWidget {
                         children: [
                           Text(
                             'Failed to load lobbies',
-                            style: const TextStyle(color: Colors.redAccent),
+                            style: TextStyle(color: colors.error),
                           ),
                           const SizedBox(height: 8),
                           OutlinedButton(
@@ -201,19 +202,20 @@ class _LobbyTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     final creatorName =
         lobby.players.isNotEmpty ? lobby.players.first.name : 'Unknown';
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Material(
-        color: Colors.white10,
+        color: colors.surfaceDim,
         borderRadius: BorderRadius.circular(8),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Row(
             children: [
-              const Icon(Icons.people, color: AppTheme.goldAccent, size: 20),
+              Icon(Icons.people, color: colors.accent, size: 20),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -221,15 +223,15 @@ class _LobbyTile extends StatelessWidget {
                   children: [
                     Text(
                       lobby.name,
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: colors.textPrimary,
                         fontSize: 14,
                       ),
                     ),
                     Text(
                       'Created by $creatorName  \u2022  ${lobby.players.length}/${lobby.maxPlayers} players',
-                      style: const TextStyle(
-                        color: Colors.white54,
+                      style: TextStyle(
+                        color: colors.textTertiary,
                         fontSize: 12,
                       ),
                     ),
