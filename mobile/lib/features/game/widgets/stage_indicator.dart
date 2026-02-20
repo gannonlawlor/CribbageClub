@@ -7,6 +7,7 @@ class StageIndicator extends StatelessWidget {
   final GameStage stage;
   final bool isMyTurn;
   final bool isDealer;
+  final bool isLocalGame;
   final String? currentPlayerName;
   final int selectedCardCount;
 
@@ -15,6 +16,7 @@ class StageIndicator extends StatelessWidget {
     required this.stage,
     required this.isMyTurn,
     this.isDealer = false,
+    this.isLocalGame = false,
     this.currentPlayerName,
     this.selectedCardCount = 0,
   });
@@ -31,7 +33,7 @@ class StageIndicator extends StatelessWidget {
       case GameStage.cutting:
         return isMyTurn ? 'Tap to cut the deck' : 'Cutting the deck';
       case GameStage.pegging:
-        return isMyTurn ? 'Your turn to play' : 'Pegging';
+        return isMyTurn && !isLocalGame ? 'Your turn to play' : 'Pegging';
       case GameStage.counting:
         return isMyTurn ? 'Count your cards!' : 'Counting';
       case GameStage.gameOver:
