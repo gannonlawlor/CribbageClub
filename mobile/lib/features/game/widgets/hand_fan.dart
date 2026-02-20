@@ -21,13 +21,16 @@ class HandFan extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final sorted = CardUtils.sorted(cards);
-    if (sorted.isEmpty) return const SizedBox(height: 10);
 
     return LayoutBuilder(
       builder: (context, constraints) {
         final dims = CardDimensions(constraints.maxWidth);
         final cardW = dims.handCardWidth;
         final cardH = dims.handCardHeight;
+
+        if (sorted.isEmpty) {
+          return SizedBox(height: cardH + 12);
+        }
         final available = constraints.maxWidth;
         final visibleW = dims.handCardVisibleForCount(sorted.length, available);
         final stackWidth = dims.handStackWidthForCount(sorted.length, available);
@@ -70,13 +73,16 @@ class OpponentHand extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (cardCount <= 0) return const SizedBox(height: 10);
-
     return LayoutBuilder(
       builder: (context, constraints) {
         final dims = CardDimensions(constraints.maxWidth);
         final cardW = dims.smallCardWidth;
         final cardH = dims.smallCardHeight;
+
+        if (cardCount <= 0) {
+          return SizedBox(height: cardH);
+        }
+
         final stackWidth = dims.opponentStackWidth(cardCount);
         final startX = (constraints.maxWidth - stackWidth) / 2;
 

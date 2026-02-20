@@ -26,15 +26,16 @@ class GameControls extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (!isMyTurn && stage != GameStage.gameOver) {
-      return const SizedBox.shrink();
-    }
+    final buttons = (!isMyTurn && stage != GameStage.gameOver)
+        ? <Widget>[]
+        : _buildButtons(context);
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+    // Always reserve the same height so the layout doesn't shift.
+    return SizedBox(
+      height: 44,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
-        children: _buildButtons(context),
+        children: buttons,
       ),
     );
   }

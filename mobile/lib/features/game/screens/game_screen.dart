@@ -353,14 +353,20 @@ class GameScreen extends ConsumerWidget {
                                 ],
                               ),
 
-                              // Play area (if pegging)
-                              if (gs.stage == GameStage.pegging) ...[
-                                const SizedBox(height: 6),
-                                PlayArea(
+                              const SizedBox(height: 6),
+
+                              // Play area — always present to prevent layout shifts.
+                              // Hidden (but space-reserving) when not pegging.
+                              Visibility(
+                                visible: gs.stage == GameStage.pegging,
+                                maintainSize: true,
+                                maintainAnimation: true,
+                                maintainState: true,
+                                child: PlayArea(
                                   playedCards: gs.playedCards,
                                   peggingCount: gs.peggingCount,
                                 ),
-                              ],
+                              ),
 
                               // Game over
                               if (gs.stage == GameStage.gameOver)
