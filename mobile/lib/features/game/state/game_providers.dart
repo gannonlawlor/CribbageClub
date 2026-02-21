@@ -9,6 +9,7 @@ import '../../../core/models/game_response.dart';
 import '../../../core/models/game_state.dart';
 import '../../../core/models/websocket_messages.dart';
 import '../../../core/services/game_feedback_service.dart';
+import '../../../core/services/settings_provider.dart';
 import '../animation/game_animation_controller.dart';
 import 'local_game_notifier.dart';
 
@@ -339,7 +340,13 @@ final gameAnimationProvider = Provider.family<GameAnimationController, String>((
 // Feedback service (sound + haptics) per game
 final gameFeedbackServiceProvider =
     Provider.family<GameFeedbackService, String>((ref, gameId) {
-      return GameFeedbackService();
+      final settings = ref.watch(settingsProvider);
+      final service = GameFeedbackService(
+        soundEnabled: settings.soundEnabled,
+        hapticsEnabled: settings.hapticsEnabled,
+      );
+      ref.onDispose(() => service.dispose());
+      return service;
     });
 
 final gameNotifierProvider =

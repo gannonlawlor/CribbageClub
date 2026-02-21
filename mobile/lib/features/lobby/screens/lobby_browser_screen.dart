@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../config/theme/app_colors.dart';
 import '../../../core/auth/auth_provider.dart';
 import '../../../core/models/lobby.dart';
+import '../../../shared/utils/text_utils.dart';
 import '../../../shared/widgets/loading_overlay.dart';
 
 final _publicLobbiesProvider = FutureProvider.autoDispose<List<Lobby>>((
@@ -54,13 +55,13 @@ class LobbyBrowserScreen extends ConsumerWidget {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(
-                                Icons.search_off,
+                                Icons.meeting_room_outlined,
                                 size: 64,
                                 color: colors.textDisabled,
                               ),
                               const SizedBox(height: 16),
                               Text(
-                                'No lobbies available',
+                                'No open lobbies',
                                 style: TextStyle(
                                   color: colors.textTertiary,
                                   fontSize: 18,
@@ -68,7 +69,8 @@ class LobbyBrowserScreen extends ConsumerWidget {
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                'Create one or try Quick Game!',
+                                'Create a lobby or try Quick Game to find a match instantly.',
+                                textAlign: TextAlign.center,
                                 style: TextStyle(
                                   color: colors.textDisabled,
                                   fontSize: 14,
@@ -210,12 +212,23 @@ class _LobbyTile extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 8),
       child: Material(
         color: colors.surfaceDim,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Row(
             children: [
-              Icon(Icons.people, color: colors.accent, size: 20),
+              CircleAvatar(
+                radius: 18,
+                backgroundColor: colors.accent.withValues(alpha: 0.15),
+                child: Text(
+                  initials(creatorName),
+                  style: TextStyle(
+                    color: colors.accent,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -226,10 +239,11 @@ class _LobbyTile extends StatelessWidget {
                       style: TextStyle(
                         color: colors.textPrimary,
                         fontSize: 14,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                     Text(
-                      'Created by $creatorName  \u2022  ${lobby.players.length}/${lobby.maxPlayers} players',
+                      '${lobby.players.length}/${lobby.maxPlayers} players  \u2022  ${_timeAgo(lobby.createdAt)}',
                       style: TextStyle(
                         color: colors.textTertiary,
                         fontSize: 12,
@@ -251,5 +265,18 @@ class _LobbyTile extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _timeAgo(String isoDate) {
+    try {
+      final created = DateTime.parse(isoDate);
+      final diff = DateTime.now().difference(created);
+      if (diff.inSeconds < 60) return 'just now';
+      if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+      if (diff.inHours < 24) return '${diff.inHours}h ago';
+      return '${diff.inDays}d ago';
+    } catch (_) {
+      return '';
+    }
   }
 }

@@ -17,6 +17,7 @@ import '../features/lobby/screens/lobby_waiting_screen.dart';
 import '../features/puzzle/screens/puzzle_screen.dart';
 import '../features/profile/screens/profile_screen.dart';
 import '../features/replay/screens/replay_screen.dart';
+import '../features/settings/screens/settings_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final auth = ref.watch(authProvider);
@@ -102,6 +103,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/practice-puzzle',
         pageBuilder: (context, state) => const NoTransitionPage(child: PracticePuzzleScreen()),
+      ),
+      GoRoute(
+        path: '/settings',
+        pageBuilder: (context, state) => const NoTransitionPage(child: SettingsScreen()),
       ),
     ],
     errorBuilder: (context, state) =>

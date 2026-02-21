@@ -264,6 +264,14 @@ class RestClient {
         .toList();
   }
 
+  Future<List<FriendRequestInfo>> getOutgoingFriendRequests() async {
+    final response = await _dio.get('/api/friends/requests/outgoing');
+    final list = response.data as List<dynamic>;
+    return list
+        .map((json) => FriendRequestInfo.fromJson(json as Map<String, dynamic>))
+        .toList();
+  }
+
   Future<FriendInfo> acceptFriendRequest(String id) async {
     final response = await _dio.post('/api/friends/requests/$id/accept');
     return FriendInfo.fromJson(response.data as Map<String, dynamic>);

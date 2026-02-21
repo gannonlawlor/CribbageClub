@@ -31,6 +31,12 @@ dependencies:
   freezed_annotation: ^2.4.4
   json_annotation: ^4.9.0
 
+  # Audio
+  audioplayers: ^6.1.0
+
+  # Sharing
+  share_plus: ^10.0.0
+
   # Local storage
   shared_preferences: ^2.3.5
   rust_lib_cribbage_club:
@@ -50,3 +56,5 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/sounds/

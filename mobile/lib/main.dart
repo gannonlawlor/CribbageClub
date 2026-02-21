@@ -5,9 +5,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart' show ExternalLibrary;
 import 'app.dart';
+import 'config/theme/theme_provider.dart';
 import 'core/auth/auth_provider.dart';
 import 'core/auth/auth_service.dart';
 import 'core/services/local_game_history_provider.dart';
+import 'core/services/settings_provider.dart';
+import 'core/services/settings_service.dart';
 import 'src/rust/frb_generated.dart';
 
 Future<void> main() async {
@@ -25,7 +28,23 @@ Future<void> main() async {
   final savedAuth = await authService.loadSavedAuth();
   setInitialAuthData(savedAuth);
 
-  final container = ProviderContainer();
+  // Load persisted settings before runApp to prevent flash of wrong theme
+  final settingsService = SettingsService();
+  final saved = await settingsService.loadAll();
+  final initialTheme = saved.themeMode == 'dark'
+      ? AppThemeMode.classicDark
+      : AppThemeMode.classicLight;
+  setInitialSettings(SettingsState(
+    soundEnabled: saved.soundEnabled,
+    hapticsEnabled: saved.hapticsEnabled,
+    themeMode: initialTheme,
+  ));
+
+  final container = ProviderContainer(
+    overrides: [
+      themeProvider.overrideWith((_) => initialTheme),
+    ],
+  );
 
   // If already logged in from a previous session, upload any remaining local games
   if (savedAuth != null) {
