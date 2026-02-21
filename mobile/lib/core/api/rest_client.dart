@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import '../../config/constants.dart';
 import '../auth/auth_service.dart';
 import '../models/auth.dart';
@@ -45,6 +46,8 @@ class RestClient {
           handler.next(options);
         },
         onError: (error, handler) {
+          debugPrint('[REST] ${error.requestOptions.method} ${error.requestOptions.path} '
+              '→ ${error.response?.statusCode ?? 'no response'}: ${error.message}');
           if (error.response?.statusCode == 401) {
             final path = error.requestOptions.path;
             if (!path.startsWith('/api/auth/')) {

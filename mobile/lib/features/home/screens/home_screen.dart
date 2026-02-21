@@ -467,6 +467,7 @@ class HomeScreen extends ConsumerWidget {
         }
       }
     } catch (e) {
+      debugPrint('[Home] Quick match failed: $e');
       if (context.mounted) {
         ScaffoldMessenger.of(
           context,
@@ -499,6 +500,7 @@ class HomeScreen extends ConsumerWidget {
         context.go('/lobby/${lobby.id}');
       }
     } catch (e) {
+      debugPrint('[Home] Failed to create lobby: $e');
       if (context.mounted) {
         ScaffoldMessenger.of(
           context,
@@ -580,6 +582,7 @@ class HomeScreen extends ConsumerWidget {
         }
       }
     } catch (e) {
+      debugPrint('[Home] Failed to join by code: $e');
       if (homeContext.mounted) {
         ScaffoldMessenger.of(
           homeContext,

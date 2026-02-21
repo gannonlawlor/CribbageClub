@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:stomp_dart_client/stomp_dart_client.dart';
 import '../../config/constants.dart';
 import '../auth/auth_service.dart';
@@ -82,12 +83,15 @@ class WebSocketClient {
           onConnect();
         },
         onStompError: (frame) {
+          debugPrint('[WebSocket] STOMP error: ${frame.body}');
           onError(frame);
         },
         onWebSocketError: (error) {
+          debugPrint('[WebSocket] WebSocket error: $error');
           _handleDisconnect();
         },
         onDisconnect: (frame) {
+          debugPrint('[WebSocket] Disconnected');
           _handleDisconnect();
         },
       ),
@@ -110,12 +114,14 @@ class WebSocketClient {
 
   void _scheduleReconnect() {
     if (_reconnectAttempts >= _maxReconnectAttempts) {
+      debugPrint('[WebSocket] Max reconnect attempts reached, giving up');
       _setStatus(ConnectionStatus.failed);
       return;
     }
 
     _setStatus(ConnectionStatus.reconnecting);
     _reconnectAttempts++;
+    debugPrint('[WebSocket] Reconnect attempt $_reconnectAttempts/$_maxReconnectAttempts');
 
     // Exponential backoff: 1s, 2s, 4s, 8s, 16s, 30s, 30s...
     final delaySeconds = (1 << (_reconnectAttempts - 1)).clamp(

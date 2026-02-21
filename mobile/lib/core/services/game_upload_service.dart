@@ -1,4 +1,4 @@
-import 'dart:developer';
+import 'package:flutter/foundation.dart';
 
 import '../api/rest_client.dart';
 import '../models/import_games.dart';
@@ -33,13 +33,13 @@ class GameUploadService {
         await _historyService.clearUploadedGames(idsToRemove);
       }
 
-      log(
-        'Game upload complete: ${response.imported.length} imported, '
+      debugPrint(
+        '[GameUpload] Complete: ${response.imported.length} imported, '
         '${response.duplicates.length} duplicates, '
         '${response.errors.length} errors',
       );
     } catch (e) {
-      log('Failed to upload local games: $e');
+      debugPrint('[GameUpload] Failed to upload local games: $e');
     }
   }
 
@@ -66,7 +66,7 @@ class GameUploadService {
         await _historyService.clearUploadedGames(idsToRemove);
       }
     } catch (e) {
-      log('Failed to upload game $gameId: $e');
+      debugPrint('[GameUpload] Failed to upload game $gameId: $e');
     }
   }
 }

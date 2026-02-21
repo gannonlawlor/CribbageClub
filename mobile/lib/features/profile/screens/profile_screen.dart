@@ -240,6 +240,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         );
       }
     } catch (e) {
+      debugPrint('[Profile] Failed to send friend request to ${p.username}: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to send request: $e')),
@@ -264,6 +265,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         }
       }
     } catch (e) {
+      debugPrint('[Profile] Failed to accept friend request from ${p.username}: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to accept request: $e')),

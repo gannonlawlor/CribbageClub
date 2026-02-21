@@ -218,6 +218,7 @@ class _FriendTile extends ConsumerWidget {
           await restClient.removeFriend(friend.friendshipId);
           ref.invalidate(_friendsProvider);
         } catch (e) {
+          debugPrint('[Friends] Failed to remove friend: $e');
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text('Failed to remove friend: $e')),
@@ -341,6 +342,7 @@ class _FriendTile extends ConsumerWidget {
         context.go('/lobby/${lobby.id}');
       }
     } catch (e) {
+      debugPrint('[Friends] Failed to create challenge: $e');
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to create challenge: $e')),
@@ -562,6 +564,7 @@ class _FriendRequestTile extends ConsumerWidget {
       ref.invalidate(_friendsProvider);
       ref.invalidate(notificationCountProvider);
     } catch (e) {
+      debugPrint('[Friends] Failed to accept friend request: $e');
       if (context.mounted) {
         ScaffoldMessenger.of(
           context,
@@ -577,6 +580,7 @@ class _FriendRequestTile extends ConsumerWidget {
       ref.invalidate(_incomingRequestsProvider);
       ref.invalidate(notificationCountProvider);
     } catch (e) {
+      debugPrint('[Friends] Failed to decline friend request: $e');
       if (context.mounted) {
         ScaffoldMessenger.of(
           context,
@@ -724,6 +728,7 @@ class _ChallengeTile extends ConsumerWidget {
         }
       }
     } catch (e) {
+      debugPrint('[Friends] Failed to accept challenge ${challenge.id}: $e');
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to accept challenge: $e')),
@@ -739,6 +744,7 @@ class _ChallengeTile extends ConsumerWidget {
       ref.invalidate(_incomingChallengesProvider);
       ref.invalidate(notificationCountProvider);
     } catch (e) {
+      debugPrint('[Friends] Failed to decline challenge ${challenge.id}: $e');
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to decline challenge: $e')),
@@ -960,6 +966,7 @@ class _SearchResultTile extends ConsumerWidget {
         ).showSnackBar(const SnackBar(content: Text('Friend request sent!')));
       }
     } catch (e) {
+      debugPrint('[Friends] Failed to send friend request to ${result.username}: $e');
       if (context.mounted) {
         ScaffoldMessenger.of(
           context,

@@ -221,6 +221,7 @@ class _PuzzleScreenState extends ConsumerState<PuzzleScreen> {
         _submitting = false;
       });
     } catch (e) {
+      debugPrint('[Puzzle] Failed to submit puzzle solution: $e');
       setState(() => _submitting = false);
       if (mounted) {
         ScaffoldMessenger.of(

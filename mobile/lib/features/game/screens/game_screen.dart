@@ -744,6 +744,7 @@ class GameScreen extends ConsumerWidget {
           context.go('/game/${gameState.gameId}');
         }
       } catch (e) {
+        debugPrint('[Game] Failed to create AI game: $e');
         if (context.mounted) {
           ScaffoldMessenger.of(
             context,
