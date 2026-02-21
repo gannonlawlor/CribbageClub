@@ -113,10 +113,11 @@ Manual providers (no riverpod_generator — incompatible with Dart 3.11 analyzer
 | Game replay | ~70% | Step-through playback, speed control |
 | Daily puzzle | ~85% | Deterministic seeding, streak tracking |
 | Game history | ~90% | Local + server, upload sync |
-| Friends | ~60% | Skeleton UI, REST integration |
-| Lobbies | ~10% | Minimal waiting room |
-| Leaderboard | ~40% | Basic list display |
-| Sound/haptics | ~20% | SystemSound only, no custom audio |
+| Friends | ~80% | Avatars, online dots, outgoing requests, notification badge, challenge button |
+| Lobbies | ~70% | Browser with avatars/time ago, waiting room with share/player slots |
+| Leaderboard | ~80% | Top-3 podium, "My Rank" card, win streaks, rich tiles |
+| Sound/haptics | ~70% | audioplayers with per-event WAV files, settings toggles |
+| Settings | ~80% | Dark mode, sound, haptics toggles; SharedPreferences persistence |
 
 ## Build Notes
 
