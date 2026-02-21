@@ -402,18 +402,19 @@ class GameScreen extends ConsumerWidget {
 
                               const SizedBox(height: 6),
 
-                              // Play area — always present to prevent layout shifts.
-                              // Hidden (but space-reserving) when not pegging.
-                              Visibility(
-                                visible: gs.stage == GameStage.pegging,
-                                maintainSize: true,
-                                maintainAnimation: true,
-                                maintainState: true,
-                                child: PlayArea(
-                                  playedCards: gs.playedCards,
-                                  peggingCount: gs.peggingCount,
+                              // Play area — space-reserving when not pegging,
+                              // but fully hidden during game over to avoid overflow.
+                              if (gs.stage != GameStage.gameOver)
+                                Visibility(
+                                  visible: gs.stage == GameStage.pegging,
+                                  maintainSize: true,
+                                  maintainAnimation: true,
+                                  maintainState: true,
+                                  child: PlayArea(
+                                    playedCards: gs.playedCards,
+                                    peggingCount: gs.peggingCount,
+                                  ),
                                 ),
-                              ),
 
                               // Game over
                               if (gs.stage == GameStage.gameOver)
@@ -693,20 +694,20 @@ class GameScreen extends ConsumerWidget {
     }
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Column(
         children: [
           Icon(
             didWin ? Icons.emoji_events : Icons.sentiment_dissatisfied,
-            size: 40,
+            size: 32,
             color: didWin ? colors.accent : colors.textDisabled,
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
           Text(
             didWin ? 'You Win!' : 'You Lose',
             style: TextStyle(
               color: didWin ? colors.accent : colors.textSecondary,
-              fontSize: 24,
+              fontSize: 22,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -734,7 +735,7 @@ class GameScreen extends ConsumerWidget {
               ),
             ),
           if (forfeit == null && (handCounts.isNotEmpty || cribCounts.isNotEmpty)) ...[
-            const SizedBox(height: 6),
+            const SizedBox(height: 4),
             ...handCounts.reversed
                 .take(2)
                 .map(
@@ -753,7 +754,7 @@ class GameScreen extends ConsumerWidget {
                   ),
                 ),
           ],
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -773,7 +774,7 @@ class GameScreen extends ConsumerWidget {
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [

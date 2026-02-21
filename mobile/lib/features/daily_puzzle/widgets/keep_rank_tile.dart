@@ -40,7 +40,7 @@ class KeepRankTile extends StatelessWidget {
       margin: const EdgeInsets.symmetric(vertical: 4),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: bgColor ?? Colors.white.withValues(alpha: 0.05),
+        color: bgColor ?? colors.surfaceDim,
         borderRadius: BorderRadius.circular(8),
         border: borderColor != null
             ? Border.all(color: borderColor, width: 1.5)
