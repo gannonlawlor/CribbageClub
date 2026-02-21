@@ -301,7 +301,7 @@ class _CountingOverlayState extends State<CountingOverlay> {
                   backgroundColor: colors.surfaceDim,
                   foregroundColor: colors.textPrimary,
                 ),
-                child: const Text('Count for me'),
+                child: const Text('Count'),
               ),
             ),
             const SizedBox(width: 12),

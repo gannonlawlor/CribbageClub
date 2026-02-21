@@ -47,10 +47,11 @@ final analysisProvider = FutureProvider.family
         state = (await restClient.getGameState(gameId)).gameState;
       }
 
-      // 4. Yield a frame so the loading UI renders before blocking FFI call
-      await Future.delayed(Duration.zero);
+      // 4. Yield multiple frames so the loading UI fully renders before blocking FFI call.
+      // Duration.zero only schedules a microtask (before paint); we need actual frames.
+      await Future.delayed(const Duration(milliseconds: 100));
 
-      // 5. Compute on-device
+      // 5. Compute on-device (synchronous FFI — blocks main thread)
       final analysis = LocalAnalysisService.analyzeGame(gameId, state.history);
 
       // 6. Cache locally

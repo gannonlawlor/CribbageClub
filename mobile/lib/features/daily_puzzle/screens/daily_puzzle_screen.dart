@@ -99,6 +99,7 @@ class _ProgressDots extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -110,10 +111,10 @@ class _ProgressDots extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: keeps[i] != null
-                  ? Colors.white.withValues(alpha: 0.6)
-                  : Colors.white.withValues(alpha: 0.2),
+                  ? colors.textSecondary
+                  : colors.divider,
               border: i == current
-                  ? Border.all(color: Colors.white, width: 1.5)
+                  ? Border.all(color: colors.textPrimary, width: 1.5)
                   : null,
             ),
           ),

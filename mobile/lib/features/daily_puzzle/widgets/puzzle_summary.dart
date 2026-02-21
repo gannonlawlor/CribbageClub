@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../config/theme/app_colors.dart';
 import '../../../core/models/card.dart';
 import '../../game/widgets/card_widget.dart';
 import '../models/daily_puzzle.dart';
@@ -64,6 +65,7 @@ class _PuzzleSummaryState extends State<PuzzleSummary> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     final dateStr = _formatDate(widget.puzzleSet.date);
 
     return Column(
@@ -74,7 +76,7 @@ class _PuzzleSummaryState extends State<PuzzleSummary> {
           child: Row(
             children: [
               IconButton(
-                icon: const Icon(Icons.arrow_back, color: Colors.white),
+                icon: Icon(Icons.arrow_back, color: colors.textPrimary),
                 onPressed: widget.onBackToHome,
               ),
               const SizedBox(width: 8),
@@ -82,18 +84,18 @@ class _PuzzleSummaryState extends State<PuzzleSummary> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Daily Challenge',
                       style: TextStyle(
-                        color: Colors.white,
+                        color: colors.textPrimary,
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     Text(
                       dateStr,
-                      style: const TextStyle(
-                        color: Colors.white54,
+                      style: TextStyle(
+                        color: colors.textTertiary,
                         fontSize: 14,
                       ),
                     ),
@@ -152,8 +154,8 @@ class _PuzzleSummaryState extends State<PuzzleSummary> {
                   icon: const Icon(Icons.share, size: 18),
                   label: const Text('Share'),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.white,
-                    side: const BorderSide(color: Colors.white38),
+                    foregroundColor: colors.textPrimary,
+                    side: BorderSide(color: colors.divider),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
                 ),
@@ -219,6 +221,7 @@ class _ScoreBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -226,11 +229,11 @@ class _ScoreBanner extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         color: allOptimal
             ? Colors.green.withValues(alpha: 0.15)
-            : Colors.white.withValues(alpha: 0.08),
+            : colors.surfaceDim,
         border: Border.all(
           color: allOptimal
               ? Colors.green.withValues(alpha: 0.5)
-              : Colors.white24,
+              : colors.divider,
         ),
       ),
       child: Column(
@@ -254,8 +257,8 @@ class _ScoreBanner extends StatelessWidget {
             children: [
               Text(
                 totalScore.toStringAsFixed(1),
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: colors.accent,
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
                 ),
@@ -264,16 +267,16 @@ class _ScoreBanner extends StatelessWidget {
               if (maxScore > 0) ...[
                 Text(
                   '/ ${maxScore.toStringAsFixed(1)}',
-                  style: const TextStyle(
-                    color: Colors.white54,
+                  style: TextStyle(
+                    color: colors.textTertiary,
                     fontSize: 18,
                   ),
                 ),
                 const SizedBox(width: 6),
               ],
-              const Text(
+              Text(
                 'avg pts',
-                style: TextStyle(color: Colors.white38, fontSize: 13),
+                style: TextStyle(color: colors.textDisabled, fontSize: 13),
               ),
             ],
           ),
@@ -308,15 +311,16 @@ class _ScoreBanner extends StatelessWidget {
 class _LoadingBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
-        color: Colors.white.withValues(alpha: 0.08),
-        border: Border.all(color: Colors.white24),
+        color: colors.surfaceDim,
+        border: Border.all(color: colors.divider),
       ),
-      child: const Row(
+      child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           SizedBox(
@@ -324,13 +328,13 @@ class _LoadingBanner extends StatelessWidget {
             height: 16,
             child: CircularProgressIndicator(
               strokeWidth: 2,
-              color: Colors.white38,
+              color: colors.textDisabled,
             ),
           ),
-          SizedBox(width: 10),
+          const SizedBox(width: 10),
           Text(
             'Analyzing...',
-            style: TextStyle(color: Colors.white54, fontSize: 16),
+            style: TextStyle(color: colors.textTertiary, fontSize: 16),
           ),
         ],
       ),
@@ -363,6 +367,7 @@ class _PuzzleRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     final isOptimal = rank == 1;
     final hasResults = results != null;
 
@@ -378,7 +383,7 @@ class _PuzzleRow extends StatelessWidget {
               decoration: BoxDecoration(
                 color: hasResults && isOptimal
                     ? Colors.green.withValues(alpha: 0.1)
-                    : Colors.white.withValues(alpha: 0.05),
+                    : colors.surfaceDim,
                 borderRadius: isExpanded
                     ? const BorderRadius.vertical(top: Radius.circular(8))
                     : BorderRadius.circular(8),
@@ -395,8 +400,8 @@ class _PuzzleRow extends StatelessWidget {
                     width: 24,
                     child: Text(
                       '${puzzle.index + 1}',
-                      style: const TextStyle(
-                        color: Colors.white70,
+                      style: TextStyle(
+                        color: colors.textSecondary,
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
@@ -421,16 +426,16 @@ class _PuzzleRow extends StatelessWidget {
                           children: [
                             Text(
                               score?.toStringAsFixed(1) ?? '-',
-                              style: const TextStyle(
-                                color: Colors.white,
+                              style: TextStyle(
+                                color: colors.textPrimary,
                                 fontSize: 15,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
                             Text(
                               ' / ${maxScore?.toStringAsFixed(1) ?? '-'}',
-                              style: const TextStyle(
-                                color: Colors.white54,
+                              style: TextStyle(
+                                color: colors.textTertiary,
                                 fontSize: 12,
                               ),
                             ),
@@ -443,16 +448,16 @@ class _PuzzleRow extends StatelessWidget {
                     const SizedBox(width: 4),
                     Icon(
                       isExpanded ? Icons.expand_less : Icons.expand_more,
-                      color: Colors.white38,
+                      color: colors.textDisabled,
                       size: 20,
                     ),
                   ] else ...[
-                    const SizedBox(
+                    SizedBox(
                       width: 16,
                       height: 16,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: Colors.white24,
+                        color: colors.textDisabled,
                       ),
                     ),
                     const SizedBox(width: 4),
@@ -465,7 +470,7 @@ class _PuzzleRow extends StatelessWidget {
           if (isExpanded && results != null)
             Container(
               decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.15),
+                color: colors.surfaceDim.withValues(alpha: 0.5),
                 borderRadius: const BorderRadius.vertical(
                   bottom: Radius.circular(8),
                 ),
@@ -479,8 +484,8 @@ class _PuzzleRow extends StatelessWidget {
                       puzzle.isDealer
                           ? 'Dealer (crib is yours)'
                           : 'Non-dealer (crib is opponent\'s)',
-                      style: const TextStyle(
-                        color: Colors.white54,
+                      style: TextStyle(
+                        color: colors.textTertiary,
                         fontSize: 12,
                       ),
                     ),
@@ -550,6 +555,7 @@ class _RankBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     if (rank == null) {
       return const SizedBox(width: 28);
     }
@@ -563,17 +569,17 @@ class _RankBadge extends StatelessWidget {
         shape: BoxShape.circle,
         color: isOptimal
             ? Colors.green.withValues(alpha: 0.3)
-            : Colors.white.withValues(alpha: 0.1),
+            : colors.surfaceDim,
         border: Border.all(
           color: isOptimal
               ? Colors.green.withValues(alpha: 0.6)
-              : Colors.white24,
+              : colors.divider,
         ),
       ),
       child: Text(
         '#$rank',
         style: TextStyle(
-          color: isOptimal ? Colors.green : Colors.white70,
+          color: isOptimal ? Colors.green : colors.textSecondary,
           fontSize: 10,
           fontWeight: FontWeight.bold,
         ),

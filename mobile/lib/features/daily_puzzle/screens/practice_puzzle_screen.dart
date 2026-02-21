@@ -228,7 +228,7 @@ class _RevealedView extends ConsumerWidget {
                 borderRadius: BorderRadius.circular(12),
                 color: isOptimalPick
                     ? Colors.green.withValues(alpha: 0.15)
-                    : Colors.white.withValues(alpha: 0.08),
+                    : colors.surfaceDim,
                 border: Border.all(
                   color: isOptimalPick
                       ? Colors.green.withValues(alpha: 0.5)
@@ -353,7 +353,7 @@ class _StatsBadge extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        color: Colors.white.withValues(alpha: 0.1),
+        color: colors.surfaceDim,
         border: Border.all(color: colors.divider),
       ),
       child: Text(
