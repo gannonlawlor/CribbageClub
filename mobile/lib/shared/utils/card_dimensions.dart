@@ -8,8 +8,8 @@ class CardDimensions {
   /// Cap at 500px to prevent oversized cards on wide screens (desktop browsers).
   CardDimensions(double width) : screenWidth = width.clamp(0.0, 500.0);
 
-  // Hand cards: ~22% screen width
-  double get handCardWidth => screenWidth * 0.22;
+  // Hand cards: ~25% screen width
+  double get handCardWidth => screenWidth * 0.25;
   double get handCardHeight => handCardWidth / AppConstants.cardAspectRatio;
 
   // Play/cut/crib cards: 85% of hand card size
