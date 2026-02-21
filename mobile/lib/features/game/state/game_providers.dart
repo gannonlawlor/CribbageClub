@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/api/rest_client.dart';
 import '../../../core/api/websocket_client.dart';
@@ -123,6 +124,7 @@ class GameNotifier extends StateNotifier<GameNotifierState> {
       );
       _notifyAnimation(response.gameState);
     } catch (e) {
+      debugPrint('[Game] Failed to load game $gameId: $e');
       state = GameNotifierState(error: 'Failed to load game: $e');
     }
   }
@@ -230,6 +232,7 @@ class GameNotifier extends StateNotifier<GameNotifierState> {
         _applyResponse(lastResponse);
       }
     } catch (e) {
+      debugPrint('[Game] Discard failed for $gameId: $e');
       state = state.copyWith(isDiscarding: false, error: 'Discard failed: $e');
     } finally {
       _actionInFlight = false;
@@ -246,6 +249,7 @@ class GameNotifier extends StateNotifier<GameNotifierState> {
       );
       _applyResponse(response);
     } catch (e) {
+      debugPrint('[Game] Play card failed for $gameId: $e');
       state = state.copyWith(error: 'Play card failed: $e');
     } finally {
       _actionInFlight = false;
@@ -262,6 +266,7 @@ class GameNotifier extends StateNotifier<GameNotifierState> {
       );
       _applyResponse(response);
     } catch (e) {
+      debugPrint('[Game] Cut failed for $gameId: $e');
       state = state.copyWith(error: 'Cut failed: $e');
     } finally {
       _actionInFlight = false;
@@ -278,6 +283,7 @@ class GameNotifier extends StateNotifier<GameNotifierState> {
       );
       _applyResponse(response);
     } catch (e) {
+      debugPrint('[Game] Go failed for $gameId: $e');
       state = state.copyWith(error: 'Go failed: $e');
     } finally {
       _actionInFlight = false;
@@ -294,6 +300,7 @@ class GameNotifier extends StateNotifier<GameNotifierState> {
       );
       _applyResponse(response);
     } catch (e) {
+      debugPrint('[Game] Count failed for $gameId: $e');
       state = state.copyWith(error: 'Count failed: $e');
     } finally {
       _actionInFlight = false;
@@ -307,6 +314,7 @@ class GameNotifier extends StateNotifier<GameNotifierState> {
       final response = await _restClient.resignGame(gameId);
       _applyResponse(response);
     } catch (e) {
+      debugPrint('[Game] Resign failed for $gameId: $e');
       state = state.copyWith(error: 'Resign failed: $e');
     } finally {
       _actionInFlight = false;

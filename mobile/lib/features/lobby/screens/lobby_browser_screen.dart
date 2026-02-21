@@ -162,6 +162,7 @@ class LobbyBrowserScreen extends ConsumerWidget {
         }
       }
     } catch (e) {
+      debugPrint('[Lobby] Failed to join lobby: $e');
       if (context.mounted) {
         ScaffoldMessenger.of(
           context,
@@ -185,6 +186,7 @@ class LobbyBrowserScreen extends ConsumerWidget {
         context.go('/lobby/${lobby.id}');
       }
     } catch (e) {
+      debugPrint('[Lobby] Failed to create lobby: $e');
       if (context.mounted) {
         ScaffoldMessenger.of(
           context,

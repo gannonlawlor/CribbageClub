@@ -55,6 +55,7 @@ class _LobbyWaitingScreenState extends ConsumerState<LobbyWaitingScreen> {
         context.go('/game/${lobby.gameId}');
       }
     } catch (e) {
+      debugPrint('[Lobby] Failed to fetch lobby ${widget.lobbyId}: $e');
       if (!mounted) return;
       setState(() {
         _isLoading = false;
@@ -67,8 +68,8 @@ class _LobbyWaitingScreenState extends ConsumerState<LobbyWaitingScreen> {
     try {
       final restClient = ref.read(restClientProvider);
       await restClient.leaveLobby(widget.lobbyId);
-    } catch (_) {
-      // Best-effort leave
+    } catch (e) {
+      debugPrint('[Lobby] Failed to leave lobby ${widget.lobbyId}: $e');
     }
     if (mounted) context.go('/');
   }

@@ -29,8 +29,8 @@ final analysisProvider = FutureProvider.family
           final serverCached = await restClient.getGameAnalysis(gameId);
           await cache.cacheAnalysis(gameId, serverCached);
           return serverCached;
-        } catch (_) {
-          // Not cached on server, will compute below
+        } catch (e) {
+          debugPrint('[Analysis] Server cache miss for $gameId: $e');
         }
       }
 
@@ -61,7 +61,9 @@ final analysisProvider = FutureProvider.family
         try {
           final restClient = ref.read(restClientProvider);
           await restClient.saveGameAnalysis(gameId, analysis);
-        } catch (_) {}
+        } catch (e) {
+          debugPrint('[Analysis] Failed to upload analysis for $gameId: $e');
+        }
       }
 
       return analysis;

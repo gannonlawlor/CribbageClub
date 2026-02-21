@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../config/constants.dart';
@@ -64,6 +65,7 @@ class LocalGameNotifier extends StateNotifier<GameNotifierState> {
       }
     } catch (e) {
       if (!_disposed) {
+        debugPrint('[LocalGame] Action failed for $gameId: $e');
         state = state.copyWith(error: 'Action failed: $e');
       }
     }
@@ -95,6 +97,7 @@ class LocalGameNotifier extends StateNotifier<GameNotifierState> {
       }
     } catch (e) {
       if (!_disposed) {
+        debugPrint('[LocalGame] Discard failed for $gameId: $e');
         state = state.copyWith(isDiscarding: false, error: 'Discard failed: $e');
       }
     }
