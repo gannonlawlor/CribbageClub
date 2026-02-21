@@ -1,7 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../config/constants.dart';
 import '../../../core/engine/local_game_service.dart';
 import '../../../core/models/card.dart';
 import '../../../core/models/game_action.dart';
@@ -16,6 +15,7 @@ class LocalGameNotifier extends StateNotifier<GameNotifierState> {
   final String _playerId;
   final GameAnimationController animationController;
   final GameFeedbackService _feedbackService;
+  final Duration Function() _getAiDelay;
   bool _disposed = false;
 
   LocalGameNotifier({
@@ -24,9 +24,11 @@ class LocalGameNotifier extends StateNotifier<GameNotifierState> {
     required String playerId,
     required this.animationController,
     required GameFeedbackService feedbackService,
+    required Duration Function() getAiDelay,
   }) : _service = service,
        _playerId = playerId,
        _feedbackService = feedbackService,
+       _getAiDelay = getAiDelay,
        super(
          service.currentState != null
              ? GameNotifierState(gameState: service.currentState)
@@ -57,7 +59,7 @@ class LocalGameNotifier extends StateNotifier<GameNotifierState> {
 
       // If it's now the AI's turn, wait then process
       if (intermediate.currentPlayerId?.startsWith('ai_') == true) {
-        await Future.delayed(AppConstants.aiThinkingDelay);
+        await Future.delayed(_getAiDelay());
         if (_disposed) return;
         final finalState = _service.processAI();
         state = GameNotifierState(gameState: finalState);
@@ -88,7 +90,7 @@ class LocalGameNotifier extends StateNotifier<GameNotifierState> {
 
         // If AI needs to act (discard + possibly cut), delay then process
         if (intermediate.currentPlayerId?.startsWith('ai_') == true) {
-          await Future.delayed(AppConstants.aiThinkingDelay);
+          await Future.delayed(_getAiDelay());
           if (_disposed) return;
           final finalState = _service.processAI();
           state = GameNotifierState(gameState: finalState);
@@ -117,6 +119,20 @@ class LocalGameNotifier extends StateNotifier<GameNotifierState> {
 
   void countHand() {
     _applyActionWithDelay(GameAction.countHand(playerId: _playerId));
+  }
+
+  /// Advance past the dealing stage (used when auto-deal is OFF).
+  void deal() {
+    try {
+      final finalState = _service.processAI();
+      state = GameNotifierState(gameState: finalState);
+      _notifyAnimation(finalState);
+    } catch (e) {
+      if (!_disposed) {
+        debugPrint('[LocalGame] Deal failed for $gameId: $e');
+        state = state.copyWith(error: 'Deal failed: $e');
+      }
+    }
   }
 
   void clearError() {

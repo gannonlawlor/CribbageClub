@@ -14,6 +14,7 @@ import '../../../core/models/player.dart';
 import '../../../core/models/score_breakdown.dart';
 import '../../../core/services/local_game_history_provider.dart';
 import '../../../shared/utils/card_utils.dart';
+import '../../../core/services/settings_provider.dart';
 import '../state/game_providers.dart';
 import '../state/local_game_notifier.dart';
 import '../widgets/crib_area.dart';
@@ -179,13 +180,17 @@ class GameScreen extends ConsumerWidget {
     final cribCards = gs.crib.isNotEmpty
         ? gs.crib
         : gs.history.whereType<CribCounted>().lastOrNull?.cribCards ?? const [];
+    final settings = ref.watch(settingsProvider);
     final selectedCards = ref.watch(selectedCardsProvider(gameId));
+    final selectedPeggingCard = ref.watch(selectedPeggingCardProvider(gameId));
 
     // Auto-go when player can't play during pegging
-    if (gs.stage == GameStage.pegging &&
+    if (settings.autoGo &&
+        gs.stage == GameStage.pegging &&
         isMyTurn &&
         !_canPlayAnyCard(player.hand, gs.peggingCount)) {
-      Future.delayed(const Duration(milliseconds: 500), () {
+      final goDelay = settings.scaleDuration(const Duration(milliseconds: 500));
+      Future.delayed(goDelay, () {
         // Re-read current state to guard against stale/duplicate callbacks
         final current = _isLocal
             ? ref.read(localGameNotifierProvider(gameId))
@@ -200,6 +205,47 @@ class GameScreen extends ConsumerWidget {
         final n = _readNotifier(ref);
         if (n is GameNotifier) n.sayGo();
         if (n is LocalGameNotifier) n.sayGo();
+      });
+    }
+
+    // Auto-cut when it's my turn during cutting stage
+    if (settings.autoCut &&
+        gs.stage == GameStage.cutting &&
+        isMyTurn) {
+      final cutDelay = settings.scaleDuration(const Duration(milliseconds: 300));
+      Future.delayed(cutDelay, () {
+        final current = _isLocal
+            ? ref.read(localGameNotifierProvider(gameId))
+            : ref.read(gameNotifierProvider(gameId));
+        final currentGs = current.gameState;
+        if (currentGs == null ||
+            currentGs.stage != GameStage.cutting ||
+            currentGs.currentPlayerId != playerId) {
+          return;
+        }
+
+        final n = _readNotifier(ref);
+        if (n is GameNotifier) n.cutDeck();
+        if (n is LocalGameNotifier) n.cutDeck();
+      });
+    }
+
+    // Auto-deal for local games when it's my turn during dealing stage
+    if (settings.autoDeal &&
+        _isLocal &&
+        gs.stage == GameStage.dealing &&
+        isMyTurn) {
+      Future.microtask(() {
+        final current = ref.read(localGameNotifierProvider(gameId));
+        final currentGs = current.gameState;
+        if (currentGs == null ||
+            currentGs.stage != GameStage.dealing ||
+            currentGs.currentPlayerId != playerId) {
+          return;
+        }
+
+        final n = _readNotifier(ref);
+        if (n is LocalGameNotifier) n.deal();
       });
     }
 
@@ -384,6 +430,12 @@ class GameScreen extends ConsumerWidget {
                         selectedCardCount: selectedCards.length,
                         isDiscarding: gameNotifier.isDiscarding,
                         showCountingOverlay: gs.stage == GameStage.counting && isMyTurn,
+                        autoDeal: settings.autoDeal,
+                        autoCut: settings.autoCut,
+                        autoGo: settings.autoGo,
+                        autoPlayPegging: settings.autoPlayAll || settings.autoPlayPegging,
+                        canPlayCard: _canPlayAnyCard(player.hand, gs.peggingCount),
+                        hasSelectedCard: selectedPeggingCard != null,
                         onDiscard: () =>
                             _handleDiscard(ref, gs, playerId, selectedCards),
                         onCut: () {
@@ -395,6 +447,23 @@ class GameScreen extends ConsumerWidget {
                           final n = _readNotifier(ref);
                           if (n is GameNotifier) n.countHand();
                           if (n is LocalGameNotifier) n.countHand();
+                        },
+                        onDeal: () {
+                          final n = _readNotifier(ref);
+                          if (n is LocalGameNotifier) n.deal();
+                        },
+                        onGo: () {
+                          final n = _readNotifier(ref);
+                          if (n is GameNotifier) n.sayGo();
+                          if (n is LocalGameNotifier) n.sayGo();
+                        },
+                        onPlayCard: () {
+                          final card = selectedPeggingCard;
+                          if (card == null) return;
+                          ref.read(selectedPeggingCardProvider(gameId).notifier).state = null;
+                          final n = _readNotifier(ref);
+                          if (n is GameNotifier) n.playCard(card);
+                          if (n is LocalGameNotifier) n.playCard(card);
                         },
                       ),
 
@@ -486,14 +555,31 @@ class GameScreen extends ConsumerWidget {
         : ref.read(gameNotifierProvider(gameId));
     if (currentState.isDiscarding) return;
 
+    final settings = ref.read(settingsProvider);
+
     if (gs.stage == GameStage.discardingToCrib) {
-      final newSelected = Set<int>.from(selected);
-      if (newSelected.contains(index)) {
-        newSelected.remove(index);
-      } else if (newSelected.length < 2) {
-        newSelected.add(index);
+      if (settings.autoPlayAll) {
+        // Auto-play all: tapping toggles selection and auto-submits when 2 selected
+        final newSelected = Set<int>.from(selected);
+        if (newSelected.contains(index)) {
+          newSelected.remove(index);
+        } else if (newSelected.length < 2) {
+          newSelected.add(index);
+        }
+        ref.read(selectedCardsProvider(gameId).notifier).state = newSelected;
+        if (newSelected.length == 2) {
+          _handleDiscard(ref, gs, playerId, newSelected);
+        }
+      } else {
+        // Normal: toggle selection, user must tap Discard button
+        final newSelected = Set<int>.from(selected);
+        if (newSelected.contains(index)) {
+          newSelected.remove(index);
+        } else if (newSelected.length < 2) {
+          newSelected.add(index);
+        }
+        ref.read(selectedCardsProvider(gameId).notifier).state = newSelected;
       }
-      ref.read(selectedCardsProvider(gameId).notifier).state = newSelected;
     } else if (gs.stage == GameStage.pegging &&
         gs.currentPlayerId == playerId) {
       final sorted = CardUtils.sorted(
@@ -509,10 +595,14 @@ class GameScreen extends ConsumerWidget {
               duration: Duration(seconds: 2),
             ),
           );
-        } else {
+        } else if (settings.autoPlayAll || settings.autoPlayPegging) {
+          // Auto-play: tap immediately plays the card
           final n = _readNotifier(ref);
           if (n is GameNotifier) n.playCard(card);
           if (n is LocalGameNotifier) n.playCard(card);
+        } else {
+          // Manual: tap selects card, "Play Card" button confirms
+          ref.read(selectedPeggingCardProvider(gameId).notifier).state = card;
         }
       }
     }

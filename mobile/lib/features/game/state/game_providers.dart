@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../config/constants.dart';
 import '../../../core/api/rest_client.dart';
 import '../../../core/api/websocket_client.dart';
 import '../../../core/auth/auth_provider.dart';
@@ -380,6 +381,11 @@ final selectedCardsProvider = StateProvider.family<Set<int>, String>(
   (ref, gameId) => {},
 );
 
+// Track selected pegging card when auto-play pegging is OFF
+final selectedPeggingCardProvider = StateProvider.family<PlayingCard?, String>(
+  (ref, gameId) => null,
+);
+
 // ── Local (offline AI) game providers ───────────────────────────────────
 
 bool isLocalGame(String gameId) => gameId.startsWith('local_');
@@ -404,5 +410,9 @@ final localGameNotifierProvider =
         playerId: auth.userId ?? 'local_player',
         animationController: animController,
         feedbackService: feedbackService,
+        getAiDelay: () {
+          final settings = ref.read(settingsProvider);
+          return settings.scaleDuration(AppConstants.aiThinkingDelay);
+        },
       );
     });
