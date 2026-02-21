@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../config/constants.dart';
@@ -7,7 +8,8 @@ import '../animation/animation_event.dart';
 import '../state/game_providers.dart';
 
 /// Overlay that shows animated "+N" popups when scores change.
-/// Player scores appear near the bottom, opponent scores near the top.
+/// Popups are queued and displayed one at a time so each scoring event
+/// is clearly readable, even when multiple scores happen in rapid succession.
 class ScorePopupOverlay extends ConsumerStatefulWidget {
   final String gameId;
   final String playerId;
@@ -24,7 +26,15 @@ class ScorePopupOverlay extends ConsumerStatefulWidget {
 
 class _ScorePopupOverlayState extends ConsumerState<ScorePopupOverlay>
     with TickerProviderStateMixin {
-  final List<_PopupEntry> _activePopups = [];
+  /// Currently visible popup (only one at a time).
+  _PopupEntry? _activePopup;
+
+  /// Queue of pending score events waiting to be shown.
+  final List<ScoreChangedEvent> _queue = [];
+
+  /// Whether we're currently showing a popup (or in the gap between popups).
+  bool _isProcessing = false;
+
   int _nextId = 0;
 
   @override
@@ -36,10 +46,7 @@ class _ScorePopupOverlayState extends ConsumerState<ScorePopupOverlay>
 
   @override
   void dispose() {
-    // Dispose all active animation controllers
-    for (final popup in _activePopups) {
-      popup.controller.dispose();
-    }
+    _activePopup?.controller.dispose();
     super.dispose();
   }
 
@@ -47,22 +54,31 @@ class _ScorePopupOverlayState extends ConsumerState<ScorePopupOverlay>
     final controller = ref.read(gameAnimationProvider(widget.gameId));
     for (final event in controller.events) {
       if (event is ScoreChangedEvent) {
-        _addPopup(event);
+        _queue.add(event);
       }
     }
+    _processQueue();
   }
 
-  void _addPopup(ScoreChangedEvent event) {
+  void _processQueue() {
+    if (_isProcessing || _queue.isEmpty) return;
+    _isProcessing = true;
+    _showNext();
+  }
+
+  void _showNext() {
+    if (_queue.isEmpty) {
+      _isProcessing = false;
+      return;
+    }
+
+    final event = _queue.removeAt(0);
     final id = _nextId++;
     final isPlayer = event.playerId == widget.playerId;
 
-    // Count existing popups in the same zone for stacking
-    final sameZoneCount = _activePopups
-        .where((p) => p.isPlayer == isPlayer)
-        .length;
-
     final settings = ref.read(settingsProvider);
-    final scaledDuration = settings.scaleDuration(AppConstants.scorePopupDuration);
+    final scaledDuration =
+        settings.scaleDuration(AppConstants.scorePopupDuration);
 
     final animController = AnimationController(
       vsync: this,
@@ -74,34 +90,46 @@ class _ScorePopupOverlayState extends ConsumerState<ScorePopupOverlay>
       event: event,
       isPlayer: isPlayer,
       controller: animController,
-      stackOffset: sameZoneCount,
     );
 
     setState(() {
-      _activePopups.add(entry);
+      _activePopup = entry;
     });
 
     animController.forward().then((_) {
-      if (mounted) {
-        setState(() {
-          _activePopups.removeWhere((p) => p.id == id);
+      if (!mounted) return;
+      setState(() {
+        _activePopup = null;
+      });
+      animController.dispose();
+
+      // Brief gap before showing next popup so they don't blur together
+      final gapDuration = _queue.isNotEmpty
+          ? settings.scaleDuration(const Duration(milliseconds: 200))
+          : Duration.zero;
+
+      if (_queue.isNotEmpty) {
+        Future.delayed(gapDuration, () {
+          if (mounted) _showNext();
         });
-        animController.dispose();
+      } else {
+        _isProcessing = false;
       }
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    // Listen to animation controller changes
-    ref.listen(gameAnimationProvider(widget.gameId), (_, controller) {
-      // The listener is already attached in initState
-    });
+    // Keep provider listened to so initState listener stays alive
+    ref.listen(gameAnimationProvider(widget.gameId), (_, controller) {});
+
+    final popup = _activePopup;
+    if (popup == null) return const SizedBox.shrink();
 
     return Stack(
-      children: _activePopups.map((popup) {
-        return _ScorePopupWidget(key: ValueKey(popup.id), entry: popup);
-      }).toList(),
+      children: [
+        _ScorePopupWidget(key: ValueKey(popup.id), entry: popup),
+      ],
     );
   }
 }
@@ -111,14 +139,12 @@ class _PopupEntry {
   final ScoreChangedEvent event;
   final bool isPlayer;
   final AnimationController controller;
-  final int stackOffset;
 
   const _PopupEntry({
     required this.id,
     required this.event,
     required this.isPlayer,
     required this.controller,
-    required this.stackOffset,
   });
 }
 
@@ -163,11 +189,10 @@ class _ScorePopupWidget extends StatelessWidget {
 
     // Position: player popups near bottom, opponent near top
     final baseVertical = entry.isPlayer ? 0.55 : 0.05;
-    final stackShift = entry.stackOffset * 0.06;
 
     return Positioned.fill(
       child: Align(
-        alignment: Alignment(0, baseVertical - stackShift),
+        alignment: Alignment(0, baseVertical),
         child: SlideTransition(
           position: slideUp,
           child: FadeTransition(

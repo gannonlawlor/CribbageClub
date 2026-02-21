@@ -8,7 +8,7 @@ import '../../../config/theme/app_colors.dart';
 /// down to bottom-right. Two parallel tracks: outer (player/gold) and
 /// inner (opponent/white).
 class PerimeterCribbageBoard extends StatefulWidget {
-  static const double boardWidth = 28.0;
+  static const double boardWidth = 34.0;
 
   final int playerScore;
   final int opponentScore;
@@ -114,14 +114,14 @@ class _PerimeterBoardPainter extends CustomPainter {
 
   static const int _totalHoles = 121;
   static const int _groupSize = 5;
-  static const double _holeRadius = 1.4;
-  static const double _pegRadius = 3.0;
+  static const double _holeRadius = 1.8;
+  static const double _pegRadius = 4.0;
   static const double _boardWidth = PerimeterCribbageBoard.boardWidth;
-  static const double _cornerRadius = 14.0;
+  static const double _cornerRadius = 17.0;
 
   // Track offsets from strip center line
-  static const double _outerTrackOffset = 5.0; // player — closer to edge
-  static const double _innerTrackOffset = -5.0; // opponent — closer to content
+  static const double _outerTrackOffset = 6.5; // player — closer to edge
+  static const double _innerTrackOffset = -6.5; // opponent — closer to content
 
   _PerimeterBoardPainter({
     required this.playerScore,
@@ -385,7 +385,7 @@ class _PerimeterBoardPainter extends CustomPainter {
         text: '$m',
         style: TextStyle(
           color: Colors.white.withValues(alpha: 0.45),
-          fontSize: 7,
+          fontSize: 8,
           fontWeight: FontWeight.bold,
         ),
       );
