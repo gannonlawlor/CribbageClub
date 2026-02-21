@@ -11,6 +11,15 @@ class GameControls extends StatelessWidget {
   final VoidCallback? onDiscard;
   final VoidCallback? onCut;
   final VoidCallback? onCount;
+  final VoidCallback? onDeal;
+  final VoidCallback? onGo;
+  final VoidCallback? onPlayCard;
+  final bool autoDeal;
+  final bool autoCut;
+  final bool autoGo;
+  final bool autoPlayPegging;
+  final bool canPlayCard;
+  final bool hasSelectedCard;
 
   const GameControls({
     super.key,
@@ -22,6 +31,15 @@ class GameControls extends StatelessWidget {
     this.onDiscard,
     this.onCut,
     this.onCount,
+    this.onDeal,
+    this.onGo,
+    this.onPlayCard,
+    this.autoDeal = true,
+    this.autoCut = true,
+    this.autoGo = true,
+    this.autoPlayPegging = true,
+    this.canPlayCard = true,
+    this.hasSelectedCard = false,
   });
 
   @override
@@ -42,6 +60,17 @@ class GameControls extends StatelessWidget {
 
   List<Widget> _buildButtons(BuildContext context) {
     switch (stage) {
+      case GameStage.dealing:
+        if (!autoDeal) {
+          return [
+            _ActionButton(
+              label: 'Deal',
+              onPressed: onDeal,
+              icon: Icons.style,
+            ),
+          ];
+        }
+        return [];
       case GameStage.discardingToCrib:
         return [
           _ActionButton(
@@ -55,14 +84,35 @@ class GameControls extends StatelessWidget {
           ),
         ];
       case GameStage.cutting:
-        return [
-          _ActionButton(
-            label: 'Cut Deck',
-            onPressed: onCut,
-            icon: Icons.content_cut,
-          ),
-        ];
+        if (!autoCut) {
+          return [
+            _ActionButton(
+              label: 'Cut Deck',
+              onPressed: onCut,
+              icon: Icons.content_cut,
+            ),
+          ];
+        }
+        return [];
       case GameStage.pegging:
+        if (!canPlayCard && !autoGo) {
+          return [
+            _ActionButton(
+              label: 'Go',
+              onPressed: onGo,
+              icon: Icons.front_hand,
+            ),
+          ];
+        }
+        if (!autoPlayPegging && hasSelectedCard) {
+          return [
+            _ActionButton(
+              label: 'Play Card',
+              onPressed: onPlayCard,
+              icon: Icons.play_arrow,
+            ),
+          ];
+        }
         return [];
       case GameStage.counting:
         if (showCountingOverlay) return [];
@@ -74,8 +124,6 @@ class GameControls extends StatelessWidget {
           ),
         ];
       case GameStage.gameOver:
-        return [];
-      default:
         return [];
     }
   }

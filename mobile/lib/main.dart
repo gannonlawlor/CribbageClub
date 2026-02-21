@@ -38,6 +38,12 @@ Future<void> main() async {
     soundEnabled: saved.soundEnabled,
     hapticsEnabled: saved.hapticsEnabled,
     themeMode: initialTheme,
+    autoDeal: saved.autoDeal,
+    autoCut: saved.autoCut,
+    autoGo: saved.autoGo,
+    autoPlayAll: saved.autoPlayAll,
+    autoPlayPegging: saved.autoPlayPegging,
+    animationSpeed: saved.animationSpeed,
   ));
 
   final container = ProviderContainer(

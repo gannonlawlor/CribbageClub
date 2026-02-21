@@ -39,6 +39,73 @@ class SettingsScreen extends ConsumerWidget {
             colors: colors,
           ),
           const Divider(height: 1, indent: 56),
+          _SectionHeader(title: 'PLAY STYLE', colors: colors),
+          _SettingsTile(
+            icon: Icons.style,
+            title: 'Auto-Deal',
+            subtitle: 'Automatically deal cards',
+            value: settings.autoDeal,
+            onChanged: (val) {
+              ref.read(settingsProvider.notifier).setAutoDeal(val);
+            },
+            colors: colors,
+          ),
+          const Divider(height: 1, indent: 56),
+          _SettingsTile(
+            icon: Icons.content_cut,
+            title: 'Auto-Cut Deck',
+            subtitle: 'Automatically cut the deck',
+            value: settings.autoCut,
+            onChanged: (val) {
+              ref.read(settingsProvider.notifier).setAutoCut(val);
+            },
+            colors: colors,
+          ),
+          const Divider(height: 1, indent: 56),
+          _SettingsTile(
+            icon: Icons.front_hand,
+            title: 'Auto-Go',
+            subtitle: 'Automatically say Go when needed',
+            value: settings.autoGo,
+            onChanged: (val) {
+              ref.read(settingsProvider.notifier).setAutoGo(val);
+            },
+            colors: colors,
+          ),
+          const Divider(height: 1, indent: 56),
+          _SettingsTile(
+            icon: Icons.touch_app,
+            title: 'Auto-Play All Cards',
+            subtitle: 'Tap to play or discard instantly',
+            value: settings.autoPlayAll,
+            onChanged: (val) {
+              ref.read(settingsProvider.notifier).setAutoPlayAll(val);
+            },
+            colors: colors,
+          ),
+          const Divider(height: 1, indent: 56),
+          _SettingsTile(
+            icon: Icons.play_arrow,
+            title: 'Auto-Play During Pegging',
+            subtitle: 'Tap to play cards during pegging',
+            value: settings.autoPlayPegging,
+            enabled: !settings.autoPlayAll,
+            onChanged: (val) {
+              ref.read(settingsProvider.notifier).setAutoPlayPegging(val);
+            },
+            colors: colors,
+          ),
+          const Divider(height: 1, indent: 56),
+          _SliderTile(
+            icon: Icons.speed,
+            title: 'Animation Speed',
+            value: settings.animationSpeed,
+            onChanged: (val) {
+              ref.read(settingsProvider.notifier).setAnimationSpeed(val);
+            },
+            colors: colors,
+          ),
+          const Divider(height: 1, indent: 56),
           _SectionHeader(title: 'AUDIO & FEEDBACK', colors: colors),
           _SettingsTile(
             icon: Icons.volume_up,
@@ -95,6 +162,7 @@ class _SettingsTile extends StatelessWidget {
   final String title;
   final String? subtitle;
   final bool value;
+  final bool enabled;
   final ValueChanged<bool> onChanged;
   final AppColors colors;
 
@@ -102,6 +170,50 @@ class _SettingsTile extends StatelessWidget {
     required this.icon,
     required this.title,
     this.subtitle,
+    required this.value,
+    this.enabled = true,
+    required this.onChanged,
+    required this.colors,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: Icon(icon, color: enabled ? colors.accent : colors.textDisabled),
+      title: Text(
+        title,
+        style: TextStyle(
+          color: enabled ? colors.textPrimary : colors.textDisabled,
+        ),
+      ),
+      subtitle: subtitle != null
+          ? Text(
+              subtitle!,
+              style: TextStyle(
+                color: enabled ? colors.textTertiary : colors.textDisabled,
+                fontSize: 12,
+              ),
+            )
+          : null,
+      trailing: Switch.adaptive(
+        value: value,
+        onChanged: enabled ? onChanged : null,
+        activeTrackColor: colors.accent,
+      ),
+    );
+  }
+}
+
+class _SliderTile extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final double value;
+  final ValueChanged<double> onChanged;
+  final AppColors colors;
+
+  const _SliderTile({
+    required this.icon,
+    required this.title,
     required this.value,
     required this.onChanged,
     required this.colors,
@@ -112,16 +224,35 @@ class _SettingsTile extends StatelessWidget {
     return ListTile(
       leading: Icon(icon, color: colors.accent),
       title: Text(title, style: TextStyle(color: colors.textPrimary)),
-      subtitle: subtitle != null
-          ? Text(
-              subtitle!,
-              style: TextStyle(color: colors.textTertiary, fontSize: 12),
-            )
-          : null,
-      trailing: Switch.adaptive(
-        value: value,
-        onChanged: onChanged,
-        activeTrackColor: colors.accent,
+      subtitle: Row(
+        children: [
+          Text(
+            '0.5x',
+            style: TextStyle(color: colors.textTertiary, fontSize: 11),
+          ),
+          Expanded(
+            child: Slider(
+              value: value,
+              min: 0.5,
+              max: 2.0,
+              divisions: 6,
+              activeColor: colors.accent,
+              onChanged: onChanged,
+            ),
+          ),
+          Text(
+            '2.0x',
+            style: TextStyle(color: colors.textTertiary, fontSize: 11),
+          ),
+        ],
+      ),
+      trailing: Text(
+        '${value.toStringAsFixed(1)}x',
+        style: TextStyle(
+          color: colors.textPrimary,
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }

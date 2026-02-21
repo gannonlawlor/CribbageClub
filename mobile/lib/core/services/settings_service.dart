@@ -39,13 +39,89 @@ class SettingsService {
     await prefs.setString(AppConstants.themeModeKey, mode);
   }
 
+  Future<bool> getAutoDeal() async {
+    final prefs = await _preferences;
+    return prefs.getBool(AppConstants.autoDealKey) ?? true;
+  }
+
+  Future<void> setAutoDeal(bool enabled) async {
+    final prefs = await _preferences;
+    await prefs.setBool(AppConstants.autoDealKey, enabled);
+  }
+
+  Future<bool> getAutoCut() async {
+    final prefs = await _preferences;
+    return prefs.getBool(AppConstants.autoCutKey) ?? true;
+  }
+
+  Future<void> setAutoCut(bool enabled) async {
+    final prefs = await _preferences;
+    await prefs.setBool(AppConstants.autoCutKey, enabled);
+  }
+
+  Future<bool> getAutoGo() async {
+    final prefs = await _preferences;
+    return prefs.getBool(AppConstants.autoGoKey) ?? true;
+  }
+
+  Future<void> setAutoGo(bool enabled) async {
+    final prefs = await _preferences;
+    await prefs.setBool(AppConstants.autoGoKey, enabled);
+  }
+
+  Future<bool> getAutoPlayAll() async {
+    final prefs = await _preferences;
+    return prefs.getBool(AppConstants.autoPlayAllKey) ?? false;
+  }
+
+  Future<void> setAutoPlayAll(bool enabled) async {
+    final prefs = await _preferences;
+    await prefs.setBool(AppConstants.autoPlayAllKey, enabled);
+  }
+
+  Future<bool> getAutoPlayPegging() async {
+    final prefs = await _preferences;
+    return prefs.getBool(AppConstants.autoPlayPeggingKey) ?? true;
+  }
+
+  Future<void> setAutoPlayPegging(bool enabled) async {
+    final prefs = await _preferences;
+    await prefs.setBool(AppConstants.autoPlayPeggingKey, enabled);
+  }
+
+  Future<double> getAnimationSpeed() async {
+    final prefs = await _preferences;
+    return prefs.getDouble(AppConstants.animationSpeedKey) ?? 1.0;
+  }
+
+  Future<void> setAnimationSpeed(double speed) async {
+    final prefs = await _preferences;
+    await prefs.setDouble(AppConstants.animationSpeedKey, speed);
+  }
+
   /// Load all settings at once (used during app startup).
-  Future<({bool soundEnabled, bool hapticsEnabled, String themeMode})> loadAll() async {
+  Future<({
+    bool soundEnabled,
+    bool hapticsEnabled,
+    String themeMode,
+    bool autoDeal,
+    bool autoCut,
+    bool autoGo,
+    bool autoPlayAll,
+    bool autoPlayPegging,
+    double animationSpeed,
+  })> loadAll() async {
     final prefs = await _preferences;
     return (
       soundEnabled: prefs.getBool(AppConstants.soundEnabledKey) ?? true,
       hapticsEnabled: prefs.getBool(AppConstants.hapticsEnabledKey) ?? true,
       themeMode: prefs.getString(AppConstants.themeModeKey) ?? 'light',
+      autoDeal: prefs.getBool(AppConstants.autoDealKey) ?? true,
+      autoCut: prefs.getBool(AppConstants.autoCutKey) ?? true,
+      autoGo: prefs.getBool(AppConstants.autoGoKey) ?? true,
+      autoPlayAll: prefs.getBool(AppConstants.autoPlayAllKey) ?? false,
+      autoPlayPegging: prefs.getBool(AppConstants.autoPlayPeggingKey) ?? true,
+      animationSpeed: prefs.getDouble(AppConstants.animationSpeedKey) ?? 1.0,
     );
   }
 }

@@ -26,6 +26,12 @@ class AppConstants {
   static const String soundEnabledKey = 'sound_enabled';
   static const String hapticsEnabledKey = 'haptics_enabled';
   static const String themeModeKey = 'theme_mode';
+  static const String autoDealKey = 'auto_deal';
+  static const String autoCutKey = 'auto_cut';
+  static const String autoGoKey = 'auto_go';
+  static const String autoPlayAllKey = 'auto_play_all';
+  static const String autoPlayPeggingKey = 'auto_play_pegging';
+  static const String animationSpeedKey = 'animation_speed';
 
   // Card dimensions
   static const double cardAspectRatio = 2.5 / 3.5;

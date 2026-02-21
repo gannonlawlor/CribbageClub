@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../config/constants.dart';
 import '../../../config/theme/app_colors.dart';
+import '../../../core/services/settings_provider.dart';
 import '../animation/animation_event.dart';
 import '../state/game_providers.dart';
 
@@ -60,9 +61,12 @@ class _ScorePopupOverlayState extends ConsumerState<ScorePopupOverlay>
         .where((p) => p.isPlayer == isPlayer)
         .length;
 
+    final settings = ref.read(settingsProvider);
+    final scaledDuration = settings.scaleDuration(AppConstants.scorePopupDuration);
+
     final animController = AnimationController(
       vsync: this,
-      duration: AppConstants.scorePopupDuration,
+      duration: scaledDuration,
     );
 
     final entry = _PopupEntry(
