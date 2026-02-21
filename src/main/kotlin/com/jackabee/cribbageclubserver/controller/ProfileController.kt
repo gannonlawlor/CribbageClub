@@ -1,6 +1,7 @@
 package com.jackabee.cribbageclubserver.controller
 
 import com.jackabee.cribbageclubserver.repository.FriendshipRepository
+import com.jackabee.cribbageclubserver.repository.GameRepository
 import com.jackabee.cribbageclubserver.repository.UserRepository
 import com.jackabee.cribbageclubserver.service.PlayerStatsService
 import io.swagger.v3.oas.annotations.Operation
@@ -14,7 +15,8 @@ import java.time.Instant
 class ProfileController(
     private val userRepository: UserRepository,
     private val playerStatsService: PlayerStatsService,
-    private val friendshipRepository: FriendshipRepository
+    private val friendshipRepository: FriendshipRepository,
+    private val gameRepository: GameRepository
 ) {
     @Operation(summary = "Get a user's public profile")
     @GetMapping("/{userId}")
@@ -47,6 +49,9 @@ class ProfileController(
             relationshipStatus = relationshipStatus,
             rating = stats.rating,
             ratingDeviation = stats.ratingDeviation,
+            highestGameScore = stats.highestGameScore,
+            currentWinStreak = stats.currentWinStreak,
+            longestWinStreak = stats.longestWinStreak,
             overallStats = CategoryStats(
                 gamesPlayed = stats.gamesPlayed,
                 gamesWon = stats.gamesWon,
@@ -70,6 +75,41 @@ class ProfileController(
             )
         )
     }
+
+    @Operation(summary = "Get head-to-head record between viewer and target user")
+    @GetMapping("/{userId}/head-to-head")
+    fun getHeadToHead(
+        @PathVariable userId: String,
+        @RequestAttribute("userId") viewerId: String
+    ): HeadToHeadResponse {
+        require(viewerId != userId) { "Cannot get head-to-head against yourself" }
+
+        val games = gameRepository.findCompletedGamesBetween(viewerId, userId)
+
+        var viewerWins = 0
+        var opponentWins = 0
+        for (game in games) {
+            if (game.winnerId == viewerId) viewerWins++ else opponentWins++
+        }
+
+        val recentGames = games.take(5).map { game ->
+            val viewerIsPlayer1 = game.player1Id == viewerId
+            HeadToHeadGame(
+                gameId = game.id,
+                viewerScore = if (viewerIsPlayer1) game.player1Score else game.player2Score,
+                opponentScore = if (viewerIsPlayer1) game.player2Score else game.player1Score,
+                viewerWon = game.winnerId == viewerId,
+                completedAt = game.updatedAt
+            )
+        }
+
+        return HeadToHeadResponse(
+            gamesPlayed = games.size,
+            viewerWins = viewerWins,
+            opponentWins = opponentWins,
+            recentGames = recentGames
+        )
+    }
 }
 
 data class ProfileResponse(
@@ -81,6 +121,9 @@ data class ProfileResponse(
     val relationshipStatus: String?,
     val rating: Double,
     val ratingDeviation: Double,
+    val highestGameScore: Int,
+    val currentWinStreak: Int,
+    val longestWinStreak: Int,
     val overallStats: CategoryStats,
     val aiStats: CategoryStats,
     val humanStats: CategoryStats
@@ -92,4 +135,19 @@ data class CategoryStats(
     val gamesLost: Int,
     val winRate: Double,
     val averageScore: Double
+)
+
+data class HeadToHeadResponse(
+    val gamesPlayed: Int,
+    val viewerWins: Int,
+    val opponentWins: Int,
+    val recentGames: List<HeadToHeadGame>
+)
+
+data class HeadToHeadGame(
+    val gameId: String,
+    val viewerScore: Int,
+    val opponentScore: Int,
+    val viewerWon: Boolean,
+    val completedAt: Instant
 )

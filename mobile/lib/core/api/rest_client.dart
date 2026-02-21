@@ -14,6 +14,7 @@ import '../models/join_by_code_result.dart';
 import '../models/leaderboard_entry.dart';
 import '../models/lobby.dart';
 import '../models/puzzle.dart';
+import '../models/head_to_head_response.dart';
 import '../models/profile_response.dart';
 import '../models/stats_response.dart';
 
@@ -348,6 +349,11 @@ class RestClient {
   Future<ProfileResponse> getProfile(String userId) async {
     final response = await _dio.get('/api/profiles/$userId');
     return ProfileResponse.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  Future<HeadToHeadResponse> getHeadToHead(String userId) async {
+    final response = await _dio.get('/api/profiles/$userId/head-to-head');
+    return HeadToHeadResponse.fromJson(response.data as Map<String, dynamic>);
   }
 
   // Stats
