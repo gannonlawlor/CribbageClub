@@ -23,6 +23,9 @@ class AppConstants {
   static const String userIdKey = 'user_id';
   static const String usernameKey = 'username';
   static const String isGuestKey = 'is_guest';
+  static const String soundEnabledKey = 'sound_enabled';
+  static const String hapticsEnabledKey = 'haptics_enabled';
+  static const String themeModeKey = 'theme_mode';
 
   // Card dimensions
   static const double cardAspectRatio = 2.5 / 3.5;

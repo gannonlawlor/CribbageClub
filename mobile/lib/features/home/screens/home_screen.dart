@@ -65,6 +65,10 @@ class HomeScreen extends ConsumerWidget {
               icon: const Icon(Icons.logout),
               onPressed: () => ref.read(authProvider.notifier).logout(),
             ),
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () => context.go('/settings'),
+          ),
           if (!auth.isLoggedIn)
             TextButton.icon(
               onPressed: () => context.go('/login'),

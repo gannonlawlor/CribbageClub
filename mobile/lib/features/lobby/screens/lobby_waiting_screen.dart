@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../../config/theme/app_colors.dart';
 import '../../../core/auth/auth_provider.dart';
 import '../../../core/models/lobby.dart';
+import '../../../shared/utils/text_utils.dart';
 
 class LobbyWaitingScreen extends ConsumerStatefulWidget {
   final String lobbyId;
@@ -76,7 +78,7 @@ class _LobbyWaitingScreenState extends ConsumerState<LobbyWaitingScreen> {
     final colors = context.appColors;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Waiting for Opponent'),
+        title: const Text('Waiting Room'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: _leaveLobby,
@@ -104,79 +106,156 @@ class _LobbyWaitingScreenState extends ConsumerState<LobbyWaitingScreen> {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(Icons.hourglass_top, size: 64, color: colors.accent),
-        const SizedBox(height: 24),
-        Text(
-          lobby.name,
-          style: TextStyle(
-            color: colors.textPrimary,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 24),
+        // Invite Code section
         if (lobby.inviteCode != null) ...[
           Text(
-            'Invite Code',
-            style: TextStyle(color: colors.textTertiary, fontSize: 14),
+            'INVITE CODE',
+            style: TextStyle(
+              color: colors.textTertiary,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 1.5,
+            ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
             decoration: BoxDecoration(
               color: colors.surfaceDim,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: colors.accent,
+                width: 2,
+              ),
+            ),
+            child: Text(
+              lobby.inviteCode!,
+              style: TextStyle(
+                color: colors.accent,
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 6,
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              TextButton.icon(
+                onPressed: () {
+                  Clipboard.setData(ClipboardData(text: lobby.inviteCode!));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Invite code copied!')),
+                  );
+                },
+                icon: const Icon(Icons.copy, size: 16),
+                label: const Text('Copy'),
+              ),
+              const SizedBox(width: 8),
+              TextButton.icon(
+                onPressed: () {
+                  Share.share(
+                    'Join my Cribbage Club game! Code: ${lobby.inviteCode!}',
+                  );
+                },
+                icon: const Icon(Icons.share, size: 16),
+                label: const Text('Share'),
+              ),
+            ],
+          ),
+        ],
+
+        const SizedBox(height: 32),
+
+        // Players section
+        Text(
+          'PLAYERS',
+          style: TextStyle(
+            color: colors.textTertiary,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 1.5,
+          ),
+        ),
+        const SizedBox(height: 12),
+        ...lobby.players.map(
+          (p) => Container(
+            margin: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: colors.surfaceDim,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 18,
+                  backgroundColor: colors.accent.withValues(alpha: 0.15),
+                  child: Text(
+                    initials(p.name),
+                    style: TextStyle(
+                      color: colors.accent,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  p.name,
+                  style: TextStyle(
+                    color: colors.textPrimary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const Spacer(),
+                Icon(Icons.check_circle, color: colors.success, size: 20),
+              ],
+            ),
+          ),
+        ),
+        // Empty slots
+        for (var i = lobby.players.length; i < lobby.maxPlayers; i++)
+          Container(
+            margin: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: colors.surfaceDim,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: colors.accent.withValues(alpha: 0.5),
+                color: colors.divider,
+                style: BorderStyle.solid,
               ),
             ),
             child: Row(
-              mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  lobby.inviteCode!,
-                  style: TextStyle(
-                    color: colors.accent,
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 4,
+                CircleAvatar(
+                  radius: 18,
+                  backgroundColor: colors.divider,
+                  child: Icon(
+                    Icons.person_outline,
+                    color: colors.textDisabled,
+                    size: 20,
                   ),
                 ),
-                const SizedBox(width: 16),
-                IconButton(
-                  icon: Icon(Icons.copy, color: colors.textTertiary),
-                  onPressed: () {
-                    Clipboard.setData(ClipboardData(text: lobby.inviteCode!));
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Invite code copied!')),
-                    );
-                  },
+                const SizedBox(width: 12),
+                Text(
+                  'Waiting for opponent...',
+                  style: TextStyle(
+                    color: colors.textDisabled,
+                    fontSize: 14,
+                    fontStyle: FontStyle.italic,
+                  ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            'Share this code with a friend',
-            style: TextStyle(color: colors.textDisabled, fontSize: 12),
-          ),
-        ],
+
         const SizedBox(height: 24),
-        Text(
-          'Players: ${lobby.players.length} / ${lobby.maxPlayers}',
-          style: TextStyle(color: colors.textSecondary, fontSize: 16),
-        ),
-        const SizedBox(height: 8),
-        ...lobby.players.map(
-          (p) => Padding(
-            padding: const EdgeInsets.only(bottom: 4),
-            child: Text(
-              p.name,
-              style: TextStyle(color: colors.textPrimary, fontSize: 14),
-            ),
-          ),
-        ),
-        const SizedBox(height: 32),
+
+        // Spinner
         const SizedBox(
           width: 24,
           height: 24,
@@ -187,14 +266,16 @@ class _LobbyWaitingScreenState extends ConsumerState<LobbyWaitingScreen> {
           'Waiting for opponent to join...',
           style: TextStyle(color: colors.textTertiary),
         ),
+
         const SizedBox(height: 32),
+
         OutlinedButton(
           onPressed: _leaveLobby,
           style: OutlinedButton.styleFrom(
             foregroundColor: colors.error,
             side: BorderSide(color: colors.error),
           ),
-          child: const Text('Cancel'),
+          child: const Text('Leave'),
         ),
       ],
     );
