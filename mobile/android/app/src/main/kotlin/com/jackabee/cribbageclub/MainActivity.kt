@@ -1,4 +1,4 @@
-package com.jackabee.cribbage_club
+package com.jackabee.cribbageclub
 
 import io.flutter.embedding.android.FlutterActivity
 
