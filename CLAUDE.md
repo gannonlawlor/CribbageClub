@@ -110,6 +110,10 @@ docker compose up -d     # start PostgreSQL + app (dev)
 - **Auth**: JWT with 90-day expiry, guest accounts, rate-limited auth endpoints
 - **Real-time**: STOMP over WebSocket with authenticated subscriptions, REST for action ordering guarantees
 
+## Current Focus
+
+- **Mobile first**: All client-side UI/UX changes target mobile (Flutter) only for now. Web will be updated after mobile launches.
+
 ## Coding Conventions
 
 - **Backend**: Kotlin data classes, sealed classes for actions/events, `require()` for validation, `@Transactional` on multi-step ops, SLF4J logging
