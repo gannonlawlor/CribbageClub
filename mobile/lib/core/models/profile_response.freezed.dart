@@ -29,6 +29,9 @@ mixin _$ProfileResponse {
   String? get relationshipStatus => throw _privateConstructorUsedError;
   double get rating => throw _privateConstructorUsedError;
   double get ratingDeviation => throw _privateConstructorUsedError;
+  int get highestGameScore => throw _privateConstructorUsedError;
+  int get currentWinStreak => throw _privateConstructorUsedError;
+  int get longestWinStreak => throw _privateConstructorUsedError;
   CategoryStats get overallStats => throw _privateConstructorUsedError;
   CategoryStats get aiStats => throw _privateConstructorUsedError;
   CategoryStats get humanStats => throw _privateConstructorUsedError;
@@ -59,6 +62,9 @@ abstract class $ProfileResponseCopyWith<$Res> {
     String? relationshipStatus,
     double rating,
     double ratingDeviation,
+    int highestGameScore,
+    int currentWinStreak,
+    int longestWinStreak,
     CategoryStats overallStats,
     CategoryStats aiStats,
     CategoryStats humanStats,
@@ -92,6 +98,9 @@ class _$ProfileResponseCopyWithImpl<$Res, $Val extends ProfileResponse>
     Object? relationshipStatus = freezed,
     Object? rating = null,
     Object? ratingDeviation = null,
+    Object? highestGameScore = null,
+    Object? currentWinStreak = null,
+    Object? longestWinStreak = null,
     Object? overallStats = null,
     Object? aiStats = null,
     Object? humanStats = null,
@@ -130,6 +139,18 @@ class _$ProfileResponseCopyWithImpl<$Res, $Val extends ProfileResponse>
                 ? _value.ratingDeviation
                 : ratingDeviation // ignore: cast_nullable_to_non_nullable
                       as double,
+            highestGameScore: null == highestGameScore
+                ? _value.highestGameScore
+                : highestGameScore // ignore: cast_nullable_to_non_nullable
+                      as int,
+            currentWinStreak: null == currentWinStreak
+                ? _value.currentWinStreak
+                : currentWinStreak // ignore: cast_nullable_to_non_nullable
+                      as int,
+            longestWinStreak: null == longestWinStreak
+                ? _value.longestWinStreak
+                : longestWinStreak // ignore: cast_nullable_to_non_nullable
+                      as int,
             overallStats: null == overallStats
                 ? _value.overallStats
                 : overallStats // ignore: cast_nullable_to_non_nullable
@@ -196,6 +217,9 @@ abstract class _$$ProfileResponseImplCopyWith<$Res>
     String? relationshipStatus,
     double rating,
     double ratingDeviation,
+    int highestGameScore,
+    int currentWinStreak,
+    int longestWinStreak,
     CategoryStats overallStats,
     CategoryStats aiStats,
     CategoryStats humanStats,
@@ -231,6 +255,9 @@ class __$$ProfileResponseImplCopyWithImpl<$Res>
     Object? relationshipStatus = freezed,
     Object? rating = null,
     Object? ratingDeviation = null,
+    Object? highestGameScore = null,
+    Object? currentWinStreak = null,
+    Object? longestWinStreak = null,
     Object? overallStats = null,
     Object? aiStats = null,
     Object? humanStats = null,
@@ -269,6 +296,18 @@ class __$$ProfileResponseImplCopyWithImpl<$Res>
             ? _value.ratingDeviation
             : ratingDeviation // ignore: cast_nullable_to_non_nullable
                   as double,
+        highestGameScore: null == highestGameScore
+            ? _value.highestGameScore
+            : highestGameScore // ignore: cast_nullable_to_non_nullable
+                  as int,
+        currentWinStreak: null == currentWinStreak
+            ? _value.currentWinStreak
+            : currentWinStreak // ignore: cast_nullable_to_non_nullable
+                  as int,
+        longestWinStreak: null == longestWinStreak
+            ? _value.longestWinStreak
+            : longestWinStreak // ignore: cast_nullable_to_non_nullable
+                  as int,
         overallStats: null == overallStats
             ? _value.overallStats
             : overallStats // ignore: cast_nullable_to_non_nullable
@@ -298,6 +337,9 @@ class _$ProfileResponseImpl implements _ProfileResponse {
     this.relationshipStatus,
     this.rating = 1500.0,
     this.ratingDeviation = 350.0,
+    this.highestGameScore = 0,
+    this.currentWinStreak = 0,
+    this.longestWinStreak = 0,
     required this.overallStats,
     required this.aiStats,
     required this.humanStats,
@@ -325,6 +367,15 @@ class _$ProfileResponseImpl implements _ProfileResponse {
   @JsonKey()
   final double ratingDeviation;
   @override
+  @JsonKey()
+  final int highestGameScore;
+  @override
+  @JsonKey()
+  final int currentWinStreak;
+  @override
+  @JsonKey()
+  final int longestWinStreak;
+  @override
   final CategoryStats overallStats;
   @override
   final CategoryStats aiStats;
@@ -333,7 +384,7 @@ class _$ProfileResponseImpl implements _ProfileResponse {
 
   @override
   String toString() {
-    return 'ProfileResponse(userId: $userId, username: $username, displayName: $displayName, avatarIndex: $avatarIndex, createdAt: $createdAt, relationshipStatus: $relationshipStatus, rating: $rating, ratingDeviation: $ratingDeviation, overallStats: $overallStats, aiStats: $aiStats, humanStats: $humanStats)';
+    return 'ProfileResponse(userId: $userId, username: $username, displayName: $displayName, avatarIndex: $avatarIndex, createdAt: $createdAt, relationshipStatus: $relationshipStatus, rating: $rating, ratingDeviation: $ratingDeviation, highestGameScore: $highestGameScore, currentWinStreak: $currentWinStreak, longestWinStreak: $longestWinStreak, overallStats: $overallStats, aiStats: $aiStats, humanStats: $humanStats)';
   }
 
   @override
@@ -355,6 +406,12 @@ class _$ProfileResponseImpl implements _ProfileResponse {
             (identical(other.rating, rating) || other.rating == rating) &&
             (identical(other.ratingDeviation, ratingDeviation) ||
                 other.ratingDeviation == ratingDeviation) &&
+            (identical(other.highestGameScore, highestGameScore) ||
+                other.highestGameScore == highestGameScore) &&
+            (identical(other.currentWinStreak, currentWinStreak) ||
+                other.currentWinStreak == currentWinStreak) &&
+            (identical(other.longestWinStreak, longestWinStreak) ||
+                other.longestWinStreak == longestWinStreak) &&
             (identical(other.overallStats, overallStats) ||
                 other.overallStats == overallStats) &&
             (identical(other.aiStats, aiStats) || other.aiStats == aiStats) &&
@@ -374,6 +431,9 @@ class _$ProfileResponseImpl implements _ProfileResponse {
     relationshipStatus,
     rating,
     ratingDeviation,
+    highestGameScore,
+    currentWinStreak,
+    longestWinStreak,
     overallStats,
     aiStats,
     humanStats,
@@ -406,6 +466,9 @@ abstract class _ProfileResponse implements ProfileResponse {
     final String? relationshipStatus,
     final double rating,
     final double ratingDeviation,
+    final int highestGameScore,
+    final int currentWinStreak,
+    final int longestWinStreak,
     required final CategoryStats overallStats,
     required final CategoryStats aiStats,
     required final CategoryStats humanStats,
@@ -430,6 +493,12 @@ abstract class _ProfileResponse implements ProfileResponse {
   double get rating;
   @override
   double get ratingDeviation;
+  @override
+  int get highestGameScore;
+  @override
+  int get currentWinStreak;
+  @override
+  int get longestWinStreak;
   @override
   CategoryStats get overallStats;
   @override

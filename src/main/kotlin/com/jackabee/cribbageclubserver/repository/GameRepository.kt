@@ -17,6 +17,15 @@ interface GameRepository : JpaRepository<GameEntity, String> {
     @Query("SELECT g FROM GameEntity g WHERE (g.player1Id = :playerId OR g.player2Id = :playerId) AND g.winnerId IS NOT NULL ORDER BY g.updatedAt DESC")
     fun findCompletedGamesByPlayer(playerId: String): List<GameEntity>
 
+    @Query("""
+        SELECT g FROM GameEntity g
+        WHERE ((g.player1Id = :playerA AND g.player2Id = :playerB)
+            OR (g.player1Id = :playerB AND g.player2Id = :playerA))
+        AND g.winnerId IS NOT NULL
+        ORDER BY g.updatedAt DESC
+    """)
+    fun findCompletedGamesBetween(playerA: String, playerB: String): List<GameEntity>
+
     fun findByOriginalLocalGameId(originalLocalGameId: String): GameEntity?
 
     @Query("SELECT g FROM GameEntity g WHERE g.winnerId IS NULL AND g.isAIGame = false AND g.turnStartedAt IS NOT NULL")
