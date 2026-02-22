@@ -24,6 +24,24 @@ flutter build apk --flavor alpha --dart-define-from-file=dart_define/alpha.json
 flutter build ipa --flavor alpha --dart-define-from-file=dart_define/alpha.json
 ```
 
+### Scripts (`mobile/scripts/`)
+
+Convenience scripts that can be run from anywhere (they `cd` to the mobile dir automatically):
+
+| Script | Description |
+|--------|-------------|
+| `scripts/ios-dev.sh` | Run iOS debug against local backend (localhost:8080) |
+| `scripts/ios-alpha.sh` | Run iOS debug against alpha server (Tailscale) |
+| `scripts/android-dev.sh` | Run Android debug against local backend |
+| `scripts/android-alpha.sh` | Run Android debug against alpha server (Tailscale) |
+| `scripts/build-ios-alpha.sh` | Build iOS release IPA for TestFlight/archive |
+| `scripts/build-android-alpha.sh` | Build Android release APK + App Bundle |
+| `scripts/codegen.sh` | Regenerate freezed/json_serializable code |
+| `scripts/test.sh` | Run static analysis + tests |
+| `scripts/clean.sh` | Clean build artifacts and restore deps |
+
+Alpha scripts require your device to be on the Tailscale network.
+
 ## Project Structure
 
 ```

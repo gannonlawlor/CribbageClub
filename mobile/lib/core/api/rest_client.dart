@@ -44,11 +44,38 @@ class RestClient {
           if (token != null) {
             options.headers['Authorization'] = 'Bearer $token';
           }
+          if (kDebugMode) {
+            final hasAuth = token != null ? ' [auth]' : '';
+            debugPrint('[REST] → ${options.method} ${options.baseUrl}${options.path}$hasAuth');
+            if (options.data != null) {
+              debugPrint('[REST]   body: ${options.data}');
+            }
+          }
           handler.next(options);
         },
+        onResponse: (response, handler) {
+          if (kDebugMode) {
+            debugPrint('[REST] ← ${response.statusCode} ${response.requestOptions.method} '
+                '${response.requestOptions.path} (${response.data.toString().length} chars)');
+          }
+          handler.next(response);
+        },
         onError: (error, handler) {
-          debugPrint('[REST] ${error.requestOptions.method} ${error.requestOptions.path} '
-              '→ ${error.response?.statusCode ?? 'no response'}: ${error.message}');
+          if (kDebugMode) {
+            debugPrint('[REST] ✗ ${error.requestOptions.method} ${error.requestOptions.path} '
+                '→ ${error.response?.statusCode ?? 'no response'}');
+            debugPrint('[REST]   error: ${error.message}');
+            if (error.response?.data != null) {
+              debugPrint('[REST]   response body: ${error.response?.data}');
+            }
+            if (error.type == DioExceptionType.connectionTimeout ||
+                error.type == DioExceptionType.receiveTimeout) {
+              debugPrint('[REST]   timeout after ${error.requestOptions.connectTimeout}ms');
+            }
+            if (error.type == DioExceptionType.connectionError) {
+              debugPrint('[REST]   connection failed — is the server running?');
+            }
+          }
           if (error.response?.statusCode == 401) {
             final path = error.requestOptions.path;
             if (!path.startsWith('/api/auth/')) {
