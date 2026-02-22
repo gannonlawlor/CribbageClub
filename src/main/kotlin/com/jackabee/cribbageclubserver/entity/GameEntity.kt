@@ -15,22 +15,22 @@ class GameEntity(
     @Id
     val id: String,
 
-    @Column(nullable = false)
+    @Column(name = "player1_id", nullable = false)
     val player1Id: String,
 
-    @Column(nullable = false)
+    @Column(name = "player1_name", nullable = false)
     val player1Name: String,
 
-    @Column(nullable = false)
+    @Column(name = "player2_id", nullable = false)
     val player2Id: String,
 
-    @Column(nullable = false)
+    @Column(name = "player2_name", nullable = false)
     val player2Name: String,
 
-    @Column(nullable = false)
+    @Column(name = "player1_score", nullable = false)
     var player1Score: Int = 0,
 
-    @Column(nullable = false)
+    @Column(name = "player2_score", nullable = false)
     var player2Score: Int = 0,
 
     @Column(nullable = false)
