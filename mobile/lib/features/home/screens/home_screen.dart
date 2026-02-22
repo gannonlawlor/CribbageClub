@@ -261,26 +261,28 @@ class HomeScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 24),
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        if (auth.isLoggedIn && !auth.isGuest) _FriendsButton(),
                         if (auth.isLoggedIn && !auth.isGuest)
-                          const SizedBox(width: 16),
-                        TextButton.icon(
-                          onPressed: () => context.go('/history'),
-                          icon: const Icon(Icons.history, size: 18),
-                          label: const Text('History'),
-                          style: TextButton.styleFrom(
-                            foregroundColor: colors.textSecondary,
+                          Flexible(child: _FriendsButton()),
+                        Flexible(
+                          child: TextButton.icon(
+                            onPressed: () => context.go('/history'),
+                            icon: const Icon(Icons.history, size: 18),
+                            label: const Text('History'),
+                            style: TextButton.styleFrom(
+                              foregroundColor: colors.textSecondary,
+                            ),
                           ),
                         ),
-                        const SizedBox(width: 16),
-                        TextButton.icon(
-                          onPressed: () => context.go('/leaderboard'),
-                          icon: const Icon(Icons.leaderboard, size: 18),
-                          label: const Text('Leaderboard'),
-                          style: TextButton.styleFrom(
-                            foregroundColor: colors.textSecondary,
+                        Flexible(
+                          child: TextButton.icon(
+                            onPressed: () => context.go('/leaderboard'),
+                            icon: const Icon(Icons.leaderboard, size: 18),
+                            label: const Text('Leaderboard'),
+                            style: TextButton.styleFrom(
+                              foregroundColor: colors.textSecondary,
+                            ),
                           ),
                         ),
                       ],
