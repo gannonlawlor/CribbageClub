@@ -89,15 +89,15 @@ class GameControllerTest {
 
         val gameId = objectMapper.readTree(createResult.response.contentAsString).get("gameId").asText()
 
-        // Get game state
+        // Get game state (response wraps GameState inside "gameState")
         mockMvc.perform(
             get("/api/games/$gameId")
                 .header("Authorization", "Bearer $token")
         )
             .andExpect(status().isOk)
-            .andExpect(jsonPath("$.gameId").value(gameId))
-            .andExpect(jsonPath("$.remainingDeck").isArray)
-            .andExpect(jsonPath("$.remainingDeck.length()").value(0)) // Filtered out
+            .andExpect(jsonPath("$.gameState.gameId").value(gameId))
+            .andExpect(jsonPath("$.gameState.remainingDeck").isArray)
+            .andExpect(jsonPath("$.gameState.remainingDeck.length()").value(0)) // Filtered out
     }
 
     @Test
