@@ -30,8 +30,8 @@ class KeepRankTile extends StatelessWidget {
       borderColor = colors.accent;
       bgColor = colors.accent.withValues(alpha: 0.1);
     } else if (isOptimal) {
-      borderColor = Colors.green;
-      bgColor = Colors.green.withValues(alpha: 0.1);
+      borderColor = colors.evOptimal;
+      bgColor = colors.evOptimal.withValues(alpha: 0.1);
     }
 
     return GestureDetector(
@@ -54,7 +54,7 @@ class KeepRankTile extends StatelessWidget {
             child: Text(
               '#${option.rank}',
               style: TextStyle(
-                color: isOptimal ? Colors.green : colors.textSecondary,
+                color: isOptimal ? colors.evOptimal : colors.textSecondary,
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
               ),

@@ -180,7 +180,7 @@ class _FriendTile extends ConsumerWidget {
       background: Container(
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 16),
-        color: Colors.red.withValues(alpha: 0.3),
+        color: colors.error.withValues(alpha: 0.3),
         child: Icon(Icons.person_remove, color: colors.error),
       ),
       confirmDismiss: (direction) async {

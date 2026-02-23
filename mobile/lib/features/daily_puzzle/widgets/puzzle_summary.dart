@@ -228,23 +228,23 @@ class _ScoreBanner extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         color: allOptimal
-            ? Colors.green.withValues(alpha: 0.15)
+            ? colors.evOptimal.withValues(alpha: 0.15)
             : colors.surfaceDim,
         border: Border.all(
           color: allOptimal
-              ? Colors.green.withValues(alpha: 0.5)
+              ? colors.evOptimal.withValues(alpha: 0.5)
               : colors.divider,
         ),
       ),
       child: Column(
         children: [
           if (allOptimal)
-            const Padding(
-              padding: EdgeInsets.only(bottom: 4),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 4),
               child: Text(
                 'Perfect!',
                 style: TextStyle(
-                  color: Colors.green,
+                  color: colors.evOptimal,
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                 ),
@@ -286,16 +286,16 @@ class _ScoreBanner extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.local_fire_department,
-                    color: Colors.orange,
+                    color: colors.streak,
                     size: 20,
                   ),
                   const SizedBox(width: 4),
                   Text(
                     '$streak day streak!',
-                    style: const TextStyle(
-                      color: Colors.orange,
+                    style: TextStyle(
+                      color: colors.streak,
                       fontSize: 16,
                     ),
                   ),
@@ -382,14 +382,14 @@ class _PuzzleRow extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
                 color: hasResults && isOptimal
-                    ? Colors.green.withValues(alpha: 0.1)
+                    ? colors.evOptimal.withValues(alpha: 0.1)
                     : colors.surfaceDim,
                 borderRadius: isExpanded
                     ? const BorderRadius.vertical(top: Radius.circular(8))
                     : BorderRadius.circular(8),
                 border: hasResults && isOptimal
                     ? Border.all(
-                        color: Colors.green.withValues(alpha: 0.4),
+                        color: colors.evOptimal.withValues(alpha: 0.4),
                       )
                     : null,
               ),
@@ -568,18 +568,18 @@ class _RankBadge extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: isOptimal
-            ? Colors.green.withValues(alpha: 0.3)
+            ? colors.evOptimal.withValues(alpha: 0.3)
             : colors.surfaceDim,
         border: Border.all(
           color: isOptimal
-              ? Colors.green.withValues(alpha: 0.6)
+              ? colors.evOptimal.withValues(alpha: 0.6)
               : colors.divider,
         ),
       ),
       child: Text(
         '#$rank',
         style: TextStyle(
-          color: isOptimal ? Colors.green : colors.textSecondary,
+          color: isOptimal ? colors.evOptimal : colors.textSecondary,
           fontSize: 10,
           fontWeight: FontWeight.bold,
         ),

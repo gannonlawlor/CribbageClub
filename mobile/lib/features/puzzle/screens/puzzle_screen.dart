@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../config/theme/app_colors.dart';
 import '../../../core/auth/auth_provider.dart';
 import '../../../core/models/card.dart';
 import '../../../core/models/game_analysis.dart';
@@ -31,6 +32,8 @@ class _PuzzleScreenState extends ConsumerState<PuzzleScreen> {
     final auth = ref.watch(authProvider);
     final puzzleAsync = ref.watch(_dailyPuzzleProvider);
 
+    final colors = context.appColors;
+
     if (!auth.isLoggedIn) {
       return Scaffold(
         appBar: AppBar(
@@ -44,11 +47,11 @@ class _PuzzleScreenState extends ConsumerState<PuzzleScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.lock_outline, size: 48, color: Colors.white38),
+              Icon(Icons.lock_outline, size: 48, color: colors.textDisabled),
               const SizedBox(height: 16),
-              const Text(
+              Text(
                 'Log in to play the daily puzzle',
-                style: TextStyle(color: Colors.white54, fontSize: 16),
+                style: TextStyle(color: colors.textTertiary, fontSize: 16),
               ),
               const SizedBox(height: 16),
               ElevatedButton(
@@ -75,7 +78,7 @@ class _PuzzleScreenState extends ConsumerState<PuzzleScreen> {
         error: (error, _) => Center(
           child: Text(
             'Failed to load puzzle: $error',
-            style: const TextStyle(color: Colors.redAccent),
+            style: TextStyle(color: colors.error),
           ),
         ),
       ),
@@ -83,21 +86,22 @@ class _PuzzleScreenState extends ConsumerState<PuzzleScreen> {
   }
 
   Widget _buildPuzzle(BuildContext context, PuzzleResponse puzzle) {
+    final colors = context.appColors;
     if (puzzle.alreadySolved && _result == null) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.check_circle, size: 48, color: Colors.greenAccent),
+            Icon(Icons.check_circle, size: 48, color: colors.evOptimal),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               "You've already solved today's puzzle!",
-              style: TextStyle(color: Colors.white, fontSize: 16),
+              style: TextStyle(color: colors.textPrimary, fontSize: 16),
             ),
             const SizedBox(height: 8),
             Text(
               'Come back tomorrow for a new one.',
-              style: TextStyle(color: Colors.white54),
+              style: TextStyle(color: colors.textTertiary),
             ),
           ],
         ),
@@ -113,14 +117,14 @@ class _PuzzleScreenState extends ConsumerState<PuzzleScreen> {
             width: double.infinity,
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white10,
+              color: colors.surfaceDim,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Column(
               children: [
                 Text(
                   'Select 2 cards to discard${puzzle.isDealer ? " (you're the dealer)" : " (you're the pone)"}',
-                  style: const TextStyle(color: Colors.white, fontSize: 16),
+                  style: TextStyle(color: colors.textPrimary, fontSize: 16),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 4),
@@ -128,7 +132,7 @@ class _PuzzleScreenState extends ConsumerState<PuzzleScreen> {
                   puzzle.isDealer
                       ? 'Maximize hand + crib expected value'
                       : 'Maximize hand - crib expected value',
-                  style: const TextStyle(color: Colors.white54, fontSize: 13),
+                  style: TextStyle(color: colors.textTertiary, fontSize: 13),
                 ),
               ],
             ),
@@ -180,12 +184,12 @@ class _PuzzleScreenState extends ConsumerState<PuzzleScreen> {
                     ? _submit
                     : null,
                 child: _submitting
-                    ? const SizedBox(
+                    ? SizedBox(
                         width: 20,
                         height: 20,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: Colors.white,
+                          color: colors.textPrimary,
                         ),
                       )
                     : Text(
@@ -240,16 +244,17 @@ class _PuzzleResult extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white10,
+        color: colors.surfaceDim,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: result.isOptimal
-              ? Colors.greenAccent.withValues(alpha: 0.5)
-              : Colors.orangeAccent.withValues(alpha: 0.5),
+              ? colors.evOptimal.withValues(alpha: 0.5)
+              : colors.evGood.withValues(alpha: 0.5),
         ),
       ),
       child: Column(
@@ -261,8 +266,8 @@ class _PuzzleResult extends StatelessWidget {
               Icon(
                 result.isOptimal ? Icons.check_circle : Icons.info_outline,
                 color: result.isOptimal
-                    ? Colors.greenAccent
-                    : Colors.orangeAccent,
+                    ? colors.evOptimal
+                    : colors.evGood,
                 size: 28,
               ),
               const SizedBox(width: 8),
@@ -270,8 +275,8 @@ class _PuzzleResult extends StatelessWidget {
                 result.isOptimal ? 'Optimal!' : 'Not quite...',
                 style: TextStyle(
                   color: result.isOptimal
-                      ? Colors.greenAccent
-                      : Colors.orangeAccent,
+                      ? colors.evOptimal
+                      : colors.evGood,
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                 ),
@@ -282,7 +287,7 @@ class _PuzzleResult extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               'EV difference: ${result.evDifference.toStringAsFixed(2)}',
-              style: const TextStyle(color: Colors.white70),
+              style: TextStyle(color: colors.textSecondary),
             ),
           ],
           const SizedBox(height: 12),
@@ -311,10 +316,10 @@ class _PuzzleResult extends StatelessWidget {
           const SizedBox(height: 12),
 
           // All options ranked
-          const Text(
+          Text(
             'All Options',
             style: TextStyle(
-              color: Colors.white,
+              color: colors.textPrimary,
               fontSize: 14,
               fontWeight: FontWeight.w600,
             ),
@@ -342,7 +347,7 @@ class _PuzzleResult extends StatelessWidget {
                     child: Text(
                       '#${i + 1}',
                       style: TextStyle(
-                        color: isOpt ? Colors.greenAccent : Colors.white54,
+                        color: isOpt ? colors.evOptimal : colors.textTertiary,
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
@@ -363,7 +368,7 @@ class _PuzzleResult extends StatelessWidget {
                   Expanded(
                     child: Text(
                       'EV ${opt.expectedCombinedValue.toStringAsFixed(2)}',
-                      style: const TextStyle(color: Colors.white, fontSize: 12),
+                      style: TextStyle(color: colors.textPrimary, fontSize: 12),
                     ),
                   ),
                   if (isYours)
@@ -373,13 +378,13 @@ class _PuzzleResult extends StatelessWidget {
                         vertical: 1,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.blueAccent.withValues(alpha: 0.2),
+                        color: colors.highlight.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(4),
                       ),
-                      child: const Text(
+                      child: Text(
                         'You',
                         style: TextStyle(
-                          color: Colors.blueAccent,
+                          color: colors.highlight,
                           fontSize: 10,
                         ),
                       ),
@@ -392,13 +397,13 @@ class _PuzzleResult extends StatelessWidget {
                         vertical: 1,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.greenAccent.withValues(alpha: 0.2),
+                        color: colors.evOptimal.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(4),
                       ),
-                      child: const Text(
+                      child: Text(
                         'Best',
                         style: TextStyle(
-                          color: Colors.greenAccent,
+                          color: colors.evOptimal,
                           fontSize: 10,
                         ),
                       ),
@@ -426,12 +431,13 @@ class _ComparisonColumn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         color: isOptimal
-            ? Colors.greenAccent.withValues(alpha: 0.08)
-            : Colors.white.withValues(alpha: 0.05),
+            ? colors.evOptimal.withValues(alpha: 0.08)
+            : colors.surfaceDim,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
@@ -440,7 +446,7 @@ class _ComparisonColumn extends StatelessWidget {
           Text(
             label,
             style: TextStyle(
-              color: isOptimal ? Colors.greenAccent : Colors.white70,
+              color: isOptimal ? colors.evOptimal : colors.textSecondary,
               fontSize: 12,
               fontWeight: FontWeight.w600,
             ),
@@ -464,8 +470,8 @@ class _ComparisonColumn extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             'EV: ${option.expectedCombinedValue.toStringAsFixed(2)}',
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: colors.textPrimary,
               fontSize: 13,
               fontWeight: FontWeight.w600,
             ),

@@ -233,21 +233,21 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       children: [
         _HighlightBox(
           icon: Icons.emoji_events,
-          iconColor: Colors.amber,
+          iconColor: colors.medalGold,
           label: 'High',
           value: '${p.highestGameScore}',
         ),
         Container(width: 1, height: 32, color: colors.surfaceDim),
         _HighlightBox(
           icon: Icons.local_fire_department,
-          iconColor: Colors.deepOrange,
+          iconColor: colors.streak,
           label: 'Streak',
           value: '${p.currentWinStreak}',
         ),
         Container(width: 1, height: 32, color: colors.surfaceDim),
         _HighlightBox(
           icon: Icons.star,
-          iconColor: Colors.amber,
+          iconColor: colors.medalGold,
           label: 'Best',
           value: '${p.longestWinStreak}',
         ),

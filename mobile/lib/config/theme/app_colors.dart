@@ -45,6 +45,18 @@ class AppColors extends ThemeExtension<AppColors> {
   final Color error;
   final Color warning;
 
+  // EV analysis
+  final Color evOptimal;
+  final Color evGood;
+  final Color evPoor;
+  final Color highlight;
+  final Color streak;
+
+  // Medals
+  final Color medalGold;
+  final Color medalSilver;
+  final Color medalBronze;
+
   const AppColors({
     required this.scaffoldBg,
     required this.gameGradientTop,
@@ -74,6 +86,14 @@ class AppColors extends ThemeExtension<AppColors> {
     required this.success,
     required this.error,
     required this.warning,
+    required this.evOptimal,
+    required this.evGood,
+    required this.evPoor,
+    required this.highlight,
+    required this.streak,
+    required this.medalGold,
+    required this.medalSilver,
+    required this.medalBronze,
   });
 
   // ── Computed getters ──────────────────────────────────────
@@ -122,37 +142,53 @@ class AppColors extends ThemeExtension<AppColors> {
     success: Color(0xFF2E7D32),
     error: Color(0xFFC62828),
     warning: Color(0xFFE65100),
+    evOptimal: Color(0xFF2E7D32),
+    evGood: Color(0xFFE65100),
+    evPoor: Color(0xFFC62828),
+    highlight: Color(0xFF1565C0),
+    streak: Color(0xFFE65100),
+    medalGold: Color(0xFFFFD700),
+    medalSilver: Color(0xFFC0C0C0),
+    medalBronze: Color(0xFFCD7F32),
   );
 
   static const classicDark = AppColors(
-    scaffoldBg: Color(0xFF1B5E20),
-    gameGradientTop: Color(0xFF1B5E20),
-    gameGradientMid: Color(0xFF2E7D32),
-    gameGradientBottom: Color(0xFF1B5E20),
-    surfacePrimary: Color(0xFF1B5E20),
-    surfaceDim: Color(0x1AFFFFFF), // white10
-    cardFace: Color(0xFFFFFDE7),
-    cardBackPrimary: Color(0xFF2E7D32),
-    cardBackSecondary: Color(0xFF1B5E20),
-    cardBackDetail: Color(0x26FFFFFF), // white15
-    suitRed: Color(0xFFC62828),
-    suitBlack: Color(0xFF212121),
-    selectedBorder: Color(0xFFFFD54F),
+    scaffoldBg: Color(0xFF111116),
+    gameGradientTop: Color(0xFF111116),
+    gameGradientMid: Color(0xFF181820),
+    gameGradientBottom: Color(0xFF111116),
+    surfacePrimary: Color(0xFF1A1A22),
+    surfaceDim: Color(0x14FFFFFF), // white @ 8%
+    cardFace: Color(0xFFFAFAF5),
+    cardBackPrimary: Color(0xFF2B3A58),
+    cardBackSecondary: Color(0xFF1D2940),
+    cardBackDetail: Color(0x1FFFFFFF), // white @ 12%
+    suitRed: Color(0xFFE54B4B),
+    suitBlack: Color(0xFFC8C8D0),
+    selectedBorder: Color(0xFFD4A843),
     boardPrimary: Color(0xFF795548),
     boardSecondary: Color(0xFF5D4037),
     boardHole: Color(0xFF3E2723),
-    pegPlayer: Color(0xFFFFD54F),
-    pegOpponent: Color(0xFFEEEEEE),
+    pegPlayer: Color(0xFFD4A843),
+    pegOpponent: Color(0xFFB0B0B8),
     textPrimary: Color(0xFFFFFFFF),
     textSecondary: Color(0xB3FFFFFF), // white70
     textTertiary: Color(0x8AFFFFFF), // white54
     textDisabled: Color(0x61FFFFFF), // white38
-    accent: Color(0xFFFFD54F),
-    accentOnSurface: Color(0xFF000000),
-    buttonPrimary: Color(0xFF2E7D32),
-    success: Color(0xFF69F0AE), // greenAccent
-    error: Color(0xFFFF5252), // redAccent
-    warning: Color(0xFFFFAB00), // amber
+    accent: Color(0xFFD4A843),
+    accentOnSurface: Color(0xFF111116),
+    buttonPrimary: Color(0xFFD4A843),
+    success: Color(0xFF4ADE80),
+    error: Color(0xFFF87171),
+    warning: Color(0xFFFBBF24),
+    evOptimal: Color(0xFF4ADE80),
+    evGood: Color(0xFFFB923C),
+    evPoor: Color(0xFFF87171),
+    highlight: Color(0xFF60A5FA),
+    streak: Color(0xFFFB923C),
+    medalGold: Color(0xFFFFD700),
+    medalSilver: Color(0xFFC0C0C0),
+    medalBronze: Color(0xFFCD7F32),
   );
 
   // ── ThemeExtension overrides ──────────────────────────────
@@ -187,6 +223,14 @@ class AppColors extends ThemeExtension<AppColors> {
     Color? success,
     Color? error,
     Color? warning,
+    Color? evOptimal,
+    Color? evGood,
+    Color? evPoor,
+    Color? highlight,
+    Color? streak,
+    Color? medalGold,
+    Color? medalSilver,
+    Color? medalBronze,
   }) {
     return AppColors(
       scaffoldBg: scaffoldBg ?? this.scaffoldBg,
@@ -217,6 +261,14 @@ class AppColors extends ThemeExtension<AppColors> {
       success: success ?? this.success,
       error: error ?? this.error,
       warning: warning ?? this.warning,
+      evOptimal: evOptimal ?? this.evOptimal,
+      evGood: evGood ?? this.evGood,
+      evPoor: evPoor ?? this.evPoor,
+      highlight: highlight ?? this.highlight,
+      streak: streak ?? this.streak,
+      medalGold: medalGold ?? this.medalGold,
+      medalSilver: medalSilver ?? this.medalSilver,
+      medalBronze: medalBronze ?? this.medalBronze,
     );
   }
 
@@ -254,6 +306,14 @@ class AppColors extends ThemeExtension<AppColors> {
       success: Color.lerp(success, other.success, t)!,
       error: Color.lerp(error, other.error, t)!,
       warning: Color.lerp(warning, other.warning, t)!,
+      evOptimal: Color.lerp(evOptimal, other.evOptimal, t)!,
+      evGood: Color.lerp(evGood, other.evGood, t)!,
+      evPoor: Color.lerp(evPoor, other.evPoor, t)!,
+      highlight: Color.lerp(highlight, other.highlight, t)!,
+      streak: Color.lerp(streak, other.streak, t)!,
+      medalGold: Color.lerp(medalGold, other.medalGold, t)!,
+      medalSilver: Color.lerp(medalSilver, other.medalSilver, t)!,
+      medalBronze: Color.lerp(medalBronze, other.medalBronze, t)!,
     );
   }
 }

@@ -286,9 +286,9 @@ class _CutScoreTable extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         // Bucket bars
-        if (great > 0) _CutBucket(label: '12+ pts', count: great, total: total, color: Colors.greenAccent),
-        if (good > 0) _CutBucket(label: '8-11 pts', count: good, total: total, color: Colors.green),
-        if (mid > 0) _CutBucket(label: '4-7 pts', count: mid, total: total, color: Colors.amber),
+        if (great > 0) _CutBucket(label: '12+ pts', count: great, total: total, color: colors.evOptimal),
+        if (good > 0) _CutBucket(label: '8-11 pts', count: good, total: total, color: colors.evGood),
+        if (mid > 0) _CutBucket(label: '4-7 pts', count: mid, total: total, color: colors.warning),
         if (low > 0) _CutBucket(label: '1-3 pts', count: low, total: total, color: colors.textSecondary),
         if (zeroCount > 0) _CutBucket(label: '0 pts', count: zeroCount, total: total, color: colors.textDisabled),
       ],

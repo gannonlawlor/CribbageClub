@@ -227,11 +227,11 @@ class _RevealedView extends ConsumerWidget {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
                 color: isOptimalPick
-                    ? Colors.green.withValues(alpha: 0.15)
+                    ? colors.evOptimal.withValues(alpha: 0.15)
                     : colors.surfaceDim,
                 border: Border.all(
                   color: isOptimalPick
-                      ? Colors.green.withValues(alpha: 0.5)
+                      ? colors.evOptimal.withValues(alpha: 0.5)
                       : colors.divider,
                 ),
               ),
@@ -242,7 +242,7 @@ class _RevealedView extends ConsumerWidget {
                         ? 'Optimal!'
                         : 'Your pick: #$playerRank of 15',
                     style: TextStyle(
-                      color: isOptimalPick ? Colors.green : colors.textPrimary,
+                      color: isOptimalPick ? colors.evOptimal : colors.textPrimary,
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),

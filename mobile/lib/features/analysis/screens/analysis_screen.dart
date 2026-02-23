@@ -223,10 +223,10 @@ class _AnalysisContent extends StatelessWidget {
                     label: 'Avg Pts Lost',
                     value: totalEvLost.toStringAsFixed(1),
                     color: totalEvLost < 2.0
-                        ? Colors.greenAccent
+                        ? colors.evOptimal
                         : totalEvLost < 5.0
-                        ? Colors.orangeAccent
-                        : Colors.redAccent,
+                        ? colors.evGood
+                        : colors.evPoor,
                   ),
                 ],
               ),
@@ -308,10 +308,10 @@ class _RoundCardState extends State<_RoundCard> {
 
     final evDiff = myAnalysis.evDifference;
     final evColor = evDiff < 0.5
-        ? Colors.greenAccent
+        ? colors.evOptimal
         : evDiff < 2.0
-        ? Colors.orangeAccent
-        : Colors.redAccent;
+        ? colors.evGood
+        : colors.evPoor;
 
     return Container(
       decoration: BoxDecoration(
@@ -521,11 +521,11 @@ class _DiscardComparison extends StatelessWidget {
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         color: isOptimal
-            ? Colors.greenAccent.withValues(alpha: 0.08)
-            : Colors.white.withValues(alpha: 0.05),
+            ? colors.evOptimal.withValues(alpha: 0.08)
+            : colors.surfaceDim,
         borderRadius: BorderRadius.circular(8),
         border: isOptimal
-            ? Border.all(color: Colors.greenAccent.withValues(alpha: 0.3))
+            ? Border.all(color: colors.evOptimal.withValues(alpha: 0.3))
             : null,
       ),
       child: Column(
@@ -534,7 +534,7 @@ class _DiscardComparison extends StatelessWidget {
           Text(
             label,
             style: TextStyle(
-              color: isOptimal ? Colors.greenAccent : colors.textSecondary,
+              color: isOptimal ? colors.evOptimal : colors.textSecondary,
               fontSize: 12,
               fontWeight: FontWeight.w600,
             ),
@@ -687,7 +687,7 @@ class _OptionRow extends StatelessWidget {
               child: Text(
                 '#$rank',
                 style: TextStyle(
-                  color: isOptimal ? Colors.greenAccent : colors.textTertiary,
+                  color: isOptimal ? colors.evOptimal : colors.textTertiary,
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                 ),
@@ -716,12 +716,12 @@ class _OptionRow extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: Colors.blueAccent.withValues(alpha: 0.2),
+                  color: colors.highlight.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(4),
                 ),
-                child: const Text(
+                child: Text(
                   'You',
-                  style: TextStyle(color: Colors.blueAccent, fontSize: 10),
+                  style: TextStyle(color: colors.highlight, fontSize: 10),
                 ),
               ),
             if (isOptimal)
@@ -729,12 +729,12 @@ class _OptionRow extends StatelessWidget {
                 margin: const EdgeInsets.only(left: 4),
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: Colors.greenAccent.withValues(alpha: 0.2),
+                  color: colors.evOptimal.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(4),
                 ),
-                child: const Text(
+                child: Text(
                   'Best',
-                  style: TextStyle(color: Colors.greenAccent, fontSize: 10),
+                  style: TextStyle(color: colors.evOptimal, fontSize: 10),
                 ),
               ),
             const SizedBox(width: 4),
