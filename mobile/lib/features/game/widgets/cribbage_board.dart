@@ -384,7 +384,7 @@ class _PerimeterBoardPainter extends CustomPainter {
       textPainter.text = TextSpan(
         text: '$m',
         style: TextStyle(
-          color: Colors.white.withValues(alpha: 0.45),
+          color: colors.textPrimary.withValues(alpha: 0.45),
           fontSize: 8,
           fontWeight: FontWeight.bold,
         ),
@@ -410,7 +410,7 @@ class _PerimeterBoardPainter extends CustomPainter {
     canvas.drawCircle(
       Offset(center.dx - 0.7, center.dy - 0.7),
       _pegRadius * 0.4,
-      Paint()..color = Colors.white.withValues(alpha: 0.5),
+      Paint()..color = colors.textPrimary.withValues(alpha: 0.5),
     );
   }
 

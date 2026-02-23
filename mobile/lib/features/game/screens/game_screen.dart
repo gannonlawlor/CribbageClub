@@ -628,7 +628,7 @@ class GameScreen extends ConsumerWidget {
               final n = _readNotifier(ref);
               if (n is GameNotifier) n.resign();
             },
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            style: TextButton.styleFrom(foregroundColor: context.appColors.error),
             child: const Text('Resign'),
           ),
         ],

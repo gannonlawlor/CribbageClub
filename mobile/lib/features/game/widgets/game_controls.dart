@@ -152,7 +152,7 @@ class _ActionButton extends StatelessWidget {
         style: ElevatedButton.styleFrom(
           backgroundColor: onPressed != null
               ? colors.buttonPrimary
-              : Colors.grey.shade700,
+              : colors.textDisabled,
           foregroundColor: colors.accentOnSurface,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         ),

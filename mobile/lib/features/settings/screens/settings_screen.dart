@@ -28,7 +28,7 @@ class SettingsScreen extends ConsumerWidget {
           _SettingsTile(
             icon: Icons.dark_mode,
             title: 'Dark Mode',
-            subtitle: 'Casino felt theme',
+            subtitle: 'Dark background and gold accents',
             value: settings.themeMode == AppThemeMode.classicDark,
             onChanged: (val) {
               final mode = val
