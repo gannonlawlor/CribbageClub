@@ -36,6 +36,9 @@ class FriendServiceTest {
     @Mock
     private lateinit var notificationService: NotificationWebSocketService
 
+    @Mock
+    private lateinit var pushNotificationService: PushNotificationService
+
     @InjectMocks
     private lateinit var friendService: FriendService
 

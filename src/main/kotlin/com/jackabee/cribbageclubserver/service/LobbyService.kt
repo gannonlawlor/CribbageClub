@@ -6,6 +6,8 @@ import com.jackabee.cribbageclubserver.model.lobby.LobbyPlayer
 import com.jackabee.cribbageclubserver.model.lobby.LobbyStatus
 import com.jackabee.cribbageclubserver.model.player.Player
 import com.jackabee.cribbageclubserver.repository.LobbyRepository
+import com.jackabee.cribbageclubserver.websocket.GameFoundNotification
+import com.jackabee.cribbageclubserver.websocket.NotificationWebSocketService
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import org.springframework.transaction.annotation.Transactional
@@ -18,7 +20,9 @@ import kotlin.random.Random
 class LobbyService(
     private val gameService: GameService,
     private val lobbyRepository: LobbyRepository,
-    private val objectMapper: ObjectMapper
+    private val objectMapper: ObjectMapper,
+    private val notificationService: NotificationWebSocketService,
+    private val pushNotificationService: PushNotificationService
 ) {
     private val logger = LoggerFactory.getLogger(LobbyService::class.java)
 
@@ -164,6 +168,10 @@ class LobbyService(
             val startedLobby = updatedLobby.startGame(gameState.gameId)
             saveLobbyEntity(startedLobby)
             logger.info("Auto-started game {} from private lobby {}", gameState.gameId, lobby.id)
+
+            // Notify the waiting player that the game is ready
+            notifyGameFound(updatedLobby.players, playerId, playerName, gameState.gameId)
+
             return JoinByCodeResult(lobby = startedLobby, gameState = gameState)
         }
 
@@ -306,10 +314,31 @@ class LobbyService(
             val startedLobby = updatedLobby.startGame(gameState.gameId)
             saveLobbyEntity(startedLobby)
             logger.info("Auto-started game {} from lobby {}", gameState.gameId, lobbyId)
+
+            // Notify the waiting player that the game is ready
+            notifyGameFound(updatedLobby.players, playerId, playerName, gameState.gameId)
+
             return JoinByCodeResult(lobby = startedLobby, gameState = gameState)
         }
 
         return JoinByCodeResult(lobby = updatedLobby)
+    }
+
+    private fun notifyGameFound(players: List<LobbyPlayer>, joinerId: String, joinerName: String, gameId: String) {
+        for (player in players) {
+            if (player.id != joinerId) {
+                notificationService.sendGameFoundNotification(
+                    player.id,
+                    GameFoundNotification(gameId = gameId, opponentName = joinerName)
+                )
+                pushNotificationService.sendIfOffline(
+                    player.id,
+                    "Game Found!",
+                    "Your match against $joinerName is ready",
+                    mapOf("type" to "GAME_FOUND", "gameId" to gameId)
+                )
+            }
+        }
     }
 
     private fun saveLobbyEntity(lobby: Lobby) {

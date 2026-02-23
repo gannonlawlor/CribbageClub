@@ -38,7 +38,8 @@ class FriendService(
     private val friendshipRepository: FriendshipRepository,
     private val userRepository: UserRepository,
     private val sessionRegistry: WebSocketSessionRegistry,
-    private val notificationService: NotificationWebSocketService
+    private val notificationService: NotificationWebSocketService,
+    private val pushNotificationService: PushNotificationService
 ) {
     private val logger = LoggerFactory.getLogger(FriendService::class.java)
 
@@ -97,6 +98,14 @@ class FriendService(
                 fromUsername = requester.username,
                 fromDisplayName = requester.displayName
             )
+        )
+
+        // Send push notification if addressee is offline
+        pushNotificationService.sendIfOffline(
+            addressee.id!!,
+            "Friend Request",
+            "${requester.displayName ?: requester.username} sent you a friend request",
+            mapOf("type" to "FRIEND_REQUEST", "friendshipId" to entity.id)
         )
 
         return FriendRequestInfo(

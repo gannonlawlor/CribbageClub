@@ -3,6 +3,7 @@ package com.jackabee.cribbageclubserver.controller
 import com.jackabee.cribbageclubserver.model.lobby.Lobby
 import com.jackabee.cribbageclubserver.service.FriendService
 import com.jackabee.cribbageclubserver.service.LobbyService
+import com.jackabee.cribbageclubserver.service.PushNotificationService
 import com.jackabee.cribbageclubserver.websocket.*
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -15,7 +16,8 @@ import org.springframework.web.bind.annotation.*
 class ChallengeController(
     private val lobbyService: LobbyService,
     private val friendService: FriendService,
-    private val notificationService: NotificationWebSocketService
+    private val notificationService: NotificationWebSocketService,
+    private val pushNotificationService: PushNotificationService
 ) {
 
     @Operation(summary = "Create a challenge (invite a friend to play)")
@@ -40,6 +42,14 @@ class ChallengeController(
                 fromUserId = userId,
                 fromUsername = username
             )
+        )
+
+        // Send push notification if friend is offline
+        pushNotificationService.sendIfOffline(
+            request.friendUserId,
+            "Game Challenge",
+            "$username challenged you to a game!",
+            mapOf("type" to "CHALLENGE_RECEIVED", "lobbyId" to lobby.id)
         )
 
         return lobby
