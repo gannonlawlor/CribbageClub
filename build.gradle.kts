@@ -33,6 +33,7 @@ dependencies {
     implementation("net.java.dev.jna:jna:5.17.0")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.15")
+    implementation("com.google.auth:google-auth-library-oauth2-http:1.23.0")
     implementation("io.jsonwebtoken:jjwt-api:0.13.0")
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.13.0")
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.13.0")

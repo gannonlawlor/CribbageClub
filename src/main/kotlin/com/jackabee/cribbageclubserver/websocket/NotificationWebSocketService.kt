@@ -46,11 +46,23 @@ data class ChallengeDeclinedNotification(
     val timestamp: Long = System.currentTimeMillis()
 )
 
+data class GameFoundNotification(
+    val type: String = "GAME_FOUND",
+    val gameId: String,
+    val opponentName: String,
+    val timestamp: Long = System.currentTimeMillis()
+)
+
 @Service
 class NotificationWebSocketService(
     private val messagingTemplate: SimpMessagingTemplate
 ) {
     private val logger = LoggerFactory.getLogger(NotificationWebSocketService::class.java)
+
+    fun sendGameFoundNotification(toUserId: String, notification: GameFoundNotification) {
+        messagingTemplate.convertAndSendToUser(toUserId, "/queue/notifications", notification)
+        logger.debug("Sent game found notification to {}", toUserId)
+    }
 
     fun sendFriendRequestNotification(toUserId: String, notification: FriendRequestNotification) {
         messagingTemplate.convertAndSendToUser(toUserId, "/queue/notifications", notification)

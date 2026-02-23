@@ -390,6 +390,16 @@ class RestClient {
     return StatsResponse.fromJson(response.data as Map<String, dynamic>);
   }
 
+  // Device Tokens
+
+  Future<void> registerDeviceToken(String token, String platform) async {
+    await _dio.post('/api/device-tokens', data: {'token': token, 'platform': platform});
+  }
+
+  Future<void> unregisterDeviceToken(String token) async {
+    await _dio.delete('/api/device-tokens', data: {'token': token});
+  }
+
   // Puzzles
 
   Future<PuzzleResponse> getDailyPuzzle() async {

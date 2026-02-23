@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'config/routes.dart';
 import 'config/theme/theme_provider.dart';
+import 'core/providers/push_notification_provider.dart';
 import 'core/services/auth_game_sync_provider.dart';
 import 'features/game/state/game_providers.dart';
 
@@ -37,6 +38,7 @@ class _AppState extends ConsumerState<App> with WidgetsBindingObserver {
     final router = ref.watch(routerProvider);
     final themeMode = ref.watch(themeProvider);
     ref.watch(authGameSyncProvider);
+    ref.watch(pushNotificationSyncProvider);
 
     return MaterialApp.router(
       title: 'Cribbage Club',

@@ -13,6 +13,8 @@ import com.jackabee.cribbageclubserver.model.game.GameHistoryEvent.ScoreBreakdow
 import com.jackabee.cribbageclubserver.model.game.GameStage
 import com.jackabee.cribbageclubserver.model.game.GameState
 import com.jackabee.cribbageclubserver.model.player.Player
+import com.jackabee.cribbageclubserver.repository.GameAnalysisRepository
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -39,7 +41,11 @@ class AnalysisServiceTest {
     }
 
     private val gameService = mock(GameService::class.java)
-    private val analysisService = AnalysisService(gameService, adapter)
+    private val gameAnalysisRepository = mock(GameAnalysisRepository::class.java)
+    private val objectMapper: ObjectMapper = jacksonObjectMapper()
+        .registerModule(JavaTimeModule())
+        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+    private val analysisService = AnalysisService(gameService, adapter, gameAnalysisRepository, objectMapper)
 
     private val p1 = "player1"
     private val p2 = "player2"
