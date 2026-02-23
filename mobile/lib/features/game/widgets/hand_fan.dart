@@ -1,10 +1,13 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/models/card.dart';
+import '../../../core/services/settings_provider.dart';
 import '../../../shared/utils/card_dimensions.dart';
 import '../../../shared/utils/card_utils.dart';
 import 'card_widget.dart';
 
-class HandFan extends StatelessWidget {
+class HandFan extends ConsumerStatefulWidget {
   final List<PlayingCard> cards;
   final Set<int> selectedIndices;
   final bool enabled;
@@ -19,8 +22,88 @@ class HandFan extends StatelessWidget {
   });
 
   @override
+  ConsumerState<HandFan> createState() => _HandFanState();
+}
+
+class _HandFanState extends ConsumerState<HandFan> {
+  bool _seenEmpty = false;
+  int _revealedCount = 0;
+  bool _faceUp = false;
+  bool _isAnimating = false;
+  Timer? _staggerTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _seenEmpty = true;
+    if (widget.cards.isNotEmpty) {
+      // Cards already present on first build (e.g. first hand of new game).
+      // Schedule animation for next frame so layout is ready.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _startDealAnimation();
+      });
+    }
+  }
+
+  @override
+  void didUpdateWidget(HandFan oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.cards.isNotEmpty && widget.cards.isEmpty) {
+      _seenEmpty = true;
+    }
+    if (_seenEmpty && oldWidget.cards.isEmpty && widget.cards.isNotEmpty) {
+      _startDealAnimation();
+    }
+  }
+
+  void _startDealAnimation() {
+    _staggerTimer?.cancel();
+    final settings = ref.read(settingsProvider);
+    final staggerMs = settings.scaleDuration(const Duration(milliseconds: 120)).inMilliseconds;
+    final flipDelayMs = settings.scaleDuration(const Duration(milliseconds: 100)).inMilliseconds;
+    final flipStaggerMs = settings.scaleDuration(const Duration(milliseconds: 80)).inMilliseconds;
+
+    setState(() {
+      _isAnimating = true;
+      _revealedCount = 0;
+      _faceUp = false;
+      _seenEmpty = false;
+    });
+
+    final totalCards = widget.cards.length;
+    _staggerTimer = Timer.periodic(Duration(milliseconds: staggerMs), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      setState(() => _revealedCount++);
+      if (_revealedCount >= totalCards) {
+        timer.cancel();
+        // After all cards positioned, flip them face-up
+        Future.delayed(Duration(milliseconds: flipDelayMs + 300), () {
+          if (!mounted) return;
+          setState(() => _faceUp = true);
+          // After flip completes, end animation
+          final totalFlipMs = flipStaggerMs * (totalCards - 1) + 400;
+          Future.delayed(Duration(milliseconds: totalFlipMs), () {
+            if (!mounted) return;
+            setState(() => _isAnimating = false);
+          });
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _staggerTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final sorted = CardUtils.sorted(cards);
+    final sorted = CardUtils.sorted(widget.cards);
+    final settings = ref.watch(settingsProvider);
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -31,14 +114,46 @@ class HandFan extends StatelessWidget {
         if (sorted.isEmpty) {
           return SizedBox(height: cardH + 12);
         }
+
         final available = constraints.maxWidth;
         final visibleW = dims.handCardVisibleForCount(sorted.length, available);
         final stackWidth = dims.handStackWidthForCount(sorted.length, available);
-        // Center the stack
         final startX = (available - stackWidth) / 2;
+        final centerX = (available - cardW) / 2;
 
+        if (_isAnimating) {
+          final flipStagger = settings.scaleDuration(const Duration(milliseconds: 80));
+          return SizedBox(
+            height: cardH + 12,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                for (int i = 0; i < sorted.length; i++)
+                  AnimatedPositioned(
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeOutCubic,
+                    left: i < _revealedCount ? startX + i * visibleW : centerX,
+                    bottom: 0,
+                    child: AnimatedOpacity(
+                      duration: const Duration(milliseconds: 150),
+                      opacity: i < _revealedCount ? 1.0 : 0.0,
+                      child: FlippableCardWidget(
+                        card: sorted[i],
+                        faceUp: _faceUp,
+                        delay: flipStagger * i,
+                        width: cardW,
+                        height: cardH,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          );
+        }
+
+        // Normal (non-animating) render
         return SizedBox(
-          height: cardH + 12, // extra for selection lift
+          height: cardH + 12,
           child: Stack(
             clipBehavior: Clip.none,
             children: [
@@ -51,9 +166,9 @@ class HandFan extends StatelessWidget {
                   child: CardWidget(
                     card: sorted[i],
                     faceUp: true,
-                    selected: selectedIndices.contains(i),
-                    enabled: enabled,
-                    onTap: onCardTap != null ? () => onCardTap!(i) : null,
+                    selected: widget.selectedIndices.contains(i),
+                    enabled: widget.enabled,
+                    onTap: widget.onCardTap != null ? () => widget.onCardTap!(i) : null,
                     width: cardW,
                     height: cardH,
                   ),
@@ -66,10 +181,78 @@ class HandFan extends StatelessWidget {
   }
 }
 
-class OpponentHand extends StatelessWidget {
+class OpponentHand extends StatefulWidget {
   final int cardCount;
 
   const OpponentHand({super.key, required this.cardCount});
+
+  @override
+  State<OpponentHand> createState() => _OpponentHandState();
+}
+
+class _OpponentHandState extends State<OpponentHand> {
+  bool _seenEmpty = false;
+  int _revealedCount = 0;
+  bool _isAnimating = false;
+  Timer? _staggerTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _seenEmpty = true;
+    if (widget.cardCount > 0) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _startDealAnimation();
+      });
+    }
+  }
+
+  @override
+  void didUpdateWidget(OpponentHand oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.cardCount > 0 && widget.cardCount <= 0) {
+      _seenEmpty = true;
+    }
+    if (_seenEmpty && oldWidget.cardCount <= 0 && widget.cardCount > 0) {
+      _startDealAnimation();
+    }
+  }
+
+  void _startDealAnimation() {
+    _staggerTimer?.cancel();
+    // Use initial settings since this isn't a ConsumerWidget
+    final settings = getInitialSettings() ?? const SettingsState();
+    final staggerMs = settings.scaleDuration(const Duration(milliseconds: 120)).inMilliseconds;
+
+    setState(() {
+      _isAnimating = true;
+      _revealedCount = 0;
+      _seenEmpty = false;
+    });
+
+    final totalCards = widget.cardCount;
+    _staggerTimer = Timer.periodic(Duration(milliseconds: staggerMs), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      setState(() => _revealedCount++);
+      if (_revealedCount >= totalCards) {
+        timer.cancel();
+        // Short delay after last card slides in, then end animation
+        Future.delayed(const Duration(milliseconds: 350), () {
+          if (!mounted) return;
+          setState(() => _isAnimating = false);
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _staggerTimer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -79,19 +262,45 @@ class OpponentHand extends StatelessWidget {
         final cardW = dims.smallCardWidth;
         final cardH = dims.smallCardHeight;
 
-        if (cardCount <= 0) {
+        if (widget.cardCount <= 0) {
           return SizedBox(height: cardH);
         }
 
-        final stackWidth = dims.opponentStackWidth(cardCount);
+        final stackWidth = dims.opponentStackWidth(widget.cardCount);
         final startX = (constraints.maxWidth - stackWidth) / 2;
+        final centerX = (constraints.maxWidth - cardW) / 2;
 
+        if (_isAnimating) {
+          return SizedBox(
+            height: cardH,
+            child: Stack(
+              children: [
+                for (int i = 0; i < widget.cardCount; i++)
+                  AnimatedPositioned(
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeOutCubic,
+                    left: i < _revealedCount ? startX + i * dims.opponentCardVisible : centerX,
+                    top: 0,
+                    child: AnimatedOpacity(
+                      duration: const Duration(milliseconds: 150),
+                      opacity: i < _revealedCount ? 1.0 : 0.0,
+                      child: CardWidget(faceUp: false, width: cardW, height: cardH),
+                    ),
+                  ),
+              ],
+            ),
+          );
+        }
+
+        // Normal (non-animating) render
         return SizedBox(
           height: cardH,
           child: Stack(
             children: [
-              for (int i = 0; i < cardCount; i++)
-                Positioned(
+              for (int i = 0; i < widget.cardCount; i++)
+                AnimatedPositioned(
+                  duration: const Duration(milliseconds: 250),
+                  curve: Curves.easeOutCubic,
                   left: startX + i * dims.opponentCardVisible,
                   top: 0,
                   child: CardWidget(faceUp: false, width: cardW, height: cardH),
