@@ -225,6 +225,7 @@
 				97C146EC1CF9000F007C117D /* Resources */,
 				9705A1C41CF9048500538489 /* Embed Frameworks */,
 				3B06AD1E1E4923F5004D2608 /* Thin Binary */,
+				A1B2C3D4E5F6A7B8C9D0E1F2 /* Copy Firebase Config */,
 				E3F343DAA6F97D2D29D4095C /* [CP] Embed Pods Frameworks */,
 				FFA27B4AFC0584F1050EB976 /* [CP] Copy Pods Resources */,
 			);
@@ -406,6 +407,20 @@
 			shellPath = /bin/sh;
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-resources.sh\"\n";
 			showEnvVarsInLog = 0;
+		};
+		A1B2C3D4E5F6A7B8C9D0E1F2 /* Copy Firebase Config */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Copy Firebase Config";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# Copy flavor-specific GoogleService-Info.plist\nFLAVOR=\"dev\"\nif echo \"$CONFIGURATION\" | grep -qi \"alpha\"; then\n  FLAVOR=\"alpha\"\nfi\n\nSRC=\"${PROJECT_DIR}/config/${FLAVOR}/GoogleService-Info.plist\"\nDST=\"${BUILT_PRODUCTS_DIR}/${PRODUCT_NAME}.app/GoogleService-Info.plist\"\n\nif [ -f \"$SRC\" ]; then\n  cp \"$SRC\" \"$DST\"\n  echo \"Copied GoogleService-Info.plist for flavor: $FLAVOR\"\nelse\n  echo \"warning: No GoogleService-Info.plist found at $SRC — Firebase will not initialize\"\nfi\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
