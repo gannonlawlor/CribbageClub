@@ -36,33 +36,6 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# --- Load App Store Connect credentials (unless skipping upload) ---
-if [[ "$SKIP_UPLOAD" == false && "$DRY_RUN" == false ]]; then
-    ENV_FILE="$SCRIPT_DIR/.release-env"
-    if [[ -f "$ENV_FILE" ]]; then
-        # shellcheck source=/dev/null
-        source "$ENV_FILE"
-    fi
-
-    if [[ -z "$ASC_API_KEY_ID" || -z "$ASC_API_ISSUER_ID" || -z "$ASC_API_KEY_PATH" ]]; then
-        echo "Error: App Store Connect credentials not configured."
-        echo ""
-        echo "Set these in $ENV_FILE or as environment variables:"
-        echo "  ASC_API_KEY_ID=XXXXXXXXXX"
-        echo "  ASC_API_ISSUER_ID=XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
-        echo "  ASC_API_KEY_PATH=~/.appstoreconnect/AuthKey_XXXXXXXXXX.p8"
-        exit 1
-    fi
-
-    # Expand ~ in key path
-    ASC_API_KEY_PATH="${ASC_API_KEY_PATH/#\~/$HOME}"
-
-    if [[ ! -f "$ASC_API_KEY_PATH" ]]; then
-        echo "Error: API key file not found at $ASC_API_KEY_PATH"
-        exit 1
-    fi
-fi
-
 # --- Parse current version from pubspec.yaml ---
 CURRENT_VERSION=$(grep '^version:' "$PUBSPEC" | sed 's/version: *//' | sed 's/+.*//')
 
@@ -94,7 +67,7 @@ if [[ "$DRY_RUN" == true ]]; then
     echo "[dry-run] Would tag: $TAG"
     echo "[dry-run] Would push commit and tag to origin"
     if [[ "$SKIP_UPLOAD" == false ]]; then
-        echo "[dry-run] Would upload IPA to TestFlight via xcrun altool"
+        echo "[dry-run] Would upload to TestFlight via xcodebuild -exportArchive"
     else
         echo "[dry-run] Upload to TestFlight: skipped (--skip-upload)"
     fi
@@ -129,16 +102,12 @@ echo "Building IPA..."
 cd "$MOBILE_DIR"
 flutter build ipa --flavor alpha --dart-define-from-file=dart_define/alpha.json --release
 
-IPA_PATH="$MOBILE_DIR/build/ios/ipa/Cribbage Club.ipa"
-if [[ ! -f "$IPA_PATH" ]]; then
-    # Try to find the IPA if the name differs
-    IPA_PATH=$(find "$MOBILE_DIR/build/ios/ipa" -name "*.ipa" -print -quit 2>/dev/null)
-    if [[ -z "$IPA_PATH" ]]; then
-        echo "Error: IPA not found in build/ios/ipa/"
-        exit 1
-    fi
+ARCHIVE_PATH="$MOBILE_DIR/build/ios/archive/Runner.xcarchive"
+if [[ ! -d "$ARCHIVE_PATH" ]]; then
+    echo "Error: Archive not found at $ARCHIVE_PATH"
+    exit 1
 fi
-echo "IPA built: $IPA_PATH"
+echo "Archive built: $ARCHIVE_PATH"
 
 # --- Git commit + tag ---
 echo ""
@@ -161,12 +130,11 @@ if [[ "$SKIP_UPLOAD" == true ]]; then
 else
     echo ""
     echo "Uploading to TestFlight..."
-    xcrun altool --upload-app \
-        --type ios \
-        --file "$IPA_PATH" \
-        --apiKey "$ASC_API_KEY_ID" \
-        --apiIssuer "$ASC_API_ISSUER_ID" \
-        --verbose
+    xcodebuild -exportArchive \
+        -archivePath "$ARCHIVE_PATH" \
+        -exportOptionsPlist "$SCRIPT_DIR/ExportOptions.plist" \
+        -allowProvisioningUpdates \
+        | tail -5
     echo "Upload complete!"
 fi
 
