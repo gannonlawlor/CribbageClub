@@ -5,6 +5,7 @@ import '../../../config/theme/app_colors.dart';
 import '../../../core/auth/auth_provider.dart';
 import '../../../core/models/game_state.dart';
 import '../../../core/providers/notification_provider.dart';
+import '../../../shared/utils/responsive.dart';
 import '../../../shared/widgets/auth_required.dart';
 import '../../../shared/widgets/loading_overlay.dart';
 import '../../daily_puzzle/state/puzzle_provider.dart';
@@ -83,7 +84,9 @@ class HomeScreen extends ConsumerWidget {
         child: Center(
           child: SingleChildScrollView(
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 400),
+              constraints: BoxConstraints(
+                maxWidth: Responsive.isTabletLandscape(context) ? 700 : 400,
+              ),
               child: Padding(
                 padding: const EdgeInsets.all(32),
                 child: Column(
@@ -173,92 +176,175 @@ class HomeScreen extends ConsumerWidget {
                       color: colors.accent,
                     ),
                     const SizedBox(height: 32),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 56,
-                      child: ElevatedButton.icon(
-                        onPressed: isCreating
-                            ? null
-                            : () => _showDifficultyPicker(context, ref),
-                        icon: const Icon(Icons.smart_toy, size: 24),
-                        label: const Text(
-                          'Play vs AI',
-                          style: TextStyle(fontSize: 18),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 56,
-                      child: ElevatedButton.icon(
-                        onPressed: isCreating
-                            ? null
-                            : () => _showOnlineOptions(context, ref),
-                        icon: const Icon(Icons.people, size: 24),
-                        label: const Text(
-                          'Play Online',
-                          style: TextStyle(fontSize: 18),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 56,
-                      child: OutlinedButton.icon(
-                        onPressed: () => context.go('/daily-puzzle'),
-                        icon: const Icon(Icons.calendar_today, size: 24),
-                        label: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Text(
-                              'Daily Challenge',
-                              style: TextStyle(fontSize: 18),
+
+                    // Main action buttons — 2x2 grid on tablet landscape, stacked on phone
+                    if (Responsive.isTabletLandscape(context)) ...[
+                      Row(
+                        children: [
+                          Expanded(
+                            child: SizedBox(
+                              height: 56,
+                              child: ElevatedButton.icon(
+                                onPressed: isCreating
+                                    ? null
+                                    : () => _showDifficultyPicker(context, ref),
+                                icon: const Icon(Icons.smart_toy, size: 24),
+                                label: const Text('Play vs AI', style: TextStyle(fontSize: 18)),
+                              ),
                             ),
-                            Consumer(
-                              builder: (context, ref, _) {
-                                final streak = ref
-                                    .watch(dailyPuzzleProvider)
-                                    .streak;
-                                if (streak <= 0) return const SizedBox.shrink();
-                                return Padding(
-                                  padding: const EdgeInsets.only(left: 8),
-                                  child: StreakBadge(
-                                    streak: streak,
-                                    fontSize: 12,
-                                  ),
-                                );
-                              },
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: SizedBox(
+                              height: 56,
+                              child: ElevatedButton.icon(
+                                onPressed: isCreating
+                                    ? null
+                                    : () => _showOnlineOptions(context, ref),
+                                icon: const Icon(Icons.people, size: 24),
+                                label: const Text('Play Online', style: TextStyle(fontSize: 18)),
+                              ),
                             ),
-                          ],
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: colors.textPrimary,
-                          side: BorderSide(
-                            color: colors.warning,
-                            width: 1.5,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: SizedBox(
+                              height: 56,
+                              child: OutlinedButton.icon(
+                                onPressed: () => context.go('/daily-puzzle'),
+                                icon: const Icon(Icons.calendar_today, size: 24),
+                                label: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Text('Daily Challenge', style: TextStyle(fontSize: 18)),
+                                    Consumer(
+                                      builder: (context, ref, _) {
+                                        final streak = ref.watch(dailyPuzzleProvider).streak;
+                                        if (streak <= 0) return const SizedBox.shrink();
+                                        return Padding(
+                                          padding: const EdgeInsets.only(left: 8),
+                                          child: StreakBadge(streak: streak, fontSize: 12),
+                                        );
+                                      },
+                                    ),
+                                  ],
+                                ),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: colors.textPrimary,
+                                  side: BorderSide(color: colors.warning, width: 1.5),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: SizedBox(
+                              height: 56,
+                              child: OutlinedButton.icon(
+                                onPressed: () => context.go('/practice-puzzle'),
+                                icon: const Icon(Icons.all_inclusive, size: 24),
+                                label: const Text('Practice Puzzles', style: TextStyle(fontSize: 18)),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: colors.textPrimary,
+                                  side: BorderSide(color: colors.textDisabled),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ] else ...[
+                      SizedBox(
+                        width: double.infinity,
+                        height: 56,
+                        child: ElevatedButton.icon(
+                          onPressed: isCreating
+                              ? null
+                              : () => _showDifficultyPicker(context, ref),
+                          icon: const Icon(Icons.smart_toy, size: 24),
+                          label: const Text(
+                            'Play vs AI',
+                            style: TextStyle(fontSize: 18),
                           ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 56,
-                      child: OutlinedButton.icon(
-                        onPressed: () => context.go('/practice-puzzle'),
-                        icon: const Icon(Icons.all_inclusive, size: 24),
-                        label: const Text(
-                          'Practice Puzzles',
-                          style: TextStyle(fontSize: 18),
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: colors.textPrimary,
-                          side: BorderSide(color: colors.textDisabled),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 56,
+                        child: ElevatedButton.icon(
+                          onPressed: isCreating
+                              ? null
+                              : () => _showOnlineOptions(context, ref),
+                          icon: const Icon(Icons.people, size: 24),
+                          label: const Text(
+                            'Play Online',
+                            style: TextStyle(fontSize: 18),
+                          ),
                         ),
                       ),
-                    ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 56,
+                        child: OutlinedButton.icon(
+                          onPressed: () => context.go('/daily-puzzle'),
+                          icon: const Icon(Icons.calendar_today, size: 24),
+                          label: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Text(
+                                'Daily Challenge',
+                                style: TextStyle(fontSize: 18),
+                              ),
+                              Consumer(
+                                builder: (context, ref, _) {
+                                  final streak = ref
+                                      .watch(dailyPuzzleProvider)
+                                      .streak;
+                                  if (streak <= 0) return const SizedBox.shrink();
+                                  return Padding(
+                                    padding: const EdgeInsets.only(left: 8),
+                                    child: StreakBadge(
+                                      streak: streak,
+                                      fontSize: 12,
+                                    ),
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: colors.textPrimary,
+                            side: BorderSide(
+                              color: colors.warning,
+                              width: 1.5,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 56,
+                        child: OutlinedButton.icon(
+                          onPressed: () => context.go('/practice-puzzle'),
+                          icon: const Icon(Icons.all_inclusive, size: 24),
+                          label: const Text(
+                            'Practice Puzzles',
+                            style: TextStyle(fontSize: 18),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: colors.textPrimary,
+                            side: BorderSide(color: colors.textDisabled),
+                          ),
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 24),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,

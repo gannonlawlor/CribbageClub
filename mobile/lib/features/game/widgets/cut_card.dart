@@ -30,26 +30,33 @@ class _CutCardDisplayState extends State<CutCardDisplay> {
 
   @override
   Widget build(BuildContext context) {
-    final dims = CardDimensions(MediaQuery.of(context).size.width);
-    final cardW = dims.playCardWidth;
-    final cardH = dims.playCardHeight;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final availableWidth = constraints.maxWidth.isFinite
+            ? constraints.maxWidth
+            : MediaQuery.of(context).size.width;
+        final dims = CardDimensions(availableWidth);
+        final cardW = dims.playCardWidth;
+        final cardH = dims.playCardHeight;
 
-    if (_shouldAnimate) {
-      return FlippableCardWidget(
-        card: widget.cutCard,
-        faceUp: widget.cutCard != null,
-        width: cardW,
-        height: cardH,
-        duration: const Duration(milliseconds: 400),
-      );
-    }
+        if (_shouldAnimate) {
+          return FlippableCardWidget(
+            card: widget.cutCard,
+            faceUp: widget.cutCard != null,
+            width: cardW,
+            height: cardH,
+            duration: const Duration(milliseconds: 400),
+          );
+        }
 
-    return CardWidget(
-      card: widget.cutCard,
-      faceUp: widget.cutCard != null,
-      enabled: false,
-      width: cardW,
-      height: cardH,
+        return CardWidget(
+          card: widget.cutCard,
+          faceUp: widget.cutCard != null,
+          enabled: false,
+          width: cardW,
+          height: cardH,
+        );
+      },
     );
   }
 }
