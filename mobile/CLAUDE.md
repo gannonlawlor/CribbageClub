@@ -36,6 +36,7 @@ Convenience scripts that can be run from anywhere (they `cd` to the mobile dir a
 | `scripts/android-alpha.sh` | Run Android debug against alpha server (Tailscale) |
 | `scripts/build-ios-alpha.sh` | Build iOS release IPA for TestFlight/archive |
 | `scripts/build-android-alpha.sh` | Build Android release APK + App Bundle |
+| `scripts/release-ios.sh` | Full iOS release: version bump → build → commit → tag → push → TestFlight upload. Flags: `--patch`, `--dry-run`, `--skip-upload` |
 | `scripts/codegen.sh` | Regenerate freezed/json_serializable code |
 | `scripts/test.sh` | Run static analysis + tests |
 | `scripts/clean.sh` | Clean build artifacts and restore deps |
