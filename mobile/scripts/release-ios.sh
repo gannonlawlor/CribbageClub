@@ -61,38 +61,31 @@ if [[ "$SKIP_UPLOAD" == false && "$DRY_RUN" == false ]]; then
 fi
 
 # --- Parse current version from pubspec.yaml ---
-CURRENT_VERSION_LINE=$(grep '^version:' "$PUBSPEC")
-CURRENT_VERSION=$(echo "$CURRENT_VERSION_LINE" | sed 's/version: *//' | sed 's/+.*//')
-CURRENT_BUILD=$(echo "$CURRENT_VERSION_LINE" | sed 's/.*+//')
+CURRENT_VERSION=$(grep '^version:' "$PUBSPEC" | sed 's/version: *//' | sed 's/+.*//')
 
 IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT_VERSION"
 
 # --- Compute new version ---
-NEW_BUILD=$((CURRENT_BUILD + 1))
-
 if [[ "$BUMP_TYPE" == "patch" ]]; then
-    NEW_PATCH=$((PATCH + 1))
-    NEW_VERSION="$MAJOR.$MINOR.$NEW_PATCH"
+    NEW_VERSION="$MAJOR.$MINOR.$((PATCH + 1))"
 else
-    NEW_MINOR=$((MINOR + 1))
-    NEW_VERSION="$MAJOR.$NEW_MINOR.0"
+    NEW_VERSION="$MAJOR.$((MINOR + 1)).0"
 fi
 
-NEW_VERSION_FULL="$NEW_VERSION+$NEW_BUILD"
 TAG="v$NEW_VERSION"
 
 # --- Confirmation ---
 echo "iOS Release"
 echo "==========="
 echo ""
-echo "  Current:  $CURRENT_VERSION+$CURRENT_BUILD"
-echo "  New:      $NEW_VERSION_FULL"
+echo "  Current:  $CURRENT_VERSION"
+echo "  New:      $NEW_VERSION"
 echo "  Tag:      $TAG"
 echo "  Bump:     $BUMP_TYPE"
 echo ""
 
 if [[ "$DRY_RUN" == true ]]; then
-    echo "[dry-run] Would update pubspec.yaml: version: $NEW_VERSION_FULL"
+    echo "[dry-run] Would update pubspec.yaml: version: $NEW_VERSION"
     echo "[dry-run] Would run: flutter build ipa --flavor alpha --dart-define-from-file=dart_define/alpha.json --release"
     echo "[dry-run] Would commit pubspec.yaml with message: Release $TAG"
     echo "[dry-run] Would tag: $TAG"
@@ -122,8 +115,8 @@ fi
 
 # --- Update pubspec.yaml ---
 echo ""
-echo "Updating pubspec.yaml → version: $NEW_VERSION_FULL"
-sed -i '' "s/^version: .*/version: $NEW_VERSION_FULL/" "$PUBSPEC"
+echo "Updating pubspec.yaml → version: $NEW_VERSION"
+sed -i '' "s/^version: .*/version: $NEW_VERSION/" "$PUBSPEC"
 
 # --- Build IPA ---
 echo ""
