@@ -10,6 +10,7 @@ PUBSPEC="$MOBILE_DIR/pubspec.yaml"
 BUMP_TYPE="minor"
 DRY_RUN=false
 SKIP_UPLOAD=false
+AUTO_YES=false
 
 # Parse flags
 while [[ $# -gt 0 ]]; do
@@ -17,6 +18,7 @@ while [[ $# -gt 0 ]]; do
         --patch)    BUMP_TYPE="patch"; shift ;;
         --dry-run)  DRY_RUN=true; shift ;;
         --skip-upload) SKIP_UPLOAD=true; shift ;;
+        --yes|-y)   AUTO_YES=true; shift ;;
         -h|--help)
             echo "Usage: release-ios.sh [--patch] [--dry-run] [--skip-upload]"
             echo ""
@@ -24,6 +26,7 @@ while [[ $# -gt 0 ]]; do
             echo "  --patch        Increment patch version instead of minor"
             echo "  --dry-run      Show what would happen without executing"
             echo "  --skip-upload  Build, commit, tag, push — but skip TestFlight upload"
+            echo "  --yes, -y      Skip confirmation prompt"
             exit 0
             ;;
         *)
@@ -100,10 +103,12 @@ if [[ "$DRY_RUN" == true ]]; then
     exit 0
 fi
 
-read -r -p "Proceed? (y/n) " CONFIRM
-if [[ "$CONFIRM" != "y" && "$CONFIRM" != "Y" ]]; then
-    echo "Aborted."
-    exit 0
+if [[ "$AUTO_YES" == false ]]; then
+    read -r -p "Proceed? (y/n) " CONFIRM
+    if [[ "$CONFIRM" != "y" && "$CONFIRM" != "Y" ]]; then
+        echo "Aborted."
+        exit 0
+    fi
 fi
 
 # --- Check for clean working tree (except pubspec.lock) ---
