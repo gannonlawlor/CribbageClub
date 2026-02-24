@@ -17,6 +17,7 @@ import '../../../shared/utils/card_utils.dart';
 import '../../../core/services/settings_provider.dart';
 import '../state/game_providers.dart';
 import '../state/local_game_notifier.dart';
+import '../../../shared/utils/responsive.dart';
 import '../widgets/crib_area.dart';
 import '../widgets/cribbage_board.dart';
 import '../widgets/cut_card.dart';
@@ -30,6 +31,7 @@ import '../widgets/dev_overlay.dart';
 import '../widgets/score_popup_overlay.dart';
 import '../widgets/stage_indicator.dart';
 import '../widgets/turn_timer.dart';
+import '../widgets/vertical_cribbage_board.dart';
 
 /// Tracks which local game IDs have already been saved to history (prevents duplicate saves on rebuild).
 final _savedLocalGamesProvider = StateProvider<Set<String>>((ref) => {});
@@ -249,6 +251,298 @@ class GameScreen extends ConsumerWidget {
       });
     }
 
+    final isTabletLandscape = Responsive.isTabletLandscape(context);
+
+    // Shared widgets used by both layouts
+    Widget buildConnectionBanners() => Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (gameNotifier.connectionStatus == ConnectionStatus.reconnecting)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            color: colors.warning,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                SizedBox(
+                  width: 12,
+                  height: 12,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: colors.accentOnSurface,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  'Reconnecting...',
+                  style: TextStyle(
+                    color: colors.accentOnSurface,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        if (gameNotifier.connectionStatus == ConnectionStatus.failed)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            color: colors.error,
+            child: Text(
+              'Connection lost. Please go back and rejoin.',
+              style: TextStyle(color: colors.accentOnSurface, fontSize: 12),
+              textAlign: TextAlign.center,
+            ),
+          ),
+      ],
+    );
+
+    Widget buildTimers() => gameNotifier.isTimed
+        ? Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                TurnTimer(
+                  turnStartedAt: gameNotifier.turnStartedAt,
+                  turnTimeLimitMs: gameNotifier.turnTimeLimitMs,
+                  timeBankMs: gameNotifier.opponentTimeBankMs,
+                  isActivePlayer: !isMyTurn,
+                  isTimed: true,
+                ),
+                TurnTimer(
+                  turnStartedAt: gameNotifier.turnStartedAt,
+                  turnTimeLimitMs: gameNotifier.turnTimeLimitMs,
+                  timeBankMs: gameNotifier.myTimeBankMs,
+                  isActivePlayer: isMyTurn,
+                  isTimed: true,
+                ),
+              ],
+            ),
+          )
+        : const SizedBox.shrink();
+
+    Widget buildOpponentHand() => Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 12),
+      child: OpponentHand(
+        cardCount: opponent.hand.isEmpty
+            ? _estimateOpponentCards(gs, opponent.id)
+            : opponent.hand.length,
+      ),
+    );
+
+    Widget buildMiddleArea() => Expanded(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            StageIndicator(
+              stage: gs.stage,
+              isMyTurn: isMyTurn,
+              isDealer: isDealer,
+              isLocalGame: _isLocal,
+              currentPlayerName: opponent.name,
+              selectedCardCount: selectedCards.length,
+            ),
+            const SizedBox(height: 6),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                CutCardDisplay(cutCard: gs.cutCard),
+                const SizedBox(width: 8),
+                CribArea(crib: cribCards, revealed: cribRevealed),
+              ],
+            ),
+            const SizedBox(height: 6),
+            if (gs.stage != GameStage.gameOver)
+              Visibility(
+                visible: gs.stage == GameStage.pegging,
+                maintainSize: true,
+                maintainAnimation: true,
+                maintainState: true,
+                child: PlayArea(
+                  playedCards: gs.playedCards,
+                  peggingCount: gs.peggingCount,
+                ),
+              ),
+            if (gs.stage == GameStage.gameOver)
+              _buildGameOver(context, ref, gs, playerId),
+          ],
+        ),
+      ),
+    );
+
+    Widget buildControls() => GameControls(
+      stage: gs.stage,
+      isMyTurn: isMyTurn,
+      selectedCardCount: selectedCards.length,
+      isDiscarding: gameNotifier.isDiscarding,
+      showCountingOverlay: gs.stage == GameStage.counting && isMyTurn,
+      autoDeal: settings.autoDeal,
+      autoCut: settings.autoCut,
+      autoGo: settings.autoGo,
+      autoPlayPegging: settings.autoPlayAll || settings.autoPlayPegging,
+      canPlayCard: _canPlayAnyCard(player.hand, gs.peggingCount),
+      hasSelectedCard: selectedPeggingCard != null,
+      onDiscard: () => _handleDiscard(ref, gs, playerId, selectedCards),
+      onCut: () {
+        final n = _readNotifier(ref);
+        if (n is GameNotifier) n.cutDeck();
+        if (n is LocalGameNotifier) n.cutDeck();
+      },
+      onCount: () {
+        final n = _readNotifier(ref);
+        if (n is GameNotifier) n.countHand();
+        if (n is LocalGameNotifier) n.countHand();
+      },
+      onDeal: () {
+        final n = _readNotifier(ref);
+        if (n is LocalGameNotifier) n.deal();
+      },
+      onGo: () {
+        final n = _readNotifier(ref);
+        if (n is GameNotifier) n.sayGo();
+        if (n is LocalGameNotifier) n.sayGo();
+      },
+      onPlayCard: () {
+        final card = selectedPeggingCard;
+        if (card == null) return;
+        ref.read(selectedPeggingCardProvider(gameId).notifier).state = null;
+        final n = _readNotifier(ref);
+        if (n is GameNotifier) n.playCard(card);
+        if (n is LocalGameNotifier) n.playCard(card);
+      },
+    );
+
+    Widget buildPlayerHand() => Padding(
+      padding: const EdgeInsets.only(bottom: 6, top: 2, left: 12, right: 12),
+      child: HandFan(
+        cards: CardUtils.sorted(player.hand),
+        selectedIndices: selectedCards,
+        enabled: isMyTurn && !gameNotifier.isDiscarding,
+        onCardTap: (index) => _handleCardTap(
+          context, ref, gs, playerId, index, selectedCards,
+        ),
+      ),
+    );
+
+    List<Widget> buildOverlays() => [
+      ScorePopupOverlay(gameId: gameId, playerId: playerId),
+      if (gs.stage == GameStage.counting && isMyTurn)
+        CountingOverlay(
+          hand: gs.handsForCounting[playerId] ?? player.hand,
+          cutCard: gs.cutCard!,
+          crib: isDealer ? gs.crib : [],
+          isDealer: isDealer,
+          onComplete: () {
+            final n = _readNotifier(ref);
+            if (n is GameNotifier) n.countHand();
+            if (n is LocalGameNotifier) n.countHand();
+          },
+        ),
+      if (kDebugMode && _isLocal)
+        DevOverlay(gameId: gameId, playerId: playerId),
+    ];
+
+    if (isTabletLandscape) {
+      // Tablet landscape: vertical board on left, card play area on right
+      return Scaffold(
+        body: Container(
+          decoration: BoxDecoration(gradient: colors.gameGradient),
+          child: SafeArea(
+            child: Row(
+              children: [
+                // Left panel: back button, score, stage, vertical board
+                SizedBox(
+                  width: 120,
+                  child: Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: IconButton(
+                          icon: Icon(Icons.arrow_back, color: colors.textSecondary, size: 20),
+                          onPressed: () => context.go('/'),
+                        ),
+                      ),
+                      ScoreDisplay(
+                        player: player,
+                        opponent: opponent,
+                        isDealer: isDealer,
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (gameNotifier.error != null)
+                            IconButton(
+                              icon: Icon(Icons.warning, color: colors.warning, size: 18),
+                              onPressed: () {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text(gameNotifier.error!)),
+                                );
+                                final n = _readNotifier(ref);
+                                if (n is GameNotifier) n.clearError();
+                                if (n is LocalGameNotifier) n.clearError();
+                              },
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                            ),
+                          if (!_isLocal && gs.stage != GameStage.gameOver)
+                            IconButton(
+                              icon: Icon(Icons.flag, color: colors.textTertiary, size: 18),
+                              onPressed: () => _confirmResign(context, ref),
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                            ),
+                          IconButton(
+                            icon: Icon(Icons.history, color: colors.textTertiary, size: 18),
+                            onPressed: () => _showHistorySheet(context, gs.history, playerId),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                          ),
+                        ],
+                      ),
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          child: VerticalCribbageBoard(
+                            playerScore: player.score,
+                            opponentScore: opponent.score,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Right panel: card play area (same widgets, no perimeter board)
+                Expanded(
+                  child: Stack(
+                    children: [
+                      Column(
+                        children: [
+                          buildConnectionBanners(),
+                          buildTimers(),
+                          buildOpponentHand(),
+                          buildMiddleArea(),
+                          buildControls(),
+                          buildPlayerHand(),
+                        ],
+                      ),
+                      ...buildOverlays(),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    // Phone / tablet portrait: original layout with perimeter board
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(gradient: colors.gameGradient),
@@ -264,7 +558,6 @@ class GameScreen extends ConsumerWidget {
                 children: [
                   Column(
                     children: [
-                      // Top bar: back + scores + history + resign
                       _TopBar(
                         gameNotifier: gameNotifier,
                         player: player,
@@ -285,234 +578,15 @@ class GameScreen extends ConsumerWidget {
                         },
                         onResign: () => _confirmResign(context, ref),
                       ),
-
-                      // Reconnecting banner
-                      if (gameNotifier.connectionStatus ==
-                          ConnectionStatus.reconnecting)
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(vertical: 4),
-                          color: colors.warning,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              SizedBox(
-                                width: 12,
-                                height: 12,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: colors.accentOnSurface,
-                                ),
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                'Reconnecting...',
-                                style: TextStyle(
-                                  color: colors.accentOnSurface,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      if (gameNotifier.connectionStatus ==
-                          ConnectionStatus.failed)
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(vertical: 4),
-                          color: colors.error,
-                          child: Text(
-                            'Connection lost. Please go back and rejoin.',
-                            style: TextStyle(color: colors.accentOnSurface, fontSize: 12),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-
-                      // Turn timers (online timed games only)
-                      if (gameNotifier.isTimed)
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 2,
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              TurnTimer(
-                                turnStartedAt: gameNotifier.turnStartedAt,
-                                turnTimeLimitMs: gameNotifier.turnTimeLimitMs,
-                                timeBankMs: gameNotifier.opponentTimeBankMs,
-                                isActivePlayer: !isMyTurn,
-                                isTimed: true,
-                              ),
-                              TurnTimer(
-                                turnStartedAt: gameNotifier.turnStartedAt,
-                                turnTimeLimitMs: gameNotifier.turnTimeLimitMs,
-                                timeBankMs: gameNotifier.myTimeBankMs,
-                                isActivePlayer: isMyTurn,
-                                isTimed: true,
-                              ),
-                            ],
-                          ),
-                        ),
-
-                      // Opponent hand
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 2,
-                          horizontal: 12,
-                        ),
-                        child: OpponentHand(
-                          cardCount: opponent.hand.isEmpty
-                              ? _estimateOpponentCards(gs, opponent.id)
-                              : opponent.hand.length,
-                        ),
-                      ),
-
-                      // Middle area
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              // Stage indicator (compact pill)
-                              StageIndicator(
-                                stage: gs.stage,
-                                isMyTurn: isMyTurn,
-                                isDealer: isDealer,
-                                isLocalGame: _isLocal,
-                                currentPlayerName: opponent.name,
-                                selectedCardCount: selectedCards.length,
-                              ),
-                              const SizedBox(height: 6),
-
-                              // Cut card + crib
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  CutCardDisplay(cutCard: gs.cutCard),
-                                  const SizedBox(width: 8),
-                                  CribArea(
-                                    crib: cribCards,
-                                    revealed: cribRevealed,
-                                  ),
-                                ],
-                              ),
-
-                              const SizedBox(height: 6),
-
-                              // Play area — space-reserving when not pegging,
-                              // but fully hidden during game over to avoid overflow.
-                              if (gs.stage != GameStage.gameOver)
-                                Visibility(
-                                  visible: gs.stage == GameStage.pegging,
-                                  maintainSize: true,
-                                  maintainAnimation: true,
-                                  maintainState: true,
-                                  child: PlayArea(
-                                    playedCards: gs.playedCards,
-                                    peggingCount: gs.peggingCount,
-                                  ),
-                                ),
-
-                              // Game over
-                              if (gs.stage == GameStage.gameOver)
-                                _buildGameOver(context, ref, gs, playerId),
-                            ],
-                          ),
-                        ),
-                      ),
-
-                      // Controls
-                      GameControls(
-                        stage: gs.stage,
-                        isMyTurn: isMyTurn,
-                        selectedCardCount: selectedCards.length,
-                        isDiscarding: gameNotifier.isDiscarding,
-                        showCountingOverlay: gs.stage == GameStage.counting && isMyTurn,
-                        autoDeal: settings.autoDeal,
-                        autoCut: settings.autoCut,
-                        autoGo: settings.autoGo,
-                        autoPlayPegging: settings.autoPlayAll || settings.autoPlayPegging,
-                        canPlayCard: _canPlayAnyCard(player.hand, gs.peggingCount),
-                        hasSelectedCard: selectedPeggingCard != null,
-                        onDiscard: () =>
-                            _handleDiscard(ref, gs, playerId, selectedCards),
-                        onCut: () {
-                          final n = _readNotifier(ref);
-                          if (n is GameNotifier) n.cutDeck();
-                          if (n is LocalGameNotifier) n.cutDeck();
-                        },
-                        onCount: () {
-                          final n = _readNotifier(ref);
-                          if (n is GameNotifier) n.countHand();
-                          if (n is LocalGameNotifier) n.countHand();
-                        },
-                        onDeal: () {
-                          final n = _readNotifier(ref);
-                          if (n is LocalGameNotifier) n.deal();
-                        },
-                        onGo: () {
-                          final n = _readNotifier(ref);
-                          if (n is GameNotifier) n.sayGo();
-                          if (n is LocalGameNotifier) n.sayGo();
-                        },
-                        onPlayCard: () {
-                          final card = selectedPeggingCard;
-                          if (card == null) return;
-                          ref.read(selectedPeggingCardProvider(gameId).notifier).state = null;
-                          final n = _readNotifier(ref);
-                          if (n is GameNotifier) n.playCard(card);
-                          if (n is LocalGameNotifier) n.playCard(card);
-                        },
-                      ),
-
-                      // Player hand
-                      Padding(
-                        padding: const EdgeInsets.only(
-                          bottom: 6,
-                          top: 2,
-                          left: 12,
-                          right: 12,
-                        ),
-                        child: HandFan(
-                          cards: CardUtils.sorted(player.hand),
-                          selectedIndices: selectedCards,
-                          enabled: isMyTurn && !gameNotifier.isDiscarding,
-                          onCardTap: (index) => _handleCardTap(
-                            context,
-                            ref,
-                            gs,
-                            playerId,
-                            index,
-                            selectedCards,
-                          ),
-                        ),
-                      ),
+                      buildConnectionBanners(),
+                      buildTimers(),
+                      buildOpponentHand(),
+                      buildMiddleArea(),
+                      buildControls(),
+                      buildPlayerHand(),
                     ],
                   ),
-
-                  // Score popup overlay
-                  ScorePopupOverlay(gameId: gameId, playerId: playerId),
-
-                  // Counting overlay
-                  if (gs.stage == GameStage.counting && isMyTurn)
-                    CountingOverlay(
-                      hand: gs.handsForCounting[playerId] ?? player.hand,
-                      cutCard: gs.cutCard!,
-                      crib: isDealer ? gs.crib : [],
-                      isDealer: isDealer,
-                      onComplete: () {
-                        final n = _readNotifier(ref);
-                        if (n is GameNotifier) n.countHand();
-                        if (n is LocalGameNotifier) n.countHand();
-                      },
-                    ),
-
-                  // Dev overlay (debug builds + local games only)
-                  if (kDebugMode && _isLocal)
-                    DevOverlay(gameId: gameId, playerId: playerId),
+                  ...buildOverlays(),
                 ],
               ),
               ),
@@ -607,6 +681,39 @@ class GameScreen extends ConsumerWidget {
         }
       }
     }
+  }
+
+  void _showHistorySheet(BuildContext context, List<GameHistoryEvent> events, String playerId) {
+    final colors = context.appColors;
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: colors.surfacePrimary,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Text(
+                'Game History',
+                style: TextStyle(
+                  color: colors.textPrimary,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            SizedBox(
+              height: 300,
+              child: HistoryLog(events: events, playerId: playerId),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   void _confirmResign(BuildContext context, WidgetRef ref) {

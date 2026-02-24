@@ -7,6 +7,7 @@ import '../../../core/auth/auth_provider.dart';
 import '../../../core/models/friend.dart';
 import '../../../core/models/lobby.dart';
 import '../../../core/providers/notification_provider.dart';
+import '../../../shared/utils/responsive.dart';
 import '../../../shared/utils/text_utils.dart';
 
 // Providers
@@ -146,6 +147,19 @@ class _FriendsTab extends ConsumerWidget {
                   ),
                 ],
               ),
+            ),
+          );
+        }
+        if (Responsive.isTabletLandscape(context)) {
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: list.map((f) => SizedBox(
+                width: (MediaQuery.of(context).size.width - 48) / 2,
+                child: _FriendTile(friend: f),
+              )).toList(),
             ),
           );
         }

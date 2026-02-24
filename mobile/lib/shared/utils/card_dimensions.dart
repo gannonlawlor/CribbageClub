@@ -8,6 +8,9 @@ class CardDimensions {
   /// Cap at 500px to prevent oversized cards on wide screens (desktop browsers).
   CardDimensions(double width) : screenWidth = width.clamp(0.0, 500.0);
 
+  /// Tablet constructor: clamps at 800px for wider landscape panels.
+  CardDimensions.tablet(double width) : screenWidth = width.clamp(0.0, 800.0);
+
   // Hand cards: ~25% screen width
   double get handCardWidth => screenWidth * 0.25;
   double get handCardHeight => handCardWidth / AppConstants.cardAspectRatio;

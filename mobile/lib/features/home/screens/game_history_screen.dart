@@ -6,6 +6,7 @@ import '../../../core/auth/auth_provider.dart';
 import '../../../core/models/game_state.dart';
 import '../../../core/models/local_game_record.dart';
 import '../../../core/services/local_game_history_provider.dart';
+import '../../../shared/utils/responsive.dart';
 import '../../../shared/widgets/game_history_row.dart';
 
 final _serverGameHistoryProvider = FutureProvider.autoDispose<List<GameState>>((
@@ -302,6 +303,19 @@ class _ServerGamesSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (Responsive.isTabletLandscape(context)) {
+      return Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          for (final game in games)
+            SizedBox(
+              width: (MediaQuery.of(context).size.width - 48) / 2,
+              child: GameHistoryRow(game: game, playerId: playerId),
+            ),
+        ],
+      );
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

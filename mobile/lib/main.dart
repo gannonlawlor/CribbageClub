@@ -23,8 +23,12 @@ Future<void> main() async {
         ? ExternalLibrary.process(iKnowHowToUseIt: true)
         : null,
   );
+  // Allow all orientations at startup; runtime policy applied per-device in App.builder
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+    DeviceOrientation.landscapeLeft,
+    DeviceOrientation.landscapeRight,
   ]);
 
   final authService = AuthService();

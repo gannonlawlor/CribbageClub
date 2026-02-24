@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../config/theme/app_colors.dart';
 import '../../../core/auth/auth_provider.dart';
 import '../../../core/models/leaderboard_entry.dart';
+import '../../../shared/utils/responsive.dart';
 import '../../../shared/utils/text_utils.dart';
 
 final _leaderboardProvider = FutureProvider.autoDispose<List<LeaderboardEntry>>(
@@ -129,16 +130,34 @@ class LeaderboardScreen extends ConsumerWidget {
 
               if (top3.length >= 3) const SizedBox(height: 16),
 
-              // Rest of leaderboard (4+)
-              ...rest.asMap().entries.map(
-                (e) => _LeaderboardTile(
-                  entry: e.value,
-                  rank: e.key + 4,
-                  isCurrentUser: e.value.playerId == auth.userId,
-                  colors: colors,
-                  onTap: () => context.push('/profile/${e.value.playerId}'),
+              // Rest of leaderboard (4+) — 2-column on tablet landscape
+              if (rest.isNotEmpty && Responsive.isTabletLandscape(context))
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 0,
+                  children: rest.asMap().entries.map(
+                    (e) => SizedBox(
+                      width: (MediaQuery.of(context).size.width - 48) / 2,
+                      child: _LeaderboardTile(
+                        entry: e.value,
+                        rank: e.key + 4,
+                        isCurrentUser: e.value.playerId == auth.userId,
+                        colors: colors,
+                        onTap: () => context.push('/profile/${e.value.playerId}'),
+                      ),
+                    ),
+                  ).toList(),
+                )
+              else
+                ...rest.asMap().entries.map(
+                  (e) => _LeaderboardTile(
+                    entry: e.value,
+                    rank: e.key + 4,
+                    isCurrentUser: e.value.playerId == auth.userId,
+                    colors: colors,
+                    onTap: () => context.push('/profile/${e.value.playerId}'),
+                  ),
                 ),
-              ),
             ],
           );
         },

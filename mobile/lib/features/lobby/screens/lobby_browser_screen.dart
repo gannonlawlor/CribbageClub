@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../config/theme/app_colors.dart';
 import '../../../core/auth/auth_provider.dart';
 import '../../../core/models/lobby.dart';
+import '../../../shared/utils/responsive.dart';
 import '../../../shared/utils/text_utils.dart';
 import '../../../shared/widgets/loading_overlay.dart';
 
@@ -43,7 +44,9 @@ class LobbyBrowserScreen extends ConsumerWidget {
         isLoading: isJoining,
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 500),
+            constraints: BoxConstraints(
+              maxWidth: Responsive.isTabletLandscape(context) ? 800 : 500,
+            ),
             child: Column(
               children: [
                 Expanded(
@@ -77,6 +80,29 @@ class LobbyBrowserScreen extends ConsumerWidget {
                                 ),
                               ),
                             ],
+                          ),
+                        );
+                      }
+                      if (Responsive.isTabletLandscape(context)) {
+                        return RefreshIndicator(
+                          onRefresh: () async {
+                            ref.invalidate(_publicLobbiesProvider);
+                            await ref.read(_publicLobbiesProvider.future);
+                          },
+                          child: SingleChildScrollView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            padding: const EdgeInsets.all(16),
+                            child: Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: list.map((lobby) => SizedBox(
+                                width: (MediaQuery.of(context).size.width - 48) / 2,
+                                child: _LobbyTile(
+                                  lobby: lobby,
+                                  onJoin: () => _joinLobby(context, ref, lobby.id),
+                                ),
+                              )).toList(),
+                            ),
                           ),
                         );
                       }
