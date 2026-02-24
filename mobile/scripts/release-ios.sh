@@ -165,7 +165,8 @@ else
         --type ios \
         --file "$IPA_PATH" \
         --apiKey "$ASC_API_KEY_ID" \
-        --apiIssuer "$ASC_API_ISSUER_ID"
+        --apiIssuer "$ASC_API_ISSUER_ID" \
+        --verbose
     echo "Upload complete!"
 fi
 
