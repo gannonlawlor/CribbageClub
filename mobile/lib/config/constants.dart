@@ -45,5 +45,5 @@ class AppConstants {
   static const Duration pegMovePerHole = Duration(milliseconds: 50);
   static const Duration scorePopupDuration = Duration(milliseconds: 1800);
   static const Duration stageTransitionDuration = Duration(milliseconds: 400);
-  static const Duration aiThinkingDelay = Duration(milliseconds: 200);
+  static const Duration aiThinkingDelay = Duration(milliseconds: 400);
 }
