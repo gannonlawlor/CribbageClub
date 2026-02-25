@@ -24,11 +24,13 @@ LocalGameNotifier _createNotifier({
       soundEnabled: false,
       hapticsEnabled: false,
     ),
+    getAiDelay: () => Duration.zero,
   );
 }
 
 void main() {
   setUpAll(() async {
+    TestWidgetsFlutterBinding.ensureInitialized();
     await RustLib.init();
   });
 
@@ -87,7 +89,7 @@ void main() {
       );
 
       // Force an error by trying to play a card not in hand
-      await notifier.playCard(const PlayingCard(rank: Rank.ace, suit: Suit.spades));
+      notifier.playCard(const PlayingCard(rank: Rank.ace, suit: Suit.spades));
       // Whether or not it errors, clearError should reset it
       notifier.clearError();
       expect(notifier.debugState.error, isNull);
@@ -113,7 +115,7 @@ void main() {
       expect(hand.length, 6);
 
       // Discard 2 cards
-      await notifier.discardCards([hand[0], hand[1]]);
+      notifier.discardCards([hand[0], hand[1]]);
 
       final updated = notifier.debugState.gameState!;
       // After discarding 2, hand should have 4

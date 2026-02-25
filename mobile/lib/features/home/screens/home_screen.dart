@@ -220,7 +220,7 @@ class HomeScreen extends ConsumerWidget {
                                 label: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    const Text('Daily Challenge', style: TextStyle(fontSize: 18)),
+                                    const Flexible(child: Text('Daily Challenge', style: TextStyle(fontSize: 18), overflow: TextOverflow.ellipsis)),
                                     Consumer(
                                       builder: (context, ref, _) {
                                         final streak = ref.watch(dailyPuzzleProvider).streak;

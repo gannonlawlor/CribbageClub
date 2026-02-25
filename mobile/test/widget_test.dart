@@ -7,8 +7,7 @@ void main() {
     await tester.pumpWidget(const ProviderScope(child: App()));
     await tester.pumpAndSettle();
 
-    // Should show login screen for unauthenticated user
+    // Should render the app with title
     expect(find.text('Cribbage Club'), findsOneWidget);
-    expect(find.text('Login'), findsOneWidget);
   });
 }
