@@ -8,10 +8,14 @@ class GameFeedbackService {
   bool soundEnabled;
   bool hapticsEnabled;
 
-  // Separate players to allow overlapping sounds
-  final AudioPlayer _cardPlayer = AudioPlayer();
-  final AudioPlayer _scorePlayer = AudioPlayer();
-  final AudioPlayer _uiPlayer = AudioPlayer();
+  // Separate players to allow overlapping sounds (lazy to avoid plugin errors in tests)
+  AudioPlayer? _cardPlayer;
+  AudioPlayer? _scorePlayer;
+  AudioPlayer? _uiPlayer;
+
+  AudioPlayer get _card => _cardPlayer ??= AudioPlayer();
+  AudioPlayer get _score => _scorePlayer ??= AudioPlayer();
+  AudioPlayer get _ui => _uiPlayer ??= AudioPlayer();
 
   GameFeedbackService({this.soundEnabled = true, this.hapticsEnabled = true});
 
@@ -19,26 +23,26 @@ class GameFeedbackService {
   void onEvent(AnimationEvent event) {
     switch (event) {
       case CardPlayedAnimEvent():
-        _playSound(_cardPlayer, 'card_play.wav');
+        _playSound(() => _card, 'card_play.wav');
         _haptic(HapticFeedback.lightImpact);
       case CardsDealtEvent():
-        _playSound(_cardPlayer, 'card_deal.wav');
+        _playSound(() => _card, 'card_deal.wav');
         _haptic(HapticFeedback.selectionClick);
       case CardsDiscardedEvent():
-        _playSound(_cardPlayer, 'discard.wav');
+        _playSound(() => _card, 'discard.wav');
         _haptic(HapticFeedback.lightImpact);
       case CutCardRevealedEvent():
-        _playSound(_uiPlayer, 'cut_card.wav');
+        _playSound(() => _ui, 'cut_card.wav');
         _haptic(HapticFeedback.lightImpact);
       case ScoreChangedEvent():
-        _playSound(_scorePlayer, 'score.wav');
+        _playSound(() => _score, 'score.wav');
         _haptic(HapticFeedback.mediumImpact);
       case StageChangedEvent(:final newStage):
         if (newStage == 'gameOver') {
-          _playSound(_uiPlayer, 'game_over.wav');
+          _playSound(() => _ui, 'game_over.wav');
           _haptic(HapticFeedback.heavyImpact);
         } else {
-          _playSound(_uiPlayer, 'stage_change.wav');
+          _playSound(() => _ui, 'stage_change.wav');
           _haptic(HapticFeedback.selectionClick);
         }
       case _:
@@ -46,9 +50,9 @@ class GameFeedbackService {
     }
   }
 
-  void _playSound(AudioPlayer player, String filename) {
+  void _playSound(AudioPlayer Function() getPlayer, String filename) {
     if (!soundEnabled) return;
-    player.play(AssetSource('sounds/$filename'));
+    getPlayer().play(AssetSource('sounds/$filename'));
   }
 
   void _haptic(Future<void> Function() method) {
@@ -57,8 +61,8 @@ class GameFeedbackService {
   }
 
   void dispose() {
-    _cardPlayer.dispose();
-    _scorePlayer.dispose();
-    _uiPlayer.dispose();
+    _cardPlayer?.dispose();
+    _scorePlayer?.dispose();
+    _uiPlayer?.dispose();
   }
 }

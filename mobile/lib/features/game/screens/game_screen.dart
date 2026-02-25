@@ -1060,4 +1060,19 @@ class _TopBar extends StatelessWidget {
   }
 }
 
-String _encodeGameState(GameState gs) => jsonEncode(gs.toJson());
+String _encodeGameState(GameState gs) {
+  final json = gs.toJson();
+  // Fix empty timestamps from Rust engine for backend Instant compatibility
+  final now = DateTime.now().toUtc().toIso8601String();
+  if (json['history'] is List) {
+    for (final event in json['history'] as List) {
+      if (event is Map<String, dynamic>) {
+        final ts = event['timestamp'];
+        if (ts == null || ts == '') {
+          event['timestamp'] = now;
+        }
+      }
+    }
+  }
+  return jsonEncode(json);
+}
