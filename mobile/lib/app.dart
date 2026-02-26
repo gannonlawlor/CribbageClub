@@ -5,6 +5,7 @@ import 'config/routes.dart';
 import 'config/theme/theme_provider.dart';
 import 'core/providers/push_notification_provider.dart';
 import 'core/services/auth_game_sync_provider.dart';
+import 'core/services/connectivity_sync_provider.dart';
 import 'features/game/state/game_providers.dart';
 import 'shared/utils/responsive.dart';
 
@@ -55,6 +56,7 @@ class _AppState extends ConsumerState<App> with WidgetsBindingObserver {
     final router = ref.watch(routerProvider);
     final themeMode = ref.watch(themeProvider);
     ref.watch(authGameSyncProvider);
+    ref.watch(connectivitySyncProvider);
     ref.watch(pushNotificationSyncProvider);
 
     return MaterialApp.router(

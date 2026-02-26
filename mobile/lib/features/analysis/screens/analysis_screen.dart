@@ -64,6 +64,7 @@ final analysisProvider = FutureProvider.family
           await restClient.saveGameAnalysis(gameId, analysis);
         } catch (e) {
           debugPrint('[Analysis] Failed to upload analysis for $gameId: $e');
+          ref.read(analysisCacheServiceProvider).addPendingUpload(gameId);
         }
       }
 
