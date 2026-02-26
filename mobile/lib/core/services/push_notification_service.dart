@@ -56,6 +56,14 @@ class PushNotificationService {
     }
   }
 
+  /// Re-registers the current FCM token with the backend if one exists.
+  /// Handles the case where initial registration failed due to no connectivity.
+  Future<void> reRegisterTokenIfNeeded() async {
+    if (_currentToken != null) {
+      await _registerToken(_currentToken!);
+    }
+  }
+
   Future<void> unregisterToken() async {
     if (_currentToken != null) {
       try {

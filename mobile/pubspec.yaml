@@ -46,6 +46,7 @@ dependencies:
   rust_lib_cribbage_club:
     path: rust_builder
   flutter_rust_bridge: 2.11.1
+  connectivity_plus: ^7.0.0
 
 dependency_overrides:
   path_provider_foundation: 2.4.3
