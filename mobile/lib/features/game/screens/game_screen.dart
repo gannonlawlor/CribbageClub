@@ -429,7 +429,7 @@ class GameScreen extends ConsumerWidget {
     );
 
     List<Widget> buildOverlays() => [
-      ScorePopupOverlay(gameId: gameId, playerId: playerId),
+      ScorePopupOverlay(gameId: gameId, playerId: playerId, opponentName: opponent.name),
       if (gs.stage == GameStage.counting && isMyTurn)
         CountingOverlay(
           hand: gs.handsForCounting[playerId] ?? player.hand,

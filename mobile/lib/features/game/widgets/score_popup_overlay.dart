@@ -13,11 +13,13 @@ import '../state/game_providers.dart';
 class ScorePopupOverlay extends ConsumerStatefulWidget {
   final String gameId;
   final String playerId;
+  final String opponentName;
 
   const ScorePopupOverlay({
     super.key,
     required this.gameId,
     required this.playerId,
+    required this.opponentName,
   });
 
   @override
@@ -89,6 +91,7 @@ class _ScorePopupOverlayState extends ConsumerState<ScorePopupOverlay>
       id: id,
       event: event,
       isPlayer: isPlayer,
+      opponentName: widget.opponentName,
       controller: animController,
     );
 
@@ -138,12 +141,14 @@ class _PopupEntry {
   final int id;
   final ScoreChangedEvent event;
   final bool isPlayer;
+  final String opponentName;
   final AnimationController controller;
 
   const _PopupEntry({
     required this.id,
     required this.event,
     required this.isPlayer,
+    required this.opponentName,
     required this.controller,
   });
 }
@@ -208,6 +213,8 @@ class _ScorePopupWidget extends StatelessWidget {
     final points = entry.event.points;
     final reason = entry.event.reason;
     final source = entry.event.source;
+    final pegColor = entry.isPlayer ? colors.pegPlayer : colors.pegOpponent;
+    final playerLabel = entry.isPlayer ? 'You' : entry.opponentName;
 
     // Label for the source
     String? sourceLabel;
@@ -225,11 +232,19 @@ class _ScorePopupWidget extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          Text(
+            playerLabel,
+            style: TextStyle(
+              color: pegColor.withValues(alpha: 0.9),
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
           if (sourceLabel != null)
             Text(
               sourceLabel,
               style: TextStyle(
-                color: colors.accent.withValues(alpha: 0.8),
+                color: pegColor.withValues(alpha: 0.8),
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
               ),
@@ -237,7 +252,7 @@ class _ScorePopupWidget extends StatelessWidget {
           Text(
             '+$points',
             style: TextStyle(
-              color: colors.accent,
+              color: pegColor,
               fontSize: 36,
               fontWeight: FontWeight.bold,
               shadows: const [
