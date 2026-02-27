@@ -507,6 +507,12 @@ class GameScreen extends ConsumerWidget {
                               constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                             ),
                           IconButton(
+                            icon: Icon(Icons.settings, color: colors.textTertiary, size: 18),
+                            onPressed: () => _showSettingsSheet(context, ref),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                          ),
+                          IconButton(
                             icon: Icon(Icons.history, color: colors.textTertiary, size: 18),
                             onPressed: () => _showHistorySheet(context, gs.history, playerId),
                             padding: EdgeInsets.zero,
@@ -586,6 +592,7 @@ class GameScreen extends ConsumerWidget {
                           if (n is LocalGameNotifier) n.clearError();
                         },
                         onResign: () => _confirmResign(context, ref),
+                        onSettings: () => _showSettingsSheet(context, ref),
                       ),
                       buildConnectionBanners(),
                       buildTimers(),
@@ -722,6 +729,18 @@ class GameScreen extends ConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+
+  void _showSettingsSheet(BuildContext context, WidgetRef ref) {
+    final colors = context.appColors;
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: colors.surfacePrimary,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => const _GameSettingsSheet(),
     );
   }
 
@@ -975,6 +994,7 @@ class _TopBar extends StatelessWidget {
   final VoidCallback onBack;
   final VoidCallback onError;
   final VoidCallback onResign;
+  final VoidCallback onSettings;
 
   const _TopBar({
     required this.gameNotifier,
@@ -988,6 +1008,7 @@ class _TopBar extends StatelessWidget {
     required this.onBack,
     required this.onError,
     required this.onResign,
+    required this.onSettings,
   });
 
   @override
@@ -1024,6 +1045,12 @@ class _TopBar extends StatelessWidget {
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
             ),
+          IconButton(
+            icon: Icon(Icons.settings, color: colors.textTertiary, size: 20),
+            onPressed: onSettings,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+          ),
           IconButton(
             icon: Icon(Icons.history, color: colors.textTertiary, size: 20),
             onPressed: () => _showHistorySheet(context),
@@ -1121,6 +1148,99 @@ class _RestoreGuardState extends ConsumerState<_RestoreGuard> {
       body: Container(
         decoration: BoxDecoration(gradient: colors.gameGradient),
         child: const Center(child: CircularProgressIndicator()),
+      ),
+    );
+  }
+}
+
+class _GameSettingsSheet extends ConsumerWidget {
+  const _GameSettingsSheet();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.appColors;
+    final settings = ref.watch(settingsProvider);
+    final notifier = ref.read(settingsProvider.notifier);
+
+    return SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Text(
+              'Play Style',
+              style: TextStyle(
+                color: colors.textPrimary,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          SwitchListTile.adaptive(
+            title: Text('Auto-Deal', style: TextStyle(color: colors.textPrimary)),
+            value: settings.autoDeal,
+            activeTrackColor: colors.accent,
+            onChanged: (val) => notifier.setAutoDeal(val),
+          ),
+          SwitchListTile.adaptive(
+            title: Text('Auto-Cut Deck', style: TextStyle(color: colors.textPrimary)),
+            value: settings.autoCut,
+            activeTrackColor: colors.accent,
+            onChanged: (val) => notifier.setAutoCut(val),
+          ),
+          SwitchListTile.adaptive(
+            title: Text('Auto-Go', style: TextStyle(color: colors.textPrimary)),
+            value: settings.autoGo,
+            activeTrackColor: colors.accent,
+            onChanged: (val) => notifier.setAutoGo(val),
+          ),
+          SwitchListTile.adaptive(
+            title: Text('Auto-Play All', style: TextStyle(color: colors.textPrimary)),
+            value: settings.autoPlayAll,
+            activeTrackColor: colors.accent,
+            onChanged: (val) => notifier.setAutoPlayAll(val),
+          ),
+          SwitchListTile.adaptive(
+            title: Text(
+              'Auto-Play Pegging',
+              style: TextStyle(
+                color: settings.autoPlayAll ? colors.textDisabled : colors.textPrimary,
+              ),
+            ),
+            value: settings.autoPlayPegging,
+            activeTrackColor: colors.accent,
+            onChanged: settings.autoPlayAll ? null : (val) => notifier.setAutoPlayPegging(val),
+          ),
+          ListTile(
+            title: Text('Animation Speed', style: TextStyle(color: colors.textPrimary)),
+            subtitle: Row(
+              children: [
+                Text('0.5x', style: TextStyle(color: colors.textTertiary, fontSize: 11)),
+                Expanded(
+                  child: Slider(
+                    value: settings.animationSpeed,
+                    min: 0.5,
+                    max: 2.0,
+                    divisions: 6,
+                    activeColor: colors.accent,
+                    onChanged: (val) => notifier.setAnimationSpeed(val),
+                  ),
+                ),
+                Text('2.0x', style: TextStyle(color: colors.textTertiary, fontSize: 11)),
+              ],
+            ),
+            trailing: Text(
+              '${settings.animationSpeed.toStringAsFixed(1)}x',
+              style: TextStyle(
+                color: colors.textPrimary,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+        ],
       ),
     );
   }
