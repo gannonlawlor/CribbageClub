@@ -60,17 +60,11 @@ class GameScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.appColors;
-    // Guard: stale local game URL after app restart
+    // Guard: stale local game URL after app restart — try to restore from persistence
     if (_isLocal) {
       final service = ref.read(localGameServiceProvider);
       if (!service.hasActiveGame) {
-        Future.microtask(() => context.go('/'));
-        return Scaffold(
-          body: Container(
-            decoration: BoxDecoration(gradient: colors.gameGradient),
-            child: const Center(child: CircularProgressIndicator()),
-          ),
-        );
+        return _RestoreGuard(gameId: gameId);
       }
     }
 
@@ -124,6 +118,7 @@ class GameScreen extends ConsumerWidget {
           final service = ref.read(localGameHistoryServiceProvider);
           await service.saveCompletedGame(gs);
           ref.invalidate(localGameHistoryProvider);
+          ref.invalidate(activeLocalGameProvider);
 
           // If logged in, upload to server immediately
           if (auth.isLoggedIn) {
@@ -135,6 +130,20 @@ class GameScreen extends ConsumerWidget {
             );
             ref.invalidate(localGameHistoryProvider);
           }
+        });
+      }
+    }
+
+    // Auto-save in-progress local games
+    if (_isLocal && gs.stage != GameStage.gameOver) {
+      final localService = ref.read(localGameServiceProvider);
+      if (localService.aiPlayerId != null && localService.difficulty != null) {
+        Future.microtask(() {
+          ref.read(localGameHistoryServiceProvider).saveActiveGame(
+            gs,
+            localService.aiPlayerId!,
+            localService.difficulty!,
+          );
         });
       }
     }
@@ -1055,6 +1064,63 @@ class _TopBar extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _RestoreGuard extends ConsumerStatefulWidget {
+  final String gameId;
+
+  const _RestoreGuard({required this.gameId});
+
+  @override
+  ConsumerState<_RestoreGuard> createState() => _RestoreGuardState();
+}
+
+class _RestoreGuardState extends ConsumerState<_RestoreGuard> {
+  bool _attempted = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _tryRestore();
+  }
+
+  Future<void> _tryRestore() async {
+    final historyService = ref.read(localGameHistoryServiceProvider);
+    final active = await historyService.getActiveGame();
+
+    if (!mounted) return;
+
+    if (active != null && active.gameState.gameId == widget.gameId) {
+      final service = ref.read(localGameServiceProvider);
+      service.restoreGame(
+        stateJson: active.stateJson,
+        aiPlayerId: active.aiPlayerId,
+        difficulty: active.difficulty,
+      );
+      // Force rebuild — the parent GameScreen will now see hasActiveGame == true
+      setState(() => _attempted = true);
+    } else {
+      // No matching active game — redirect home
+      context.go('/');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+
+    if (_attempted) {
+      // Engine restored — render the real game screen
+      return GameScreen(gameId: widget.gameId);
+    }
+
+    return Scaffold(
+      body: Container(
+        decoration: BoxDecoration(gradient: colors.gameGradient),
+        child: const Center(child: CircularProgressIndicator()),
       ),
     );
   }

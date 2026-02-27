@@ -22,6 +22,12 @@ final persistedGameStateProvider =
   return service.getGameState(gameId);
 });
 
+final activeLocalGameProvider =
+    FutureProvider.autoDispose<ActiveLocalGame?>((ref) async {
+  final service = ref.read(localGameHistoryServiceProvider);
+  return service.getActiveGame();
+});
+
 final gameUploadServiceProvider = Provider<GameUploadService>((ref) {
   return GameUploadService(
     restClient: ref.read(restClientProvider),

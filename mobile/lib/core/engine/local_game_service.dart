@@ -74,6 +74,20 @@ class LocalGameService {
     return _processAIActions();
   }
 
+  GameState restoreGame({
+    required String stateJson,
+    required String aiPlayerId,
+    required String difficulty,
+  }) {
+    _engine = rust.engineRestore(stateJson: stateJson);
+    _aiPlayerId = aiPlayerId;
+    _difficulty = difficulty;
+    return currentState!;
+  }
+
+  String? get aiPlayerId => _aiPlayerId;
+  String? get difficulty => _difficulty;
+
   bool get hasActiveGame => _engine != null;
 
   GameState? get currentState {

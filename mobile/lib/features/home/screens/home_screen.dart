@@ -10,6 +10,8 @@ import '../../../shared/widgets/auth_required.dart';
 import '../../../shared/widgets/loading_overlay.dart';
 import '../../daily_puzzle/state/puzzle_provider.dart';
 import '../../daily_puzzle/widgets/streak_badge.dart';
+import '../../../core/services/local_game_history_provider.dart';
+import '../../../core/services/local_game_history_service.dart';
 import '../../game/state/game_providers.dart';
 
 final _isCreatingGameProvider = StateProvider<bool>((ref) => false);
@@ -33,6 +35,7 @@ class HomeScreen extends ConsumerWidget {
     final auth = ref.watch(authProvider);
     final isCreating = ref.watch(_isCreatingGameProvider);
     final activeGames = ref.watch(_activeGamesProvider);
+    final activeLocalGame = ref.watch(activeLocalGameProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -135,37 +138,16 @@ class HomeScreen extends ConsumerWidget {
                       const SizedBox(height: 24),
                     ],
 
-                    // Active games section (only when logged in)
-                    if (auth.isLoggedIn)
-                      AnimatedSize(
-                        duration: const Duration(milliseconds: 200),
-                        alignment: Alignment.topCenter,
-                        child: activeGames.when(
-                          data: (games) {
-                            if (games.isEmpty) return const SizedBox.shrink();
-                            return Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Continue Game',
-                                  style: TextStyle(
-                                    color: colors.textPrimary,
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                ...games.map(
-                                  (game) => _ActiveGameTile(game: game),
-                                ),
-                                const SizedBox(height: 24),
-                              ],
-                            );
-                          },
-                          loading: () => const SizedBox.shrink(),
-                          error: (_, _) => const SizedBox.shrink(),
-                        ),
+                    // Active games section (online + local in-progress)
+                    AnimatedSize(
+                      duration: const Duration(milliseconds: 200),
+                      alignment: Alignment.topCenter,
+                      child: _ContinueGameSection(
+                        activeGames: activeGames,
+                        activeLocalGame: activeLocalGame,
+                        isLoggedIn: auth.isLoggedIn,
                       ),
+                    ),
 
                     Icon(
                       Icons.style,
@@ -531,6 +513,7 @@ class HomeScreen extends ConsumerWidget {
       humanPlayerName: auth.username ?? 'Player',
       difficulty: difficulty,
     );
+    ref.invalidate(activeLocalGameProvider);
     if (context.mounted) {
       context.go('/game/${state.gameId}');
     }
@@ -676,6 +659,50 @@ class HomeScreen extends ConsumerWidget {
     } finally {
       ref.read(_isCreatingGameProvider.notifier).state = false;
     }
+  }
+}
+
+class _ContinueGameSection extends StatelessWidget {
+  final AsyncValue<List<GameState>> activeGames;
+  final AsyncValue<ActiveLocalGame?> activeLocalGame;
+  final bool isLoggedIn;
+
+  const _ContinueGameSection({
+    required this.activeGames,
+    required this.activeLocalGame,
+    required this.isLoggedIn,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+    final onlineGames = isLoggedIn
+        ? (activeGames.valueOrNull ?? <GameState>[])
+        : <GameState>[];
+    final localGame = activeLocalGame.valueOrNull;
+
+    if (onlineGames.isEmpty && localGame == null) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Continue Game',
+          style: TextStyle(
+            color: colors.textPrimary,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 8),
+        if (localGame != null)
+          _ActiveGameTile(game: localGame.gameState),
+        ...onlineGames.map((game) => _ActiveGameTile(game: game)),
+        const SizedBox(height: 24),
+      ],
+    );
   }
 }
 
