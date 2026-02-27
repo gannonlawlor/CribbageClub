@@ -137,37 +137,34 @@ class HomeScreen extends ConsumerWidget {
 
                     // Active games section (only when logged in)
                     if (auth.isLoggedIn)
-                      activeGames.when(
-                        data: (games) {
-                          if (games.isEmpty) return const SizedBox.shrink();
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Continue Game',
-                                style: TextStyle(
-                                  color: colors.textPrimary,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
+                      AnimatedSize(
+                        duration: const Duration(milliseconds: 200),
+                        alignment: Alignment.topCenter,
+                        child: activeGames.when(
+                          data: (games) {
+                            if (games.isEmpty) return const SizedBox.shrink();
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Continue Game',
+                                  style: TextStyle(
+                                    color: colors.textPrimary,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 8),
-                              ...games.map(
-                                (game) => _ActiveGameTile(game: game),
-                              ),
-                              const SizedBox(height: 24),
-                            ],
-                          );
-                        },
-                        loading: () => const Padding(
-                          padding: EdgeInsets.only(bottom: 24),
-                          child: SizedBox(
-                            height: 24,
-                            width: 24,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          ),
+                                const SizedBox(height: 8),
+                                ...games.map(
+                                  (game) => _ActiveGameTile(game: game),
+                                ),
+                                const SizedBox(height: 24),
+                              ],
+                            );
+                          },
+                          loading: () => const SizedBox.shrink(),
+                          error: (_, _) => const SizedBox.shrink(),
                         ),
-                        error: (_, _) => const SizedBox.shrink(),
                       ),
 
                     Icon(
