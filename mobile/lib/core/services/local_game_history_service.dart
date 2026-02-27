@@ -6,9 +6,25 @@ import '../models/game_state.dart';
 import '../models/import_games.dart';
 import '../models/local_game_record.dart';
 
+class ActiveLocalGame {
+  final String stateJson;
+  final String aiPlayerId;
+  final String difficulty;
+
+  ActiveLocalGame({
+    required this.stateJson,
+    required this.aiPlayerId,
+    required this.difficulty,
+  });
+
+  GameState get gameState =>
+      GameState.fromJson(jsonDecode(stateJson) as Map<String, dynamic>);
+}
+
 class LocalGameHistoryService {
   static const _indexKey = 'local_game_history_index';
   static const _stateKeyPrefix = 'local_game_state_';
+  static const _activeGameKey = 'local_active_game';
   static const _maxGames = 50;
 
   SharedPreferences? _prefs;
@@ -18,8 +34,42 @@ class LocalGameHistoryService {
     return _prefs!;
   }
 
+  Future<void> saveActiveGame(
+    GameState state,
+    String aiPlayerId,
+    String difficulty,
+  ) async {
+    final prefs = await _preferences;
+    final bundle = jsonEncode({
+      'stateJson': jsonEncode(state.toJson()),
+      'aiPlayerId': aiPlayerId,
+      'difficulty': difficulty,
+    });
+    await prefs.setString(_activeGameKey, bundle);
+  }
+
+  Future<ActiveLocalGame?> getActiveGame() async {
+    final prefs = await _preferences;
+    final raw = prefs.getString(_activeGameKey);
+    if (raw == null) return null;
+    final map = jsonDecode(raw) as Map<String, dynamic>;
+    return ActiveLocalGame(
+      stateJson: map['stateJson'] as String,
+      aiPlayerId: map['aiPlayerId'] as String,
+      difficulty: map['difficulty'] as String,
+    );
+  }
+
+  Future<void> clearActiveGame() async {
+    final prefs = await _preferences;
+    await prefs.remove(_activeGameKey);
+  }
+
   Future<void> saveCompletedGame(GameState gameState) async {
     final prefs = await _preferences;
+
+    // Clear any active game since this one is now complete
+    await prefs.remove(_activeGameKey);
 
     // Determine player vs AI
     final player = gameState.players.firstWhere(
