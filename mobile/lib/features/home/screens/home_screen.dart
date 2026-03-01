@@ -193,29 +193,43 @@ class HomeScreen extends ConsumerWidget {
                           Expanded(
                             child: SizedBox(
                               height: 56,
-                              child: OutlinedButton.icon(
-                                onPressed: () => context.go('/daily-puzzle'),
-                                icon: const Icon(Icons.calendar_today, size: 24),
-                                label: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Flexible(child: Text('Daily Challenge', style: TextStyle(fontSize: 18), overflow: TextOverflow.ellipsis)),
-                                    Consumer(
-                                      builder: (context, ref, _) {
-                                        final streak = ref.watch(dailyPuzzleProvider).streak;
-                                        if (streak <= 0) return const SizedBox.shrink();
-                                        return Padding(
-                                          padding: const EdgeInsets.only(left: 8),
-                                          child: StreakBadge(streak: streak, fontSize: 12),
-                                        );
-                                      },
+                              child: Consumer(
+                                builder: (context, ref, _) {
+                                  final status = ref.watch(dailyPuzzleStatusProvider);
+                                  final completedToday = status.valueOrNull?.completedToday ?? false;
+                                  final completedCount = status.valueOrNull?.completedCount ?? 0;
+                                  final streak = status.valueOrNull?.streak ?? 0;
+                                  final borderColor = completedToday ? colors.evOptimal : colors.warning;
+                                  return OutlinedButton.icon(
+                                    onPressed: () => context.go('/daily-puzzle'),
+                                    icon: const Icon(Icons.calendar_today, size: 24),
+                                    label: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Flexible(child: Text('Daily Challenge', style: TextStyle(fontSize: 18), overflow: TextOverflow.ellipsis)),
+                                        if (completedToday)
+                                          Padding(
+                                            padding: const EdgeInsets.only(left: 6),
+                                            child: Icon(Icons.check_circle, size: 18, color: colors.evOptimal),
+                                          )
+                                        else if (completedCount > 0)
+                                          Padding(
+                                            padding: const EdgeInsets.only(left: 6),
+                                            child: Text('$completedCount/5', style: TextStyle(fontSize: 12, color: colors.textSecondary)),
+                                          ),
+                                        if (streak > 0)
+                                          Padding(
+                                            padding: const EdgeInsets.only(left: 8),
+                                            child: StreakBadge(streak: streak, fontSize: 12),
+                                          ),
+                                      ],
                                     ),
-                                  ],
-                                ),
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: colors.textPrimary,
-                                  side: BorderSide(color: colors.warning, width: 1.5),
-                                ),
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: colors.textPrimary,
+                                      side: BorderSide(color: borderColor, width: 1.5),
+                                    ),
+                                  );
+                                },
                               ),
                             ),
                           ),
@@ -270,40 +284,52 @@ class HomeScreen extends ConsumerWidget {
                       SizedBox(
                         width: double.infinity,
                         height: 56,
-                        child: OutlinedButton.icon(
-                          onPressed: () => context.go('/daily-puzzle'),
-                          icon: const Icon(Icons.calendar_today, size: 24),
-                          label: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Text(
-                                'Daily Challenge',
-                                style: TextStyle(fontSize: 18),
-                              ),
-                              Consumer(
-                                builder: (context, ref, _) {
-                                  final streak = ref
-                                      .watch(dailyPuzzleProvider)
-                                      .streak;
-                                  if (streak <= 0) return const SizedBox.shrink();
-                                  return Padding(
-                                    padding: const EdgeInsets.only(left: 8),
-                                    child: StreakBadge(
-                                      streak: streak,
-                                      fontSize: 12,
+                        child: Consumer(
+                          builder: (context, ref, _) {
+                            final status = ref.watch(dailyPuzzleStatusProvider);
+                            final completedToday = status.valueOrNull?.completedToday ?? false;
+                            final completedCount = status.valueOrNull?.completedCount ?? 0;
+                            final streak = status.valueOrNull?.streak ?? 0;
+                            final borderColor = completedToday ? colors.evOptimal : colors.warning;
+                            return OutlinedButton.icon(
+                              onPressed: () => context.go('/daily-puzzle'),
+                              icon: const Icon(Icons.calendar_today, size: 24),
+                              label: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Text(
+                                    'Daily Challenge',
+                                    style: TextStyle(fontSize: 18),
+                                  ),
+                                  if (completedToday)
+                                    Padding(
+                                      padding: const EdgeInsets.only(left: 6),
+                                      child: Icon(Icons.check_circle, size: 18, color: colors.evOptimal),
+                                    )
+                                  else if (completedCount > 0)
+                                    Padding(
+                                      padding: const EdgeInsets.only(left: 6),
+                                      child: Text('$completedCount/5', style: TextStyle(fontSize: 12, color: colors.textSecondary)),
                                     ),
-                                  );
-                                },
+                                  if (streak > 0)
+                                    Padding(
+                                      padding: const EdgeInsets.only(left: 8),
+                                      child: StreakBadge(
+                                        streak: streak,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                ],
                               ),
-                            ],
-                          ),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: colors.textPrimary,
-                            side: BorderSide(
-                              color: colors.warning,
-                              width: 1.5,
-                            ),
-                          ),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: colors.textPrimary,
+                                side: BorderSide(
+                                  color: borderColor,
+                                  width: 1.5,
+                                ),
+                              ),
+                            );
+                          },
                         ),
                       ),
                       const SizedBox(height: 16),

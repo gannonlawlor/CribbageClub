@@ -152,6 +152,16 @@ class PuzzlePersistence {
     return prefs.getInt(_keyStreak) ?? 0;
   }
 
+  /// Returns how many of today's puzzles have keeps submitted (0–5).
+  Future<int> getCompletedCount() async {
+    final prefs = await _preferences;
+    final now = DateTime.now();
+    final dateStr = _formatDate(now);
+    final n = PuzzleGenerator.puzzlesPerDay;
+    final keeps = _loadKeeps(prefs, _keepsKey(dateStr), n);
+    return keeps.where((k) => k != null).length;
+  }
+
   Future<bool> hasCompletedToday() async {
     final progress = await getProgress(DateTime.now());
     return progress.nextIndex >= PuzzleGenerator.puzzlesPerDay;
