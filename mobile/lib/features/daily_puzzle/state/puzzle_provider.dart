@@ -260,3 +260,14 @@ final dailyPuzzleProvider =
       final persistence = ref.read(puzzlePersistenceProvider);
       return DailyPuzzleNotifier(persistence);
     });
+
+/// Lightweight status provider for the home screen Daily Challenge button.
+/// autoDispose ensures it re-fetches each time the home screen is shown.
+final dailyPuzzleStatusProvider =
+    FutureProvider.autoDispose<({bool completedToday, int streak, int completedCount})>((ref) async {
+      final persistence = ref.read(puzzlePersistenceProvider);
+      final completedCount = await persistence.getCompletedCount();
+      final streak = await persistence.getStreak();
+      final completedToday = completedCount >= PuzzleGenerator.puzzlesPerDay;
+      return (completedToday: completedToday, streak: streak, completedCount: completedCount);
+    });
