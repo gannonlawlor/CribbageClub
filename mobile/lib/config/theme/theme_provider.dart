@@ -2,14 +2,25 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'app_colors.dart';
 
-enum AppThemeMode { classicLight, classicDark }
+enum AppThemeMode { classicLight, classicDark, system }
 
 final themeProvider = StateProvider<AppThemeMode>((_) => AppThemeMode.classicLight);
+
+/// Resolve system mode to concrete light/dark based on platform brightness.
+AppThemeMode resolveThemeMode(AppThemeMode mode, Brightness platformBrightness) {
+  if (mode == AppThemeMode.system) {
+    return platformBrightness == Brightness.dark
+        ? AppThemeMode.classicDark
+        : AppThemeMode.classicLight;
+  }
+  return mode;
+}
 
 ThemeData buildThemeData(AppThemeMode mode) {
   final colors = switch (mode) {
     AppThemeMode.classicLight => AppColors.classicLight,
     AppThemeMode.classicDark => AppColors.classicDark,
+    AppThemeMode.system => AppColors.classicLight, // fallback, should be resolved first
   };
 
   final brightness =

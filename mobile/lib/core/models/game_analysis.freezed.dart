@@ -297,6 +297,7 @@ mixin _$PlayerRoundAnalysis {
   DiscardOption get optimalDiscard => throw _privateConstructorUsedError;
   DiscardOption get playerDiscard => throw _privateConstructorUsedError;
   double get evDifference => throw _privateConstructorUsedError;
+  List<DiscardOption>? get allOptions => throw _privateConstructorUsedError;
 
   /// Serializes this PlayerRoundAnalysis to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -326,6 +327,7 @@ abstract class $PlayerRoundAnalysisCopyWith<$Res> {
     DiscardOption optimalDiscard,
     DiscardOption playerDiscard,
     double evDifference,
+    List<DiscardOption>? allOptions,
   });
 
   $DiscardOptionCopyWith<$Res> get optimalDiscard;
@@ -357,6 +359,7 @@ class _$PlayerRoundAnalysisCopyWithImpl<$Res, $Val extends PlayerRoundAnalysis>
     Object? optimalDiscard = null,
     Object? playerDiscard = null,
     Object? evDifference = null,
+    Object? allOptions = freezed,
   }) {
     return _then(
       _value.copyWith(
@@ -400,6 +403,10 @@ class _$PlayerRoundAnalysisCopyWithImpl<$Res, $Val extends PlayerRoundAnalysis>
                 ? _value.evDifference
                 : evDifference // ignore: cast_nullable_to_non_nullable
                       as double,
+            allOptions: freezed == allOptions
+                ? _value.allOptions
+                : allOptions // ignore: cast_nullable_to_non_nullable
+                      as List<DiscardOption>?,
           )
           as $Val,
     );
@@ -446,6 +453,7 @@ abstract class _$$PlayerRoundAnalysisImplCopyWith<$Res>
     DiscardOption optimalDiscard,
     DiscardOption playerDiscard,
     double evDifference,
+    List<DiscardOption>? allOptions,
   });
 
   @override
@@ -478,6 +486,7 @@ class __$$PlayerRoundAnalysisImplCopyWithImpl<$Res>
     Object? optimalDiscard = null,
     Object? playerDiscard = null,
     Object? evDifference = null,
+    Object? allOptions = freezed,
   }) {
     return _then(
       _$PlayerRoundAnalysisImpl(
@@ -521,6 +530,10 @@ class __$$PlayerRoundAnalysisImplCopyWithImpl<$Res>
             ? _value.evDifference
             : evDifference // ignore: cast_nullable_to_non_nullable
                   as double,
+        allOptions: freezed == allOptions
+            ? _value._allOptions
+            : allOptions // ignore: cast_nullable_to_non_nullable
+                  as List<DiscardOption>?,
       ),
     );
   }
@@ -540,9 +553,11 @@ class _$PlayerRoundAnalysisImpl implements _PlayerRoundAnalysis {
     required this.optimalDiscard,
     required this.playerDiscard,
     required this.evDifference,
+    final List<DiscardOption>? allOptions,
   }) : _dealtHand = dealtHand,
        _keptHand = keptHand,
-       _discarded = discarded;
+       _discarded = discarded,
+       _allOptions = allOptions;
 
   factory _$PlayerRoundAnalysisImpl.fromJson(Map<String, dynamic> json) =>
       _$$PlayerRoundAnalysisImplFromJson(json);
@@ -585,10 +600,19 @@ class _$PlayerRoundAnalysisImpl implements _PlayerRoundAnalysis {
   final DiscardOption playerDiscard;
   @override
   final double evDifference;
+  final List<DiscardOption>? _allOptions;
+  @override
+  List<DiscardOption>? get allOptions {
+    final value = _allOptions;
+    if (value == null) return null;
+    if (_allOptions is EqualUnmodifiableListView) return _allOptions;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
 
   @override
   String toString() {
-    return 'PlayerRoundAnalysis(playerId: $playerId, isDealer: $isDealer, dealtHand: $dealtHand, keptHand: $keptHand, discarded: $discarded, actualHandScore: $actualHandScore, actualCribScore: $actualCribScore, optimalDiscard: $optimalDiscard, playerDiscard: $playerDiscard, evDifference: $evDifference)';
+    return 'PlayerRoundAnalysis(playerId: $playerId, isDealer: $isDealer, dealtHand: $dealtHand, keptHand: $keptHand, discarded: $discarded, actualHandScore: $actualHandScore, actualCribScore: $actualCribScore, optimalDiscard: $optimalDiscard, playerDiscard: $playerDiscard, evDifference: $evDifference, allOptions: $allOptions)';
   }
 
   @override
@@ -618,7 +642,11 @@ class _$PlayerRoundAnalysisImpl implements _PlayerRoundAnalysis {
             (identical(other.playerDiscard, playerDiscard) ||
                 other.playerDiscard == playerDiscard) &&
             (identical(other.evDifference, evDifference) ||
-                other.evDifference == evDifference));
+                other.evDifference == evDifference) &&
+            const DeepCollectionEquality().equals(
+              other._allOptions,
+              _allOptions,
+            ));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -635,6 +663,7 @@ class _$PlayerRoundAnalysisImpl implements _PlayerRoundAnalysis {
     optimalDiscard,
     playerDiscard,
     evDifference,
+    const DeepCollectionEquality().hash(_allOptions),
   );
 
   /// Create a copy of PlayerRoundAnalysis
@@ -666,6 +695,7 @@ abstract class _PlayerRoundAnalysis implements PlayerRoundAnalysis {
     required final DiscardOption optimalDiscard,
     required final DiscardOption playerDiscard,
     required final double evDifference,
+    final List<DiscardOption>? allOptions,
   }) = _$PlayerRoundAnalysisImpl;
 
   factory _PlayerRoundAnalysis.fromJson(Map<String, dynamic> json) =
@@ -691,6 +721,8 @@ abstract class _PlayerRoundAnalysis implements PlayerRoundAnalysis {
   DiscardOption get playerDiscard;
   @override
   double get evDifference;
+  @override
+  List<DiscardOption>? get allOptions;
 
   /// Create a copy of PlayerRoundAnalysis
   /// with the given fields replaced by the non-null parameter values.

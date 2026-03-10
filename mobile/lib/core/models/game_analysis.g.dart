@@ -51,6 +51,9 @@ _$PlayerRoundAnalysisImpl _$$PlayerRoundAnalysisImplFromJson(
     json['playerDiscard'] as Map<String, dynamic>,
   ),
   evDifference: (json['evDifference'] as num).toDouble(),
+  allOptions: (json['allOptions'] as List<dynamic>?)
+      ?.map((e) => DiscardOption.fromJson(e as Map<String, dynamic>))
+      .toList(),
 );
 
 Map<String, dynamic> _$$PlayerRoundAnalysisImplToJson(
@@ -66,6 +69,7 @@ Map<String, dynamic> _$$PlayerRoundAnalysisImplToJson(
   'optimalDiscard': instance.optimalDiscard,
   'playerDiscard': instance.playerDiscard,
   'evDifference': instance.evDifference,
+  'allOptions': instance.allOptions,
 };
 
 _$RoundAnalysisImpl _$$RoundAnalysisImplFromJson(Map<String, dynamic> json) =>

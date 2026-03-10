@@ -125,7 +125,14 @@ class _FriendsTab extends ConsumerWidget {
     final friends = ref.watch(_friendsProvider);
 
     return friends.when(
-      data: (list) {
+      data: (unsorted) {
+        // Sort: online first, then alphabetical by display name
+        final list = [...unsorted]..sort((a, b) {
+          if (a.isOnline != b.isOnline) return a.isOnline ? -1 : 1;
+          final nameA = (a.displayName ?? a.username).toLowerCase();
+          final nameB = (b.displayName ?? b.username).toLowerCase();
+          return nameA.compareTo(nameB);
+        });
         if (list.isEmpty) {
           return Center(
             child: Padding(

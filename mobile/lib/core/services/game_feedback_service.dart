@@ -34,6 +34,9 @@ class GameFeedbackService {
       case CutCardRevealedEvent():
         _playSound(() => _ui, 'cut_card.wav');
         _haptic(HapticFeedback.lightImpact);
+      case CribRevealedEvent():
+        _playSound(() => _ui, 'stage_change.wav');
+        _haptic(HapticFeedback.selectionClick);
       case ScoreChangedEvent():
         _playSound(() => _score, 'score.wav');
         _haptic(HapticFeedback.mediumImpact);
@@ -45,8 +48,6 @@ class GameFeedbackService {
           _playSound(() => _ui, 'stage_change.wav');
           _haptic(HapticFeedback.selectionClick);
         }
-      case _:
-        break;
     }
   }
 

@@ -21,6 +21,16 @@ final _serverGameHistoryProvider = FutureProvider.autoDispose<List<GameState>>((
 class GameHistoryScreen extends ConsumerWidget {
   const GameHistoryScreen({super.key});
 
+  Future<void> _refresh(WidgetRef ref, bool isLoggedIn) async {
+    ref.invalidate(localGameHistoryProvider);
+    if (isLoggedIn) {
+      ref.invalidate(_serverGameHistoryProvider);
+      await ref.read(_serverGameHistoryProvider.future);
+    } else {
+      await ref.read(localGameHistoryProvider.future);
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final auth = ref.watch(authProvider);
@@ -30,6 +40,7 @@ class GameHistoryScreen extends ConsumerWidget {
     if (auth.isLoggedIn) {
       final serverHistory = ref.watch(_serverGameHistoryProvider);
 
+      final colors = context.appColors;
       return Scaffold(
         appBar: AppBar(
           leading: IconButton(
@@ -38,7 +49,10 @@ class GameHistoryScreen extends ConsumerWidget {
           ),
           title: const Text('Game History'),
         ),
-        body: ListView(
+        body: RefreshIndicator(
+          color: colors.accent,
+          onRefresh: () => _refresh(ref, true),
+          child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
             // Pending upload section (local games that haven't been uploaded yet)
@@ -76,10 +90,12 @@ class GameHistoryScreen extends ConsumerWidget {
             ),
           ],
         ),
+        ),
       );
     }
 
     // Not logged in: show local games only
+    final colors = context.appColors;
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -88,29 +104,33 @@ class GameHistoryScreen extends ConsumerWidget {
         ),
         title: const Text('Game History'),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          localHistory.when(
-            data: (records) {
-              if (records.isEmpty) {
-                return const _SectionEmpty(
-                  message: 'No local games yet. Play vs AI to get started!',
-                );
-              }
-              return _LocalGamesSection(records: records);
-            },
-            loading: () => const Center(
-              child: Padding(
-                padding: EdgeInsets.all(24),
-                child: CircularProgressIndicator(),
+      body: RefreshIndicator(
+        color: colors.accent,
+        onRefresh: () => _refresh(ref, false),
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            localHistory.when(
+              data: (records) {
+                if (records.isEmpty) {
+                  return const _SectionEmpty(
+                    message: 'No local games yet. Play vs AI to get started!',
+                  );
+                }
+                return _LocalGamesSection(records: records);
+              },
+              loading: () => const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(24),
+                  child: CircularProgressIndicator(),
+                ),
+              ),
+              error: (error, _) => _SectionEmpty(
+                message: 'Failed to load local history: $error',
               ),
             ),
-            error: (error, _) => _SectionEmpty(
-              message: 'Failed to load local history: $error',
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

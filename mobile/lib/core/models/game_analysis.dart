@@ -31,6 +31,7 @@ class PlayerRoundAnalysis with _$PlayerRoundAnalysis {
     required DiscardOption optimalDiscard,
     required DiscardOption playerDiscard,
     required double evDifference,
+    List<DiscardOption>? allOptions,
   }) = _PlayerRoundAnalysis;
 
   factory PlayerRoundAnalysis.fromJson(Map<String, dynamic> json) =>

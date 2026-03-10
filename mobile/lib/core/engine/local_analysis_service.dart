@@ -135,6 +135,7 @@ class LocalAnalysisService {
       evDifference:
           optimalOption.expectedCombinedValue -
           playerOption.expectedCombinedValue,
+      allOptions: allOptions,
     );
   }
 }

@@ -113,3 +113,61 @@
 - [x] Extract shared AI utility methods (`combinations()`, `findRunContinuation()`) into `AIUtils` object
 - [x] Fix `ScoreBreakdown` inconsistency: removed `totalScore` constructor param, made it a computed `val`
 - [x] Filter AI players from leaderboard results in `PlayerStatsService`
+
+---
+
+## 9. Mobile Feature Polish
+
+### 9a. Game Replay (~70% → ~90%)
+
+Core replay works (step-through, seeking, playback speed, visual state reconstruction). Gaps:
+
+- [x] Handle `GameForfeited` event in `ReplaySnapshotBuilder` (currently ignored — could crash or show blank)
+- [x] Add pull-to-refresh on game history screen so replay list stays current
+
+### 9b. Sound & Haptics (~70% → ~95%)
+
+7 sound events wired up. One gap:
+
+- [x] Add sound + haptic feedback for `CribRevealedEvent` (fires when crib is shown during counting, currently silent)
+
+### 9c. Lobbies (~70% → ~85%)
+
+Lobby browser, create/join, waiting room, invite codes, share all work. Gaps:
+
+- [ ] Generate shareable deep link URL for invite codes (currently shares plain text, not `https://cribbageclub.com/join/CODE`)
+- [ ] Handle incoming deep links to auto-join lobby by code
+
+### 9d. Friends (~80% → ~90%)
+
+Friend list, search, requests, challenges, online dots, push notifications all work. Gaps:
+
+- [ ] Add cancel/retract button on outgoing friend requests (requires backend endpoint)
+- [x] Sort friends list (online first, then alphabetical)
+
+### 9e. Leaderboard (~80% → ~90%)
+
+Top-3 podium, My Rank card, full leaderboard tiles, profile navigation all work. Gaps:
+
+- [x] Add pull-to-refresh to leaderboard screen
+- [ ] Show player's rank even when not in top 10 (requires backend endpoint for own rank)
+
+### 9f. Settings (~80% → ~90%)
+
+9 settings with SharedPreferences persistence, in-game settings sheet. Gaps:
+
+- [x] Add "Use System Theme" option (follow device light/dark preference)
+- [ ] Add notification preferences (toggle push notifications per event type — requires backend)
+
+### 9g. Game History (~90% → ~95%)
+
+Local + server history, upload sync on login/connectivity, analyze/replay buttons. Gaps:
+
+- [x] Add pull-to-refresh on game history screen
+- [ ] Add pagination for server game history (requires backend endpoint changes)
+
+### 9h. Analysis (~85% → ~95%)
+
+Multi-layer caching, summary stats, per-round your-vs-optimal comparison. Gaps:
+
+- [x] Show full ranked list of all 15 discard options in analysis round cards (previously only showed optimal + player choice)
