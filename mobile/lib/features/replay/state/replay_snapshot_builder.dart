@@ -137,6 +137,15 @@ class ReplaySnapshotBuilder {
         winnerPlayerId = event.winnerPlayerId;
         eventDescription =
             '${getName(event.winnerPlayerId)} wins with ${event.finalScore} points!';
+      } else if (event is GameForfeited) {
+        isGameOver = true;
+        // The winner is the other player
+        winnerPlayerId = playerIds.firstWhere(
+          (id) => id != event.forfeitingPlayerId,
+          orElse: () => playerIds.first,
+        );
+        eventDescription =
+            '${getName(event.forfeitingPlayerId)} forfeited${event.reason != null ? ' — ${event.reason}' : ''}';
       }
     }
 

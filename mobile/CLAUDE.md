@@ -128,15 +128,15 @@ Manual providers (no riverpod_generator — incompatible with Dart 3.11 analyzer
 | Online multiplayer | Complete | REST + WebSocket |
 | Auth (login/register/guest) | Complete | JWT, guest upgrade flow |
 | Game screen + board | ~85% | Cards, board, animations, controls |
-| Discard analysis | ~85% | Multi-layer cache, Rust FFI compute |
-| Game replay | ~70% | Step-through playback, speed control |
+| Discard analysis | ~95% | Multi-layer cache, Rust FFI compute, all 15 options ranked |
+| Game replay | ~90% | Step-through playback, speed control, GameForfeited handling |
 | Daily puzzle | ~85% | Deterministic seeding, streak tracking |
-| Game history | ~90% | Local + server, upload sync |
-| Friends | ~80% | Avatars, online dots, outgoing requests, notification badge, challenge button |
-| Lobbies | ~70% | Browser with avatars/time ago, waiting room with share/player slots |
-| Leaderboard | ~80% | Top-3 podium, "My Rank" card, win streaks, rich tiles |
-| Sound/haptics | ~70% | audioplayers with per-event WAV files, settings toggles |
-| Settings | ~80% | Dark mode, sound, haptics toggles; SharedPreferences persistence |
+| Game history | ~95% | Local + server, upload sync, pull-to-refresh |
+| Friends | ~90% | Avatars, online dots, sorted list, outgoing requests, notification badge, challenge button |
+| Lobbies | ~85% | Browser with avatars/time ago, waiting room with share/player slots |
+| Leaderboard | ~90% | Top-3 podium, "My Rank" card, win streaks, rich tiles, pull-to-refresh |
+| Sound/haptics | ~95% | audioplayers with per-event WAV files (all events), settings toggles |
+| Settings | ~90% | System/dark/light theme, sound, haptics toggles; SharedPreferences persistence |
 
 ## Build Notes
 

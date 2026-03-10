@@ -38,9 +38,11 @@ Future<void> main() async {
   // Load persisted settings before runApp to prevent flash of wrong theme
   final settingsService = SettingsService();
   final saved = await settingsService.loadAll();
-  final initialTheme = saved.themeMode == 'dark'
-      ? AppThemeMode.classicDark
-      : AppThemeMode.classicLight;
+  final initialTheme = switch (saved.themeMode) {
+    'dark' => AppThemeMode.classicDark,
+    'system' => AppThemeMode.system,
+    _ => AppThemeMode.classicLight,
+  };
   setInitialSettings(SettingsState(
     soundEnabled: saved.soundEnabled,
     hapticsEnabled: saved.hapticsEnabled,

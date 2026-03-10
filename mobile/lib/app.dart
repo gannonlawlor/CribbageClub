@@ -55,13 +55,15 @@ class _AppState extends ConsumerState<App> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     final router = ref.watch(routerProvider);
     final themeMode = ref.watch(themeProvider);
+    final platformBrightness = MediaQuery.platformBrightnessOf(context);
+    final resolvedMode = resolveThemeMode(themeMode, platformBrightness);
     ref.watch(authGameSyncProvider);
     ref.watch(connectivitySyncProvider);
     ref.watch(pushNotificationSyncProvider);
 
     return MaterialApp.router(
       title: 'Cribbage Club',
-      theme: buildThemeData(themeMode),
+      theme: buildThemeData(resolvedMode),
       routerConfig: router,
       debugShowCheckedModeBanner: false,
       builder: (context, child) {

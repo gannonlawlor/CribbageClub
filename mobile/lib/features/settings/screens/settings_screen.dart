@@ -26,10 +26,26 @@ class SettingsScreen extends ConsumerWidget {
         children: [
           _SectionHeader(title: 'APPEARANCE', colors: colors),
           _SettingsTile(
+            icon: Icons.brightness_auto,
+            title: 'Use System Theme',
+            subtitle: 'Follow device light/dark setting',
+            value: settings.themeMode == AppThemeMode.system,
+            onChanged: (val) {
+              if (val) {
+                ref.read(settingsProvider.notifier).setThemeMode(AppThemeMode.system);
+              } else {
+                ref.read(settingsProvider.notifier).setThemeMode(AppThemeMode.classicLight);
+              }
+            },
+            colors: colors,
+          ),
+          const Divider(height: 1, indent: 56),
+          _SettingsTile(
             icon: Icons.dark_mode,
             title: 'Dark Mode',
             subtitle: 'Dark background and gold accents',
             value: settings.themeMode == AppThemeMode.classicDark,
+            enabled: settings.themeMode != AppThemeMode.system,
             onChanged: (val) {
               final mode = val
                   ? AppThemeMode.classicDark

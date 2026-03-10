@@ -17,6 +17,12 @@ final _leaderboardProvider = FutureProvider.autoDispose<List<LeaderboardEntry>>(
 class LeaderboardScreen extends ConsumerWidget {
   const LeaderboardScreen({super.key});
 
+  Future<void> _refresh(WidgetRef ref) async {
+    ref.invalidate(_leaderboardProvider);
+    // Wait for the new data to load
+    await ref.read(_leaderboardProvider.future);
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.appColors;
@@ -95,7 +101,10 @@ class LeaderboardScreen extends ConsumerWidget {
               ? entries.indexOf(myEntry) + 1
               : null;
 
-          return ListView(
+          return RefreshIndicator(
+            color: colors.accent,
+            onRefresh: () => _refresh(ref),
+            child: ListView(
             padding: const EdgeInsets.all(16),
             children: [
               // My Rank card
@@ -159,6 +168,7 @@ class LeaderboardScreen extends ConsumerWidget {
                   ),
                 ),
             ],
+          ),
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),

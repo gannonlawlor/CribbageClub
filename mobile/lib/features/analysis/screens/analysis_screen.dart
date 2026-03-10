@@ -616,10 +616,16 @@ class _FullOptionsList extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.appColors;
 
-    // Show the two key options we have
-    final options = [analysis.optimalDiscard, analysis.playerDiscard];
-    // Deduplicate if they're the same
-    final unique = options.toSet().toList();
+    // Use all 15 ranked options when available, otherwise fall back to optimal + player
+    final List<DiscardOption> options;
+    if (analysis.allOptions != null && analysis.allOptions!.isNotEmpty) {
+      options = analysis.allOptions!;
+    } else {
+      final fallback = [analysis.optimalDiscard, analysis.playerDiscard];
+      options = fallback.toSet().toList();
+    }
+
+    final playerDiscardSet = analysis.discarded.toSet();
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
@@ -627,11 +633,12 @@ class _FullOptionsList extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Divider(color: colors.surfaceDim),
-          for (var i = 0; i < unique.length; i++)
+          for (var i = 0; i < options.length; i++)
             _OptionRow(
               rank: i + 1,
-              option: unique[i],
-              isPlayerChoice: unique[i] == analysis.playerDiscard,
+              option: options[i],
+              isPlayerChoice: options[i].discard.toSet().difference(playerDiscardSet).isEmpty &&
+                  playerDiscardSet.difference(options[i].discard.toSet()).isEmpty,
               isOptimal: i == 0,
               dealtHand: analysis.dealtHand,
               isDealer: analysis.isDealer,

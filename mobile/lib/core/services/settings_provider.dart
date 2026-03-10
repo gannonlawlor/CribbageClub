@@ -80,7 +80,11 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
   Future<void> setThemeMode(AppThemeMode mode) async {
     state = state.copyWith(themeMode: mode);
     _themeController.state = mode;
-    final key = mode == AppThemeMode.classicDark ? 'dark' : 'light';
+    final key = switch (mode) {
+      AppThemeMode.classicDark => 'dark',
+      AppThemeMode.system => 'system',
+      _ => 'light',
+    };
     await _service.setThemeMode(key);
   }
 
