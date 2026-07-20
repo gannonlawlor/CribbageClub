@@ -22,7 +22,7 @@ export function PlayArea({ playedCards, peggingCount, miniCardWidth, miniCardHei
           transition={{ duration: 0.2 }}
           className="px-3 py-1 bg-black/40 rounded-full"
         >
-          <span className="text-[var(--gold)] font-bold text-base">
+          <span className="text-[var(--text-1)] font-bold text-base tnum">
             Count: {peggingCount}
           </span>
         </motion.div>

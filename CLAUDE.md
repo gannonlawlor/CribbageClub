@@ -17,6 +17,7 @@ CribbageClub/
 ├── mobile/                       # Flutter app (Dart) — iOS & Android
 ├── web/                          # React SPA (TypeScript) — browser
 ├── engine/                       # Rust game engine
+├── design/                       # Design language spec (Design Language.md) + comps
 ├── CLAUDE.md                     # This file (project overview)
 ├── TODO.md                       # Backend task list (all complete)
 ├── FRONTEND.md                   # Frontend plan and phased roadmap

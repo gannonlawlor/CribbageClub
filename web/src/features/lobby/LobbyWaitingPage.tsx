@@ -86,19 +86,23 @@ export function LobbyWaitingPage() {
         </div>
 
         {l?.inviteCode && (
-          <div className="px-5 py-4 border-b border-[var(--border)] text-center">
-            <div className="text-white/40 text-xs uppercase tracking-wider mb-2">Invite Code</div>
-            <div className="flex items-center justify-center gap-3">
-              <div className="text-white text-3xl font-mono font-bold tracking-[0.3em] bg-black/25 rounded-md px-4 py-2">
+          <div className="px-5 py-4 border-b border-[var(--border)]">
+            <button
+              onClick={() => handleCopy(l.inviteCode!)}
+              className="w-full bg-[var(--surface-0)] rounded-lg border border-dashed border-[var(--border-strong)] px-4 py-3.5 cursor-pointer transition-colors duration-[400ms] text-center"
+              style={copied ? { borderColor: 'var(--green-500)', color: 'var(--green-500)' } : undefined}
+            >
+              <div className="text-[var(--text-3)] text-xs uppercase tracking-wider mb-1.5">Invite Code</div>
+              <div
+                className="font-mono text-xl font-semibold tracking-[0.18em]"
+                style={{ color: copied ? 'var(--green-500)' : 'var(--text-1)' }}
+              >
                 {l.inviteCode}
               </div>
-              <button
-                onClick={() => handleCopy(l.inviteCode!)}
-                className="text-white/70 hover:text-white bg-[var(--surface-hover)] hover:bg-black/30 border border-[var(--border)] rounded-md px-3 py-2 text-sm cursor-pointer transition-colors"
-              >
-                {copied ? 'Copied!' : 'Copy'}
-              </button>
-            </div>
+              <div className="text-[var(--text-3)] text-xs mt-1.5">
+                {copied ? 'Copied' : 'Click to copy'}
+              </div>
+            </button>
           </div>
         )}
 
@@ -108,7 +112,7 @@ export function LobbyWaitingPage() {
           </div>
           {l?.players.map((p) => (
             <div key={p.id} className="flex items-center gap-3 py-1.5">
-              <div className="w-8 h-8 rounded-md bg-[var(--accent)] text-white text-sm font-bold flex items-center justify-center">
+              <div className="w-8 h-8 rounded-md bg-[var(--player-self)] text-[var(--on-green)] text-sm font-bold flex items-center justify-center">
                 {p.name[0]?.toUpperCase()}
               </div>
               <span className="text-white text-sm font-medium">{p.name}</span>

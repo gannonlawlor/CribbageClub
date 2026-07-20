@@ -23,33 +23,30 @@ export function CardWidget({
   height = 84,
   className = '',
 }: CardWidgetProps) {
-  const scale = height / 84
-
   return (
     <motion.div
       onClick={enabled && onClick ? onClick : undefined}
-      animate={{ y: selected ? -6 : 0 }}
-      transition={{ duration: 0.15, ease: 'easeOut' }}
-      style={{ width, height }}
-      className={`relative rounded-md overflow-hidden select-none ${
+      animate={{ y: selected ? -8 : 0 }}
+      transition={{ duration: 0.15, ease: [0.2, 0, 0, 1] }}
+      style={{ width, height, borderRadius: width * 0.08 }}
+      className={`relative overflow-hidden select-none ${
         enabled && onClick ? 'cursor-pointer' : ''
       } ${className}`}
-      whileHover={enabled && onClick ? { y: -2, transition: { duration: 0.1, ease: 'easeOut' } } : undefined}
+      whileHover={enabled && onClick ? { y: -2, transition: { duration: 0.1 } } : undefined}
     >
       {/* Border / shadow layer */}
       <div
-        className="absolute inset-0 rounded-md"
+        className="absolute inset-0"
         style={{
-          border: selected ? '2px solid var(--gold)' : '0.5px solid rgba(255,255,255,0.24)',
-          boxShadow: selected
-            ? '0 0 10px rgba(255,213,79,0.5), 0 0 4px rgba(255,213,79,0.3)'
-            : '1px 2px 3px rgba(0,0,0,0.26)',
+          borderRadius: width * 0.08,
+          border: selected ? '2px solid var(--green-300)' : '0.5px solid rgba(255,255,255,0.24)',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.4)',
         }}
       />
 
       {/* Card content */}
       {faceUp && card ? (
-        <CardFace card={card} scale={scale} />
+        <CardFace card={card} width={width} />
       ) : (
         <CardBack width={width} />
       )}
@@ -57,86 +54,81 @@ export function CardWidget({
   )
 }
 
-function CardFace({ card, scale }: { card: PlayingCard; scale: number }) {
+/** Corner index (rank over suit) + one large center pip — no pip grids.
+    Rank stays ≥25% of card width so faces read at 40px. */
+function CardFace({ card, width }: { card: PlayingCard; width: number }) {
   const color = isRedSuit(card.suit) ? 'var(--card-red)' : 'var(--card-black)'
   const rankText = RANK_DISPLAY[card.rank]
   const suitText = SUIT_SYMBOL[card.suit]
+  const rankSize = Math.max(width * 0.25, 11)
 
-  return (
-    <div className="w-full h-full bg-[var(--card-white)] rounded-md p-[2px] relative">
-      {/* Top-left: rank + suit */}
-      <div className="absolute top-0.5 left-1 flex flex-col items-center leading-none">
-        <span style={{ color, fontSize: 16 * scale, fontWeight: 800, lineHeight: 1.1 }}>
-          {rankText}
-        </span>
-        <span style={{ color, fontSize: 12 * scale, lineHeight: 1 }}>
-          {suitText}
-        </span>
-      </div>
-
-      {/* Center: large suit */}
-      <div className="absolute inset-0 flex items-center justify-center">
-        <span style={{ color, fontSize: 28 * scale }}>{suitText}</span>
-      </div>
-
-      {/* Bottom-right: rank + suit (rotated 180) */}
-      <div className="absolute bottom-0.5 right-1 flex flex-col items-center leading-none rotate-180">
-        <span style={{ color, fontSize: 16 * scale, fontWeight: 800, lineHeight: 1.1 }}>
-          {rankText}
-        </span>
-        <span style={{ color, fontSize: 12 * scale, lineHeight: 1 }}>
-          {suitText}
-        </span>
-      </div>
-    </div>
-  )
-}
-
-function CardBack({ width }: { width: number }) {
   return (
     <div
-      className="w-full h-full rounded-md"
-      style={{
-        background: 'linear-gradient(135deg, #5d9948, #45753c)',
-      }}
+      className="w-full h-full bg-[var(--card-face)] relative"
+      style={{ borderRadius: width * 0.08 }}
     >
+      {/* Corner index: rank over suit */}
       <div
-        className="flex items-center justify-center w-full h-full"
-        style={{
-          margin: 0,
-        }}
+        className="absolute flex flex-col items-center leading-none tnum"
+        style={{ top: width * 0.06, left: width * 0.08 }}
       >
-        <div
-          className="flex items-center justify-center rounded-sm"
-          style={{
-            width: `calc(100% - ${width * 0.16}px)`,
-            height: `calc(100% - ${width * 0.16}px)`,
-            border: '1px solid rgba(255,255,255,0.15)',
-          }}
-        >
-          <span style={{ fontSize: width * 0.4, color: 'rgba(255,255,255,0.2)' }}>
-            &#9830;
-          </span>
-        </div>
+        <span style={{ color, fontSize: rankSize, fontWeight: 700, lineHeight: 1.05 }}>
+          {rankText}
+        </span>
+        <span style={{ color, fontSize: rankSize * 0.8, lineHeight: 1 }}>
+          {suitText}
+        </span>
+      </div>
+
+      {/* One large center pip */}
+      <div className="absolute inset-0 flex items-center justify-center">
+        <span style={{ color, fontSize: width * 0.5, lineHeight: 1, transform: 'translate(12%, 12%)' }}>
+          {suitText}
+        </span>
       </div>
     </div>
   )
 }
 
-/** Mini card for played cards area */
+/** Small card used in the pegging play area. */
 export function MiniCard({ card, width = 40, height = 56 }: { card: PlayingCard; width?: number; height?: number }) {
   const color = isRedSuit(card.suit) ? 'var(--card-red)' : 'var(--card-black)'
   const fontSize = Math.round(height * 0.21)
   return (
     <motion.div
-      initial={{ scale: 0.5, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
-      transition={{ duration: 0.2 }}
-      className="rounded border border-white/20 bg-[var(--card-white)] flex flex-col items-center justify-center"
-      style={{ width, height, fontSize }}
+      initial={{ opacity: 0, y: 4 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.18, ease: [0.2, 0, 0, 1] }}
+      className="rounded border border-white/20 bg-[var(--card-face)] flex flex-col items-center justify-center tnum"
+      style={{ width, height, fontSize, boxShadow: '0 1px 3px rgba(0,0,0,0.4)' }}
     >
-      <span style={{ color }}>{RANK_DISPLAY[card.rank]}</span>
+      <span style={{ color, fontWeight: 700 }}>{RANK_DISPLAY[card.rank]}</span>
       <span style={{ color }}>{SUIT_SYMBOL[card.suit]}</span>
     </motion.div>
+  )
+}
+
+/** Cool slate, 45° hairline stripes, card-stock border, no logo. */
+function CardBack({ width }: { width: number }) {
+  const borderWidth = Math.max(Math.round(width * 0.06), 2)
+  return (
+    <div
+      className="w-full h-full"
+      style={{
+        borderRadius: width * 0.08,
+        backgroundColor: 'var(--card-face)',
+        padding: borderWidth,
+      }}
+    >
+      <div
+        className="w-full h-full"
+        style={{
+          borderRadius: width * 0.04,
+          backgroundColor: 'var(--card-back)',
+          backgroundImage:
+            'repeating-linear-gradient(45deg, rgba(255,255,255,0.07) 0, rgba(255,255,255,0.07) 1px, transparent 1px, transparent 5px)',
+        }}
+      />
+    </div>
   )
 }

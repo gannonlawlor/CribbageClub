@@ -136,8 +136,9 @@ web/src/
 - Feature-folder organization (`features/[feature]/`)
 - Components in `components/` subdirectory within feature
 - Tailwind utility classes (no CSS modules, no styled-components)
-- CSS variables for theme colors defined in `index.css`: dark charcoal surfaces (`--bg`, `--bg-deep`, `--surface`), primary action green (`--accent`), rating gold (`--gold`); legacy `--felt-green*` names alias to the charcoal surfaces
-- Chess.com-style chrome: left sidebar app shell on desktop (`Layout.tsx`), player bars with Glicko ratings in-game, green primary CTAs
+- Design tokens in `index.css` implement `design/Design Language.md` (v1.0): surfaces `--surface-0..3`, text `--text-1..3`, action green `--green-300..600` with `--on-green` dark text on green fills, `--gold` reserved for ratings/trophies only, player identity `--player-self` (green) / `--player-opp` (ivory); legacy names (`--bg`, `--surface`, `--accent`, `--felt-green*`) alias to these
+- Chess.com-style chrome: left sidebar app shell on desktop (`Layout.tsx`) with green active markers, player bars with identity edges and Glicko ratings in-game, stage pill strip, flattened charcoal cribbage board (gold ring on hole 121)
+- A `[data-theme="light"]` token mapping exists in `index.css` (no toggle wired yet)
 - `lg:` breakpoint (1024px) for desktop-specific styles
 - Framer Motion for all animations (card selection, score popups, page transitions)
 - Tests colocated with feature files (`*.test.tsx`)

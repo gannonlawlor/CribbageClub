@@ -60,7 +60,7 @@ export function Layout() {
                   <div className="px-3 py-1 text-white/40 text-xs truncate">{username} (guest)</div>
                   <Link
                     to="/upgrade"
-                    className="mx-1 mb-1 bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white text-sm font-semibold text-center py-2 rounded-md no-underline transition-colors"
+                    className="mx-1 mb-1 bg-[var(--green-500)] hover:bg-[var(--green-400)] text-[var(--on-green)] text-sm font-bold text-center py-2 rounded-md no-underline transition-colors shadow-[inset_0_-3px_0_var(--green-600)]"
                   >
                     Sign Up
                   </Link>
@@ -84,7 +84,7 @@ export function Layout() {
             <>
               <Link
                 to="/login"
-                className="mx-1 mb-1 bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white text-sm font-semibold text-center py-2 rounded-md no-underline transition-colors"
+                className="mx-1 mb-1 bg-[var(--green-500)] hover:bg-[var(--green-400)] text-[var(--on-green)] text-sm font-bold text-center py-2 rounded-md no-underline transition-colors shadow-[inset_0_-3px_0_var(--green-600)]"
               >
                 Sign Up
               </Link>
@@ -170,19 +170,31 @@ function SideNavLink({
       to={to}
       end={end}
       className={({ isActive }) =>
-        `flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-semibold no-underline transition-colors relative ${
+        `flex items-center gap-2.5 h-[38px] px-3 rounded-md text-sm font-semibold no-underline transition-colors relative overflow-hidden ${
           isActive
-            ? 'bg-[var(--surface)] text-white'
-            : 'text-white/60 hover:text-white hover:bg-[var(--surface)]/60'
+            ? 'bg-[var(--surface-2)] text-[var(--text-1)]'
+            : 'text-[var(--text-3)] hover:text-[var(--text-1)] hover:bg-[var(--surface-2)]/60'
         }`
       }
     >
-      <span className="text-white/50 w-4 h-4 flex items-center justify-center">{icon}</span>
-      {label}
-      {badge != null && badge > 0 && (
-        <span className="ml-auto bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
-          {badge}
-        </span>
+      {({ isActive }) => (
+        <>
+          {isActive && (
+            <span className="absolute left-0 top-0 bottom-0 w-[3px] bg-[var(--green-500)]" />
+          )}
+          <span
+            className="w-5 h-5 flex items-center justify-center"
+            style={{ color: isActive ? 'var(--green-500)' : 'var(--text-3)' }}
+          >
+            {icon}
+          </span>
+          {label}
+          {badge != null && badge > 0 && (
+            <span className="ml-auto bg-[var(--loss)] text-[#26221e] text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 tnum">
+              {badge}
+            </span>
+          )}
+        </>
       )}
     </NavLink>
   )

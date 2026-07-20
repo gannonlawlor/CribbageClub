@@ -11,7 +11,7 @@ import { CribbageBoardStandard } from './components/CribbageBoardStandard'
 import { HandFan, OpponentHand } from './components/HandFan'
 import { PlayArea } from './components/PlayArea'
 import { StageIndicator } from './components/StageIndicator'
-import { GameControls } from './components/GameControls'
+import { GameControls, ResignControl } from './components/GameControls'
 import { CutCard } from './components/CutCard'
 import { ScorePopupOverlay } from './components/ScorePopup'
 import { HistoryLog } from './components/HistoryLog'
@@ -86,7 +86,7 @@ export function GamePage() {
   if (isLocalGame(gameId ?? '')) {
     return (
       <div className="max-w-4xl mx-auto p-8 text-center">
-        <h1 className="text-2xl font-bold text-[var(--gold)] mb-4">Local Game</h1>
+        <h1 className="text-2xl font-bold text-[var(--text-1)] mb-4">Local Game</h1>
         <p className="text-white/50">Local AI games require the WASM engine (coming soon).</p>
       </div>
     )
@@ -104,7 +104,7 @@ export function GamePage() {
     return (
       <div className="max-w-4xl mx-auto p-8 text-center">
         <div className="text-red-400 mb-4">{error}</div>
-        <button onClick={() => navigate('/')} className="text-[var(--gold)] bg-transparent border-none cursor-pointer">
+        <button onClick={() => navigate('/')} className="text-[var(--green-500)] bg-transparent border-none cursor-pointer">
           Back to Home
         </button>
       </div>
@@ -371,33 +371,27 @@ function DesktopGameBoard({
             </div>
           )}
 
-          {/* Game over */}
+          {/* Game over — result word never colored; the score carries the story */}
           {stage === GameStage.GAME_OVER && (
-            <div className="text-center bg-[var(--surface)] border border-[var(--border)] rounded-xl p-6 mx-auto max-w-md">
-              <div className="text-2xl font-extrabold mb-2">
-                {player.score >= 121 ? (
-                  <span className="text-[var(--accent)]">You Won</span>
-                ) : (
-                  <span className="text-red-400">You Lost</span>
-                )}
+            <div className="text-center bg-[var(--surface-2)] border border-[var(--border-strong)] rounded-xl p-6 mx-auto max-w-[340px] shadow-[0_12px_40px_rgba(0,0,0,0.5)]">
+              <div className="text-[26px] font-bold text-[var(--text-1)] mb-1">
+                {player.score >= 121 ? 'Victory' : 'Defeat'}
               </div>
-              <div className="text-white/60 mb-4 tabular-nums">
-                {player.score} &ndash; {opponent.score}
+              <div className="text-sm text-[var(--text-3)] mb-5 tnum">
+                {player.score}&ndash;{opponent.score}
               </div>
-              <div className="flex gap-3 justify-center">
-                <button
-                  onClick={() => onNavigate(`/analysis/${gameState.gameId}`)}
-                  className="bg-black/25 text-white px-5 py-2 rounded-md hover:bg-black/40 border border-[var(--border)] cursor-pointer font-semibold"
-                >
-                  Game Review
-                </button>
-                <button
-                  onClick={() => onNavigate('/')}
-                  className="bg-[var(--accent)] text-white px-5 py-2 rounded-md hover:bg-[var(--accent-hover)] border-b-2 border-[var(--accent-dark)] cursor-pointer font-bold"
-                >
-                  New Game
-                </button>
-              </div>
+              <button
+                onClick={() => onNavigate('/')}
+                className="w-full h-11 bg-[var(--green-500)] text-[var(--on-green)] rounded-lg hover:bg-[var(--green-400)] shadow-[inset_0_-4px_0_var(--green-600)] border-none cursor-pointer font-bold mb-2"
+              >
+                New Game
+              </button>
+              <button
+                onClick={() => onNavigate(`/analysis/${gameState.gameId}`)}
+                className="w-full h-[38px] bg-[var(--surface-0)] text-[var(--text-1)] rounded-lg hover:bg-[var(--surface-3)] border border-[var(--border-strong)] cursor-pointer font-semibold text-sm"
+              >
+                Analyze game
+              </button>
             </div>
           )}
 
@@ -452,14 +446,14 @@ function DesktopGameBoard({
                   opponentScore={opponent.score}
                 />
               </div>
-              <div className="flex justify-between text-xs px-3 py-2 border-t border-[var(--border)]">
+              <div className="flex justify-between text-xs px-3 py-2 border-t border-[var(--border)] tnum">
                 <div className="flex items-center gap-1.5">
-                  <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#FFD54F' }} />
-                  <span className="text-white/50">You: {player.score}</span>
+                  <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ backgroundColor: 'var(--player-self)' }} />
+                  <span className="text-[var(--text-3)]">You: {player.score}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#EEEEEE' }} />
-                  <span className="text-white/50">{opponent.name}: {opponent.score}</span>
+                  <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ backgroundColor: 'var(--player-opp)' }} />
+                  <span className="text-[var(--text-3)]">{opponent.name}: {opponent.score}</span>
                 </div>
               </div>
             </div>
@@ -468,12 +462,7 @@ function DesktopGameBoard({
             <div className="flex-1 min-h-0 flex flex-col">
               {stage !== GameStage.GAME_OVER && onResign && (
                 <div className="flex justify-end mb-1">
-                  <button
-                    onClick={onResign}
-                    className="text-red-400/40 text-xs bg-transparent border-none cursor-pointer hover:text-red-400"
-                  >
-                    Resign
-                  </button>
+                  <ResignControl onResign={onResign} />
                 </div>
               )}
               <div className="flex-1 min-h-0">
@@ -487,7 +476,8 @@ function DesktopGameBoard({
   )
 }
 
-/** Chess.com-style player bar: avatar, name, rating, progress to 121, score. */
+/** Player bar per design language: 40px avatar · identity · right-aligned
+    score, with a 3px identity edge that brightens on the active turn. */
 function PlayerBar({
   name,
   rating,
@@ -506,42 +496,55 @@ function PlayerBar({
   compact?: boolean
 }) {
   const pct = Math.min((score / 121) * 100, 100)
+  const identity = isSelf ? 'var(--player-self)' : 'var(--player-opp)'
   return (
     <div
-      className={`flex items-center bg-[var(--surface)] rounded-md border transition-colors ${
-        isTurn ? 'border-[var(--accent)]/70' : 'border-[var(--border)]'
-      } ${compact ? 'gap-2 px-2 py-1.5' : 'gap-3 px-4 py-2.5'}`}
+      className={`relative flex items-center bg-[var(--surface-0)] rounded-lg border border-[var(--border)] overflow-hidden ${
+        compact ? 'gap-2 py-1.5 pl-3 pr-2' : 'gap-3 py-2.5 pl-4 pr-3.5'
+      }`}
+      style={{ minHeight: compact ? 44 : 60 }}
     >
+      {/* Identity edge */}
       <div
-        className={`rounded-md flex items-center justify-center font-bold ${
-          isSelf ? 'bg-[var(--accent)] text-white' : 'bg-black/30 text-white/60'
-        } ${compact ? 'w-7 h-7 text-xs' : 'w-9 h-9 text-sm'}`}
+        className="absolute left-0 top-0 bottom-0 w-[3px] transition-opacity duration-150"
+        style={{ backgroundColor: identity, opacity: isTurn ? 1 : 0.4 }}
+      />
+      <div
+        className={`rounded-md flex items-center justify-center font-bold flex-shrink-0 ${
+          compact ? 'w-7 h-7 text-xs' : 'w-10 h-10 text-sm'
+        }`}
+        style={
+          isSelf
+            ? { backgroundColor: 'var(--player-self)', color: 'var(--on-green)' }
+            : { backgroundColor: 'var(--surface-3)', color: 'var(--text-2)' }
+        }
       >
         {name[0]?.toUpperCase() ?? '?'}
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <span className={`text-white font-semibold truncate ${compact ? 'text-xs' : 'text-sm'}`}>
+          <span className={`text-[var(--text-1)] font-semibold truncate ${compact ? 'text-xs' : 'text-sm'}`}>
             {isSelf ? 'You' : name}
           </span>
           {rating != null && (
-            <span className="text-white/40 text-xs tabular-nums">({Math.round(rating)})</span>
+            <span className="text-[var(--gold)] text-[13px] tnum flex-shrink-0">({Math.round(rating)})</span>
           )}
           {isDealer && (
-            <span className="text-[9px] font-bold uppercase tracking-wider bg-black/30 text-white/50 rounded px-1.5 py-0.5">
+            <span className="text-[10px] font-bold uppercase tracking-wider bg-[var(--surface-3)] text-[var(--text-3)] rounded px-1.5 py-0.5 flex-shrink-0">
               Dealer
             </span>
           )}
-          {isTurn && <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] animate-pulse" />}
         </div>
-        <div className={`h-1 bg-black/30 rounded-full overflow-hidden ${compact ? 'w-20 mt-1' : 'w-28 mt-1.5'}`}>
+        <div className={`h-1 bg-[var(--surface-3)] rounded-full overflow-hidden ${compact ? 'w-20 mt-1' : 'w-28 mt-1.5'}`}>
           <div
-            className={`h-full rounded-full ${isSelf ? 'bg-[var(--accent)]' : 'bg-white/40'}`}
-            style={{ width: `${pct}%` }}
+            className="h-full rounded-full"
+            style={{ width: `${pct}%`, backgroundColor: identity }}
           />
         </div>
       </div>
-      <span className={`text-white font-extrabold tabular-nums ${compact ? 'text-lg' : 'text-2xl'}`}>
+      <span
+        className={`text-[var(--text-1)] font-bold tnum text-right ${compact ? 'text-lg min-w-[2.2em]' : 'text-[32px] min-w-[2.2em]'}`}
+      >
         {score}
       </span>
     </div>
@@ -632,29 +635,25 @@ function MobileGameBoard({
             </div>
           )}
 
-          {/* Game over */}
+          {/* Game over — result word never colored; the score carries the story */}
           {stage === GameStage.GAME_OVER && (
-            <div className="text-center bg-[var(--surface)] border border-[var(--border)] rounded-lg p-4">
-              <div className="text-xl font-extrabold mb-1">
-                {player.score >= 121 ? (
-                  <span className="text-[var(--accent)]">You Won</span>
-                ) : (
-                  <span className="text-red-400">You Lost</span>
-                )}
+            <div className="text-center bg-[var(--surface-2)] border border-[var(--border-strong)] rounded-xl p-4">
+              <div className="text-xl font-bold text-[var(--text-1)] mb-0.5">
+                {player.score >= 121 ? 'Victory' : 'Defeat'}
               </div>
-              <div className="text-white/60 text-sm mb-3 tabular-nums">
-                {player.score} - {opponent.score}
+              <div className="text-[var(--text-3)] text-sm mb-3 tnum">
+                {player.score}&ndash;{opponent.score}
               </div>
               <div className="flex gap-2 justify-center">
                 <button
                   onClick={() => onNavigate(`/analysis/${gameState.gameId}`)}
-                  className="bg-black/25 text-white px-4 py-1.5 rounded-md hover:bg-black/40 border border-[var(--border)] cursor-pointer text-sm font-semibold"
+                  className="bg-[var(--surface-0)] text-[var(--text-1)] px-4 py-1.5 rounded-lg hover:bg-[var(--surface-3)] border border-[var(--border-strong)] cursor-pointer text-sm font-semibold"
                 >
-                  Game Review
+                  Analyze game
                 </button>
                 <button
                   onClick={() => onNavigate('/')}
-                  className="bg-[var(--accent)] text-white px-4 py-1.5 rounded-md hover:bg-[var(--accent-hover)] border-b-2 border-[var(--accent-dark)] cursor-pointer font-bold text-sm"
+                  className="bg-[var(--green-500)] text-[var(--on-green)] px-4 py-1.5 rounded-lg hover:bg-[var(--green-400)] shadow-[inset_0_-3px_0_var(--green-600)] border-none cursor-pointer font-bold text-sm"
                 >
                   New Game
                 </button>

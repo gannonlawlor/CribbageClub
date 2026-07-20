@@ -29,7 +29,7 @@ export function ScorePopupOverlay({ history, playerId }: ScorePopupOverlayProps)
     setPopups((prev) => [...prev, { id, points, reason, source, isPlayer }])
     setTimeout(() => {
       setPopups((prev) => prev.filter((p) => p.id !== id))
-    }, 1800)
+    }, 1240) // 140ms in + 1100ms hold; exit animation runs after removal
   }, [])
 
   useEffect(() => {
@@ -76,41 +76,34 @@ export function ScorePopupOverlay({ history, playerId }: ScorePopupOverlayProps)
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden">
       <AnimatePresence>
-        {popups.map((popup) => (
-          <motion.div
-            key={popup.id}
-            initial={{ opacity: 0, scale: 0.5, y: 0 }}
-            animate={{ opacity: 1, scale: 1, y: -20 }}
-            exit={{ opacity: 0, y: -40, transition: { duration: 0.5, delay: 1 } }}
-            transition={{ duration: 0.3 }}
-            className={`absolute flex flex-col items-center ${
-              popup.isPlayer
-                ? 'right-4 top-2'
-                : 'left-4 top-2'
-            }`}
-          >
-            {popup.source === 'hand' && (
-              <span className="text-[var(--gold)]/80 text-xs font-semibold">Hand</span>
-            )}
-            {popup.source === 'crib' && (
-              <span className="text-[var(--gold)]/80 text-xs font-semibold">Crib</span>
-            )}
-            <span
-              className={`text-4xl font-bold ${popup.isPlayer ? 'text-[var(--gold)]' : 'text-white'}`}
-              style={{ textShadow: '1px 1px 4px rgba(0,0,0,0.5)' }}
+        {popups.map((popup) => {
+          const label =
+            popup.source === 'hand' ? 'hand'
+            : popup.source === 'crib' ? 'crib'
+            : popup.reason?.toLowerCase()
+          return (
+            <motion.div
+              key={popup.id}
+              initial={{ opacity: 0, y: 0 }}
+              animate={{ opacity: 1, y: -6, transition: { duration: 0.14, ease: [0.2, 0, 0, 1] } }}
+              exit={{ opacity: 0, y: -12, transition: { duration: 0.2, ease: [0.4, 0, 1, 1] } }}
+              className={`absolute flex items-center gap-1.5 rounded-full ${
+                popup.isPlayer ? 'right-4 top-2' : 'left-4 top-2'
+              }`}
+              style={{
+                padding: '7px 14px',
+                backgroundColor: popup.isPlayer ? 'var(--player-self)' : 'var(--player-opp)',
+                color: popup.isPlayer ? 'var(--on-green)' : '#26221e',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.4)',
+              }}
             >
-              +{popup.points}
-            </span>
-            {popup.reason && (
-              <span
-                className="text-white/90 text-xs font-medium"
-                style={{ textShadow: '1px 1px 3px rgba(0,0,0,0.5)' }}
-              >
-                {popup.reason}
-              </span>
-            )}
-          </motion.div>
-        ))}
+              <span className="text-sm font-bold tnum">+{popup.points}</span>
+              {label && (
+                <span className="text-sm font-medium opacity-75">{label}</span>
+              )}
+            </motion.div>
+          )
+        })}
       </AnimatePresence>
     </div>
   )

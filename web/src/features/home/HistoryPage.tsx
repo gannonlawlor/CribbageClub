@@ -10,7 +10,7 @@ export function HistoryPage() {
 
   return (
     <div className="max-w-2xl mx-auto p-8">
-      <h1 className="text-2xl font-bold text-[var(--gold)] mb-6">Game History</h1>
+      <h1 className="text-2xl font-bold text-[var(--text-1)] mb-6">Game History</h1>
 
       {!isLoggedIn && (
         <div className="text-center py-8">
@@ -57,14 +57,14 @@ function GameRow({ game, playerId }: { game: GameState; playerId: string }) {
 
   return (
     <div className="flex items-center gap-3 bg-white/10 rounded-lg px-4 py-3">
-      <span className={isWinner ? 'text-[var(--gold)]' : 'text-red-400'}>
+      <span className={isWinner ? 'text-[var(--win)]' : 'text-[var(--loss)]'}>
         {isWinner ? '🏆' : '✕'}
       </span>
       <div className="flex-1">
         <div className="text-white text-sm">vs {opponent.name}</div>
         <div className="text-white/50 text-xs">{player.score} - {opponent.score}</div>
       </div>
-      <span className={`font-bold text-sm ${isWinner ? 'text-[var(--gold)]' : 'text-red-400'}`}>
+      <span className={`font-bold text-sm ${isWinner ? 'text-[var(--win)]' : 'text-[var(--loss)]'}`}>
         {isWinner ? 'Won' : 'Lost'}
       </span>
       <Link

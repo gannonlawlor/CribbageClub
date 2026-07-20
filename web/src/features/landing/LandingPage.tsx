@@ -21,44 +21,41 @@ export function LandingPage() {
 
   return (
     <div>
-      {/* ── Hero ── */}
-      <section className="min-h-[calc(100vh-52px)] lg:min-h-screen flex items-center bg-[var(--bg)]">
-        <div className="max-w-6xl mx-auto px-6 py-16 grid lg:grid-cols-2 gap-14 items-center w-full">
-          <div className="hidden lg:block">
-            <GameSnapshot />
+      {/* ── Hero: one centered column, the proof is the ladder ── */}
+      <section className="min-h-[calc(100vh-52px)] lg:min-h-screen flex items-center bg-[var(--surface-1)]">
+        <div className="max-w-[720px] mx-auto px-6 py-16 w-full text-center">
+          <h1 className="text-[40px] leading-[44px] lg:text-5xl font-bold text-[var(--text-1)] mb-4">
+            Play Cribbage Online<br />on the Rated Ladder
+          </h1>
+          <p className="text-lg text-[var(--text-2)] leading-relaxed mb-8 max-w-md mx-auto">
+            Real opponents, Glicko-2 ratings, and engine-backed analysis of
+            every discard.
+          </p>
+          <div className="flex flex-col gap-3 max-w-sm mx-auto">
+            <BigCta
+              onClick={handlePlayNow}
+              title="Play Online"
+              subtitle="Rated matchmaking against real players"
+              variant="accent"
+              icon={<BoltIcon />}
+            />
+            <BigCta
+              onClick={handlePlayNow}
+              title="Play Computer"
+              subtitle="Three engine difficulties, instant start"
+              variant="surface"
+              icon={<CpuIcon />}
+            />
+            <button
+              onClick={() => navigate('/login')}
+              className="text-[var(--text-3)] hover:text-[var(--text-1)] text-sm bg-transparent border-none cursor-pointer py-1"
+            >
+              Already have an account? <span className="text-[var(--green-500)] font-semibold">Log In</span>
+            </button>
           </div>
-
-          <div>
-            <h1 className="text-4xl lg:text-5xl font-extrabold text-white leading-tight mb-4">
-              Play Cribbage Online<br />on the Rated Ladder
-            </h1>
-            <p className="text-lg text-white/60 leading-relaxed mb-8 max-w-md">
-              Real opponents, Glicko-2 ratings, and engine-backed analysis of
-              every discard. Built for players who keep score.
-            </p>
-            <div className="flex flex-col gap-3 max-w-sm">
-              <BigCta
-                onClick={handlePlayNow}
-                title="Play Online"
-                subtitle="Rated matchmaking against real players"
-                variant="accent"
-                icon={<BoltIcon />}
-              />
-              <BigCta
-                onClick={handlePlayNow}
-                title="Play Computer"
-                subtitle="Three engine difficulties, instant start"
-                variant="surface"
-                icon={<CpuIcon />}
-              />
-              <button
-                onClick={() => navigate('/login')}
-                className="text-white/50 hover:text-white text-sm bg-transparent border-none cursor-pointer py-1"
-              >
-                Already have an account? <span className="text-[var(--accent)] font-semibold">Log In</span>
-              </button>
-            </div>
-          </div>
+          <p className="text-[var(--text-3)] text-xs uppercase tracking-[0.06em] mt-8 tnum">
+            Free &middot; Rated ladder &middot; iOS, Android &amp; web
+          </p>
         </div>
       </section>
 
@@ -194,7 +191,7 @@ export function LandingPage() {
           >
             <button
               onClick={handlePlayNow}
-              className="bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white font-bold text-lg px-10 py-3 rounded-md active:scale-[0.98] transition-all border-b-4 border-[var(--accent-dark)] cursor-pointer"
+              className="bg-[var(--green-500)] hover:bg-[var(--green-400)] text-[var(--on-green)] font-bold text-lg px-10 py-3 rounded-lg active:translate-y-[2px] transition-all duration-100 shadow-[inset_0_-4px_0_var(--green-600)] border-none cursor-pointer"
             >
               Play Now
             </button>
@@ -216,49 +213,9 @@ export function LandingPage() {
   )
 }
 
-/* ── Hero mock: a game in progress ── */
 
-function GameSnapshot() {
-  return (
-    <div className="bg-[var(--bg-deep)] rounded-xl border border-[var(--border)] p-5 shadow-2xl max-w-md">
-      <SnapshotPlayerBar name="pegmaster_63" rating={1874} score={96} />
-      <div className="flex justify-center gap-2 py-6">
-        <MockCard label="5" suit="♥" red />
-        <MockCard label="J" suit="♣" />
-        <MockCard label="10" suit="♦" red />
-        <MockCard label="5" suit="♠" />
-      </div>
-      <div className="text-center text-white/40 text-xs mb-4 uppercase tracking-wider">
-        Pegging &middot; count 25
-      </div>
-      <SnapshotPlayerBar name="you" rating={1841} score={102} accent />
-    </div>
-  )
-}
 
-function SnapshotPlayerBar({ name, rating, score, accent }: { name: string; rating: number; score: number; accent?: boolean }) {
-  return (
-    <div className="flex items-center gap-3">
-      <div className={`w-9 h-9 rounded-md flex items-center justify-center font-bold text-sm ${accent ? 'bg-[var(--accent)] text-white' : 'bg-[var(--surface)] text-white/60'}`}>
-        {name[0].toUpperCase()}
-      </div>
-      <div className="flex-1">
-        <span className="text-white text-sm font-semibold">{name}</span>
-        <span className="text-white/40 text-xs ml-2">({rating})</span>
-      </div>
-      <span className="text-white font-bold text-lg tabular-nums">{score}</span>
-    </div>
-  )
-}
 
-function MockCard({ label, suit, red }: { label: string; suit: string; red?: boolean }) {
-  return (
-    <div className="w-14 h-20 bg-[var(--card-white)] rounded-md shadow-md flex flex-col items-center justify-center">
-      <span className={`text-lg font-bold ${red ? 'text-[var(--card-red)]' : 'text-[var(--card-black)]'}`}>{label}</span>
-      <span className={`text-lg leading-none ${red ? 'text-[var(--card-red)]' : 'text-[var(--card-black)]'}`}>{suit}</span>
-    </div>
-  )
-}
 
 /* ── Shared pieces ── */
 
@@ -275,18 +232,19 @@ function BigCta({
   variant: 'accent' | 'surface'
   icon: React.ReactNode
 }) {
-  const styles = variant === 'accent'
-    ? 'bg-[var(--accent)] hover:bg-[var(--accent-hover)] border-b-4 border-[var(--accent-dark)]'
-    : 'bg-[var(--surface)] hover:bg-[var(--surface-hover)] border border-[var(--border)]'
+  const isAccent = variant === 'accent'
+  const styles = isAccent
+    ? 'bg-[var(--green-500)] hover:bg-[var(--green-400)] shadow-[inset_0_-4px_0_var(--green-600)]'
+    : 'bg-[var(--surface-2)] hover:bg-[var(--surface-3)] border border-[var(--border-strong)]'
   return (
     <button
       onClick={onClick}
-      className={`${styles} text-left rounded-md px-5 py-3.5 flex items-center gap-4 cursor-pointer active:scale-[0.99] transition-all`}
+      className={`${styles} text-left rounded-lg px-5 py-3.5 flex items-center gap-4 cursor-pointer active:translate-y-[2px] transition-all duration-100 border-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--green-300)]`}
     >
-      <span className="text-white/90">{icon}</span>
+      <span style={{ color: isAccent ? 'var(--on-green)' : 'var(--text-2)' }}>{icon}</span>
       <span>
-        <span className="block text-white font-bold text-lg leading-tight">{title}</span>
-        <span className={`block text-xs mt-0.5 ${variant === 'accent' ? 'text-white/80' : 'text-white/50'}`}>{subtitle}</span>
+        <span className={`block font-bold text-lg leading-tight ${isAccent ? 'text-[var(--on-green)]' : 'text-[var(--text-1)]'}`}>{title}</span>
+        <span className={`block text-xs mt-0.5 ${isAccent ? 'text-[var(--on-green)]/80' : 'text-[var(--text-3)]'}`}>{subtitle}</span>
       </span>
     </button>
   )
