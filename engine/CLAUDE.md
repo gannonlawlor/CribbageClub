@@ -2,9 +2,12 @@
 
 ## Overview
 
-Rust crate (`cribbage-engine`) implementing the complete cribbage game engine, three AI difficulty levels, and discard analysis. Consumed via:
+Rust crate (`cribbage_engine`) implementing the complete cribbage game engine, three AI difficulty levels, and discard analysis. Consumed via:
 - **Mobile (Flutter)**: flutter_rust_bridge (native FFI on iOS/Android)
 - **Backend**: JNA (native shared library on JVM)
+- **Web (React)**: wasm-bindgen WASM module (built with wasm-pack, output at `engine/pkg/`)
+
+Cargo features select the FFI layer: `frb` (default, flutter_rust_bridge) and `wasm-web` (wasm-bindgen).
 
 ## Build & Test
 
@@ -12,7 +15,9 @@ Rust crate (`cribbage-engine`) implementing the complete cribbage game engine, t
 cd engine
 cargo build --release    # build native library (used by JVM backend)
 cargo test               # run all tests
-cargo build --target wasm32-unknown-unknown --release  # WASM for web
+
+# WASM for web (or run `npm run build:wasm` from web/)
+wasm-pack build --target web --release -- --no-default-features --features wasm-web
 ```
 
 The backend's Gradle build automatically runs `cargo build --release` via the `cargoReleaseBuild` task.
@@ -44,8 +49,8 @@ engine/src/
 │   └── discard_analyzer.rs  # Exhaustive discard analysis (all 15 keeps)
 ├── api/
 │   └── simple.rs         # flutter_rust_bridge FFI functions (12 public)
-├── c_api/
-│   └── mod.rs            # C-compatible FFI for JNA (backend)
+├── c_api.rs              # C-compatible FFI for JNA (backend)
+├── wasm_api.rs           # wasm-bindgen FFI for web (feature: wasm-web)
 └── frb_generated.rs      # flutter_rust_bridge auto-generated glue
 ```
 
@@ -87,18 +92,30 @@ Three difficulty levels implementing `AiPlayer` trait:
 - `calculate_hand_score_json(hand, cut, is_crib)` — Score a hand
 - Plus restore, state query, and utility functions
 
-**C API (`c_api/mod.rs`)** — C-compatible FFI for JNA:
+**C API (`c_api.rs`)** — C-compatible FFI for JNA:
 - Same functionality as flutter_rust_bridge but with C calling convention
 - String parameters/returns for JSON interchange
 - Memory management via `engine_free_string()`
 
+**WASM API (`wasm_api.rs`)** — wasm-bindgen exports for the web app (behind the `wasm-web` feature):
+- JSON-string interchange like the other FFI layers
+- Consumed by `web/src/engine/wasm-engine.ts` (Vite aliases `cribbage-engine` → `engine/pkg`)
+- Used for client-side puzzle and discard analysis in the browser
+
 ## Dependencies
 
 ```toml
+[features]
+default = ["frb"]
+frb = ["dep:flutter_rust_bridge"]
+wasm-web = ["dep:wasm-bindgen"]
+
+[dependencies]
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 rand = "0.8"
-flutter_rust_bridge = "=2.11.1"
+flutter_rust_bridge = { version = "=2.11.1", optional = true }
+wasm-bindgen = { version = "0.2", optional = true }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 getrandom = { version = "0.2", features = ["js"] }  # WASM random support

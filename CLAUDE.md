@@ -34,7 +34,7 @@ CribbageClub/
 | Backend | Kotlin 1.9.25, Spring Boot 3.4.13, JDK 21, PostgreSQL, Flyway, STOMP/WebSocket |
 | Mobile | Flutter/Dart 3.11+, Riverpod, GoRouter, Dio, freezed, flutter_rust_bridge |
 | Web | React 19, TypeScript, Zustand, React Router, Tailwind CSS, Vite |
-| Engine | Rust, serde, flutter_rust_bridge (FFI to Flutter), JNA (FFI to JVM) |
+| Engine | Rust, serde, flutter_rust_bridge (FFI to Flutter), JNA (FFI to JVM), wasm-bindgen (WASM for web) |
 | Infra | Docker, GitHub Actions CI, Tailscale (alpha networking) |
 
 ## Build & Run
@@ -90,11 +90,20 @@ docker compose up -d     # start PostgreSQL + app (dev)
 | GET | `/api/games/me/history` | My completed games |
 | POST | `/api/games/ai` | Create AI game (difficulty: basic/medium/hard) |
 | POST | `/api/games/{id}/actions` | Apply game action |
+| POST | `/api/games/{id}/resign` | Resign a game |
 | GET | `/api/games/{id}/analysis` | Get/compute discard analysis |
 | POST | `/api/games/{id}/analysis` | Upload client-computed analysis |
 | POST | `/api/games/import` | Import local games to server |
+| POST | `/api/lobbies/quick-match` | Quick game matchmaking |
+| GET | `/api/lobbies/public` | Lobby browser |
+| POST | `/api/lobbies` / `.../join` / `/api/lobbies/join-by-code` | Create/join lobbies |
+| GET/POST | `/api/friends/**` | Friends: search, requests, accept/decline |
+| POST | `/api/challenges` (+ accept/decline/cancel) | Direct friend challenges |
+| GET | `/api/profiles/{userId}` | Public profile (+ `/head-to-head`) |
+| POST | `/api/device-tokens` | Register push notification token |
 | GET | `/api/stats/leaderboard` | Top 10 players |
-| GET | `/api/puzzles/daily` | Daily puzzle |
+| GET | `/api/puzzles/daily` | Daily puzzle (5-puzzle challenge) |
+| POST | `/api/puzzles/{id}/solve` | Submit puzzle solution |
 
 ### WebSocket (STOMP)
 
@@ -109,6 +118,8 @@ docker compose up -d     # start PostgreSQL + app (dev)
 - **Game state filtering**: `GameStateFilter` hides opponent hands, deck, and crib from each player's view
 - **Auth**: JWT with 90-day expiry, guest accounts, rate-limited auth endpoints
 - **Real-time**: STOMP over WebSocket with authenticated subscriptions, REST for action ordering guarantees
+- **Turn timers**: Per-player time banks with server-side timeout forfeit
+- **Push notifications**: FCM (friend requests, challenges, game found), sent only when the user is offline
 
 ## Current Focus
 
