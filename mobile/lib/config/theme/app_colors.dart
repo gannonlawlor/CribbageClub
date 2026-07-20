@@ -57,6 +57,9 @@ class AppColors extends ThemeExtension<AppColors> {
   final Color medalSilver;
   final Color medalBronze;
 
+  // Ratings — gold is reserved for skill (ratings, trophies), never actions
+  final Color ratingGold;
+
   const AppColors({
     required this.scaffoldBg,
     required this.gameGradientTop,
@@ -94,6 +97,7 @@ class AppColors extends ThemeExtension<AppColors> {
     required this.medalGold,
     required this.medalSilver,
     required this.medalBronze,
+    required this.ratingGold,
   });
 
   // ── Computed getters ──────────────────────────────────────
@@ -113,82 +117,87 @@ class AppColors extends ThemeExtension<AppColors> {
 
   // ── Theme variants ────────────────────────────────────────
 
+  /// Design Language v1.0 — light theme ("warm paper" mapping, spec §9).
+  /// Card faces, backs, and pegs are identical in both themes.
   static const classicLight = AppColors(
-    scaffoldBg: Color(0xFFF0F1F5),
-    gameGradientTop: Color(0xFFECEDF1),
-    gameGradientMid: Color(0xFFECEDF1),
-    gameGradientBottom: Color(0xFFECEDF1),
-    surfacePrimary: Color(0xFFFFFFFF),
-    surfaceDim: Color(0xFFE8E9ED),
-    cardFace: Color(0xFFFFFFFF),
-    cardBackPrimary: Color(0xFF3D4559),
-    cardBackSecondary: Color(0xFF2D3346),
-    cardBackDetail: Color(0x2EFFFFFF), // white @ 0.18
-    suitRed: Color(0xFFC85A5A),
-    suitBlack: Color(0xFF2D3142),
-    selectedBorder: Color(0xFF3D4559),
-    boardPrimary: Color(0xFF8D6E63),
-    boardSecondary: Color(0xFF6D4C41),
-    boardHole: Color(0xFF4E342E),
-    pegPlayer: Color(0xFF3D4559),
-    pegOpponent: Color(0xFF9E9E9E),
-    textPrimary: Color(0xFF1E2130),
-    textSecondary: Color(0xFF6B7085),
-    textTertiary: Color(0xFF9498AB),
-    textDisabled: Color(0xFFB8BCCA),
-    accent: Color(0xFF3D4559),
-    accentOnSurface: Color(0xFFFFFFFF),
-    buttonPrimary: Color(0xFF3D4559),
-    success: Color(0xFF2E7D32),
-    error: Color(0xFFC62828),
-    warning: Color(0xFFE65100),
-    evOptimal: Color(0xFF2E7D32),
-    evGood: Color(0xFFE65100),
-    evPoor: Color(0xFFC62828),
-    highlight: Color(0xFF1565C0),
-    streak: Color(0xFFE65100),
-    medalGold: Color(0xFFFFD700),
+    scaffoldBg: Color(0xFFF4F1EC), // --surface-1 (page)
+    gameGradientTop: Color(0xFFF4F1EC),
+    gameGradientMid: Color(0xFFF4F1EC),
+    gameGradientBottom: Color(0xFFF4F1EC),
+    surfacePrimary: Color(0xFFFFFFFF), // --surface-2 (panels)
+    surfaceDim: Color(0xFFEAE6E0), // --surface-0 (chrome)
+    cardFace: Color(0xFFF5F0E8), // --card-face
+    cardBackPrimary: Color(0xFF4A5568), // --card-back (cool slate)
+    cardBackSecondary: Color(0xFF3F4757),
+    cardBackDetail: Color(0x12FFFFFF), // white @ 7% (45° hairline stripes)
+    suitRed: Color(0xFFC0392B), // --card-red
+    suitBlack: Color(0xFF1A1A1A), // --card-black
+    selectedBorder: Color(0xFF81B64C), // --green-500 (ring needs contrast on paper)
+    boardPrimary: Color(0xFFECE7DF), // --board
+    boardSecondary: Color(0x12000000), // --board-track: black @ 7%
+    boardHole: Color(0xFFD8D2C8), // --board-hole
+    pegPlayer: Color(0xFF81B64C), // --player-self
+    pegOpponent: Color(0xFFA49C90), // --player-opp (ivory would vanish on paper)
+    textPrimary: Color(0xFF2A2622), // --text-1
+    textSecondary: Color(0xFF57524B), // --text-2
+    textTertiary: Color(0xFF767066), // --text-3
+    textDisabled: Color(0xFFA8A29A), // --text-faint
+    accent: Color(0xFF81B64C), // --green-500 (theme-invariant CTA)
+    accentOnSurface: Color(0xFF16240C), // --on-green
+    buttonPrimary: Color(0xFF81B64C),
+    success: Color(0xFF4E7A2E), // --win (green as text on paper)
+    error: Color(0xFFB6362A), // --loss
+    warning: Color(0xFFB25A17), // --streak
+    evOptimal: Color(0xFF4E7A2E),
+    evGood: Color(0xFFB25A17),
+    evPoor: Color(0xFFB6362A),
+    highlight: Color(0xFF3B6EA5), // muted blue
+    streak: Color(0xFFB25A17),
+    medalGold: Color(0xFF9A7514), // --gold (light)
     medalSilver: Color(0xFFC0C0C0),
     medalBronze: Color(0xFFCD7F32),
+    ratingGold: Color(0xFF9A7514), // --gold — ratings/trophies only
   );
 
+  /// Design Language v1.0 — dark theme (primary, spec §2).
   static const classicDark = AppColors(
-    scaffoldBg: Color(0xFF111116),
-    gameGradientTop: Color(0xFF111116),
-    gameGradientMid: Color(0xFF181820),
-    gameGradientBottom: Color(0xFF111116),
-    surfacePrimary: Color(0xFF1A1A22),
-    surfaceDim: Color(0x14FFFFFF), // white @ 8%
-    cardFace: Color(0xFFFAFAF5),
-    cardBackPrimary: Color(0xFF2B3A58),
-    cardBackSecondary: Color(0xFF1D2940),
-    cardBackDetail: Color(0x1FFFFFFF), // white @ 12%
-    suitRed: Color(0xFFE54B4B),
-    suitBlack: Color(0xFFC8C8D0),
-    selectedBorder: Color(0xFFD4A843),
-    boardPrimary: Color(0xFF795548),
-    boardSecondary: Color(0xFF5D4037),
-    boardHole: Color(0xFF3E2723),
-    pegPlayer: Color(0xFFD4A843),
-    pegOpponent: Color(0xFFB0B0B8),
-    textPrimary: Color(0xFFFFFFFF),
-    textSecondary: Color(0xB3FFFFFF), // white70
-    textTertiary: Color(0x8AFFFFFF), // white54
-    textDisabled: Color(0x61FFFFFF), // white38
-    accent: Color(0xFFD4A843),
-    accentOnSurface: Color(0xFF111116),
-    buttonPrimary: Color(0xFFD4A843),
-    success: Color(0xFF4ADE80),
-    error: Color(0xFFF87171),
-    warning: Color(0xFFFBBF24),
-    evOptimal: Color(0xFF4ADE80),
-    evGood: Color(0xFFFB923C),
-    evPoor: Color(0xFFF87171),
-    highlight: Color(0xFF60A5FA),
-    streak: Color(0xFFFB923C),
-    medalGold: Color(0xFFFFD700),
+    scaffoldBg: Color(0xFF312E2B), // --surface-1 (page)
+    gameGradientTop: Color(0xFF262421), // --surface-0
+    gameGradientMid: Color(0xFF312E2B), // --surface-1
+    gameGradientBottom: Color(0xFF262421), // --surface-0
+    surfacePrimary: Color(0xFF3C3936), // --surface-2 (panels)
+    surfaceDim: Color(0xFF47433F), // --surface-3 (hover/raised)
+    cardFace: Color(0xFFF5F0E8), // --card-face
+    cardBackPrimary: Color(0xFF4A5568), // --card-back (cool slate)
+    cardBackSecondary: Color(0xFF3F4757),
+    cardBackDetail: Color(0x12FFFFFF), // white @ 7% (45° hairline stripes)
+    suitRed: Color(0xFFC0392B), // --card-red
+    suitBlack: Color(0xFF1A1A1A), // --card-black (on card face)
+    selectedBorder: Color(0xFFA4D372), // --green-300 (selection ring)
+    boardPrimary: Color(0xFF38342F), // --board (flattened, 2 steps warmer)
+    boardSecondary: Color(0xFF2F2C28), // recessed track step
+    boardHole: Color(0xFF211F1D), // --board-hole
+    pegPlayer: Color(0xFF81B64C), // --player-self
+    pegOpponent: Color(0xFFD9D4CC), // --player-opp (card-stock ivory)
+    textPrimary: Color(0xFFF0EDE8), // --text-1
+    textSecondary: Color(0xFFB8B3AC), // --text-2
+    textTertiary: Color(0xFF9C968E), // --text-3
+    textDisabled: Color(0xFF6B6660), // --text-faint
+    accent: Color(0xFF81B64C), // --green-500 — green means "act"
+    accentOnSurface: Color(0xFF16240C), // --on-green
+    buttonPrimary: Color(0xFF81B64C),
+    success: Color(0xFF81B64C), // --win
+    error: Color(0xFFE5766D), // --loss
+    warning: Color(0xFFE2833F), // --streak
+    evOptimal: Color(0xFF81B64C),
+    evGood: Color(0xFFE2833F),
+    evPoor: Color(0xFFE5766D),
+    highlight: Color(0xFF7EA6D9), // muted blue
+    streak: Color(0xFFE2833F),
+    medalGold: Color(0xFFE3AA24), // --gold (dark)
     medalSilver: Color(0xFFC0C0C0),
     medalBronze: Color(0xFFCD7F32),
+    ratingGold: Color(0xFFE3AA24), // --gold — ratings/trophies only
   );
 
   // ── ThemeExtension overrides ──────────────────────────────
@@ -231,6 +240,7 @@ class AppColors extends ThemeExtension<AppColors> {
     Color? medalGold,
     Color? medalSilver,
     Color? medalBronze,
+    Color? ratingGold,
   }) {
     return AppColors(
       scaffoldBg: scaffoldBg ?? this.scaffoldBg,
@@ -269,6 +279,7 @@ class AppColors extends ThemeExtension<AppColors> {
       medalGold: medalGold ?? this.medalGold,
       medalSilver: medalSilver ?? this.medalSilver,
       medalBronze: medalBronze ?? this.medalBronze,
+      ratingGold: ratingGold ?? this.ratingGold,
     );
   }
 
@@ -314,6 +325,7 @@ class AppColors extends ThemeExtension<AppColors> {
       medalGold: Color.lerp(medalGold, other.medalGold, t)!,
       medalSilver: Color.lerp(medalSilver, other.medalSilver, t)!,
       medalBronze: Color.lerp(medalBronze, other.medalBronze, t)!,
+      ratingGold: Color.lerp(ratingGold, other.ratingGold, t)!,
     );
   }
 }
