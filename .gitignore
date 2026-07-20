@@ -48,3 +48,5 @@ out/
 engine/pkg/
 engine/target/
 web/dist/
+
+.DS_Store
