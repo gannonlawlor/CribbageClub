@@ -3,8 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../config/theme/app_colors.dart';
 import '../../../config/theme/theme_provider.dart';
+import '../../../core/auth/auth_provider.dart';
 import '../../../core/services/settings_provider.dart';
+import '../../../shared/widgets/cc_bottom_nav.dart';
+import '../../game/widgets/game_settings_sheet.dart';
 
+/// Settings tab (design comp 3d): grouped sections with caption headers.
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
@@ -12,263 +16,327 @@ class SettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.appColors;
     final settings = ref.watch(settingsProvider);
+    final auth = ref.watch(authProvider);
+    final notifier = ref.read(settingsProvider.notifier);
 
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/'),
-        ),
-        title: const Text('Settings'),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        children: [
-          _SectionHeader(title: 'APPEARANCE', colors: colors),
-          _SettingsTile(
-            icon: Icons.brightness_auto,
-            title: 'Use System Theme',
-            subtitle: 'Follow device light/dark setting',
-            value: settings.themeMode == AppThemeMode.system,
-            onChanged: (val) {
-              if (val) {
-                ref.read(settingsProvider.notifier).setThemeMode(AppThemeMode.system);
-              } else {
-                ref.read(settingsProvider.notifier).setThemeMode(AppThemeMode.classicLight);
-              }
-            },
-            colors: colors,
-          ),
-          const Divider(height: 1, indent: 56),
-          _SettingsTile(
-            icon: Icons.dark_mode,
-            title: 'Dark Mode',
-            subtitle: 'Dark background and gold accents',
-            value: settings.themeMode == AppThemeMode.classicDark,
-            enabled: settings.themeMode != AppThemeMode.system,
-            onChanged: (val) {
-              final mode = val
-                  ? AppThemeMode.classicDark
-                  : AppThemeMode.classicLight;
-              ref.read(settingsProvider.notifier).setThemeMode(mode);
-            },
-            colors: colors,
-          ),
-          const Divider(height: 1, indent: 56),
-          _SectionHeader(title: 'PLAY STYLE', colors: colors),
-          _SettingsTile(
-            icon: Icons.style,
-            title: 'Auto-Deal',
-            subtitle: 'Automatically deal cards',
-            value: settings.autoDeal,
-            onChanged: (val) {
-              ref.read(settingsProvider.notifier).setAutoDeal(val);
-            },
-            colors: colors,
-          ),
-          const Divider(height: 1, indent: 56),
-          _SettingsTile(
-            icon: Icons.content_cut,
-            title: 'Auto-Cut Deck',
-            subtitle: 'Automatically cut the deck',
-            value: settings.autoCut,
-            onChanged: (val) {
-              ref.read(settingsProvider.notifier).setAutoCut(val);
-            },
-            colors: colors,
-          ),
-          const Divider(height: 1, indent: 56),
-          _SettingsTile(
-            icon: Icons.front_hand,
-            title: 'Auto-Go',
-            subtitle: 'Automatically say Go when needed',
-            value: settings.autoGo,
-            onChanged: (val) {
-              ref.read(settingsProvider.notifier).setAutoGo(val);
-            },
-            colors: colors,
-          ),
-          const Divider(height: 1, indent: 56),
-          _SettingsTile(
-            icon: Icons.touch_app,
-            title: 'Auto-Play All Cards',
-            subtitle: 'Tap to play or discard instantly',
-            value: settings.autoPlayAll,
-            onChanged: (val) {
-              ref.read(settingsProvider.notifier).setAutoPlayAll(val);
-            },
-            colors: colors,
-          ),
-          const Divider(height: 1, indent: 56),
-          _SettingsTile(
-            icon: Icons.play_arrow,
-            title: 'Auto-Play During Pegging',
-            subtitle: 'Tap to play cards during pegging',
-            value: settings.autoPlayPegging,
-            enabled: !settings.autoPlayAll,
-            onChanged: (val) {
-              ref.read(settingsProvider.notifier).setAutoPlayPegging(val);
-            },
-            colors: colors,
-          ),
-          const Divider(height: 1, indent: 56),
-          _SliderTile(
-            icon: Icons.speed,
-            title: 'Animation Speed',
-            value: settings.animationSpeed,
-            onChanged: (val) {
-              ref.read(settingsProvider.notifier).setAnimationSpeed(val);
-            },
-            colors: colors,
-          ),
-          const Divider(height: 1, indent: 56),
-          _SectionHeader(title: 'AUDIO & FEEDBACK', colors: colors),
-          _SettingsTile(
-            icon: Icons.volume_up,
-            title: 'Sound Effects',
-            subtitle: 'Card, score, and game sounds',
-            value: settings.soundEnabled,
-            onChanged: (val) {
-              ref.read(settingsProvider.notifier).setSoundEnabled(val);
-            },
-            colors: colors,
-          ),
-          const Divider(height: 1, indent: 56),
-          _SettingsTile(
-            icon: Icons.vibration,
-            title: 'Haptic Feedback',
-            subtitle: 'Vibration on card play and scoring',
-            value: settings.hapticsEnabled,
-            onChanged: (val) {
-              ref.read(settingsProvider.notifier).setHapticsEnabled(val);
-            },
-            colors: colors,
-          ),
-        ],
-      ),
-    );
-  }
-}
+      body: SafeArea(
+        bottom: false,
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 480),
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+              children: [
+                Text(
+                  'Settings',
+                  style: TextStyle(
+                    color: colors.textPrimary,
+                    fontSize: 26,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 16),
 
-class _SectionHeader extends StatelessWidget {
-  final String title;
-  final AppColors colors;
+                const _SectionCaption('Account'),
+                _Group(
+                  children: [
+                    if (auth.isLoggedIn) ...[
+                      _ValueRow(
+                        label: 'Username',
+                        value: auth.username ?? '—',
+                        onTap: auth.userId != null
+                            ? () => context.push('/profile/${auth.userId}')
+                            : null,
+                      ),
+                      if (auth.isGuest)
+                        _ValueRow(
+                          label: 'Account',
+                          value: 'Guest — upgrade',
+                          valueColor: colors.accent,
+                          onTap: () => context.go('/upgrade'),
+                        ),
+                    ] else
+                      _ValueRow(
+                        label: 'Account',
+                        value: 'Sign in',
+                        valueColor: colors.accent,
+                        onTap: () => context.go('/login'),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 18),
 
-  const _SectionHeader({required this.title, required this.colors});
+                const _SectionCaption('Gameplay'),
+                _Group(
+                  children: [
+                    _ValueRow(
+                      label: 'Game settings',
+                      value: gameSettingsSummary(settings),
+                      onTap: () => showGameSettingsSheet(context),
+                    ),
+                    _ToggleRow(
+                      label: 'Sounds',
+                      value: settings.soundEnabled,
+                      onChanged: (v) => notifier.setSoundEnabled(v),
+                    ),
+                    _ToggleRow(
+                      label: 'Haptics',
+                      value: settings.hapticsEnabled,
+                      onChanged: (v) => notifier.setHapticsEnabled(v),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 18),
 
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
-      child: Text(
-        title,
-        style: TextStyle(
-          color: colors.textTertiary,
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          letterSpacing: 1.0,
-        ),
-      ),
-    );
-  }
-}
+                const _SectionCaption('Appearance'),
+                _Group(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 10,
+                      ),
+                      child: Row(
+                        children: [
+                          Text(
+                            'Theme',
+                            style: TextStyle(
+                              color: colors.textPrimary,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const Spacer(),
+                          _ThemeSegmented(
+                            mode: settings.themeMode,
+                            onChanged: (m) => notifier.setThemeMode(m),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
 
-class _SettingsTile extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String? subtitle;
-  final bool value;
-  final bool enabled;
-  final ValueChanged<bool> onChanged;
-  final AppColors colors;
-
-  const _SettingsTile({
-    required this.icon,
-    required this.title,
-    this.subtitle,
-    required this.value,
-    this.enabled = true,
-    required this.onChanged,
-    required this.colors,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      leading: Icon(icon, color: enabled ? colors.accent : colors.textDisabled),
-      title: Text(
-        title,
-        style: TextStyle(
-          color: enabled ? colors.textPrimary : colors.textDisabled,
-        ),
-      ),
-      subtitle: subtitle != null
-          ? Text(
-              subtitle!,
-              style: TextStyle(
-                color: enabled ? colors.textTertiary : colors.textDisabled,
-                fontSize: 12,
-              ),
-            )
-          : null,
-      trailing: Switch.adaptive(
-        value: value,
-        onChanged: enabled ? onChanged : null,
-        activeTrackColor: colors.accent,
-      ),
-    );
-  }
-}
-
-class _SliderTile extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final double value;
-  final ValueChanged<double> onChanged;
-  final AppColors colors;
-
-  const _SliderTile({
-    required this.icon,
-    required this.title,
-    required this.value,
-    required this.onChanged,
-    required this.colors,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      leading: Icon(icon, color: colors.accent),
-      title: Text(title, style: TextStyle(color: colors.textPrimary)),
-      subtitle: Row(
-        children: [
-          Text(
-            '0.5x',
-            style: TextStyle(color: colors.textTertiary, fontSize: 11),
-          ),
-          Expanded(
-            child: Slider(
-              value: value,
-              min: 0.5,
-              max: 2.0,
-              divisions: 6,
-              activeColor: colors.accent,
-              onChanged: onChanged,
+                if (auth.isLoggedIn) ...[
+                  const SizedBox(height: 22),
+                  Center(
+                    child: TextButton(
+                      onPressed: () {
+                        ref.read(authProvider.notifier).logout();
+                        context.go('/');
+                      },
+                      child: Text(
+                        'Sign out',
+                        style: TextStyle(
+                          color: colors.error,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
+        ),
+      ),
+      bottomNavigationBar: const CcBottomNav(active: CcTab.settings),
+    );
+  }
+}
+
+class _SectionCaption extends StatelessWidget {
+  final String text;
+
+  const _SectionCaption(this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+    return Padding(
+      padding: const EdgeInsets.only(left: 2, bottom: 8),
+      child: Text(
+        text.toUpperCase(),
+        style: TextStyle(
+          color: colors.textTertiary,
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.7,
+        ),
+      ),
+    );
+  }
+}
+
+/// Grouped rows card: surface-2 fill, hairline border, dividers between rows.
+class _Group extends StatelessWidget {
+  final List<Widget> children;
+
+  const _Group({required this.children});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+    final rows = <Widget>[];
+    for (int i = 0; i < children.length; i++) {
+      if (i > 0) rows.add(Divider(height: 1, color: colors.border));
+      rows.add(children[i]);
+    }
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        decoration: BoxDecoration(
+          color: colors.surfacePrimary,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: colors.border),
+        ),
+        child: Column(children: rows),
+      ),
+    );
+  }
+}
+
+class _ValueRow extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color? valueColor;
+  final VoidCallback? onTap;
+
+  const _ValueRow({
+    required this.label,
+    required this.value,
+    this.valueColor,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+        child: Row(
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                color: colors.textPrimary,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const Spacer(),
+            Flexible(
+              child: Text(
+                value,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: valueColor ?? colors.textTertiary,
+                  fontSize: 13.5,
+                ),
+              ),
+            ),
+            if (onTap != null) ...[
+              const SizedBox(width: 4),
+              Icon(Icons.chevron_right, size: 17, color: colors.textDisabled),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ToggleRow extends StatelessWidget {
+  final String label;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  const _ToggleRow({
+    required this.label,
+    required this.value,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+      child: Row(
+        children: [
           Text(
-            '2.0x',
-            style: TextStyle(color: colors.textTertiary, fontSize: 11),
+            label,
+            style: TextStyle(
+              color: colors.textPrimary,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const Spacer(),
+          Switch.adaptive(
+            value: value,
+            activeTrackColor: colors.accent,
+            onChanged: onChanged,
           ),
         ],
       ),
-      trailing: Text(
-        '${value.toStringAsFixed(1)}x',
-        style: TextStyle(
-          color: colors.textPrimary,
-          fontSize: 14,
-          fontWeight: FontWeight.w600,
-        ),
+    );
+  }
+}
+
+class _ThemeSegmented extends StatelessWidget {
+  final AppThemeMode mode;
+  final ValueChanged<AppThemeMode> onChanged;
+
+  const _ThemeSegmented({required this.mode, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+    final options = [
+      (AppThemeMode.classicDark, 'Dark'),
+      (AppThemeMode.classicLight, 'Light'),
+      (AppThemeMode.system, 'Auto'),
+    ];
+
+    return Container(
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: colors.surfaceChrome,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: colors.border),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (final (value, label) in options)
+            GestureDetector(
+              onTap: () => onChanged(value),
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                decoration: BoxDecoration(
+                  color: mode == value ? colors.accent : Colors.transparent,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    color: mode == value
+                        ? colors.accentOnSurface
+                        : colors.textSecondary,
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

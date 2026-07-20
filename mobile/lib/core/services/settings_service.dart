@@ -31,7 +31,7 @@ class SettingsService {
 
   Future<String> getThemeMode() async {
     final prefs = await _preferences;
-    return prefs.getString(AppConstants.themeModeKey) ?? 'light';
+    return prefs.getString(AppConstants.themeModeKey) ?? 'dark';
   }
 
   Future<void> setThemeMode(String mode) async {
@@ -115,7 +115,7 @@ class SettingsService {
     return (
       soundEnabled: prefs.getBool(AppConstants.soundEnabledKey) ?? true,
       hapticsEnabled: prefs.getBool(AppConstants.hapticsEnabledKey) ?? true,
-      themeMode: prefs.getString(AppConstants.themeModeKey) ?? 'light',
+      themeMode: prefs.getString(AppConstants.themeModeKey) ?? 'dark',
       autoDeal: prefs.getBool(AppConstants.autoDealKey) ?? true,
       autoCut: prefs.getBool(AppConstants.autoCutKey) ?? true,
       autoGo: prefs.getBool(AppConstants.autoGoKey) ?? true,

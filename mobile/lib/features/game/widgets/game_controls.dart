@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../config/theme/app_colors.dart';
 import '../../../core/models/game_state.dart';
+import '../../../shared/widgets/cc_buttons.dart';
 
 class GameControls extends StatelessWidget {
   final GameStage stage;
@@ -142,19 +142,16 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.appColors;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8),
-      child: ElevatedButton.icon(
-        onPressed: onPressed,
-        icon: Icon(icon, size: 18),
-        label: Text(label),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: onPressed != null
-              ? colors.buttonPrimary
-              : colors.textDisabled,
-          foregroundColor: colors.accentOnSurface,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minWidth: 180),
+        child: CcPrimaryButton(
+          label: label,
+          icon: icon,
+          onPressed: onPressed,
+          height: 42,
+          fontSize: 14,
         ),
       ),
     );

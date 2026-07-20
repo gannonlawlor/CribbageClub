@@ -10,7 +10,6 @@ import '../../../core/auth/auth_provider.dart';
 import '../../../core/models/card.dart';
 import '../../../core/models/game_history_event.dart';
 import '../../../core/models/game_state.dart';
-import '../../../core/models/player.dart';
 import '../../../core/models/score_breakdown.dart';
 import '../../../core/services/local_game_history_provider.dart';
 import '../../../shared/utils/card_utils.dart';
@@ -18,13 +17,16 @@ import '../../../core/services/settings_provider.dart';
 import '../state/game_providers.dart';
 import '../state/local_game_notifier.dart';
 import '../../../shared/utils/responsive.dart';
+import '../../../shared/widgets/cc_buttons.dart';
+import '../widgets/board_strip.dart';
 import '../widgets/crib_area.dart';
-import '../widgets/cribbage_board.dart';
 import '../widgets/cut_card.dart';
 import '../widgets/game_controls.dart';
+import '../widgets/game_settings_sheet.dart';
 import '../widgets/hand_fan.dart';
 import '../widgets/history_log.dart';
 import '../widgets/play_area.dart';
+import '../widgets/player_bar.dart';
 import '../widgets/counting_overlay.dart';
 import '../widgets/score_display.dart';
 import '../widgets/dev_overlay.dart';
@@ -472,7 +474,11 @@ class GameScreen extends ConsumerWidget {
                         padding: const EdgeInsets.only(top: 4),
                         child: IconButton(
                           icon: Icon(Icons.arrow_back, color: colors.textSecondary, size: 20),
-                          onPressed: () => context.go('/'),
+                          onPressed: () {
+                            ref.invalidate(activeLocalGameProvider);
+                            ref.invalidate(localGameHistoryProvider);
+                            context.go('/');
+                          },
                         ),
                       ),
                       ScoreDisplay(
@@ -557,7 +563,7 @@ class GameScreen extends ConsumerWidget {
       );
     }
 
-    // Phone / tablet portrait: original layout with perimeter board
+    // Phone / tablet portrait: player bars top/bottom, compact board strip
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(gradient: colors.gameGradient),
@@ -565,24 +571,22 @@ class GameScreen extends ConsumerWidget {
           child: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 500),
-              child: PerimeterCribbageBoard(
-                playerScore: player.score,
-                opponentScore: opponent.score,
-                isDealer: isDealer,
-                child: Stack(
+              child: Stack(
                 children: [
                   Column(
                     children: [
                       _TopBar(
                         gameNotifier: gameNotifier,
-                        player: player,
-                        opponent: opponent,
-                        isDealer: isDealer,
                         events: gs.history,
                         playerId: playerId,
                         isOnlineGame: !_isLocal,
                         isGameOver: gs.stage == GameStage.gameOver,
-                        onBack: () => context.go('/'),
+                        onBack: () {
+                          // Refresh cached home-tab data before leaving
+                          ref.invalidate(activeLocalGameProvider);
+                          ref.invalidate(localGameHistoryProvider);
+                          context.go('/');
+                        },
                         onError: () {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(content: Text(gameNotifier.error!)),
@@ -594,17 +598,42 @@ class GameScreen extends ConsumerWidget {
                         onResign: () => _confirmResign(context, ref),
                         onSettings: () => _showSettingsSheet(context, ref),
                       ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: PlayerBar(
+                          name: opponent.name,
+                          score: opponent.score,
+                          isSelf: false,
+                          isDealer: !isDealer,
+                          isActive: gs.currentPlayerId == opponent.id,
+                        ),
+                      ),
                       buildConnectionBanners(),
                       buildTimers(),
-                      buildOpponentHand(),
                       buildMiddleArea(),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: BoardStrip(
+                          playerScore: player.score,
+                          opponentScore: opponent.score,
+                        ),
+                      ),
                       buildControls(),
                       buildPlayerHand(),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+                        child: PlayerBar(
+                          name: player.name,
+                          score: player.score,
+                          isSelf: true,
+                          isDealer: isDealer,
+                          isActive: isMyTurn,
+                        ),
+                      ),
                     ],
                   ),
                   ...buildOverlays(),
                 ],
-              ),
               ),
             ),
           ),
@@ -733,29 +762,19 @@ class GameScreen extends ConsumerWidget {
   }
 
   void _showSettingsSheet(BuildContext context, WidgetRef ref) {
-    final colors = context.appColors;
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: colors.surfacePrimary,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (ctx) => const _GameSettingsSheet(),
-    );
+    showGameSettingsSheet(context);
   }
 
   void _confirmResign(BuildContext context, WidgetRef ref) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Resign Game?'),
-        content: const Text(
-          'Are you sure you want to resign? Your opponent will be awarded the win.',
-        ),
+        title: const Text('Resign this game?'),
+        content: const Text('It counts as a loss.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cancel'),
+            child: const Text('Keep playing'),
           ),
           TextButton(
             onPressed: () {
@@ -828,107 +847,120 @@ class GameScreen extends ConsumerWidget {
       };
     }
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Column(
-        children: [
-          Icon(
-            didWin ? Icons.emoji_events : Icons.sentiment_dissatisfied,
-            size: 32,
-            color: didWin ? colors.accent : colors.textDisabled,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            didWin ? 'You Win!' : 'You Lose',
-            style: TextStyle(
-              color: didWin ? colors.accent : colors.textSecondary,
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
+    // Result subtitle: forfeit reason, or score + margin
+    final scoreLine = forfeitText != null
+        ? '${player.score}–${opponent.score} · $forfeitText'
+        : margin > 0
+            ? '${player.score}–${opponent.score} · by $margin point${margin == 1 ? '' : 's'}'
+            : '${player.score}–${opponent.score}';
+
+    // Game-over panel (design language §4): result word never colored —
+    // the score line carries the outcome.
+    return Center(
+      child: Container(
+        width: 300,
+        margin: const EdgeInsets.symmetric(vertical: 4),
+        padding: const EdgeInsets.fromLTRB(24, 22, 24, 16),
+        decoration: BoxDecoration(
+          color: colors.surfacePrimary,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: colors.borderStrong),
+          boxShadow: const [
+            BoxShadow(
+              color: Colors.black45,
+              blurRadius: 40,
+              offset: Offset(0, 12),
             ),
-          ),
-          if (forfeitText != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 2),
-              child: Text(
-                forfeitText,
-                style: TextStyle(color: colors.textTertiary, fontSize: 13),
-              ),
-            ),
-          const SizedBox(height: 4),
-          Text(
-            '${player.name}: ${player.score}  -  ${opponent.name}: ${opponent.score}',
-            style: TextStyle(color: colors.textPrimary, fontSize: 14),
-          ),
-          if (margin > 0 && forfeit == null)
-            Text(
-              didWin ? 'Won by $margin points' : 'Lost by $margin points',
-              style: TextStyle(
-                color: didWin
-                    ? colors.accent.withValues(alpha: 0.8)
-                    : colors.textTertiary,
-                fontSize: 12,
-              ),
-            ),
-          if (forfeit == null && (handCounts.isNotEmpty || cribCounts.isNotEmpty)) ...[
-            const SizedBox(height: 4),
-            ...handCounts.reversed
-                .take(2)
-                .map(
-                  (e) => Text(
-                    '${e.playerId == playerId ? "Your hand" : "Opponent hand"}: '
-                    '${e.totalPoints} pts${_breakdownText(e.scoreBreakdown)}',
-                    style: TextStyle(color: colors.textTertiary, fontSize: 11),
-                  ),
-                ),
-            ...cribCounts.reversed
-                .take(1)
-                .map(
-                  (e) => Text(
-                    'Crib: ${e.totalPoints} pts${_breakdownText(e.scoreBreakdown)}',
-                    style: TextStyle(color: colors.textTertiary, fontSize: 11),
-                  ),
-                ),
           ],
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              ElevatedButton.icon(
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              didWin ? 'Victory' : 'Defeat',
+              style: TextStyle(
+                color: colors.textPrimary,
+                fontSize: 26,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              scoreLine,
+              style: TextStyle(
+                color: colors.textTertiary,
+                fontSize: 14,
+                fontFeatures: const [FontFeature.tabularFigures()],
+              ),
+            ),
+            if (forfeit == null &&
+                (handCounts.isNotEmpty || cribCounts.isNotEmpty)) ...[
+              const SizedBox(height: 8),
+              ...handCounts.reversed.take(2).map(
+                    (e) => Text(
+                      '${e.playerId == playerId ? "Your hand" : "Opponent hand"}: '
+                      '${e.totalPoints} pts${_breakdownText(e.scoreBreakdown)}',
+                      textAlign: TextAlign.center,
+                      style:
+                          TextStyle(color: colors.textTertiary, fontSize: 11),
+                    ),
+                  ),
+              ...cribCounts.reversed.take(1).map(
+                    (e) => Text(
+                      'Crib: ${e.totalPoints} pts${_breakdownText(e.scoreBreakdown)}',
+                      textAlign: TextAlign.center,
+                      style:
+                          TextStyle(color: colors.textTertiary, fontSize: 11),
+                    ),
+                  ),
+            ],
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: CcPrimaryButton(
+                label: 'Rematch',
+                height: 48,
+                fontSize: 15,
                 onPressed: () => _playAgain(context, ref),
-                icon: const Icon(Icons.refresh, size: 16),
-                label: const Text('Play Again'),
               ),
-              const SizedBox(width: 10),
-              OutlinedButton(
-                onPressed: () => context.go('/'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: colors.textSecondary,
-                  side: BorderSide(color: colors.textDisabled),
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: CcSecondaryButton(
+                    label: 'Analyze game',
+                    height: 40,
+                    fontSize: 13,
+                    filled: false,
+                    onPressed: () => context.go('/analysis/${gs.gameId}'),
+                  ),
                 ),
-                child: const Text('Home'),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: CcSecondaryButton(
+                    label: 'Replay',
+                    height: 40,
+                    fontSize: 13,
+                    filled: false,
+                    onPressed: () => context.go('/replay/${gs.gameId}'),
+                  ),
+                ),
+              ],
+            ),
+            TextButton(
+              onPressed: () => context.go('/'),
+              child: Text(
+                'Home',
+                style: TextStyle(
+                  color: colors.textTertiary,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              TextButton.icon(
-                onPressed: () => context.go('/analysis/${gs.gameId}'),
-                icon: const Icon(Icons.analytics, size: 16),
-                label: const Text('Analyze'),
-                style: TextButton.styleFrom(foregroundColor: colors.textTertiary),
-              ),
-              const SizedBox(width: 8),
-              TextButton.icon(
-                onPressed: () => context.go('/replay/${gs.gameId}'),
-                icon: const Icon(Icons.replay, size: 16),
-                label: const Text('Replay'),
-                style: TextButton.styleFrom(foregroundColor: colors.textTertiary),
-              ),
-            ],
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -981,12 +1013,10 @@ class GameScreen extends ConsumerWidget {
   }
 }
 
-/// Compact top bar: back button, score chips, history icon
+/// Slim utility bar above the opponent bar: back, error, resign,
+/// settings, history. Scores now live in the player bars.
 class _TopBar extends StatelessWidget {
   final GameNotifierState gameNotifier;
-  final Player player;
-  final Player opponent;
-  final bool isDealer;
   final List<GameHistoryEvent> events;
   final String playerId;
   final bool isOnlineGame;
@@ -998,9 +1028,6 @@ class _TopBar extends StatelessWidget {
 
   const _TopBar({
     required this.gameNotifier,
-    required this.player,
-    required this.opponent,
-    required this.isDealer,
     required this.events,
     required this.playerId,
     required this.isOnlineGame,
@@ -1024,13 +1051,7 @@ class _TopBar extends StatelessWidget {
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
           ),
-          Expanded(
-            child: ScoreDisplay(
-              player: player,
-              opponent: opponent,
-              isDealer: isDealer,
-            ),
-          ),
+          const Spacer(),
           if (gameNotifier.error != null)
             IconButton(
               icon: Icon(Icons.warning, color: colors.warning, size: 20),
@@ -1148,99 +1169,6 @@ class _RestoreGuardState extends ConsumerState<_RestoreGuard> {
       body: Container(
         decoration: BoxDecoration(gradient: colors.gameGradient),
         child: const Center(child: CircularProgressIndicator()),
-      ),
-    );
-  }
-}
-
-class _GameSettingsSheet extends ConsumerWidget {
-  const _GameSettingsSheet();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final colors = context.appColors;
-    final settings = ref.watch(settingsProvider);
-    final notifier = ref.read(settingsProvider.notifier);
-
-    return SafeArea(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Text(
-              'Play Style',
-              style: TextStyle(
-                color: colors.textPrimary,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          SwitchListTile.adaptive(
-            title: Text('Auto-Deal', style: TextStyle(color: colors.textPrimary)),
-            value: settings.autoDeal,
-            activeTrackColor: colors.accent,
-            onChanged: (val) => notifier.setAutoDeal(val),
-          ),
-          SwitchListTile.adaptive(
-            title: Text('Auto-Cut Deck', style: TextStyle(color: colors.textPrimary)),
-            value: settings.autoCut,
-            activeTrackColor: colors.accent,
-            onChanged: (val) => notifier.setAutoCut(val),
-          ),
-          SwitchListTile.adaptive(
-            title: Text('Auto-Go', style: TextStyle(color: colors.textPrimary)),
-            value: settings.autoGo,
-            activeTrackColor: colors.accent,
-            onChanged: (val) => notifier.setAutoGo(val),
-          ),
-          SwitchListTile.adaptive(
-            title: Text('Auto-Play All', style: TextStyle(color: colors.textPrimary)),
-            value: settings.autoPlayAll,
-            activeTrackColor: colors.accent,
-            onChanged: (val) => notifier.setAutoPlayAll(val),
-          ),
-          SwitchListTile.adaptive(
-            title: Text(
-              'Auto-Play Pegging',
-              style: TextStyle(
-                color: settings.autoPlayAll ? colors.textDisabled : colors.textPrimary,
-              ),
-            ),
-            value: settings.autoPlayPegging,
-            activeTrackColor: colors.accent,
-            onChanged: settings.autoPlayAll ? null : (val) => notifier.setAutoPlayPegging(val),
-          ),
-          ListTile(
-            title: Text('Animation Speed', style: TextStyle(color: colors.textPrimary)),
-            subtitle: Row(
-              children: [
-                Text('0.5x', style: TextStyle(color: colors.textTertiary, fontSize: 11)),
-                Expanded(
-                  child: Slider(
-                    value: settings.animationSpeed,
-                    min: 0.5,
-                    max: 2.0,
-                    divisions: 6,
-                    activeColor: colors.accent,
-                    onChanged: (val) => notifier.setAnimationSpeed(val),
-                  ),
-                ),
-                Text('2.0x', style: TextStyle(color: colors.textTertiary, fontSize: 11)),
-              ],
-            ),
-            trailing: Text(
-              '${settings.animationSpeed.toStringAsFixed(1)}x',
-              style: TextStyle(
-                color: colors.textPrimary,
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-        ],
       ),
     );
   }

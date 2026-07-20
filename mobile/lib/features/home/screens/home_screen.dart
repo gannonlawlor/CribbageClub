@@ -4,20 +4,23 @@ import 'package:go_router/go_router.dart';
 import '../../../config/theme/app_colors.dart';
 import '../../../core/auth/auth_provider.dart';
 import '../../../core/models/game_state.dart';
-import '../../../core/providers/notification_provider.dart';
-import '../../../shared/utils/responsive.dart';
+import '../../../core/models/local_game_record.dart';
 import '../../../shared/widgets/auth_required.dart';
+import '../../../shared/widgets/cc_bottom_nav.dart';
+import '../../../shared/widgets/cc_buttons.dart';
 import '../../../shared/widgets/loading_overlay.dart';
 import '../../daily_puzzle/state/puzzle_provider.dart';
-import '../../daily_puzzle/widgets/streak_badge.dart';
+import '../../game/widgets/game_settings_sheet.dart';
+import '../../profile/state/my_profile_provider.dart';
 import '../../../core/services/local_game_history_provider.dart';
 import '../../../core/services/local_game_history_service.dart';
 import '../../game/state/game_providers.dart';
 
 final _isCreatingGameProvider = StateProvider<bool>((ref) => false);
 
-// Active games provider — fetches from /api/games/me (only when logged in)
-final _activeGamesProvider = FutureProvider.autoDispose<List<GameState>>((
+// Active games provider — fetches from /api/games/me (only when logged in).
+// Kept alive so returning to the Play tab doesn't re-load and shift layout.
+final _activeGamesProvider = FutureProvider<List<GameState>>((
   ref,
 ) async {
   final auth = ref.read(authProvider);
@@ -31,360 +34,116 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final colors = context.appColors;
     final auth = ref.watch(authProvider);
     final isCreating = ref.watch(_isCreatingGameProvider);
     final activeGames = ref.watch(_activeGamesProvider);
     final activeLocalGame = ref.watch(activeLocalGameProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Cribbage Club'),
-        actions: [
-          if (auth.isLoggedIn && auth.isGuest)
-            TextButton(
-              onPressed: () => context.go('/upgrade'),
-              child: Text(
-                'Upgrade',
-                style: TextStyle(color: colors.accent),
-              ),
-            ),
-          if (auth.isLoggedIn && auth.username != null)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: Center(
-                child: GestureDetector(
-                  onTap: auth.userId != null
-                      ? () => context.push('/profile/${auth.userId}')
-                      : null,
-                  child: Text(
-                    auth.username!,
-                    style: TextStyle(color: colors.accent),
-                  ),
-                ),
-              ),
-            ),
-          if (auth.isLoggedIn)
-            IconButton(
-              icon: const Icon(Icons.logout),
-              onPressed: () => ref.read(authProvider.notifier).logout(),
-            ),
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () => context.go('/settings'),
-          ),
-          if (!auth.isLoggedIn)
-            TextButton.icon(
-              onPressed: () => context.go('/login'),
-              icon: const Icon(Icons.login, size: 18),
-              label: const Text('Log In'),
-              style: TextButton.styleFrom(foregroundColor: colors.accent),
-            ),
-        ],
-      ),
-      body: LoadingOverlay(
-        isLoading: isCreating,
-        child: Center(
-          child: SingleChildScrollView(
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                maxWidth: Responsive.isTabletLandscape(context) ? 700 : 400,
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(32),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // Guest upgrade banner
-                    if (auth.isLoggedIn && auth.isGuest) ...[
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: colors.accent),
-                          color: colors.accent.withValues(alpha: 0.1),
-                        ),
-                        child: Row(
+      body: SafeArea(
+        bottom: false,
+        child: LoadingOverlay(
+          isLoading: isCreating,
+          child: Column(
+            children: [
+              _Header(auth: auth),
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 480),
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            Icon(
-                              Icons.info_outline,
-                              color: colors.accent,
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                'Create an account to save your progress and stats.',
-                                style: TextStyle(
-                                  color: colors.textSecondary,
-                                  fontSize: 13,
-                                ),
+                            // Guest upgrade banner
+                            if (auth.isLoggedIn && auth.isGuest) ...[
+                              _GuestBanner(),
+                              const SizedBox(height: 14),
+                            ],
+
+                            // Active games (online + local in-progress)
+                            AnimatedSize(
+                              duration: const Duration(milliseconds: 200),
+                              alignment: Alignment.topCenter,
+                              child: _ContinueGameSection(
+                                activeGames: activeGames,
+                                activeLocalGame: activeLocalGame,
+                                isLoggedIn: auth.isLoggedIn,
                               ),
                             ),
-                            const SizedBox(width: 8),
-                            TextButton(
-                              onPressed: () => context.go('/upgrade'),
-                              child: Text(
-                                'Upgrade',
-                                style: TextStyle(
-                                  color: colors.accent,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
+
+                            CcPrimaryButton(
+                              label: 'Play · Rated',
+                              onPressed: isCreating
+                                  ? null
+                                  : () => _quickMatch(context, ref),
                             ),
+                            const SizedBox(height: 10),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: CcSecondaryButton(
+                                    label: 'Play a friend',
+                                    onPressed: isCreating
+                                        ? null
+                                        : () => _showOnlineOptions(context, ref),
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: CcSecondaryButton(
+                                    label: 'Play the engine',
+                                    onPressed: isCreating
+                                        ? null
+                                        : () =>
+                                            _showDifficultyPicker(context, ref),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 14),
+                            const _PuzzleGroup(),
+                            const SizedBox(height: 14),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: CcSecondaryButton(
+                                    label: 'Game history',
+                                    icon: Icons.history,
+                                    height: 40,
+                                    fontSize: 13,
+                                    onPressed: () => context.go('/history'),
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: CcSecondaryButton(
+                                    label: 'Game settings',
+                                    icon: Icons.tune,
+                                    height: 40,
+                                    fontSize: 13,
+                                    onPressed: () =>
+                                        showGameSettingsSheet(context),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 18),
+                            const _RecentGamesSection(),
                           ],
                         ),
                       ),
-                      const SizedBox(height: 24),
-                    ],
-
-                    // Active games section (online + local in-progress)
-                    AnimatedSize(
-                      duration: const Duration(milliseconds: 200),
-                      alignment: Alignment.topCenter,
-                      child: _ContinueGameSection(
-                        activeGames: activeGames,
-                        activeLocalGame: activeLocalGame,
-                        isLoggedIn: auth.isLoggedIn,
-                      ),
                     ),
-
-                    Icon(
-                      Icons.style,
-                      size: 100,
-                      color: colors.accent,
-                    ),
-                    const SizedBox(height: 32),
-
-                    // Main action buttons — 2x2 grid on tablet landscape, stacked on phone
-                    if (Responsive.isTabletLandscape(context)) ...[
-                      Row(
-                        children: [
-                          Expanded(
-                            child: SizedBox(
-                              height: 56,
-                              child: ElevatedButton.icon(
-                                onPressed: isCreating
-                                    ? null
-                                    : () => _showDifficultyPicker(context, ref),
-                                icon: const Icon(Icons.smart_toy, size: 24),
-                                label: const Text('Play vs AI', style: TextStyle(fontSize: 18)),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: SizedBox(
-                              height: 56,
-                              child: ElevatedButton.icon(
-                                onPressed: isCreating
-                                    ? null
-                                    : () => _showOnlineOptions(context, ref),
-                                icon: const Icon(Icons.people, size: 24),
-                                label: const Text('Play Online', style: TextStyle(fontSize: 18)),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: SizedBox(
-                              height: 56,
-                              child: Consumer(
-                                builder: (context, ref, _) {
-                                  final status = ref.watch(dailyPuzzleStatusProvider);
-                                  final completedToday = status.valueOrNull?.completedToday ?? false;
-                                  final completedCount = status.valueOrNull?.completedCount ?? 0;
-                                  final streak = status.valueOrNull?.streak ?? 0;
-                                  final borderColor = completedToday ? colors.evOptimal : colors.warning;
-                                  return OutlinedButton.icon(
-                                    onPressed: () => context.go('/daily-puzzle'),
-                                    icon: const Icon(Icons.calendar_today, size: 24),
-                                    label: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        const Flexible(child: Text('Daily Challenge', style: TextStyle(fontSize: 18), overflow: TextOverflow.ellipsis)),
-                                        if (completedToday)
-                                          Padding(
-                                            padding: const EdgeInsets.only(left: 6),
-                                            child: Icon(Icons.check_circle, size: 18, color: colors.evOptimal),
-                                          )
-                                        else if (completedCount > 0)
-                                          Padding(
-                                            padding: const EdgeInsets.only(left: 6),
-                                            child: Text('$completedCount/5', style: TextStyle(fontSize: 12, color: colors.textSecondary)),
-                                          ),
-                                        if (streak > 0)
-                                          Padding(
-                                            padding: const EdgeInsets.only(left: 8),
-                                            child: StreakBadge(streak: streak, fontSize: 12),
-                                          ),
-                                      ],
-                                    ),
-                                    style: OutlinedButton.styleFrom(
-                                      foregroundColor: colors.textPrimary,
-                                      side: BorderSide(color: borderColor, width: 1.5),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: SizedBox(
-                              height: 56,
-                              child: OutlinedButton.icon(
-                                onPressed: () => context.go('/practice-puzzle'),
-                                icon: const Icon(Icons.all_inclusive, size: 24),
-                                label: const Text('Practice Puzzles', style: TextStyle(fontSize: 18)),
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: colors.textPrimary,
-                                  side: BorderSide(color: colors.textDisabled),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ] else ...[
-                      SizedBox(
-                        width: double.infinity,
-                        height: 56,
-                        child: ElevatedButton.icon(
-                          onPressed: isCreating
-                              ? null
-                              : () => _showDifficultyPicker(context, ref),
-                          icon: const Icon(Icons.smart_toy, size: 24),
-                          label: const Text(
-                            'Play vs AI',
-                            style: TextStyle(fontSize: 18),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 56,
-                        child: ElevatedButton.icon(
-                          onPressed: isCreating
-                              ? null
-                              : () => _showOnlineOptions(context, ref),
-                          icon: const Icon(Icons.people, size: 24),
-                          label: const Text(
-                            'Play Online',
-                            style: TextStyle(fontSize: 18),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 56,
-                        child: Consumer(
-                          builder: (context, ref, _) {
-                            final status = ref.watch(dailyPuzzleStatusProvider);
-                            final completedToday = status.valueOrNull?.completedToday ?? false;
-                            final completedCount = status.valueOrNull?.completedCount ?? 0;
-                            final streak = status.valueOrNull?.streak ?? 0;
-                            final borderColor = completedToday ? colors.evOptimal : colors.warning;
-                            return OutlinedButton.icon(
-                              onPressed: () => context.go('/daily-puzzle'),
-                              icon: const Icon(Icons.calendar_today, size: 24),
-                              label: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Text(
-                                    'Daily Challenge',
-                                    style: TextStyle(fontSize: 18),
-                                  ),
-                                  if (completedToday)
-                                    Padding(
-                                      padding: const EdgeInsets.only(left: 6),
-                                      child: Icon(Icons.check_circle, size: 18, color: colors.evOptimal),
-                                    )
-                                  else if (completedCount > 0)
-                                    Padding(
-                                      padding: const EdgeInsets.only(left: 6),
-                                      child: Text('$completedCount/5', style: TextStyle(fontSize: 12, color: colors.textSecondary)),
-                                    ),
-                                  if (streak > 0)
-                                    Padding(
-                                      padding: const EdgeInsets.only(left: 8),
-                                      child: StreakBadge(
-                                        streak: streak,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                ],
-                              ),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: colors.textPrimary,
-                                side: BorderSide(
-                                  color: borderColor,
-                                  width: 1.5,
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 56,
-                        child: OutlinedButton.icon(
-                          onPressed: () => context.go('/practice-puzzle'),
-                          icon: const Icon(Icons.all_inclusive, size: 24),
-                          label: const Text(
-                            'Practice Puzzles',
-                            style: TextStyle(fontSize: 18),
-                          ),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: colors.textPrimary,
-                            side: BorderSide(color: colors.textDisabled),
-                          ),
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: 24),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        if (auth.isLoggedIn && !auth.isGuest)
-                          Flexible(child: _FriendsButton()),
-                        Flexible(
-                          child: TextButton.icon(
-                            onPressed: () => context.go('/history'),
-                            icon: const Icon(Icons.history, size: 18),
-                            label: const Text('History'),
-                            style: TextButton.styleFrom(
-                              foregroundColor: colors.textSecondary,
-                            ),
-                          ),
-                        ),
-                        Flexible(
-                          child: TextButton.icon(
-                            onPressed: () => context.go('/leaderboard'),
-                            icon: const Icon(Icons.leaderboard, size: 18),
-                            label: const Text('Leaderboard'),
-                            style: TextButton.styleFrom(
-                              foregroundColor: colors.textSecondary,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+                  ),
                 ),
               ),
-            ),
+            ],
           ),
         ),
       ),
+      bottomNavigationBar: const CcBottomNav(active: CcTab.play),
     );
   }
 
@@ -688,6 +447,498 @@ class HomeScreen extends ConsumerWidget {
   }
 }
 
+/// App header: logo mark, wordmark, rating/identity chip (comp 3a).
+class _Header extends ConsumerWidget {
+  final AuthState auth;
+
+  const _Header({required this.auth});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.appColors;
+    final rating = ref.watch(myProfileProvider).valueOrNull?.rating;
+
+    final Widget chip;
+    if (rating != null) {
+      chip = _HeaderChip(
+        label: '${rating.round()}',
+        labelColor: colors.ratingGold,
+        onTap: () => context.go('/me'),
+      );
+    } else if (auth.isLoggedIn && auth.username != null) {
+      chip = _HeaderChip(
+        label: auth.username!,
+        labelColor: colors.textPrimary,
+        onTap: () => context.go('/me'),
+      );
+    } else {
+      chip = _HeaderChip(
+        label: 'Sign in',
+        labelColor: colors.accent,
+        onTap: () => context.go('/login'),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
+      child: Row(
+        children: [
+          Container(
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(
+              color: colors.accent,
+              borderRadius: BorderRadius.circular(7),
+            ),
+            child: Center(
+              child: Text(
+                'CC',
+                style: TextStyle(
+                  color: colors.accentOnSurface,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Cribbage Club',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: colors.textPrimary,
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          chip,
+        ],
+      ),
+    );
+  }
+}
+
+class _HeaderChip extends StatelessWidget {
+  final String label;
+  final Color labelColor;
+  final VoidCallback? onTap;
+
+  const _HeaderChip({
+    required this.label,
+    required this.labelColor,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(999),
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 140),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: colors.surfaceChrome,
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: colors.border),
+        ),
+        child: Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            color: labelColor,
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _GuestBanner extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.appColors;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 12, 6, 12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: colors.accentBorder),
+        color: colors.accentSubtle,
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              "You're playing as a guest. Create an account to keep your rating and history.",
+              style: TextStyle(color: colors.textSecondary, fontSize: 12.5),
+            ),
+          ),
+          TextButton(
+            onPressed: () => context.go('/upgrade'),
+            child: Text(
+              'Upgrade',
+              style: TextStyle(
+                color: colors.accent,
+                fontWeight: FontWeight.w700,
+                fontSize: 13,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Caption label — 12/600, +0.06em, uppercase (design language "caption").
+class _Caption extends StatelessWidget {
+  final String text;
+
+  const _Caption(this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+    return Text(
+      text.toUpperCase(),
+      style: TextStyle(
+        color: colors.textTertiary,
+        fontSize: 11,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.7,
+      ),
+    );
+  }
+}
+
+/// Grouped puzzle card (comp 3a): today's puzzle row over the practice row,
+/// one bordered container with a hairline divider.
+class _PuzzleGroup extends StatelessWidget {
+  const _PuzzleGroup();
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        decoration: BoxDecoration(
+          color: colors.surfacePrimary,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: colors.border),
+        ),
+        child: Column(
+          children: [
+            const _DailyPuzzleRow(),
+            Divider(height: 1, color: colors.border),
+            const _PracticePuzzleRow(),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DailyPuzzleRow extends ConsumerWidget {
+  const _DailyPuzzleRow();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.appColors;
+    final status = ref.watch(dailyPuzzleStatusProvider);
+    final completedToday = status.valueOrNull?.completedToday ?? false;
+    final completedCount = status.valueOrNull?.completedCount ?? 0;
+    final streak = status.valueOrNull?.streak ?? 0;
+
+    final subtitle = [
+      if (completedToday)
+        'Solved today'
+      else if (completedCount > 0)
+        '$completedCount/5 solved'
+      else
+        '5 puzzles',
+      if (streak > 0) 'streak $streak day${streak == 1 ? '' : 's'}',
+    ].join(' · ');
+
+    return InkWell(
+      onTap: () => context.go('/daily-puzzle'),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(
+          children: [
+            _MysteryCard(),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Today's puzzle: pick the discard",
+                    style: TextStyle(
+                      color: colors.textPrimary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      color: colors.textTertiary,
+                      fontSize: 12,
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              completedToday ? 'Done' : 'Solve',
+              style: TextStyle(
+                color: completedToday ? colors.textTertiary : colors.accent,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Small face-down "?" card used on the daily puzzle card.
+class _MysteryCard extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+    return Container(
+      width: 40,
+      height: 54,
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: colors.cardFace,
+        borderRadius: BorderRadius.circular(4),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black38,
+            blurRadius: 3,
+            offset: Offset(0, 1),
+          ),
+        ],
+      ),
+      child: Stack(
+        children: [
+          Text(
+            '?',
+            style: TextStyle(
+              color: colors.suitRed,
+              fontSize: 13,
+              height: 1,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          Align(
+            alignment: Alignment.bottomRight,
+            child: Text(
+              '♥',
+              style: TextStyle(color: colors.suitRed, fontSize: 15, height: 1),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PracticePuzzleRow extends StatelessWidget {
+  const _PracticePuzzleRow();
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+    return Material(
+      color: colors.surfaceChrome,
+      child: InkWell(
+        onTap: () => context.go('/practice-puzzle'),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Puzzle practice',
+                      style: TextStyle(
+                        color: colors.textPrimary,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 1),
+                    Text(
+                      'Discards · pegging traps · counting drills',
+                      style: TextStyle(
+                        color: colors.textTertiary,
+                        fontSize: 11.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Text(
+                'Open',
+                style: TextStyle(
+                  color: colors.accent,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RecentGamesSection extends ConsumerWidget {
+  const _RecentGamesSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.appColors;
+    final records =
+        ref.watch(localGameHistoryProvider).valueOrNull ?? const [];
+    final recent = records.take(3).toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 2),
+          child: Row(
+            children: [
+              const _Caption('Recent games'),
+              const Spacer(),
+              GestureDetector(
+                onTap: () => context.go('/history'),
+                child: Text(
+                  'See all',
+                  style: TextStyle(
+                    color: colors.accent,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: colors.border),
+          ),
+          child: recent.isEmpty
+              ? Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Text(
+                    'No games yet. Your first game starts your record.',
+                    style: TextStyle(
+                      color: colors.textTertiary,
+                      fontSize: 12.5,
+                    ),
+                  ),
+                )
+              : Column(
+                  children: [
+                    for (int i = 0; i < recent.length; i++) ...[
+                      if (i > 0)
+                        Divider(height: 1, color: colors.border),
+                      _RecentGameRow(record: recent[i]),
+                    ],
+                  ],
+                ),
+        ),
+      ],
+    );
+  }
+}
+
+class _RecentGameRow extends StatelessWidget {
+  final LocalGameRecord record;
+
+  const _RecentGameRow({required this.record});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+    final resultColor = record.isWin ? colors.success : colors.error;
+
+    return InkWell(
+      onTap: () => context.go('/replay/${record.gameId}'),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+        child: Row(
+          children: [
+            Container(
+              width: 22,
+              height: 22,
+              decoration: BoxDecoration(
+                color: resultColor.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(5),
+              ),
+              child: Center(
+                child: Text(
+                  record.isWin ? 'W' : 'L',
+                  style: TextStyle(
+                    color: resultColor,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                record.opponentName,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: colors.textPrimary,
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            Text(
+              '${record.playerScore}–${record.opponentScore}',
+              style: TextStyle(
+                color: colors.textTertiary,
+                fontSize: 13.5,
+                fontFeatures: const [FontFeature.tabularFigures()],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _ContinueGameSection extends StatelessWidget {
   final AsyncValue<List<GameState>> activeGames;
   final AsyncValue<ActiveLocalGame?> activeLocalGame;
@@ -701,7 +952,6 @@ class _ContinueGameSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.appColors;
     final onlineGames = isLoggedIn
         ? (activeGames.valueOrNull ?? <GameState>[])
         : <GameState>[];
@@ -712,21 +962,17 @@ class _ContinueGameSection extends StatelessWidget {
     }
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
-          'Continue Game',
-          style: TextStyle(
-            color: colors.textPrimary,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 2),
+          child: _Caption('In progress'),
         ),
         const SizedBox(height: 8),
         if (localGame != null)
           _ActiveGameTile(game: localGame.gameState),
         ...onlineGames.map((game) => _ActiveGameTile(game: game)),
-        const SizedBox(height: 24),
+        const SizedBox(height: 14),
       ],
     );
   }
@@ -761,27 +1007,6 @@ class _DifficultyTile extends StatelessWidget {
   }
 }
 
-class _FriendsButton extends ConsumerWidget {
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final colors = context.appColors;
-    final notifCount = ref.watch(notificationCountProvider);
-    final total = notifCount.whenOrNull(data: (n) => n.total) ?? 0;
-
-    return TextButton.icon(
-      onPressed: () => context.go('/friends'),
-      icon: Badge(
-        isLabelVisible: total > 0,
-        label: Text('$total', style: const TextStyle(fontSize: 10)),
-        backgroundColor: colors.error,
-        child: const Icon(Icons.people, size: 18),
-      ),
-      label: const Text('Friends'),
-      style: TextButton.styleFrom(foregroundColor: colors.textSecondary),
-    );
-  }
-}
-
 class _ActiveGameTile extends ConsumerWidget {
   final GameState game;
 
@@ -801,21 +1026,25 @@ class _ActiveGameTile extends ConsumerWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Material(
-        color: colors.surfaceDim,
+        color: colors.surfacePrimary,
         borderRadius: BorderRadius.circular(8),
         child: InkWell(
           borderRadius: BorderRadius.circular(8),
           onTap: () => context.go('/game/${game.gameId}'),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: colors.border),
+            ),
             child: Row(
               children: [
                 Icon(
-                  Icons.play_arrow,
+                  Icons.play_arrow_rounded,
                   color: colors.accent,
-                  size: 20,
+                  size: 22,
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -824,14 +1053,16 @@ class _ActiveGameTile extends ConsumerWidget {
                         'vs ${opponent.name}',
                         style: TextStyle(
                           color: colors.textPrimary,
-                          fontSize: 14,
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                       Text(
-                        '${game.stage.displayName} — ${player.score} to ${opponent.score}',
+                        '${game.stage.displayName} · ${player.score}–${opponent.score}',
                         style: TextStyle(
                           color: colors.textTertiary,
                           fontSize: 12,
+                          fontFeatures: const [FontFeature.tabularFigures()],
                         ),
                       ),
                     ],
