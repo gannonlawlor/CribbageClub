@@ -4,7 +4,8 @@ import 'app_colors.dart';
 
 enum AppThemeMode { classicLight, classicDark, system }
 
-final themeProvider = StateProvider<AppThemeMode>((_) => AppThemeMode.classicLight);
+// Dark theme is primary (design language v1.0); light is the opt-in mapping.
+final themeProvider = StateProvider<AppThemeMode>((_) => AppThemeMode.classicDark);
 
 /// Resolve system mode to concrete light/dark based on platform brightness.
 AppThemeMode resolveThemeMode(AppThemeMode mode, Brightness platformBrightness) {

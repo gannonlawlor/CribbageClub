@@ -16,7 +16,7 @@ class SettingsState {
   const SettingsState({
     this.soundEnabled = true,
     this.hapticsEnabled = true,
-    this.themeMode = AppThemeMode.classicLight,
+    this.themeMode = AppThemeMode.classicDark,
     this.autoDeal = true,
     this.autoCut = true,
     this.autoGo = true,

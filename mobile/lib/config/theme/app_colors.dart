@@ -103,6 +103,14 @@ class AppColors extends ThemeExtension<AppColors> {
   // ── Computed getters ──────────────────────────────────────
 
   Color get selectedGlow => accent.withValues(alpha: 0.5);
+
+  /// Hairline borders (--border / --border-strong). Deriving from textPrimary
+  /// yields white-on-dark and black-on-light automatically.
+  Color get border => textPrimary.withValues(alpha: 0.08);
+  Color get borderStrong => textPrimary.withValues(alpha: 0.14);
+
+  /// Chrome surface (--surface-0): headers, player bars, nav.
+  Color get surfaceChrome => gameGradientTop;
   Color get accentSubtle => accent.withValues(alpha: 0.2);
   Color get accentBorder => accent.withValues(alpha: 0.5);
   Color get scrim => Colors.black54;

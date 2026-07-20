@@ -44,19 +44,13 @@ class StageIndicator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.appColors;
-    return SizedBox(
-      width: double.infinity,
+    return Center(
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
         decoration: BoxDecoration(
-          color: isMyTurn
-              ? colors.accentSubtle
-              : colors.surfaceDim,
-          borderRadius: BorderRadius.circular(16),
-          border: isMyTurn
-              ? Border.all(color: colors.accentBorder)
-              : null,
+          color: isMyTurn ? colors.accent : colors.surfaceDim,
+          borderRadius: BorderRadius.circular(999),
         ),
         child: AnimatedSwitcher(
           duration: AppConstants.stageTransitionDuration,
@@ -78,9 +72,10 @@ class StageIndicator extends StatelessWidget {
             _message,
             key: ValueKey('${stage.name}_$isMyTurn'),
             style: TextStyle(
-              color: isMyTurn ? colors.accent : colors.textSecondary,
-              fontSize: 13,
-              fontWeight: isMyTurn ? FontWeight.bold : FontWeight.normal,
+              color: isMyTurn ? colors.accentOnSurface : colors.textSecondary,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.3,
             ),
             textAlign: TextAlign.center,
           ),

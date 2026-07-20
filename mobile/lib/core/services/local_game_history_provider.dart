@@ -10,8 +10,11 @@ final localGameHistoryServiceProvider = Provider<LocalGameHistoryService>((ref) 
   return LocalGameHistoryService();
 });
 
+// Kept alive (not autoDispose) so tab switches render cached data instantly
+// instead of re-loading and shifting the layout. Invalidated after games
+// complete and when leaving a game.
 final localGameHistoryProvider =
-    FutureProvider.autoDispose<List<LocalGameRecord>>((ref) async {
+    FutureProvider<List<LocalGameRecord>>((ref) async {
   final service = ref.read(localGameHistoryServiceProvider);
   return service.getGameRecords();
 });
@@ -22,8 +25,7 @@ final persistedGameStateProvider =
   return service.getGameState(gameId);
 });
 
-final activeLocalGameProvider =
-    FutureProvider.autoDispose<ActiveLocalGame?>((ref) async {
+final activeLocalGameProvider = FutureProvider<ActiveLocalGame?>((ref) async {
   final service = ref.read(localGameHistoryServiceProvider);
   return service.getActiveGame();
 });
