@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+  html,body{margin:0;padding:0;background:#262421;}
+  a{color:#81b64c;text-decoration:none;} a:hover{color:#93c757;}
+  @keyframes ccpop{0%{opacity:0;transform:translateY(8px) scale(.96);}9%{opacity:1;transform:translateY(0) scale(1);}80%{opacity:1;}100%{opacity:0;transform:translateY(-4px);}}
+</style>
+</helmet>
+<div style="min-height:100vh;background:#262421;color:#b8b3ac;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.6;padding:0 0 120px 0;">
+<div style="max-width:1180px;margin:0 auto;padding:72px 40px 0 40px;">
+
+  <!-- HEADER -->
+  <header style="margin-bottom:88px;border-bottom:1px solid rgba(255,255,255,0.08);padding-bottom:48px;">
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:28px;">
+      <div style="width:36px;height:36px;border-radius:8px;background:#81b64c;display:flex;align-items:center;justify-content:center;color:#16240c;font-weight:800;font-size:17px;">CC</div>
+      <span style="font-size:14px;font-weight:600;color:#f0ede8;">Cribbage Club</span>
+      <span style="font-size:12px;color:#6b6660;font-family:ui-monospace,'SF Mono',Menlo,monospace;">design language · v1.0</span>
+    </div>
+    <h1 style="font-size:44px;line-height:1.1;font-weight:700;color:#f0ede8;margin:0 0 16px 0;letter-spacing:-0.02em;">A serious game deserves a quiet room.</h1>
+    <p style="max-width:680px;margin:0;">The competitive-cribbage design system: dark charcoal surfaces, one decisive green, gold reserved for skill. Data-dense, calm, fast. Full token source in <a href="Design Language.md">Design&nbsp;Language.md</a>.</p>
+  </header>
+
+  <!-- 01 PRINCIPLES -->
+  <section style="margin-bottom:96px;">
+    <div style="font-size:12px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:#9c968e;margin-bottom:8px;">01 · Principles</div>
+    <h2 style="font-size:26px;font-weight:700;color:#f0ede8;margin:0 0 32px 0;">Five rules the whole product obeys</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px;">
+      <div style="background:#312e2b;border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:24px;"><div style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12px;color:#81b64c;margin-bottom:10px;">1</div><div style="font-size:16px;font-weight:600;color:#f0ede8;margin-bottom:6px;">The count is always legible at a glance.</div><div style="font-size:14px;">The pegging count is the largest live number on screen. Nothing may crowd, animate over, or restyle it mid-play.</div></div>
+      <div style="background:#312e2b;border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:24px;"><div style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12px;color:#81b64c;margin-bottom:10px;">2</div><div style="font-size:16px;font-weight:600;color:#f0ede8;margin-bottom:6px;">Gold means skill, nothing else.</div><div style="font-size:14px;">Rating gold appears only where ability is measured: ratings, trophies, rating deltas, the 121 hole. Never decoration, never buttons.</div></div>
+      <div style="background:#312e2b;border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:24px;"><div style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12px;color:#81b64c;margin-bottom:10px;">3</div><div style="font-size:16px;font-weight:600;color:#f0ede8;margin-bottom:6px;">One green, and it always means "act."</div><div style="font-size:14px;">Action green is the only saturated interactive color. If it's green, clicking it advances the game or the player.</div></div>
+      <div style="background:#312e2b;border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:24px;"><div style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12px;color:#81b64c;margin-bottom:10px;">4</div><div style="font-size:16px;font-weight:600;color:#f0ede8;margin-bottom:6px;">Cards are instruments, not decoration.</div><div style="font-size:14px;">Card faces are optimized for reading at 40px, not for beauty at 400px. No bevels, no gloss, no ornamental backs.</div></div>
+      <div style="background:#312e2b;border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:24px;"><div style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12px;color:#81b64c;margin-bottom:10px;">5</div><div style="font-size:16px;font-weight:600;color:#f0ede8;margin-bottom:6px;">Records are content, motion is punctuation.</div><div style="font-size:14px;">Ratings, streaks and analysis get layout priority everywhere. Animation confirms what happened in ≤320ms and gets out of the way — nothing bouncy, ever.</div></div>
+    </div>
+  </section>
+
+  <!-- 02 COLOR -->
+  <section style="margin-bottom:96px;">
+    <div style="font-size:12px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:#9c968e;margin-bottom:8px;">02 · Color</div>
+    <h2 style="font-size:26px;font-weight:700;color:#f0ede8;margin:0 0 12px 0;">Token set</h2>
+    <p style="max-width:680px;margin:0 0 36px 0;">Refined from the shipped baseline. Contrast ratios are computed against the surface named in the row; every text token meets WCAG AA (4.5:1) on its intended surface.</p>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px 40px;align-items:start;">
+      <div>
+        <div style="font-size:13px;font-weight:600;color:#f0ede8;margin-bottom:10px;">Surfaces — 4 elevation steps</div>
+        <div style="display:flex;flex-direction:column;">
+          <div style="display:grid;grid-template-columns:40px 1fr 110px 1fr;gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);"><div style="width:36px;height:26px;border-radius:6px;background:#262421;border:1px solid rgba(255,255,255,0.12);"></div><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12.5px;color:#f0ede8;">--surface-0</span><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12.5px;">#262421</span><span style="font-size:12.5px;color:#9c968e;">chrome: sidebar, headers</span></div>
+          <div style="display:grid;grid-template-columns:40px 1fr 110px 1fr;gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);"><div style="width:36px;height:26px;border-radius:6px;background:#312e2b;border:1px solid rgba(255,255,255,0.12);"></div><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12.5px;color:#f0ede8;">--surface-1</span><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12.5px;">#312e2b</span><span style="font-size:12.5px;color:#9c968e;">page background</span></div>
+          <div style="display:grid;grid-template-columns:40px 1fr 110px 1fr;gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);"><div style="width:36px;height:26px;border-radius:6px;background:#3c3936;border:1px solid rgba(255,255,255,0.12);"></div><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12.5px;color:#f0ede8;">--surface-2</span><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12.5px;">#3c3936</span><span style="font-size:12.5px;color:#9c968e;">panels, cards, table headers</span></div>
+          <div style="display:grid;grid-template-columns:40px 1fr 110px 1fr;gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);"><div style="width:36px;height:26px;border-radius:6px;background:#47433f;border:1px solid rgba(255,255,255,0.12);"></div><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12.5px;color:#f0ede8;">--surface-3</span><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12.5px;">#47433f</span><span style="font-size:12.5px;color:#9c968e;">hover, raised, selected row</span></div>
+          <div style="display:grid;grid-template-columns:40px 1fr 110px 1fr;gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);"><div style="width:36px;height:26px;border-radius:6px;background:#312e2b;border:1px solid rgba(255,255,255,0.08);"></div><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12.5px;color:#f0ede8;">--border</span><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12.5px;">#fff / 8%</span><span style="font-size:12.5px;color:#9c968e;">hairlines · strong: 14%</span></div>
+        </div>
+
+        <div style="font-size:13px;font-weight:600;color:#f0ede8;margin:28px 0 10px 0;">Text hierarchy — on --surface-1</div>
+        <div style="display:flex;flex-direction:column;">
+          <div style="display:grid;grid-template-columns:40px 1fr 110px 60px 1fr;gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);"><div style="width:36px;height:26px;border-radius:6px;background:#f0ede8;"></div><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12.5px;color:#f0ede8;">--text-1</span><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12.5px;">#f0ede8</span><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12px;color:#81b64c;">11.5:1</span><span style="font-size:12.5px;color:#9c968e;">headings, scores, names</span></div>
+          <div style="display:grid;grid-template-columns:40px 1fr 110px 60px 1fr;gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);"><div style="width:36px;height:26px;border-radius:6px;background:#b8b3ac;"></div><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12.5px;color:#f0ede8;">--text-2</span><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12.5px;">#b8b3ac</span><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12px;color:#81b64c;">6.5:1</span><span style="font-size:12.5px;color:#9c968e;">body, table cells</span></div>
+          <div style="display:grid;grid-template-columns:40px 1fr 110px 60px 1fr;gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);"><div style="width:36px;height:26px;border-radius:6px;background:#9c968e;"></div><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12.5px;color:#f0ede8;">--text-3</span><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12.5px;">#9c968e</span><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12px;color:#81b64c;">4.6:1</span><span style="font-size:12.5px;color:#9c968e;">labels, timestamps, meta</span></div>
+          <div style="display:grid;grid-template-columns:40px 1fr 110px 60px 1fr;gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);"><div style="width:36px;height:26px;border-radius:6px;background:#6b6660;"></div><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12.5px;color:#f0ede8;">--text-faint</span><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12.5px;">#6b6660</span><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12px;color:#e2833f;">2.5:1</span><span style="font-size:12.5px;color:#9c968e;">disabled / decorative only, never copy</span></div>
+        </div>
+
+        <div style="font-size:13px;font-weight:600;color:#f0ede8;margin:28px 0 10px 0;">Card faces — on --card-face</div>
+        <div style="display:flex;flex-direction:column;">
+          <div style="display:grid;grid-template-columns:40px 1fr 110px 60px 1fr;gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);"><div style="width:36px;height:26px;border-radius:6px;background:#f5f0e8;"></div><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12.5px;color:#f0ede8;">--card-face</span><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12.5px;">#f5f0e8</span><span style="font-size:12px;">—</span><span style="font-size:12.5px;color:#9c968e;">card stock</span></div>
+          <div style="display:grid;grid-template-columns:40px 1fr 110px 60px 1fr;gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);"><div style="width:36px;height:26px;border-radius:6px;background:#c0392b;"></div><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12.5px;color:#f0ede8;">--card-red</span><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12.5px;">#c0392b</span><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12px;color:#81b64c;">5.7:1</span><span style="font-size:12.5px;color:#9c968e;">♥ ♦ pips &amp; ranks</span></div>
+          <div style="display:grid;grid-template-columns:40px 1fr 110px 60px 1fr;gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);"><div style="width:36px;height:26px;border-radius:6px;background:#1a1a1a;"></div><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12.5px;color:#f0ede8;">--card-black</span><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12.5px;">#1a1a1a</span><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12px;color:#81b64c;">15:1</span><span style="font-size:12.5px;color:#9c968e;">♠ ♣ pips &amp; ranks</span></div>
+          <div style="display:grid;grid-template-columns:40px 1fr 110px 60px 1fr;gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);"><div style="width:36px;height:26px;border-radius:6px;background:#4a5568;background-image:repeating-linear-gradient(45deg,rgba(255,255,255,0.07) 0 2px,transparent 2px 6px);"></div><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12.5px;color:#f0ede8;">--card-back</span><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12.5px;">#4a5568</span><span style="font-size:12px;">—</span><span style="font-size:12.5px;color:#9c968e;">cool slate — reads "not yours" instantly</span></div>
+        </div>
+      </div>
+
+      <div>
+        <div style="font-size:13px;font-weight:600;color:#f0ede8;margin-bottom:10px;">Action green scale</div>
+        <div style="display:flex;flex-direction:column;">
+          <div style="display:grid;grid-template-columns:40px 1fr 110px 1fr;gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);"><div style="width:36px;height:26px;border-radius:6px;background:#a4d372;"></div><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12.5px;color:#f0ede8;">--green-300</span><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12.5px;">#a4d372</span><span style="font-size:12.5px;color:#9c968e;">focus ring, green on green</span></div>
+          <div style="display:grid;grid-template-columns:40px 1fr 110px 1fr;gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);"><div style="width:36px;height:26px;border-radius:6px;background:#93c757;"></div><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12.5px;color:#f0ede8;">--green-400</span><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12.5px;">#93c757</span><span style="font-size:12.5px;color:#9c968e;">hover fill</span></div>
+          <div style="display:grid;grid-template-columns:40px 1fr 110px 1fr;gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);"><div style="width:36px;height:26px;border-radius:6px;background:#81b64c;"></div><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12.5px;color:#f0ede8;">--green-500</span><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12.5px;">#81b64c</span><span style="font-size:12.5px;color:#9c968e;">base fill · as text 5.6:1 on surface-1</span></div>
+          <div style="display:grid;grid-template-columns:40px 1fr 110px 1fr;gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);"><div style="width:36px;height:26px;border-radius:6px;background:#5d9948;"></div><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12.5px;color:#f0ede8;">--green-600</span><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12.5px;">#5d9948</span><span style="font-size:12.5px;color:#9c968e;">pressed edge / bottom bevel</span></div>
+          <div style="display:grid;grid-template-columns:40px 1fr 110px 1fr;gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);"><div style="width:36px;height:26px;border-radius:6px;background:#16240c;"></div><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12.5px;color:#f0ede8;">--on-green</span><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12.5px;">#16240c</span><span style="font-size:12.5px;color:#9c968e;">text on green — 6.8:1 (white fails at 2.5:1)</span></div>
+        </div>
+
+        <div style="font-size:13px;font-weight:600;color:#f0ede8;margin:28px 0 10px 0;">Rating &amp; semantic — on --surface-1</div>
+        <div style="display:flex;flex-direction:column;">
+          <div style="display:grid;grid-template-columns:40px 1fr 110px 60px 1fr;gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);"><div style="width:36px;height:26px;border-radius:6px;background:#e3aa24;"></div><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12.5px;color:#f0ede8;">--gold</span><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12.5px;">#e3aa24</span><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12px;color:#81b64c;">6.5:1</span><span style="font-size:12.5px;color:#9c968e;">ratings, trophies, 121 hole — nothing else</span></div>
+          <div style="display:grid;grid-template-columns:40px 1fr 110px 60px 1fr;gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);"><div style="width:36px;height:26px;border-radius:6px;background:#81b64c;"></div><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12.5px;color:#f0ede8;">--win</span><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12.5px;">#81b64c</span><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12px;color:#81b64c;">5.6:1</span><span style="font-size:12.5px;color:#9c968e;">W badges, positive deltas</span></div>
+          <div style="display:grid;grid-template-columns:40px 1fr 110px 60px 1fr;gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);"><div style="width:36px;height:26px;border-radius:6px;background:#e5766d;"></div><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12.5px;color:#f0ede8;">--loss / --error</span><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12.5px;">#e5766d</span><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12px;color:#81b64c;">4.6:1</span><span style="font-size:12.5px;color:#9c968e;">L badges, destructive, errors</span></div>
+          <div style="display:grid;grid-template-columns:40px 1fr 110px 60px 1fr;gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);"><div style="width:36px;height:26px;border-radius:6px;background:#9c968e;"></div><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12.5px;color:#f0ede8;">--draw</span><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12.5px;">#9c968e</span><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12px;color:#81b64c;">4.6:1</span><span style="font-size:12.5px;color:#9c968e;">aborted / void games</span></div>
+          <div style="display:grid;grid-template-columns:40px 1fr 110px 60px 1fr;gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);"><div style="width:36px;height:26px;border-radius:6px;background:#e2833f;"></div><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12.5px;color:#f0ede8;">--streak</span><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12.5px;">#e2833f</span><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12px;color:#81b64c;">4.9:1</span><span style="font-size:12.5px;color:#9c968e;">win streaks — distinct from gold</span></div>
+        </div>
+
+        <div style="font-size:13px;font-weight:600;color:#f0ede8;margin:28px 0 10px 0;">Player identity — recommendation</div>
+        <div style="background:#312e2b;border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:20px;">
+          <div style="display:flex;gap:24px;margin-bottom:14px;">
+            <div style="display:flex;align-items:center;gap:10px;"><div style="width:18px;height:18px;border-radius:50%;background:#81b64c;box-shadow:0 1px 3px rgba(0,0,0,0.5);"></div><div><div style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12.5px;color:#f0ede8;">--player-self · #81b64c</div><div style="font-size:12px;color:#9c968e;">you</div></div></div>
+            <div style="display:flex;align-items:center;gap:10px;"><div style="width:18px;height:18px;border-radius:50%;background:#d9d4cc;box-shadow:0 1px 3px rgba(0,0,0,0.5);"></div><div><div style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12.5px;color:#f0ede8;">--player-opp · #d9d4cc</div><div style="font-size:12px;color:#9c968e;">opponent</div></div></div>
+          </div>
+          <div style="font-size:13px;color:#b8b3ac;">Replace gold-vs-white. Your color is the action green you already own everywhere in the UI — your pegs, your score popups, your bar accent. The opponent is card-stock ivory: neutral, never "premium." This frees gold for ratings (principle 2) and the ~9× luminance gap holds for all color-vision types.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 03 TYPOGRAPHY -->
+  <section style="margin-bottom:96px;">
+    <div style="font-size:12px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:#9c968e;margin-bottom:8px;">03 · Typography</div>
+    <h2 style="font-size:26px;font-weight:700;color:#f0ede8;margin:0 0 12px 0;">System stack, defended</h2>
+    <p style="max-width:680px;margin:0 0 32px 0;">Zero webfonts. <span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:13px;color:#f0ede8;">-apple-system, 'Segoe UI', Roboto…</span> gives native rendering on all three platforms, instant paint, and first-rate tabular figures. Every score, rating, count and table column sets <span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:13px;color:#f0ede8;">font-variant-numeric: tabular-nums</span>.</p>
+    <div style="background:#312e2b;border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:8px 28px;">
+      <div style="display:grid;grid-template-columns:180px 1fr;gap:24px;align-items:baseline;padding:18px 0;border-bottom:1px solid rgba(255,255,255,0.06);"><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12px;color:#9c968e;">display · 40/44 · 700</span><span style="font-size:40px;line-height:44px;font-weight:700;color:#f0ede8;font-variant-numeric:tabular-nums;">Count: 31</span></div>
+      <div style="display:grid;grid-template-columns:180px 1fr;gap:24px;align-items:baseline;padding:18px 0;border-bottom:1px solid rgba(255,255,255,0.06);"><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12px;color:#9c968e;">title · 28/34 · 700</span><span style="font-size:28px;line-height:34px;font-weight:700;color:#f0ede8;">Game over — Victory</span></div>
+      <div style="display:grid;grid-template-columns:180px 1fr;gap:24px;align-items:baseline;padding:18px 0;border-bottom:1px solid rgba(255,255,255,0.06);"><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12px;color:#9c968e;">heading · 20/28 · 600</span><span style="font-size:20px;line-height:28px;font-weight:600;color:#f0ede8;">Daily puzzle · July 19</span></div>
+      <div style="display:grid;grid-template-columns:180px 1fr;gap:24px;align-items:baseline;padding:18px 0;border-bottom:1px solid rgba(255,255,255,0.06);"><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12px;color:#9c968e;">body · 15/22 · 400</span><span style="font-size:15px;line-height:22px;">Your discard kept a double run and gave the crib nothing.</span></div>
+      <div style="display:grid;grid-template-columns:180px 1fr;gap:24px;align-items:baseline;padding:18px 0;border-bottom:1px solid rgba(255,255,255,0.06);"><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12px;color:#9c968e;">label · 13/18 · 500</span><span style="font-size:13px;line-height:18px;font-weight:500;color:#b8b3ac;">Rated · 2 games today · avg hand 8.1</span></div>
+      <div style="display:grid;grid-template-columns:180px 1fr;gap:24px;align-items:baseline;padding:18px 0;"><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12px;color:#9c968e;">caption · 12/16 · 500</span><span style="font-size:12px;line-height:16px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:#9c968e;">Pegging · Round 3</span></div>
+    </div>
+  </section>
+
+  <!-- 04 COMPONENTS -->
+  <section style="margin-bottom:96px;">
+    <div style="font-size:12px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:#9c968e;margin-bottom:8px;">04 · Components</div>
+    <h2 style="font-size:26px;font-weight:700;color:#f0ede8;margin:0 0 32px 0;">Core kit, rendered at spec</h2>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start;">
+
+      <!-- player bar -->
+      <div style="background:#312e2b;border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:24px;">
+        <div style="font-size:14px;font-weight:600;color:#f0ede8;margin-bottom:16px;">Player bar (in-game)</div>
+        <div style="background:#262421;border-radius:8px;padding:10px 14px;display:grid;grid-template-columns:40px 1fr auto;gap:12px;align-items:center;border-left:3px solid #81b64c;">
+          <div style="width:40px;height:40px;border-radius:6px;background:#47433f;display:flex;align-items:center;justify-content:center;color:#f0ede8;font-weight:700;font-size:16px;">P</div>
+          <div style="min-width:0;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:14px;font-weight:600;color:#f0ede8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">PegLegPenelope_87</span>
+              <span style="font-size:13px;color:#e3aa24;font-variant-numeric:tabular-nums;">(1847)</span>
+              <span style="font-size:10px;font-weight:700;letter-spacing:0.06em;background:#47433f;color:#b8b3ac;border-radius:4px;padding:2px 6px;">DEALER</span>
+            </div>
+            <div style="margin-top:7px;height:4px;border-radius:2px;background:#47433f;overflow:hidden;"><div style="width:72%;height:100%;background:#81b64c;"></div></div>
+          </div>
+          <div style="font-size:32px;line-height:1;font-weight:700;color:#f0ede8;font-variant-numeric:tabular-nums;">87</div>
+        </div>
+        <sc-if value="{{ showAnatomy }}" hint-placeholder-val="{{ true }}">
+        <div style="font-size:12.5px;color:#9c968e;margin-top:14px;line-height:1.7;">Height 60px · avatar 40px r6 · identity edge 3px (--player-self / --player-opp) · name 14/600 ellipsizes at 6–20 chars, rating never truncates · progress-to-121 bar 4px · score 32px tabular right-aligned, reserves 2 digits + "121". Active turn: edge brightens to green-400 + name goes text-1; inactive: edge at 40% opacity.</div>
+        </sc-if>
+      </div>
+
+      <!-- buttons -->
+      <div style="background:#312e2b;border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:24px;">
+        <div style="font-size:14px;font-weight:600;color:#f0ede8;margin-bottom:16px;">Play CTA &amp; secondary button</div>
+        <div style="display:flex;flex-direction:column;gap:12px;max-width:340px;">
+          <button style="height:56px;border:none;border-radius:8px;background:#81b64c;box-shadow:inset 0 -4px 0 #5d9948;color:#16240c;font-size:18px;font-weight:700;font-family:inherit;cursor:pointer;" style-hover="background:#93c757;" style-active="box-shadow:inset 0 -1px 0 #5d9948;transform:translateY(2px);">Play · Rated</button>
+          <button style="height:40px;border:1px solid rgba(255,255,255,0.14);border-radius:8px;background:#3c3936;color:#f0ede8;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;" style-hover="background:#47433f;">Play a friend</button>
+          <button style="height:40px;border:none;border-radius:8px;background:transparent;color:#9c968e;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;" style-hover="color:#f0ede8;background:#3c3936;">Watch live games</button>
+        </div>
+        <sc-if value="{{ showAnatomy }}" hint-placeholder-val="{{ true }}">
+        <div style="font-size:12.5px;color:#9c968e;margin-top:14px;line-height:1.7;">CTA: 56px, r8, 18/700 on-green text, 4px green-600 bottom bevel; hover green-400 (100ms), press: bevel collapses to 1px + 2px translate, instant. Secondary: 40px surface-2 + strong border. Tertiary: text-only. Focus (all): 2px green-300 ring, 2px offset. Disabled: 40% opacity, no bevel.</div>
+        </sc-if>
+      </div>
+
+      <!-- stat card + invite code -->
+      <div style="background:#312e2b;border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:24px;">
+        <div style="font-size:14px;font-weight:600;color:#f0ede8;margin-bottom:16px;">Stat / rating card · invite code</div>
+        <div style="display:flex;gap:12px;margin-bottom:12px;">
+          <div style="flex:1;background:#3c3936;border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:16px;"><div style="font-size:12px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:#9c968e;margin-bottom:6px;">Rating</div><div style="display:flex;align-items:baseline;gap:8px;"><span style="font-size:28px;font-weight:700;color:#e3aa24;font-variant-numeric:tabular-nums;">1847</span><span style="font-size:13px;font-weight:600;color:#81b64c;font-variant-numeric:tabular-nums;">+8</span></div></div>
+          <div style="flex:1;background:#3c3936;border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:16px;"><div style="font-size:12px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:#9c968e;margin-bottom:6px;">Record</div><div style="display:flex;align-items:baseline;gap:8px;"><span style="font-size:28px;font-weight:700;color:#f0ede8;font-variant-numeric:tabular-nums;">142–98</span><span style="font-size:13px;font-weight:600;color:#e2833f;">W5</span></div></div>
+        </div>
+        <div style="background:#262421;border:1px dashed rgba(255,255,255,0.14);border-radius:8px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;">
+          <span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:20px;letter-spacing:0.18em;color:#f0ede8;">QJ4K-7H2P</span>
+          <span style="font-size:13px;font-weight:600;color:#81b64c;cursor:pointer;">Copy</span>
+        </div>
+        <sc-if value="{{ showAnatomy }}" hint-placeholder-val="{{ true }}">
+        <div style="font-size:12.5px;color:#9c968e;margin-top:14px;line-height:1.7;">Stat card: surface-2, r8, p16; label caption style; value 28/700 tabular — gold only when the value is a rating. Invite code: mono 20px, 0.18em tracking, dashed border signals "share me"; whole card is the copy target; on copy the code flashes green-500 for 400ms.</div>
+        </sc-if>
+      </div>
+
+      <!-- table rows -->
+      <div style="background:#312e2b;border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:24px;">
+        <div style="font-size:14px;font-weight:600;color:#f0ede8;margin-bottom:16px;">Data table row (lobby / leaderboard)</div>
+        <div style="border:1px solid rgba(255,255,255,0.08);border-radius:8px;overflow:hidden;">
+          <div style="display:grid;grid-template-columns:36px 1fr 70px 80px 70px;gap:12px;align-items:center;padding:8px 14px;background:#3c3936;font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#9c968e;"><span>#</span><span>Player</span><span style="text-align:right;">Rating</span><span style="text-align:right;">W–L</span><span style="text-align:right;">Streak</span></div>
+          <div style="display:grid;grid-template-columns:36px 1fr 70px 80px 70px;gap:12px;align-items:center;padding:11px 14px;border-top:1px solid rgba(255,255,255,0.06);font-size:14px;font-variant-numeric:tabular-nums;" style-hover="background:#47433f;"><span style="color:#e3aa24;font-weight:700;">1</span><span style="color:#f0ede8;font-weight:600;">skunk_hunter</span><span style="text-align:right;color:#e3aa24;font-weight:600;">2214</span><span style="text-align:right;color:#b8b3ac;">312–104</span><span style="text-align:right;color:#e2833f;font-weight:600;">W12</span></div>
+          <div style="display:grid;grid-template-columns:36px 1fr 70px 80px 70px;gap:12px;align-items:center;padding:11px 14px;border-top:1px solid rgba(255,255,255,0.06);font-size:14px;font-variant-numeric:tabular-nums;" style-hover="background:#47433f;"><span style="color:#9c968e;">2</span><span style="color:#f0ede8;font-weight:600;">MugginsMaude</span><span style="text-align:right;color:#e3aa24;font-weight:600;">2181</span><span style="text-align:right;color:#b8b3ac;">198–77</span><span style="text-align:right;color:#9c968e;">—</span></div>
+          <div style="display:grid;grid-template-columns:36px 1fr 70px 80px 70px;gap:12px;align-items:center;padding:11px 14px;border-top:1px solid rgba(255,255,255,0.06);font-size:14px;font-variant-numeric:tabular-nums;background:rgba(129,182,76,0.08);"><span style="color:#9c968e;">47</span><span style="color:#f0ede8;font-weight:600;">you</span><span style="text-align:right;color:#e3aa24;font-weight:600;">1847</span><span style="text-align:right;color:#b8b3ac;">142–98</span><span style="text-align:right;color:#e2833f;font-weight:600;">W5</span></div>
+        </div>
+        <sc-if value="{{ showAnatomy }}" hint-placeholder-val="{{ true }}">
+        <div style="font-size:12.5px;color:#9c968e;margin-top:14px;line-height:1.7;">Row 42px, p 11/14, hairline separators, hover surface-3, all numerals tabular right-aligned. "You" row: 8% green wash, no border tricks. Lobby variant swaps trailing columns for time control + a small secondary Join button that appears on hover.</div>
+        </sc-if>
+      </div>
+
+      <!-- cards -->
+      <div style="background:#312e2b;border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:24px;">
+        <div style="font-size:14px;font-weight:600;color:#f0ede8;margin-bottom:16px;">Playing card · face &amp; back</div>
+        <div style="display:flex;align-items:flex-end;gap:20px;flex-wrap:wrap;">
+          <div style="width:96px;height:134px;border-radius:8px;background:#f5f0e8;box-shadow:0 1px 3px rgba(0,0,0,0.4);position:relative;padding:8px;">
+            <div style="font-size:24px;line-height:1;font-weight:700;color:#c0392b;font-variant-numeric:tabular-nums;">10</div>
+            <div style="font-size:18px;line-height:1;color:#c0392b;">♥</div>
+            <div style="position:absolute;bottom:10px;right:12px;font-size:34px;color:#c0392b;">♥</div>
+          </div>
+          <div style="width:96px;height:134px;border-radius:8px;background:#4a5568;background-image:repeating-linear-gradient(45deg,rgba(255,255,255,0.07) 0 2px,transparent 2px 7px);box-shadow:0 1px 3px rgba(0,0,0,0.4);border:4px solid #f5f0e8;"></div>
+          <div style="display:flex;flex-direction:column;gap:6px;align-items:center;">
+            <div style="width:{{ cw }}px;height:{{ ch }}px;border-radius:{{ cr }}px;background:#f5f0e8;box-shadow:0 1px 2px rgba(0,0,0,0.4);position:relative;padding:{{ cp }}px;">
+              <div style="font-size:{{ rankFs }}px;line-height:1;font-weight:700;color:#1a1a1a;font-variant-numeric:tabular-nums;">J</div>
+              <div style="font-size:{{ suitFs }}px;line-height:1.1;color:#1a1a1a;">♠</div>
+            </div>
+            <span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:11px;color:#9c968e;">{{ cw }}px test</span>
+          </div>
+        </div>
+        <sc-if value="{{ showAnatomy }}" hint-placeholder-val="{{ true }}">
+        <div style="font-size:12.5px;color:#9c968e;margin-top:14px;line-height:1.7;">Ratio 5:7, radius = 8% of width. Corner index only (rank over suit) + one large center pip — no full pip grids; that's what keeps a 40px card readable. Rank ≥ 25% of card width, bold, tabular ("10" is the widest case). Back: slate #4a5568, 45° hairline stripes, 4px card-stock border — no logo. Selected-in-hand: lift 8px + 2px green-300 ring. Use the width tweak to stress-test.</div>
+        </sc-if>
+      </div>
+
+      <!-- score popup + stage -->
+      <div style="background:#312e2b;border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:24px;">
+        <div style="font-size:14px;font-weight:600;color:#f0ede8;margin-bottom:16px;">Score popup · stage indicator</div>
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:18px;min-height:40px;">
+          {{ popupDemo }}
+          <div style="display:inline-flex;align-items:center;gap:8px;background:#d9d4cc;color:#26221e;border-radius:999px;padding:7px 14px;font-size:14px;font-weight:700;box-shadow:0 2px 8px rgba(0,0,0,0.4);font-variant-numeric:tabular-nums;">+2 <span style="font-weight:500;opacity:0.75;">pair</span></div>
+          <button onClick="{{ replayPopup }}" style="border:1px solid rgba(255,255,255,0.14);background:transparent;color:#9c968e;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;" style-hover="color:#f0ede8;">↻ replay</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="font-size:12px;font-weight:600;letter-spacing:0.04em;color:#6b6660;padding:5px 10px;border-radius:999px;">Deal</span>
+          <span style="font-size:12px;font-weight:600;letter-spacing:0.04em;color:#6b6660;padding:5px 10px;border-radius:999px;">Discard</span>
+          <span style="font-size:12px;font-weight:600;letter-spacing:0.04em;color:#16240c;background:#81b64c;padding:5px 10px;border-radius:999px;">Pegging</span>
+          <span style="font-size:12px;font-weight:600;letter-spacing:0.04em;color:#6b6660;padding:5px 10px;border-radius:999px;">Count</span>
+        </div>
+        <sc-if value="{{ showAnatomy }}" hint-placeholder-val="{{ true }}">
+        <div style="font-size:12.5px;color:#9c968e;margin-top:14px;line-height:1.7;">Popup: pill r-full, points 14/700 tabular + reason 14/500 at 75%; fill is the scorer's identity color (green = you, ivory = opponent) with dark text — both ≥6:1. Anchored above the scoring card, rises 6px. Stage: pill strip; active = green fill + on-green; past = text-3; future = text-faint. The strip is the single source of "whose move is it," paired with a 13px "Your discard" line beneath.</div>
+        </sc-if>
+      </div>
+
+      <!-- nav item -->
+      <div style="background:#312e2b;border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:24px;">
+        <div style="font-size:14px;font-weight:600;color:#f0ede8;margin-bottom:16px;">Nav sidebar item</div>
+        <div style="width:200px;background:#262421;border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:2px;">
+          <div style="display:flex;align-items:center;gap:12px;padding:9px 12px;border-radius:6px;background:#3c3936;position:relative;"><div style="position:absolute;left:0;top:8px;bottom:8px;width:3px;border-radius:2px;background:#81b64c;"></div><div style="width:20px;height:20px;border-radius:4px;background:#81b64c;"></div><span style="font-size:14px;font-weight:600;color:#f0ede8;">Play</span></div>
+          <div style="display:flex;align-items:center;gap:12px;padding:9px 12px;border-radius:6px;" style-hover="background:#3c3936;"><div style="width:20px;height:20px;border-radius:4px;background:#6b6660;"></div><span style="font-size:14px;font-weight:500;color:#b8b3ac;">Puzzles</span></div>
+          <div style="display:flex;align-items:center;gap:12px;padding:9px 12px;border-radius:6px;" style-hover="background:#3c3936;"><div style="width:20px;height:20px;border-radius:4px;background:#6b6660;"></div><span style="font-size:14px;font-weight:500;color:#b8b3ac;">Analysis</span></div>
+        </div>
+        <sc-if value="{{ showAnatomy }}" hint-placeholder-val="{{ true }}">
+        <div style="font-size:12.5px;color:#9c968e;margin-top:14px;line-height:1.7;">Sidebar on surface-0, 240px expanded / 68px rail. Item 38px, r6, icon 20px (squares here stand in for the icon set — 1.5px stroke, geometric). Active: surface-2 fill + 3px green marker + icon tinted green; hover: surface-2 only. Collapsed rail keeps the marker, drops labels.</div>
+        </sc-if>
+      </div>
+
+      <!-- game over -->
+      <div style="background:#312e2b;border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:24px;">
+        <div style="font-size:14px;font-weight:600;color:#f0ede8;margin-bottom:16px;">Game-over panel</div>
+        <div style="max-width:340px;background:#3c3936;border:1px solid rgba(255,255,255,0.14);border-radius:12px;padding:28px;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,0.5);">
+          <div style="font-size:26px;font-weight:700;color:#f0ede8;margin-bottom:4px;">Victory</div>
+          <div style="font-size:14px;color:#9c968e;margin-bottom:14px;font-variant-numeric:tabular-nums;">121–98 · by pegging</div>
+          <div style="display:inline-flex;align-items:baseline;gap:8px;background:#262421;border-radius:8px;padding:10px 18px;margin-bottom:20px;"><span style="font-size:24px;font-weight:700;color:#e3aa24;font-variant-numeric:tabular-nums;">1855</span><span style="font-size:14px;font-weight:700;color:#81b64c;font-variant-numeric:tabular-nums;">+8</span></div>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <button style="height:44px;border:none;border-radius:8px;background:#81b64c;box-shadow:inset 0 -3px 0 #5d9948;color:#16240c;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;" style-hover="background:#93c757;">Rematch</button>
+            <div style="display:flex;gap:10px;">
+              <button style="flex:1;height:38px;border:1px solid rgba(255,255,255,0.14);border-radius:8px;background:transparent;color:#f0ede8;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;" style-hover="background:#47433f;">Analyze game</button>
+              <button style="flex:1;height:38px;border:1px solid rgba(255,255,255,0.14);border-radius:8px;background:transparent;color:#f0ede8;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;" style-hover="background:#47433f;">New opponent</button>
+            </div>
+          </div>
+        </div>
+        <sc-if value="{{ showAnatomy }}" hint-placeholder-val="{{ true }}">
+        <div style="font-size:12.5px;color:#9c968e;margin-top:14px;line-height:1.7;">Modal 340px, surface-2, r12, strong border + deep shadow; scrim rgba(0,0,0,0.55). Result word 26/700 in text-1 (never colored red/green — the delta carries valence). Rating chip: new rating gold + delta win/loss. Defeat swaps the word and delta color only; identical layout, no sad-state theming.</div>
+        </sc-if>
+      </div>
+    </div>
+  </section>
+
+  <!-- 05 BOARD -->
+  <section style="margin-bottom:96px;">
+    <div style="font-size:12px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:#9c968e;margin-bottom:8px;">05 · The board</div>
+    <h2 style="font-size:26px;font-weight:700;color:#f0ede8;margin:0 0 12px 0;">Recommendation: flatten it — keep the warmth in the tint, not the texture</h2>
+    <p style="max-width:760px;margin:0 0 28px 0;">Drop the walnut canvas. A wood object floating in a charcoal UI reads as a different app — and it's exactly the skeuomorphism the brief bans. Instead the board becomes a first-class UI panel on a slightly warmer charcoal (<span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:13px;color:#f0ede8;">--board #38342f</span>), with drilled-hole affordances done in light and shadow, not material. It stays unmistakably a cribbage board while matching every other panel.</p>
+    <div style="background:#38342f;border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:28px;">
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div style="display:flex;align-items:center;gap:14px;">
+          <div style="width:14px;height:14px;border-radius:50%;background:#81b64c;flex:none;box-shadow:0 1px 3px rgba(0,0,0,0.5);"></div>
+          <div style="display:flex;align-items:center;gap:4px;background:rgba(0,0,0,0.22);border-radius:999px;padding:7px 12px;">
+            <sc-for list="{{ laneYou }}" as="h" hint-placeholder-count="30"><div style="{{ h.css }}"></div></sc-for>
+            <div style="width:13px;height:13px;border-radius:50%;background:#211f1d;box-shadow:inset 0 1px 2px rgba(0,0,0,0.6),0 0 0 2px rgba(227,170,36,0.55);margin-left:10px;"></div>
+          </div>
+          <span style="font-size:12px;color:#9c968e;font-variant-numeric:tabular-nums;">you · 14</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:14px;">
+          <div style="width:14px;height:14px;border-radius:50%;background:#d9d4cc;flex:none;box-shadow:0 1px 3px rgba(0,0,0,0.5);"></div>
+          <div style="display:flex;align-items:center;gap:4px;background:rgba(0,0,0,0.22);border-radius:999px;padding:7px 12px;">
+            <sc-for list="{{ laneOpp }}" as="h" hint-placeholder-count="30"><div style="{{ h.css }}"></div></sc-for>
+            <div style="width:13px;height:13px;border-radius:50%;background:#211f1d;box-shadow:inset 0 1px 2px rgba(0,0,0,0.6),0 0 0 2px rgba(227,170,36,0.55);margin-left:10px;"></div>
+          </div>
+          <span style="font-size:12px;color:#9c968e;font-variant-numeric:tabular-nums;">opponent · 11</span>
+        </div>
+      </div>
+      <div style="font-size:12px;color:#9c968e;margin-top:16px;font-family:ui-monospace,'SF Mono',Menlo,monospace;">first 30 holes shown · gold-ringed hole = 121</div>
+    </div>
+    <sc-if value="{{ showAnatomy }}" hint-placeholder-val="{{ true }}">
+    <div style="font-size:12.5px;color:#9c968e;margin-top:16px;line-height:1.7;max-width:760px;">Spec: board panel #38342f (2 steps warmer than surface-2), r12. Lanes are recessed tracks rgba(0,0,0,0.22). Holes 13px, fill #211f1d with inset top shadow — "drilled" via lighting only. Groups of 5 with 10px gaps; street markers 30/60/90 as caption labels below the track; hole 121 gets the only gold on the field: a 2px #e3aa24 ring. Pegs: front peg filled identity color + drop shadow, back peg 2px outlined ring of the same color. Mobile: the same lanes compress to a 6px linear track with peg dots — holes drop out below 480px width.</div>
+    </sc-if>
+  </section>
+
+  <!-- 06 LAYOUT -->
+  <section style="margin-bottom:96px;">
+    <div style="font-size:12px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:#9c968e;margin-bottom:8px;">06 · Layout grids</div>
+    <h2 style="font-size:26px;font-weight:700;color:#f0ede8;margin:0 0 32px 0;">Three screens, one 8px grid · breakpoint 1024px</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;">
+      <div style="background:#312e2b;border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:20px;">
+        <div style="font-size:14px;font-weight:600;color:#f0ede8;margin-bottom:12px;">Game screen ≥1024</div>
+        <div style="display:grid;grid-template-columns:56px 1fr 110px;gap:8px;height:190px;">
+          <div style="background:#262421;border-radius:6px;border:1px solid rgba(255,255,255,0.08);"></div>
+          <div style="display:grid;grid-template-rows:28px 1fr 34px 28px;gap:8px;">
+            <div style="background:#3c3936;border-radius:6px;"></div>
+            <div style="background:#47433f;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#9c968e;font-family:ui-monospace,'SF Mono',Menlo,monospace;">table + hand</div>
+            <div style="background:#38342f;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#9c968e;font-family:ui-monospace,'SF Mono',Menlo,monospace;">board</div>
+            <div style="background:#3c3936;border-radius:6px;"></div>
+          </div>
+          <div style="background:#3c3936;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#9c968e;font-family:ui-monospace,'SF Mono',Menlo,monospace;">panel</div>
+        </div>
+        <div style="font-size:12.5px;color:#9c968e;margin-top:12px;line-height:1.7;">Nav rail 68px · game column fluid (min 640) · right panel fixed 400px (moves, chat, analysis) · 24px gutters. Opponent bar top, yours bottom; board strip sits between table and your hand so the count and pegs share one eye-line. &lt;1024: panel becomes bottom tabs; board strip persists.</div>
+      </div>
+      <div style="background:#312e2b;border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:20px;">
+        <div style="font-size:14px;font-weight:600;color:#f0ede8;margin-bottom:12px;">Home dashboard</div>
+        <div style="display:grid;grid-template-columns:repeat(12,1fr);grid-auto-rows:40px;gap:8px;height:190px;">
+          <div style="grid-column:span 8;grid-row:span 2;background:#47433f;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#9c968e;font-family:ui-monospace,'SF Mono',Menlo,monospace;">play CTA + queue</div>
+          <div style="grid-column:span 4;grid-row:span 2;background:#3c3936;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#9c968e;font-family:ui-monospace,'SF Mono',Menlo,monospace;">rating</div>
+          <div style="grid-column:span 4;background:#3c3936;border-radius:6px;"></div>
+          <div style="grid-column:span 4;background:#3c3936;border-radius:6px;"></div>
+          <div style="grid-column:span 4;background:#3c3936;border-radius:6px;"></div>
+          <div style="grid-column:span 12;background:#3c3936;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#9c968e;font-family:ui-monospace,'SF Mono',Menlo,monospace;">recent games table</div>
+        </div>
+        <div style="font-size:12.5px;color:#9c968e;margin-top:12px;line-height:1.7;">12-col, max 1140, 24px gutters. Play block spans 8, rating card 4 — the CTA and your number are the whole above-fold story. Then 3 × 4-col stat cards (puzzles, streak, avg hand), recent games full-width. &lt;1024: single column, CTA first.</div>
+      </div>
+      <div style="background:#312e2b;border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:20px;">
+        <div style="font-size:14px;font-weight:600;color:#f0ede8;margin-bottom:12px;">Landing hero</div>
+        <div style="display:grid;grid-template-rows:24px 1fr;gap:8px;height:190px;">
+          <div style="background:#262421;border-radius:6px;border:1px solid rgba(255,255,255,0.08);"></div>
+          <div style="background:#312e2b;border:1px solid rgba(255,255,255,0.08);border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;">
+            <div style="width:55%;height:16px;border-radius:4px;background:#47433f;"></div>
+            <div style="width:38%;height:8px;border-radius:4px;background:#3c3936;"></div>
+            <div style="display:flex;gap:8px;margin-top:6px;"><div style="width:84px;height:22px;border-radius:5px;background:#81b64c;"></div><div style="width:84px;height:22px;border-radius:5px;background:#3c3936;border:1px solid rgba(255,255,255,0.14);"></div></div>
+            <div style="font-size:10px;color:#6b6660;font-family:ui-monospace,'SF Mono',Menlo,monospace;margin-top:4px;">1,204 playing now</div>
+          </div>
+        </div>
+        <div style="font-size:12.5px;color:#9c968e;margin-top:12px;line-height:1.7;">64px nav, then one centered 720px column: headline (display size), one line of copy, Play + Sign in pair, live-games counter in tabular caption. No screenshots carousel, no feature grid above the fold — the proof is the player count.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 07 MOTION -->
+  <section style="margin-bottom:96px;">
+    <div style="font-size:12px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:#9c968e;margin-bottom:8px;">07 · Motion</div>
+    <h2 style="font-size:26px;font-weight:700;color:#f0ede8;margin:0 0 12px 0;">Fast, monotonic, ≤320ms</h2>
+    <p style="max-width:680px;margin:0 0 24px 0;">Two easings only: <span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:13px;color:#f0ede8;">--ease-out: cubic-bezier(0.2, 0, 0, 1)</span> for things arriving, <span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:13px;color:#f0ede8;">--ease-in: cubic-bezier(0.4, 0, 1, 1)</span> for things leaving. No spring, no overshoot, no bounce.</p>
+    <div style="background:#312e2b;border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:6px 24px;">
+      <div style="display:grid;grid-template-columns:1fr 90px 130px 1fr;gap:16px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.06);font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#9c968e;"><span>Event</span><span>Duration</span><span>Easing</span><span>Notes</span></div>
+      <div style="display:grid;grid-template-columns:1fr 90px 130px 1fr;gap:16px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.06);font-size:13.5px;"><span style="color:#f0ede8;font-weight:600;">Card play (hand → table)</span><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12.5px;">180ms</span><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12.5px;">ease-out</span><span style="color:#9c968e;">translate + ≤3° settle rotation</span></div>
+      <div style="display:grid;grid-template-columns:1fr 90px 130px 1fr;gap:16px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.06);font-size:13.5px;"><span style="color:#f0ede8;font-weight:600;">Starter cut (card flip)</span><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12.5px;">240ms</span><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12.5px;">ease-out</span><span style="color:#9c968e;">rotateY, face legible by 60%</span></div>
+      <div style="display:grid;grid-template-columns:1fr 90px 130px 1fr;gap:16px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.06);font-size:13.5px;"><span style="color:#f0ede8;font-weight:600;">Score popup</span><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12.5px;">140 / 200ms</span><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12.5px;">out / in</span><span style="color:#9c968e;">rise 6px in, hold 1100ms, fade out</span></div>
+      <div style="display:grid;grid-template-columns:1fr 90px 130px 1fr;gap:16px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.06);font-size:13.5px;"><span style="color:#f0ede8;font-weight:600;">Peg movement</span><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12.5px;">240ms</span><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12.5px;">ease-out</span><span style="color:#9c968e;">one slide, cap 320ms on long jumps — never hole-by-hole hops</span></div>
+      <div style="display:grid;grid-template-columns:1fr 90px 130px 1fr;gap:16px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.06);font-size:13.5px;"><span style="color:#f0ede8;font-weight:600;">Count / score number swap</span><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12.5px;">120ms</span><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12.5px;">ease-out</span><span style="color:#9c968e;">crossfade, no odometer rolls</span></div>
+      <div style="display:grid;grid-template-columns:1fr 90px 130px 1fr;gap:16px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.06);font-size:13.5px;"><span style="color:#f0ede8;font-weight:600;">Page / panel transition</span><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12.5px;">160ms</span><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12.5px;">ease-out</span><span style="color:#9c968e;">fade + 4px rise, no slides</span></div>
+      <div style="display:grid;grid-template-columns:1fr 90px 130px 1fr;gap:16px;padding:12px 0;font-size:13.5px;"><span style="color:#f0ede8;font-weight:600;">Hover / press</span><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12.5px;">100 / 0ms</span><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12.5px;">linear</span><span style="color:#9c968e;">press feedback is instant, always</span></div>
+    </div>
+  </section>
+
+  <!-- 08 VOICE -->
+  <section style="margin-bottom:96px;">
+    <div style="font-size:12px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:#9c968e;margin-bottom:8px;">08 · Voice &amp; microcopy</div>
+    <h2 style="font-size:26px;font-weight:700;color:#f0ede8;margin:0 0 12px 0;">Confident, understated, specific</h2>
+    <p style="max-width:680px;margin:0 0 28px 0;">State facts, use numbers, never cheerlead. "Rated match found," not "Let's shuffle up!" Exclamation points: zero.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 48px;background:#312e2b;border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:10px 28px;">
+      <div style="padding:13px 0;border-bottom:1px solid rgba(255,255,255,0.06);"><div style="font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#9c968e;margin-bottom:3px;">Match found</div><div style="font-size:14.5px;color:#f0ede8;">Rated match found. MugginsMaude (1512) · first deal is yours.</div></div>
+      <div style="padding:13px 0;border-bottom:1px solid rgba(255,255,255,0.06);"><div style="font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#9c968e;margin-bottom:3px;">Win</div><div style="font-size:14.5px;color:#f0ede8;">Victory · 121–98. Rating 1855 (+8).</div></div>
+      <div style="padding:13px 0;border-bottom:1px solid rgba(255,255,255,0.06);"><div style="font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#9c968e;margin-bottom:3px;">Loss</div><div style="font-size:14.5px;color:#f0ede8;">Defeat · 104–121. Rating 1839 (−8).</div></div>
+      <div style="padding:13px 0;border-bottom:1px solid rgba(255,255,255,0.06);"><div style="font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#9c968e;margin-bottom:3px;">Skunk</div><div style="font-size:14.5px;color:#f0ede8;">Skunk · 121–87. That one counts double on the ladder.</div></div>
+      <div style="padding:13px 0;border-bottom:1px solid rgba(255,255,255,0.06);"><div style="font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#9c968e;margin-bottom:3px;">Empty game history</div><div style="font-size:14.5px;color:#f0ede8;">No games yet. Your first rated game sets your rating.</div></div>
+      <div style="padding:13px 0;border-bottom:1px solid rgba(255,255,255,0.06);"><div style="font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#9c968e;margin-bottom:3px;">Empty friends list</div><div style="font-size:14.5px;color:#f0ede8;">No club members yet. Share your invite code to start a match.</div></div>
+      <div style="padding:13px 0;border-bottom:1px solid rgba(255,255,255,0.06);"><div style="font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#9c968e;margin-bottom:3px;">Streak</div><div style="font-size:14.5px;color:#f0ede8;">Five straight. Best streak: 7.</div></div>
+      <div style="padding:13px 0;border-bottom:1px solid rgba(255,255,255,0.06);"><div style="font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#9c968e;margin-bottom:3px;">Guest upsell</div><div style="font-size:14.5px;color:#f0ede8;">You're playing unrated. Create an account to keep a rating and your game history.</div></div>
+      <div style="padding:13px 0;border-bottom:1px solid rgba(255,255,255,0.06);"><div style="font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#9c968e;margin-bottom:3px;">Resign confirmation</div><div style="font-size:14.5px;color:#f0ede8;">Resign this game? It counts as a loss. — Resign / Keep playing</div></div>
+      <div style="padding:13px 0;border-bottom:1px solid rgba(255,255,255,0.06);"><div style="font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#9c968e;margin-bottom:3px;">Opponent disconnected</div><div style="font-size:14.5px;color:#f0ede8;">Opponent disconnected. You can claim the win in 0:47.</div></div>
+      <div style="padding:13px 0;"><div style="font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#9c968e;margin-bottom:3px;">Daily puzzle</div><div style="font-size:14.5px;color:#f0ede8;">Today's puzzle: pick the discard. 12,431 solved.</div></div>
+      <div style="padding:13px 0;"><div style="font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#9c968e;margin-bottom:3px;">Analysis ready</div><div style="font-size:14.5px;color:#f0ede8;">Analysis ready. Two inaccuracies, one missed 4-point discard.</div></div>
+    </div>
+  </section>
+
+  <!-- 09 LIGHT THEME -->
+  <section style="margin-bottom:40px;">
+    <div style="font-size:12px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:#9c968e;margin-bottom:8px;">09 · Light theme mapping</div>
+    <h2 style="font-size:26px;font-weight:700;color:#f0ede8;margin:0 0 32px 0;">Same tokens, warm paper values</h2>
+    <div style="background:#f4f1ec;border-radius:12px;padding:32px;color:#57524b;font-size:14px;">
+      <div style="display:grid;grid-template-columns:1fr auto;gap:32px;align-items:start;">
+        <div>
+          <div style="display:grid;grid-template-columns:repeat(2,minmax(240px,1fr));gap:4px 32px;">
+            <div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid rgba(0,0,0,0.07);"><div style="width:28px;height:20px;border-radius:5px;background:#eae6e0;border:1px solid rgba(0,0,0,0.1);"></div><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12px;color:#2a2622;">--surface-0 #eae6e0</span><span style="font-size:12px;color:#87817a;">chrome</span></div>
+            <div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid rgba(0,0,0,0.07);"><div style="width:28px;height:20px;border-radius:5px;background:#f4f1ec;border:1px solid rgba(0,0,0,0.1);"></div><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12px;color:#2a2622;">--surface-1 #f4f1ec</span><span style="font-size:12px;color:#87817a;">page</span></div>
+            <div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid rgba(0,0,0,0.07);"><div style="width:28px;height:20px;border-radius:5px;background:#ffffff;border:1px solid rgba(0,0,0,0.1);"></div><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12px;color:#2a2622;">--surface-2 #ffffff</span><span style="font-size:12px;color:#87817a;">panels</span></div>
+            <div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid rgba(0,0,0,0.07);"><div style="width:28px;height:20px;border-radius:5px;background:#efece6;border:1px solid rgba(0,0,0,0.1);"></div><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12px;color:#2a2622;">--surface-3 #efece6</span><span style="font-size:12px;color:#87817a;">hover</span></div>
+            <div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid rgba(0,0,0,0.07);"><div style="width:28px;height:20px;border-radius:5px;background:#2a2622;"></div><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12px;color:#2a2622;">--text-1 #2a2622</span><span style="font-size:12px;color:#87817a;">13.6:1</span></div>
+            <div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid rgba(0,0,0,0.07);"><div style="width:28px;height:20px;border-radius:5px;background:#57524b;"></div><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12px;color:#2a2622;">--text-2 #57524b</span><span style="font-size:12px;color:#87817a;">7.4:1</span></div>
+            <div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid rgba(0,0,0,0.07);"><div style="width:28px;height:20px;border-radius:5px;background:#767066;"></div><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12px;color:#2a2622;">--text-3 #767066</span><span style="font-size:12px;color:#87817a;">4.7:1</span></div>
+            <div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid rgba(0,0,0,0.07);"><div style="width:28px;height:20px;border-radius:5px;background:#9a7514;"></div><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12px;color:#2a2622;">--gold #9a7514</span><span style="font-size:12px;color:#87817a;">rating text · 4.8:1</span></div>
+            <div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid rgba(0,0,0,0.07);"><div style="width:28px;height:20px;border-radius:5px;background:#4e7a2e;"></div><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12px;color:#2a2622;">--green-text #4e7a2e</span><span style="font-size:12px;color:#87817a;">green as text · 4.7:1</span></div>
+            <div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid rgba(0,0,0,0.07);"><div style="width:28px;height:20px;border-radius:5px;background:#b6362a;"></div><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12px;color:#2a2622;">--loss #b6362a</span><span style="font-size:12px;color:#87817a;">4.9:1</span></div>
+          </div>
+          <div style="font-size:13px;color:#57524b;margin-top:16px;max-width:560px;">Button fills don't change: green-500 + on-green dark text pass on both themes, so the CTA is theme-invariant. Gold and green get darker text-only variants; card faces, backs and pegs are identical in both themes. Opponent peg on light: <span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12px;">#a49c90</span> (ivory would vanish on paper).</div>
+        </div>
+        <div style="background:#ffffff;border:1px solid rgba(0,0,0,0.1);border-radius:10px;padding:18px;width:230px;box-shadow:0 1px 4px rgba(0,0,0,0.06);">
+          <div style="font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#767066;margin-bottom:5px;">Rating</div>
+          <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:14px;"><span style="font-size:26px;font-weight:700;color:#9a7514;font-variant-numeric:tabular-nums;">1847</span><span style="font-size:13px;font-weight:600;color:#4e7a2e;">+8</span></div>
+          <button style="width:100%;height:42px;border:none;border-radius:8px;background:#81b64c;box-shadow:inset 0 -3px 0 #5d9948;color:#16240c;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;">Play · Rated</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer style="border-top:1px solid rgba(255,255,255,0.08);padding-top:28px;font-size:13px;color:#6b6660;">Cribbage Club design language v1.0 · full token source: <a href="Design Language.md">Design Language.md</a></footer>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;showAnatomy&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Spec view&quot;},&quot;cardWidth&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:40,&quot;min&quot;:32,&quot;max&quot;:140,&quot;step&quot;:2,&quot;unit&quot;:&quot;px&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Stress tests&quot;}}">
+class Component extends DCLogic {
+  state = { popKey: 0 };
+  hole(peg) {
+    const base = "width:13px;height:13px;border-radius:50%;flex:none;";
+    if (peg === "self") return base + "background:#81b64c;box-shadow:0 1px 2px rgba(0,0,0,0.5);";
+    if (peg === "selfBack") return base + "background:transparent;box-shadow:inset 0 0 0 2px #81b64c;";
+    if (peg === "opp") return base + "background:#d9d4cc;box-shadow:0 1px 2px rgba(0,0,0,0.5);";
+    if (peg === "oppBack") return base + "background:transparent;box-shadow:inset 0 0 0 2px #d9d4cc;";
+    return base + "background:#211f1d;box-shadow:inset 0 1px 2px rgba(0,0,0,0.6);";
+  }
+  lane(front, back, kind) {
+    const out = [];
+    for (let i = 0; i < 30; i++) {
+      let peg = null;
+      if (i === front - 1) peg = kind;
+      else if (i === back - 1) peg = kind + "Back";
+      let css = this.hole(peg);
+      if (i % 5 === 4 && i < 29) css += "margin-right:10px;";
+      out.push({ css });
+    }
+    return out;
+  }
+  renderVals() {
+    const cw = Math.round(this.props.cardWidth ?? 40);
+    const ch = Math.round(cw * 1.4);
+    const popup = React.createElement("div", {
+      key: this.state.popKey,
+      style: { display: "inline-flex", alignItems: "center", gap: 8, background: "#81b64c", color: "#16240c", borderRadius: 999, padding: "7px 14px", fontSize: 14, fontWeight: 700, boxShadow: "0 2px 8px rgba(0,0,0,0.4)", fontVariantNumeric: "tabular-nums", animation: "ccpop 1.6s cubic-bezier(0.2,0,0,1) both" }
+    }, "+2 ", React.createElement("span", { style: { fontWeight: 500, opacity: 0.8 } }, "fifteen"));
+    return {
+      showAnatomy: this.props.showAnatomy ?? true,
+      cw, ch,
+      cr: Math.max(3, Math.round(cw * 0.08)),
+      cp: Math.max(3, Math.round(cw * 0.09)),
+      rankFs: Math.max(10, Math.round(cw * 0.27)),
+      suitFs: Math.max(8, Math.round(cw * 0.2)),
+      laneYou: this.lane(14, 9, "self"),
+      laneOpp: this.lane(11, 7, "opp"),
+      popupDemo: popup,
+      replayPopup: () => this.setState(s => ({ popKey: s.popKey + 1 }))
+    };
+  }
+}
+</script>
+</body>
+</html>

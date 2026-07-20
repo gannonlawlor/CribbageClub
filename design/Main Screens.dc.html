@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<style>
+  html,body{margin:0;padding:0;background:#1d1b19;}
+  a{color:#81b64c;text-decoration:none;} a:hover{color:#93c757;}
+</style>
+</helmet>
+<section style="padding:48px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+  <div style="display:flex;gap:64px;align-items:flex-start;">
+
+    <!-- ============ 1a LANDING ============ -->
+    <div id="1a" style="flex:none;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;"><span style="background:#3c3936;color:#f0ede8;font-size:12px;font-weight:700;font-family:ui-monospace,'SF Mono',Menlo,monospace;border-radius:6px;padding:3px 8px;">1a</span><span style="font-size:13px;color:#9c968e;">Landing hero · 1440×800</span></div>
+      <div data-screen-label="Landing" style="width:1440px;height:800px;background:#312e2b;border-radius:12px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.5);display:flex;flex-direction:column;color:#b8b3ac;font-size:15px;">
+        <div style="height:64px;flex:none;background:#262421;border-bottom:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;padding:0 40px;gap:28px;">
+          <div style="display:flex;align-items:center;gap:11px;margin-right:auto;"><div style="width:30px;height:30px;border-radius:7px;background:#81b64c;display:flex;align-items:center;justify-content:center;color:#16240c;font-weight:800;font-size:14px;">CC</div><span style="font-size:15px;font-weight:700;color:#f0ede8;">Cribbage Club</span></div>
+          <span style="font-size:14px;font-weight:600;color:#b8b3ac;">Puzzles</span>
+          <span style="font-size:14px;font-weight:600;color:#b8b3ac;">Watch</span>
+          <span style="font-size:14px;font-weight:600;color:#b8b3ac;">Leaderboard</span>
+          <button style="height:36px;padding:0 18px;border:1px solid rgba(255,255,255,0.14);border-radius:8px;background:#3c3936;color:#f0ede8;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;" style-hover="background:#47433f;">Sign in</button>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;">
+          <div style="width:720px;text-align:center;">
+            <h1 style="font-size:56px;line-height:1.08;font-weight:700;color:#f0ede8;margin:0 0 20px 0;letter-spacing:-0.02em;">Serious cribbage.</h1>
+            <p style="font-size:18px;line-height:1.55;margin:0 auto 36px auto;max-width:540px;">Rated games on a Glicko-2 ladder, daily discard puzzles, and engine analysis of every hand you play.</p>
+            <div style="display:flex;gap:14px;justify-content:center;margin-bottom:22px;">
+              <button style="height:56px;padding:0 44px;border:none;border-radius:8px;background:#81b64c;box-shadow:inset 0 -4px 0 #5d9948;color:#16240c;font-size:18px;font-weight:700;font-family:inherit;cursor:pointer;" style-hover="background:#93c757;">Play now</button>
+              <button style="height:56px;padding:0 32px;border:1px solid rgba(255,255,255,0.14);border-radius:8px;background:#3c3936;color:#f0ede8;font-size:16px;font-weight:600;font-family:inherit;cursor:pointer;" style-hover="background:#47433f;">Try a puzzle</button>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;justify-content:center;font-size:13px;color:#9c968e;font-variant-numeric:tabular-nums;"><span style="width:7px;height:7px;border-radius:50%;background:#81b64c;"></span>1,204 playing now · 89,412 games today</div>
+          </div>
+          <div style="margin-top:64px;background:#38342f;border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:20px 28px;display:flex;flex-direction:column;gap:9px;">
+            <div style="display:flex;align-items:center;gap:4px;">
+              <div style="width:12px;height:12px;border-radius:50%;background:#81b64c;box-shadow:0 1px 2px rgba(0,0,0,0.5);margin-right:8px;"></div>
+              <sc-for list="{{ heroYou }}" as="h" hint-placeholder-count="30"><div style="{{ h.css }}"></div></sc-for>
+            </div>
+            <div style="display:flex;align-items:center;gap:4px;">
+              <div style="width:12px;height:12px;border-radius:50%;background:#d9d4cc;box-shadow:0 1px 2px rgba(0,0,0,0.5);margin-right:8px;"></div>
+              <sc-for list="{{ heroOpp }}" as="h" hint-placeholder-count="30"><div style="{{ h.css }}"></div></sc-for>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 1b DASHBOARD ============ -->
+    <div id="1b" style="flex:none;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;"><span style="background:#3c3936;color:#f0ede8;font-size:12px;font-weight:700;font-family:ui-monospace,'SF Mono',Menlo,monospace;border-radius:6px;padding:3px 8px;">1b</span><span style="font-size:13px;color:#9c968e;">Home dashboard · 1440×900</span></div>
+      <div data-screen-label="Dashboard" style="width:1440px;height:900px;background:#312e2b;border-radius:12px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.5);display:flex;color:#b8b3ac;font-size:15px;">
+        <div style="width:240px;flex:none;background:#262421;border-right:1px solid rgba(255,255,255,0.08);display:flex;flex-direction:column;padding:20px 12px;">
+          <div style="display:flex;align-items:center;gap:11px;padding:0 12px;margin-bottom:26px;"><div style="width:30px;height:30px;border-radius:7px;background:#81b64c;display:flex;align-items:center;justify-content:center;color:#16240c;font-weight:800;font-size:14px;">CC</div><span style="font-size:15px;font-weight:700;color:#f0ede8;">Cribbage Club</span></div>
+          <div style="display:flex;flex-direction:column;gap:2px;">
+            <div style="display:flex;align-items:center;gap:12px;padding:9px 12px;border-radius:6px;background:#3c3936;position:relative;"><div style="position:absolute;left:-12px;top:8px;bottom:8px;width:3px;border-radius:2px;background:#81b64c;"></div><div style="width:0;height:0;border-left:13px solid #81b64c;border-top:8px solid transparent;border-bottom:8px solid transparent;margin:0 4px 0 3px;"></div><span style="font-size:14px;font-weight:600;color:#f0ede8;">Play</span></div>
+            <div style="display:flex;align-items:center;gap:12px;padding:9px 12px;border-radius:6px;" style-hover="background:#3c3936;"><div style="width:20px;height:20px;display:grid;grid-template-columns:1fr 1fr;gap:3px;padding:2px;"><div style="border-radius:2px;background:#8c8781;"></div><div style="border-radius:2px;background:#8c8781;"></div><div style="border-radius:2px;background:#8c8781;"></div><div style="border-radius:2px;border:1.5px solid #8c8781;"></div></div><span style="font-size:14px;font-weight:500;">Puzzles</span></div>
+            <div style="display:flex;align-items:center;gap:12px;padding:9px 12px;border-radius:6px;" style-hover="background:#3c3936;"><div style="width:20px;height:20px;display:flex;align-items:flex-end;gap:2.5px;padding:1px;"><div style="flex:1;height:8px;border-radius:1.5px;background:#8c8781;"></div><div style="flex:1;height:15px;border-radius:1.5px;background:#8c8781;"></div><div style="flex:1;height:11px;border-radius:1.5px;background:#8c8781;"></div></div><span style="font-size:14px;font-weight:500;">Analysis</span></div>
+            <div style="display:flex;align-items:center;gap:12px;padding:9px 12px;border-radius:6px;" style-hover="background:#3c3936;"><div style="width:20px;height:20px;display:flex;align-items:center;justify-content:center;"><div style="width:15px;height:15px;border-radius:50%;border:2px solid #8c8781;"></div></div><span style="font-size:14px;font-weight:500;">Watch</span></div>
+            <div style="display:flex;align-items:center;gap:12px;padding:9px 12px;border-radius:6px;" style-hover="background:#3c3936;"><div style="width:20px;height:20px;display:flex;align-items:center;justify-content:center;gap:2px;"><div style="width:9px;height:9px;border-radius:50%;border:2px solid #8c8781;"></div><div style="width:9px;height:9px;border-radius:50%;border:2px solid #8c8781;margin-left:-4px;background:#262421;"></div></div><span style="font-size:14px;font-weight:500;">Friends</span></div>
+          </div>
+          <div style="margin-top:auto;display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:6px;background:#312e2b;">
+            <div style="width:32px;height:32px;border-radius:6px;background:#47433f;display:flex;align-items:center;justify-content:center;color:#f0ede8;font-weight:700;font-size:13px;">P</div>
+            <div style="min-width:0;"><div style="font-size:13px;font-weight:600;color:#f0ede8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">PegLegPenelope_87</div><div style="font-size:12px;color:#e3aa24;font-variant-numeric:tabular-nums;">1847</div></div>
+          </div>
+        </div>
+        <div style="flex:1;overflow:hidden;padding:40px 48px;">
+          <div style="max-width:1080px;margin:0 auto;">
+            <div style="display:grid;grid-template-columns:2fr 1fr;gap:24px;margin-bottom:24px;">
+              <div style="background:#3c3936;border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:32px;display:flex;flex-direction:column;justify-content:center;gap:14px;">
+                <div style="font-size:20px;font-weight:600;color:#f0ede8;">Good evening, Penelope.</div>
+                <div style="font-size:14px;color:#9c968e;">Queue time right now: ~8 seconds at your rating.</div>
+                <div style="display:flex;gap:12px;margin-top:6px;">
+                  <button style="height:56px;padding:0 44px;border:none;border-radius:8px;background:#81b64c;box-shadow:inset 0 -4px 0 #5d9948;color:#16240c;font-size:18px;font-weight:700;font-family:inherit;cursor:pointer;" style-hover="background:#93c757;">Play · Rated</button>
+                  <button style="height:56px;padding:0 24px;border:1px solid rgba(255,255,255,0.14);border-radius:8px;background:#312e2b;color:#f0ede8;font-size:15px;font-weight:600;font-family:inherit;cursor:pointer;" style-hover="background:#47433f;">Play a friend</button>
+                  <button style="height:56px;padding:0 24px;border:1px solid rgba(255,255,255,0.14);border-radius:8px;background:#312e2b;color:#f0ede8;font-size:15px;font-weight:600;font-family:inherit;cursor:pointer;" style-hover="background:#47433f;">Play the engine</button>
+                </div>
+              </div>
+              <div style="background:#3c3936;border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:28px 32px;display:flex;flex-direction:column;justify-content:center;">
+                <div style="font-size:12px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:#9c968e;margin-bottom:8px;">Rating</div>
+                <div style="display:flex;align-items:baseline;gap:10px;"><span style="font-size:40px;line-height:1;font-weight:700;color:#e3aa24;font-variant-numeric:tabular-nums;">1847</span><span style="font-size:15px;font-weight:600;color:#81b64c;font-variant-numeric:tabular-nums;">+24 this week</span></div>
+                <div style="font-size:13px;color:#9c968e;margin-top:10px;font-variant-numeric:tabular-nums;">Peak 1872 · rank #47 · 142–98 lifetime</div>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-bottom:24px;">
+              <div style="background:#3c3936;border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:18px 22px;"><div style="font-size:12px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:#9c968e;margin-bottom:6px;">Puzzle streak</div><div style="display:flex;align-items:baseline;gap:8px;"><span style="font-size:28px;font-weight:700;color:#f0ede8;font-variant-numeric:tabular-nums;">12 days</span><span style="font-size:13px;font-weight:600;color:#e2833f;">best 21</span></div></div>
+              <div style="background:#3c3936;border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:18px 22px;"><div style="font-size:12px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:#9c968e;margin-bottom:6px;">This week</div><div style="display:flex;align-items:baseline;gap:8px;"><span style="font-size:28px;font-weight:700;color:#f0ede8;font-variant-numeric:tabular-nums;">9–4</span><span style="font-size:13px;font-weight:600;color:#e2833f;">W5</span></div></div>
+              <div style="background:#3c3936;border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:18px 22px;"><div style="font-size:12px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:#9c968e;margin-bottom:6px;">Avg hand</div><div style="display:flex;align-items:baseline;gap:8px;"><span style="font-size:28px;font-weight:700;color:#f0ede8;font-variant-numeric:tabular-nums;">8.1</span><span style="font-size:13px;font-weight:600;color:#81b64c;">+0.4 vs last month</span></div></div>
+            </div>
+            <div style="border:1px solid rgba(255,255,255,0.08);border-radius:8px;overflow:hidden;">
+              <div style="display:grid;grid-template-columns:56px 1fr 110px 90px 90px 110px;gap:12px;align-items:center;padding:9px 20px;background:#3c3936;font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#9c968e;"><span></span><span>Opponent</span><span style="text-align:right;">Rating</span><span style="text-align:right;">Score</span><span style="text-align:right;">Δ</span><span style="text-align:right;">Played</span></div>
+              <div style="display:grid;grid-template-columns:56px 1fr 110px 90px 90px 110px;gap:12px;align-items:center;padding:12px 20px;border-top:1px solid rgba(255,255,255,0.06);font-size:14px;font-variant-numeric:tabular-nums;" style-hover="background:#47433f;"><span style="width:24px;height:24px;border-radius:6px;background:rgba(129,182,76,0.15);color:#81b64c;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;">W</span><span style="color:#f0ede8;font-weight:600;">MugginsMaude</span><span style="text-align:right;color:#9c968e;">1512</span><span style="text-align:right;color:#b8b3ac;">121–98</span><span style="text-align:right;color:#81b64c;font-weight:600;">+8</span><span style="text-align:right;color:#9c968e;">2h ago</span></div>
+              <div style="display:grid;grid-template-columns:56px 1fr 110px 90px 90px 110px;gap:12px;align-items:center;padding:12px 20px;border-top:1px solid rgba(255,255,255,0.06);font-size:14px;font-variant-numeric:tabular-nums;" style-hover="background:#47433f;"><span style="width:24px;height:24px;border-radius:6px;background:rgba(129,182,76,0.15);color:#81b64c;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;">W</span><span style="color:#f0ede8;font-weight:600;">skunk_hunter</span><span style="text-align:right;color:#9c968e;">2214</span><span style="text-align:right;color:#b8b3ac;">121–116</span><span style="text-align:right;color:#81b64c;font-weight:600;">+14</span><span style="text-align:right;color:#9c968e;">yesterday</span></div>
+              <div style="display:grid;grid-template-columns:56px 1fr 110px 90px 90px 110px;gap:12px;align-items:center;padding:12px 20px;border-top:1px solid rgba(255,255,255,0.06);font-size:14px;font-variant-numeric:tabular-nums;" style-hover="background:#47433f;"><span style="width:24px;height:24px;border-radius:6px;background:rgba(229,118,109,0.15);color:#e5766d;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;">L</span><span style="color:#f0ede8;font-weight:600;">TheCribKeeper_22</span><span style="text-align:right;color:#9c968e;">1901</span><span style="text-align:right;color:#b8b3ac;">109–121</span><span style="text-align:right;color:#e5766d;font-weight:600;">−6</span><span style="text-align:right;color:#9c968e;">yesterday</span></div>
+              <div style="display:grid;grid-template-columns:56px 1fr 110px 90px 90px 110px;gap:12px;align-items:center;padding:12px 20px;border-top:1px solid rgba(255,255,255,0.06);font-size:14px;font-variant-numeric:tabular-nums;" style-hover="background:#47433f;"><span style="width:24px;height:24px;border-radius:6px;background:rgba(129,182,76,0.15);color:#81b64c;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;">W</span><span style="color:#f0ede8;font-weight:600;">nobs_and_nibs</span><span style="text-align:right;color:#9c968e;">1788</span><span style="text-align:right;color:#b8b3ac;">121–87</span><span style="text-align:right;color:#81b64c;font-weight:600;">+11 · skunk</span><span style="text-align:right;color:#9c968e;">Jul 16</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 1c GAME SCREEN ============ -->
+    <div id="1c" style="flex:none;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;"><span style="background:#3c3936;color:#f0ede8;font-size:12px;font-weight:700;font-family:ui-monospace,'SF Mono',Menlo,monospace;border-radius:6px;padding:3px 8px;">1c</span><span style="font-size:13px;color:#9c968e;">Game screen · pegging · 1440×900</span></div>
+      <div data-screen-label="Game" style="width:1440px;height:900px;background:#312e2b;border-radius:12px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.5);display:flex;color:#b8b3ac;font-size:15px;">
+        <div style="width:68px;flex:none;background:#262421;border-right:1px solid rgba(255,255,255,0.08);display:flex;flex-direction:column;align-items:center;padding:18px 0;gap:6px;">
+          <div style="width:32px;height:32px;border-radius:7px;background:#81b64c;display:flex;align-items:center;justify-content:center;color:#16240c;font-weight:800;font-size:14px;margin-bottom:16px;">CC</div>
+          <div style="width:44px;height:38px;border-radius:6px;background:#3c3936;display:flex;align-items:center;justify-content:center;position:relative;"><div style="position:absolute;left:-12px;top:8px;bottom:8px;width:3px;border-radius:2px;background:#81b64c;"></div><div style="width:0;height:0;border-left:12px solid #81b64c;border-top:7px solid transparent;border-bottom:7px solid transparent;margin-left:3px;"></div></div>
+          <div style="width:44px;height:38px;border-radius:6px;display:flex;align-items:center;justify-content:center;" style-hover="background:#3c3936;"><div style="width:18px;height:18px;display:grid;grid-template-columns:1fr 1fr;gap:2.5px;"><div style="border-radius:2px;background:#8c8781;"></div><div style="border-radius:2px;background:#8c8781;"></div><div style="border-radius:2px;background:#8c8781;"></div><div style="border-radius:2px;border:1.5px solid #8c8781;"></div></div></div>
+          <div style="width:44px;height:38px;border-radius:6px;display:flex;align-items:center;justify-content:center;" style-hover="background:#3c3936;"><div style="width:18px;height:18px;display:flex;align-items:flex-end;gap:2px;"><div style="flex:1;height:7px;border-radius:1.5px;background:#8c8781;"></div><div style="flex:1;height:14px;border-radius:1.5px;background:#8c8781;"></div><div style="flex:1;height:10px;border-radius:1.5px;background:#8c8781;"></div></div></div>
+          <div style="margin-top:auto;width:36px;height:36px;border-radius:6px;background:#47433f;display:flex;align-items:center;justify-content:center;color:#f0ede8;font-weight:700;font-size:13px;">P</div>
+        </div>
+
+        <div style="flex:1;display:flex;flex-direction:column;padding:20px 28px;gap:14px;min-width:0;">
+          <!-- opponent bar -->
+          <div style="background:#262421;border-radius:8px;padding:10px 16px;display:grid;grid-template-columns:40px 1fr auto;gap:12px;align-items:center;border-left:3px solid rgba(217,212,204,0.4);">
+            <div style="width:40px;height:40px;border-radius:6px;background:#47433f;display:flex;align-items:center;justify-content:center;color:#f0ede8;font-weight:700;font-size:16px;">M</div>
+            <div style="min-width:0;">
+              <div style="display:flex;align-items:center;gap:8px;"><span style="font-size:14px;font-weight:600;color:#b8b3ac;">MugginsMaude</span><span style="font-size:13px;color:#e3aa24;font-variant-numeric:tabular-nums;">(1512)</span><span style="font-size:10px;font-weight:700;letter-spacing:0.06em;background:#47433f;color:#b8b3ac;border-radius:4px;padding:2px 6px;">DEALER</span></div>
+              <div style="margin-top:7px;height:4px;border-radius:2px;background:#47433f;overflow:hidden;"><div style="width:31%;height:100%;background:#d9d4cc;"></div></div>
+            </div>
+            <div style="font-size:32px;line-height:1;font-weight:700;color:#f0ede8;font-variant-numeric:tabular-nums;">38</div>
+          </div>
+
+          <!-- table -->
+          <div style="flex:1;background:#3c3936;border:1px solid rgba(255,255,255,0.08);border-radius:12px;display:flex;align-items:center;padding:0 40px;gap:44px;min-height:0;">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:8px;flex:none;">
+              <div style="position:relative;width:96px;height:134px;">
+                <div style="position:absolute;inset:0;border-radius:8px;background:#4a5568;background-image:repeating-linear-gradient(45deg,rgba(255,255,255,0.07) 0 2px,transparent 2px 7px);border:4px solid #f5f0e8;box-shadow:0 1px 3px rgba(0,0,0,0.4);"></div>
+                <div style="position:absolute;left:34px;top:8px;width:96px;height:134px;border-radius:8px;background:#f5f0e8;box-shadow:0 2px 6px rgba(0,0,0,0.45);padding:8px;"><div style="font-size:24px;line-height:1;font-weight:700;color:#1a1a1a;font-variant-numeric:tabular-nums;">6</div><div style="font-size:18px;line-height:1;color:#1a1a1a;">♣</div><div style="position:absolute;bottom:10px;right:12px;font-size:34px;color:#1a1a1a;">♣</div></div>
+              </div>
+              <span style="font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#9c968e;margin-left:34px;">Starter</span>
+            </div>
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:18px;">
+              <div style="display:flex;align-items:center;">
+                <div style="width:96px;height:134px;border-radius:8px;background:#f5f0e8;box-shadow:0 2px 6px rgba(0,0,0,0.4);padding:8px;position:relative;"><div style="font-size:24px;line-height:1;font-weight:700;color:#c0392b;font-variant-numeric:tabular-nums;">5</div><div style="font-size:18px;line-height:1;color:#c0392b;">♦</div><div style="position:absolute;bottom:10px;right:12px;font-size:34px;color:#c0392b;">♦</div></div>
+                <div style="width:96px;height:134px;border-radius:8px;background:#f5f0e8;box-shadow:0 2px 6px rgba(0,0,0,0.4);padding:8px;position:relative;margin-left:-44px;top:0;"><div style="font-size:24px;line-height:1;font-weight:700;color:#1a1a1a;font-variant-numeric:tabular-nums;">10</div><div style="font-size:18px;line-height:1;color:#1a1a1a;">♠</div><div style="position:absolute;bottom:10px;right:12px;font-size:34px;color:#1a1a1a;">♠</div></div>
+                <div style="width:96px;height:134px;border-radius:8px;background:#f5f0e8;box-shadow:0 3px 8px rgba(0,0,0,0.45);padding:8px;position:relative;margin-left:-44px;"><div style="font-size:24px;line-height:1;font-weight:700;color:#c0392b;font-variant-numeric:tabular-nums;">9</div><div style="font-size:18px;line-height:1;color:#c0392b;">♥</div><div style="position:absolute;bottom:10px;right:12px;font-size:34px;color:#c0392b;">♥</div></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px;">
+                <span style="font-size:12px;font-weight:600;letter-spacing:0.04em;color:#6b6660;padding:5px 10px;border-radius:999px;">Deal</span>
+                <span style="font-size:12px;font-weight:600;letter-spacing:0.04em;color:#6b6660;padding:5px 10px;border-radius:999px;">Discard</span>
+                <span style="font-size:12px;font-weight:600;letter-spacing:0.04em;color:#16240c;background:#81b64c;padding:5px 10px;border-radius:999px;">Pegging</span>
+                <span style="font-size:12px;font-weight:600;letter-spacing:0.04em;color:#6b6660;padding:5px 10px;border-radius:999px;">Count</span>
+              </div>
+            </div>
+            <div style="flex:none;text-align:center;min-width:130px;">
+              <div style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#9c968e;margin-bottom:4px;">Count</div>
+              <div style="font-size:64px;line-height:1;font-weight:700;color:#f0ede8;font-variant-numeric:tabular-nums;">24</div>
+              <div style="font-size:13px;color:#81b64c;font-weight:600;margin-top:10px;">Your play</div>
+            </div>
+          </div>
+
+          <!-- board -->
+          <div style="background:#38342f;border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:14px 22px 16px 22px;display:flex;flex-direction:column;gap:10px;flex:none;">
+            <div style="display:flex;align-items:center;gap:18px;padding-left:54px;">
+              <span style="display:flex;align-items:center;gap:7px;font-size:13px;font-variant-numeric:tabular-nums;"><span style="width:10px;height:10px;border-radius:50%;background:#81b64c;"></span><span style="color:#f0ede8;font-weight:600;">44</span></span>
+              <span style="display:flex;align-items:center;gap:7px;font-size:13px;font-variant-numeric:tabular-nums;"><span style="width:10px;height:10px;border-radius:50%;background:#d9d4cc;"></span><span style="color:#b8b3ac;font-weight:600;">38</span></span>
+            </div>
+            <div style="display:flex;align-items:center;gap:16px;">
+              <span style="width:38px;font-size:11px;color:#6b6660;font-family:ui-monospace,'SF Mono',Menlo,monospace;text-align:right;flex:none;">1–60</span>
+              <div style="display:flex;flex-direction:column;gap:5px;">
+                <div style="display:flex;align-items:center;gap:3px;"><sc-for list="{{ rowYouA }}" as="h" hint-placeholder-count="60"><div style="{{ h.css }}"></div></sc-for></div>
+                <div style="display:flex;align-items:center;gap:3px;"><sc-for list="{{ rowOppA }}" as="h" hint-placeholder-count="60"><div style="{{ h.css }}"></div></sc-for></div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:16px;">
+              <span style="width:38px;font-size:11px;color:#6b6660;font-family:ui-monospace,'SF Mono',Menlo,monospace;text-align:right;flex:none;">61–121</span>
+              <div style="display:flex;flex-direction:column;gap:5px;">
+                <div style="display:flex;align-items:center;gap:3px;"><sc-for list="{{ rowYouB }}" as="h" hint-placeholder-count="61"><div style="{{ h.css }}"></div></sc-for></div>
+                <div style="display:flex;align-items:center;gap:3px;"><sc-for list="{{ rowOppB }}" as="h" hint-placeholder-count="61"><div style="{{ h.css }}"></div></sc-for></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- hand -->
+          <div style="display:flex;justify-content:center;gap:14px;flex:none;padding:6px 0 2px 0;">
+            <div style="width:96px;height:134px;border-radius:8px;background:#f5f0e8;box-shadow:0 2px 6px rgba(0,0,0,0.4);padding:8px;position:relative;cursor:pointer;" style-hover="transform:translateY(-6px);"><div style="font-size:24px;line-height:1;font-weight:700;color:#1a1a1a;font-variant-numeric:tabular-nums;">4</div><div style="font-size:18px;line-height:1;color:#1a1a1a;">♠</div><div style="position:absolute;bottom:10px;right:12px;font-size:34px;color:#1a1a1a;">♠</div></div>
+            <div style="width:96px;height:134px;border-radius:8px;background:#f5f0e8;box-shadow:0 0 0 2px #a4d372,0 8px 18px rgba(0,0,0,0.45);padding:8px;position:relative;cursor:pointer;transform:translateY(-8px);"><div style="font-size:24px;line-height:1;font-weight:700;color:#c0392b;font-variant-numeric:tabular-nums;">7</div><div style="font-size:18px;line-height:1;color:#c0392b;">♥</div><div style="position:absolute;bottom:10px;right:12px;font-size:34px;color:#c0392b;">♥</div></div>
+            <div style="width:96px;height:134px;border-radius:8px;background:#f5f0e8;box-shadow:0 2px 6px rgba(0,0,0,0.4);padding:8px;position:relative;cursor:pointer;opacity:0.45;"><div style="font-size:24px;line-height:1;font-weight:700;color:#1a1a1a;font-variant-numeric:tabular-nums;">K</div><div style="font-size:18px;line-height:1;color:#1a1a1a;">♣</div><div style="position:absolute;bottom:10px;right:12px;font-size:34px;color:#1a1a1a;">♣</div></div>
+          </div>
+
+          <!-- your bar -->
+          <div style="background:#262421;border-radius:8px;padding:10px 16px;display:grid;grid-template-columns:40px 1fr auto;gap:12px;align-items:center;border-left:3px solid #93c757;">
+            <div style="width:40px;height:40px;border-radius:6px;background:#47433f;display:flex;align-items:center;justify-content:center;color:#f0ede8;font-weight:700;font-size:16px;">P</div>
+            <div style="min-width:0;">
+              <div style="display:flex;align-items:center;gap:8px;"><span style="font-size:14px;font-weight:600;color:#f0ede8;">PegLegPenelope_87</span><span style="font-size:13px;color:#e3aa24;font-variant-numeric:tabular-nums;">(1847)</span><span style="font-size:12px;color:#81b64c;font-weight:600;">your play — K♣ would exceed 31</span></div>
+              <div style="margin-top:7px;height:4px;border-radius:2px;background:#47433f;overflow:hidden;"><div style="width:36%;height:100%;background:#81b64c;"></div></div>
+            </div>
+            <div style="font-size:32px;line-height:1;font-weight:700;color:#f0ede8;font-variant-numeric:tabular-nums;">44</div>
+          </div>
+        </div>
+
+        <!-- right panel -->
+        <div style="width:400px;flex:none;background:#262421;border-left:1px solid rgba(255,255,255,0.08);display:flex;flex-direction:column;">
+          <div style="display:flex;border-bottom:1px solid rgba(255,255,255,0.08);flex:none;">
+            <div style="flex:1;text-align:center;padding:14px 0;font-size:13px;font-weight:600;color:#f0ede8;border-bottom:2px solid #81b64c;">Moves</div>
+            <div style="flex:1;text-align:center;padding:14px 0;font-size:13px;font-weight:600;color:#9c968e;" style-hover="color:#f0ede8;">Chat</div>
+          </div>
+          <div style="flex:1;overflow:hidden;padding:14px 20px;display:flex;flex-direction:column;gap:2px;font-variant-numeric:tabular-nums;">
+            <div style="font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#6b6660;padding:6px 0;">Round 3 · Pegging</div>
+            <div style="display:grid;grid-template-columns:24px 1fr 60px;gap:10px;padding:7px 8px;border-radius:6px;font-size:13.5px;"><span style="color:#6b6660;">1.</span><span style="color:#b8b3ac;"><span style="width:8px;height:8px;border-radius:50%;background:#d9d4cc;display:inline-block;margin-right:8px;"></span>Maude plays 5♦</span><span style="text-align:right;color:#9c968e;">5</span></div>
+            <div style="display:grid;grid-template-columns:24px 1fr 60px;gap:10px;padding:7px 8px;border-radius:6px;font-size:13.5px;"><span style="color:#6b6660;">2.</span><span style="color:#b8b3ac;"><span style="width:8px;height:8px;border-radius:50%;background:#81b64c;display:inline-block;margin-right:8px;"></span>You play 10♠</span><span style="text-align:right;color:#9c968e;">15</span></div>
+            <div style="display:grid;grid-template-columns:24px 1fr 60px;gap:10px;padding:2px 8px 7px 8px;font-size:12.5px;"><span></span><span style="color:#81b64c;font-weight:600;">+2 · fifteen</span><span></span></div>
+            <div style="display:grid;grid-template-columns:24px 1fr 60px;gap:10px;padding:7px 8px;border-radius:6px;font-size:13.5px;background:#312e2b;"><span style="color:#6b6660;">3.</span><span style="color:#f0ede8;"><span style="width:8px;height:8px;border-radius:50%;background:#d9d4cc;display:inline-block;margin-right:8px;"></span>Maude plays 9♥</span><span style="text-align:right;color:#f0ede8;font-weight:600;">24</span></div>
+            <div style="display:grid;grid-template-columns:24px 1fr 60px;gap:10px;padding:10px 8px;font-size:13px;"><span></span><span style="color:#9c968e;font-style:normal;">Your play · 4♠ or 7♥ keep you under 31</span><span></span></div>
+            <div style="margin-top:auto;background:#312e2b;border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:14px 16px;">
+              <div style="font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#9c968e;margin-bottom:8px;">Crib · Maude's</div>
+              <div style="display:flex;gap:6px;">
+                <div style="width:34px;height:48px;border-radius:4px;background:#4a5568;background-image:repeating-linear-gradient(45deg,rgba(255,255,255,0.07) 0 2px,transparent 2px 6px);border:2px solid #f5f0e8;"></div>
+                <div style="width:34px;height:48px;border-radius:4px;background:#4a5568;background-image:repeating-linear-gradient(45deg,rgba(255,255,255,0.07) 0 2px,transparent 2px 6px);border:2px solid #f5f0e8;"></div>
+                <div style="width:34px;height:48px;border-radius:4px;background:#4a5568;background-image:repeating-linear-gradient(45deg,rgba(255,255,255,0.07) 0 2px,transparent 2px 6px);border:2px solid #f5f0e8;"></div>
+                <div style="width:34px;height:48px;border-radius:4px;background:#4a5568;background-image:repeating-linear-gradient(45deg,rgba(255,255,255,0.07) 0 2px,transparent 2px 6px);border:2px solid #f5f0e8;"></div>
+              </div>
+            </div>
+          </div>
+          <div style="flex:none;border-top:1px solid rgba(255,255,255,0.08);padding:14px 20px;display:flex;gap:10px;">
+            <button style="flex:1;height:38px;border:1px solid rgba(255,255,255,0.14);border-radius:8px;background:transparent;color:#9c968e;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;" style-hover="color:#e5766d;border-color:rgba(229,118,109,0.4);">Resign</button>
+            <button style="flex:1;height:38px;border:1px solid rgba(255,255,255,0.14);border-radius:8px;background:transparent;color:#9c968e;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;" style-hover="color:#f0ede8;">Settings</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  hole(size, peg, gap, gold) {
+    let css = `width:${size}px;height:${size}px;border-radius:50%;flex:none;`;
+    if (peg === "self") css += "background:#81b64c;box-shadow:0 1px 2px rgba(0,0,0,0.5);";
+    else if (peg === "selfBack") css += "background:transparent;box-shadow:inset 0 0 0 2px #81b64c;";
+    else if (peg === "opp") css += "background:#d9d4cc;box-shadow:0 1px 2px rgba(0,0,0,0.5);";
+    else if (peg === "oppBack") css += "background:transparent;box-shadow:inset 0 0 0 2px #d9d4cc;";
+    else css += "background:#211f1d;box-shadow:inset 0 1px 2px rgba(0,0,0,0.6)" + (gold ? ",0 0 0 2px rgba(227,170,36,0.55);" : ";");
+    if (gap) css += "margin-right:7px;";
+    return { css };
+  }
+  row(size, start, end, front, back, kind) {
+    const out = [];
+    for (let i = start; i <= end; i++) {
+      let peg = null;
+      if (i === front) peg = kind;
+      else if (i === back) peg = kind + "Back";
+      out.push(this.hole(size, peg, i % 5 === 0 && i !== end, i === 121));
+    }
+    return out;
+  }
+  renderVals() {
+    return {
+      heroYou: this.row(12, 1, 30, 14, 9, "self"),
+      heroOpp: this.row(12, 1, 30, 11, 7, "opp"),
+      rowYouA: this.row(9, 1, 60, 44, 37, "self"),
+      rowOppA: this.row(9, 1, 60, 38, 31, "opp"),
+      rowYouB: this.row(9, 61, 121, -1, -1, "self"),
+      rowOppB: this.row(9, 61, 121, -1, -1, "opp")
+    };
+  }
+}
+</script>
+</body>
+</html>
