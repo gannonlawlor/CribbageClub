@@ -18,12 +18,17 @@ Requires: JDK 21, Rust toolchain (cargo), PostgreSQL running on localhost:5432.
 
 ```
 src/main/kotlin/com/jackabee/cribbageclubserver/
-├── config/           # SecurityConfig, WebSocketConfig, JWT filter, rate limiter, CORS
+├── config/           # SecurityConfig, WebSocketConfig, JWT filter, rate limiter, CORS,
+│                     # FcmConfig (push credentials, null when unconfigured)
 ├── controller/       # GameController, LobbyController, AuthController, StatsController,
-│                     # FriendController, ChallengeController, PuzzleController
+│                     # FriendController, ChallengeController, PuzzleController,
+│                     # ProfileController, DeviceTokenController
 ├── service/          # GameService, LobbyService, UserService, AnalysisService,
-│                     # PlayerStatsService, FriendService, PuzzleService, CleanupService
-├── entity/           # JPA entities: User, Game, Lobby, PlayerStats, Puzzle, GameAnalysis, etc.
+│                     # PlayerStatsService, FriendService, PuzzleService, CleanupService,
+│                     # TurnTimerService, TimeoutCheckService, ForfeitService,
+│                     # DeviceTokenService, PushNotificationService, JwtService
+├── entity/           # JPA entities: User, Game, Lobby, PlayerStats, Puzzle, GameAnalysis,
+│                     # Friendship, PuzzleSolve, DeviceToken
 ├── repository/       # Spring Data JPA repositories
 ├── model/            # Domain: GameState, GameAction (sealed), GameHistoryEvent (sealed),
 │                     # Card/Rank/Suit, GameAnalysis, Player, Lobby, etc.
@@ -40,7 +45,9 @@ src/main/kotlin/com/jackabee/cribbageclubserver/
 - **Rate limiting**: Sliding-window `RateLimitFilter` on `/api/auth/*` (10 req/60s).
 - **GameStateFilter**: Hides opponent hands, deck, and crib per player. Applied in all controllers before returning state.
 - **Optimistic locking**: `@Version` on all mutable entities.
-- **Flyway**: 7 migrations (V1–V7). `ddl-auto=validate` in production.
+- **Flyway**: 10 migrations (V1–V10). `ddl-auto=validate` in production.
+- **Turn timers & forfeit**: Per-player time banks on `games` (V8), `TurnTimerService`/`TimeoutCheckService` enforce them, `ForfeitService` handles timeouts and resignations.
+- **Push notifications**: FCM HTTP v1 via `PushNotificationService`; `FcmConfig` holds credentials (no-op when unconfigured). Sent only when `WebSocketSessionRegistry.isUserOnline()` is false. Events: friend request, challenge received, game found. Device tokens registered via `/api/device-tokens`.
 
 ## Database Schema (Flyway Migrations)
 
@@ -53,6 +60,9 @@ src/main/kotlin/com/jackabee/cribbageclubserver/
 | V5 | puzzles, puzzle_solves | Daily puzzles |
 | V6 | (alters games) | Local game import (original_local_game_id) |
 | V7 | game_analyses | Analysis caching |
+| V8 | (alters games) | Turn timers (time banks) and forfeit reason |
+| V9 | (alters users, player_stats) | Avatar index, AI-vs-human split stats |
+| V10 | device_tokens | Push notification device tokens |
 
 ## Serialization
 
@@ -71,7 +81,7 @@ src/main/kotlin/com/jackabee/cribbageclubserver/
 
 ## Testing
 
-20 test files covering controllers, services, security, WebSocket, models. Uses JUnit 5, Mockito, H2 for integration tests.
+23 test files covering controllers, services, security, WebSocket, models. Uses JUnit 5, Mockito, H2 for integration tests.
 
 ## Conventions
 
