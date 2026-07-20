@@ -10,12 +10,14 @@ const HOLES_PER_ROW = 30
 const NUM_ROWS = 4
 
 // Colors
-const BOARD_BG = '#6D4C41'
-const BOARD_BG_LIGHT = '#795548'
-const BOARD_EDGE = '#4E342E'
-const HOLE_COLOR = '#3E2723'
-const PEG_GOLD = '#FFD54F'
-const PEG_WHITE = '#EEEEEE'
+// Flattened board per design language: warmth in the tint, not the texture
+const BOARD_BG = '#38342f'
+const BOARD_BG_LIGHT = '#3d3934'
+const BOARD_EDGE = 'rgba(255,255,255,0.08)'
+const HOLE_COLOR = '#211f1d'
+const PEG_SELF = '#81b64c'
+const PEG_OPP = '#d9d4cc'
+const GOLD_121 = '#e3aa24'
 const MILESTONE_COLOR = 'rgba(255,255,255,0.35)'
 
 export function CribbageBoardStandard({ playerScore, opponentScore }: CribbageBoardStandardProps) {
@@ -138,10 +140,18 @@ function draw(canvas: HTMLCanvasElement, playerScore: number, opponentScore: num
     drawHole(ctx, x, yBase + trackSep / 2, holeR)
   }
 
-  // Finish hole (121) — after row 4 (index 3) which goes right-to-left, finish is at the left end
+  // Finish hole (121) — the only gold on the field
   const actualFinishX = padX + innerPadX
   drawHole(ctx, actualFinishX, finishY, holeR * 1.3)
   drawHole(ctx, actualFinishX + trackSep * 1.5, finishY, holeR * 1.3)
+  ctx.strokeStyle = GOLD_121
+  ctx.lineWidth = 1.5
+  ctx.beginPath()
+  ctx.arc(actualFinishX, finishY, holeR * 2, 0, Math.PI * 2)
+  ctx.stroke()
+  ctx.beginPath()
+  ctx.arc(actualFinishX + trackSep * 1.5, finishY, holeR * 2, 0, Math.PI * 2)
+  ctx.stroke()
 
   // Draw milestone labels
   const milestones = [30, 60, 90, 120]
@@ -198,8 +208,8 @@ function draw(canvas: HTMLCanvasElement, playerScore: number, opponentScore: num
 
   const playerPos = pegPos(playerScore, -trackSep / 2)
   const opponentPos = pegPos(opponentScore, trackSep / 2)
-  drawPeg(ctx, opponentPos, PEG_WHITE, pegR)
-  drawPeg(ctx, playerPos, PEG_GOLD, pegR)
+  drawPeg(ctx, opponentPos, PEG_OPP, pegR)
+  drawPeg(ctx, playerPos, PEG_SELF, pegR)
 }
 
 function drawBoard(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number) {

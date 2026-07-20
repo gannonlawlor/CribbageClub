@@ -141,7 +141,7 @@ function PlayingPhase({
       </div>
 
       {/* Selection counter */}
-      <div className={`text-center text-sm mb-4 ${canSubmit ? 'text-[var(--gold)]' : 'text-white/40'}`}>
+      <div className={`text-center text-sm mb-4 ${canSubmit ? 'text-[var(--green-400)]' : 'text-white/40'}`}>
         {selectedCards.length}/4 selected
       </div>
 

@@ -1,42 +1,110 @@
 @import "tailwindcss";
 
+/* Cribbage Club Design Language v1.0 — see design/Design Language.md */
 :root {
-  /* Core dark theme (chess.com-inspired charcoal) */
-  --bg: #312e2b;
-  --bg-deep: #262421;
-  --surface: #3c3936;
-  --surface-hover: #47433f;
-  --border: rgba(255, 255, 255, 0.08);
+  /* Surfaces — 4 elevation steps */
+  --surface-0: #262421;  /* chrome: sidebar, headers */
+  --surface-1: #312e2b;  /* page background */
+  --surface-2: #3c3936;  /* panels, cards, table headers */
+  --surface-3: #47433f;  /* hover, raised, selected rows */
+  --board:     #38342f;  /* cribbage board panel — 2 steps warmer */
+  --border:        rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.14);
 
-  /* Primary action green */
-  --accent: #81b64c;
-  --accent-hover: #93c757;
-  --accent-dark: #5d9948;
+  /* Text — on --surface-1 */
+  --text-1: #f0ede8;     /* headings, scores, names */
+  --text-2: #b8b3ac;     /* body, table cells */
+  --text-3: #9c968e;     /* labels, timestamps, meta */
+  --text-faint: #6b6660; /* disabled/decorative only */
 
-  /* Rating / highlight gold */
-  --gold: #e3aa24;
-  --gold-light: #f0c14b;
+  /* Action green */
+  --green-300: #a4d372;  /* focus ring, green-on-green */
+  --green-400: #93c757;  /* hover fill */
+  --green-500: #81b64c;  /* base fill */
+  --green-600: #5d9948;  /* pressed edge / bottom bevel */
+  --on-green:  #16240c;  /* text on green fills */
 
-  /* Cards */
-  --card-white: #f5f0e8;
-  --card-red: #c0392b;
+  /* Rating & semantic */
+  --gold:   #e3aa24;     /* ratings, trophies, the 121 hole — nothing else */
+  --win:    #81b64c;
+  --loss:   #e5766d;
+  --draw:   #9c968e;
+  --streak: #e2833f;
+
+  /* Card faces */
+  --card-face:  #f5f0e8;
+  --card-red:   #c0392b;
   --card-black: #1a1a1a;
+  --card-back:  #4a5568;
 
-  /* Legacy aliases — older components reference the felt palette.
-     They now resolve to the dark charcoal surfaces. */
-  --felt-green: #3c3936;
-  --felt-green-light: #47433f;
-  --felt-green-dark: #312e2b;
+  /* Player identity */
+  --player-self: #81b64c;
+  --player-opp:  #d9d4cc;
+
+  /* Board */
+  --board-track: rgba(0, 0, 0, 0.22);
+  --board-hole:  #211f1d;
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.2, 0, 0, 1);
+  --ease-in:  cubic-bezier(0.4, 0, 1, 1);
+
+  /* Legacy aliases — older components reference these names */
+  --bg: var(--surface-1);
+  --bg-deep: var(--surface-0);
+  --surface: var(--surface-2);
+  --surface-hover: var(--surface-3);
+  --accent: var(--green-500);
+  --accent-hover: var(--green-400);
+  --accent-dark: var(--green-600);
+  --gold-light: #f0c14b;
+  --card-white: var(--card-face);
+  --felt-green: var(--surface-2);
+  --felt-green-light: var(--surface-3);
+  --felt-green-dark: var(--surface-1);
+}
+
+[data-theme="light"] {
+  --surface-0: #eae6e0;
+  --surface-1: #f4f1ec;
+  --surface-2: #ffffff;
+  --surface-3: #efece6;
+  --board:     #ece7df;
+  --border:        rgba(0, 0, 0, 0.08);
+  --border-strong: rgba(0, 0, 0, 0.14);
+
+  --text-1: #2a2622;
+  --text-2: #57524b;
+  --text-3: #767066;
+  --text-faint: #a8a29a;
+
+  --gold:  #9a7514;
+  --win:   #4e7a2e;
+  --loss:  #b6362a;
+  --draw:  #767066;
+  --streak:#b25a17;
+
+  --player-self: #81b64c;
+  --player-opp:  #a49c90;
+  --board-track: rgba(0, 0, 0, 0.07);
+  --board-hole:  #d8d2c8;
 }
 
 body {
   margin: 0;
-  background-color: var(--bg);
-  color: white;
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background-color: var(--surface-1);
+  color: var(--text-1);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 15px;
+  line-height: 22px;
   min-height: 100vh;
 }
 
 #root {
   min-height: 100vh;
+}
+
+/* Tabular figures are mandatory on scores, ratings, counts, timers, tables */
+.tnum {
+  font-variant-numeric: tabular-nums;
 }

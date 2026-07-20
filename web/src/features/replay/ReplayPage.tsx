@@ -86,7 +86,7 @@ export function ReplayPage() {
     return (
       <div className="max-w-lg mx-auto p-8 text-center">
         <div className="text-red-400 mb-4">{error ?? 'Game not found'}</div>
-        <button onClick={() => navigate('/')} className="text-[var(--gold)] bg-transparent border-none cursor-pointer">
+        <button onClick={() => navigate('/')} className="text-[var(--green-500)] bg-transparent border-none cursor-pointer">
           Back to Home
         </button>
       </div>
@@ -111,7 +111,7 @@ export function ReplayPage() {
         >
           &larr; Back
         </button>
-        <h1 className="text-lg font-bold text-[var(--gold)]">Game Replay</h1>
+        <h1 className="text-lg font-bold text-[var(--text-1)]">Game Replay</h1>
         <button
           onClick={() => navigate(`/analysis/${gameId}`)}
           className="text-white/60 hover:text-white bg-transparent border-none cursor-pointer text-sm"
@@ -134,7 +134,7 @@ export function ReplayPage() {
           <div className="text-center">
             <div className="text-white text-sm font-medium">{currentSnapshot.description}</div>
             {currentSnapshot.scoring && (
-              <div className="text-[var(--gold)] text-sm">{currentSnapshot.scoring}</div>
+              <div className="text-[var(--green-400)] text-sm">{currentSnapshot.scoring}</div>
             )}
           </div>
         )}
@@ -335,7 +335,7 @@ function ReplayBoard({
         {/* Your info */}
         <div className="flex items-center justify-between px-2">
           <div>
-            <span className="text-[var(--gold)] text-xs font-medium">{you.name}</span>
+            <span className="text-[var(--green-400)] text-xs font-medium">{you.name}</span>
             <span className="text-white font-bold text-lg ml-2">{you.score}</span>
           </div>
         </div>

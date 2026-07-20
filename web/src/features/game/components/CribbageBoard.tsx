@@ -10,11 +10,12 @@ const TOTAL_HOLES = 121
 const GROUP_SIZE = 5
 
 // Colors matching Flutter theme
-const BOARD_BROWN = '#5D4037'
-const BOARD_BROWN_LIGHT = '#795548'
-const BOARD_HOLE = '#3E2723'
-const PEG_GOLD = '#FFD54F'
-const PEG_WHITE = '#EEEEEE'
+// Flattened board per design language: warmth in the tint, not the texture
+const BOARD_BROWN = '#38342f'
+const BOARD_BROWN_LIGHT = '#3d3934'
+const BOARD_HOLE = '#211f1d'
+const PEG_SELF = '#81b64c'
+const PEG_OPP = '#d9d4cc'
 
 /** Computed dimensions proportional to canvas width */
 interface Dims {
@@ -119,8 +120,8 @@ function draw(canvas: HTMLCanvasElement, playerScore: number, opponentScore: num
   // Draw pegs
   const playerPos = scoreToPosition(playerScore, outerHoles)
   const opponentPos = scoreToPosition(opponentScore, innerHoles)
-  drawPeg(ctx, opponentPos, PEG_WHITE, dims)
-  drawPeg(ctx, playerPos, PEG_GOLD, dims)
+  drawPeg(ctx, opponentPos, PEG_OPP, dims)
+  drawPeg(ctx, playerPos, PEG_SELF, dims)
 }
 
 function drawBoardBackground(ctx: CanvasRenderingContext2D, w: number, h: number, dims: Dims) {

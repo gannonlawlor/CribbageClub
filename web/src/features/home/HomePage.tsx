@@ -154,7 +154,7 @@ export function HomePage() {
           {isLoggedIn && (
             <div className="bg-[var(--surface)] rounded-lg border border-[var(--border)] p-4">
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-md bg-[var(--accent)] text-white font-bold flex items-center justify-center text-lg">
+                <div className="w-10 h-10 rounded-md bg-[var(--player-self)] text-[var(--on-green)] font-bold flex items-center justify-center text-lg">
                   {(username ?? '?')[0]?.toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -175,12 +175,17 @@ export function HomePage() {
                 </div>
               </div>
               {isGuest ? (
-                <Link
-                  to="/upgrade"
-                  className="block bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white text-center text-sm font-semibold py-2 rounded-md no-underline transition-colors"
-                >
-                  Create Account to Keep Your Rating
-                </Link>
+                <>
+                  <p className="text-[var(--text-3)] text-xs mb-2">
+                    You're playing unrated. Create an account to keep a rating and your game history.
+                  </p>
+                  <Link
+                    to="/upgrade"
+                    className="block bg-[var(--green-500)] hover:bg-[var(--green-400)] text-[var(--on-green)] text-center text-sm font-bold py-2 rounded-md no-underline transition-colors shadow-[inset_0_-3px_0_var(--green-600)]"
+                  >
+                    Create Account
+                  </Link>
+                </>
               ) : (
                 <div className="flex gap-2 text-xs">
                   <Link to={`/profile/${userId}`} className="flex-1 text-center bg-black/20 hover:bg-black/30 text-white/70 py-1.5 rounded no-underline transition-colors">
@@ -202,7 +207,7 @@ export function HomePage() {
               </p>
               <Link
                 to="/login"
-                className="block bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white text-center text-sm font-semibold py-2 rounded-md no-underline transition-colors"
+                className="block bg-[var(--green-500)] hover:bg-[var(--green-400)] text-[var(--on-green)] text-center text-sm font-bold py-2 rounded-md no-underline transition-colors shadow-[inset_0_-3px_0_var(--green-600)]"
               >
                 Sign Up
               </Link>
@@ -255,23 +260,24 @@ function PlayMenuButton({
   onClick: () => void
   children?: React.ReactNode
 }) {
-  const styles = variant === 'accent'
-    ? 'bg-[var(--accent)] hover:bg-[var(--accent-hover)] border-b-4 border-[var(--accent-dark)]'
-    : 'bg-[var(--surface)] hover:bg-[var(--surface-hover)] border border-[var(--border)]'
+  const isAccent = variant === 'accent'
+  const styles = isAccent
+    ? 'bg-[var(--green-500)] hover:bg-[var(--green-400)] shadow-[inset_0_-4px_0_var(--green-600)]'
+    : 'bg-[var(--surface-2)] hover:bg-[var(--surface-3)] border border-[var(--border-strong)]'
   return (
     <div>
       <button
         onClick={onClick}
         disabled={disabled}
-        className={`${styles} w-full text-left rounded-md px-5 py-3.5 flex items-center gap-4 cursor-pointer active:scale-[0.99] transition-all disabled:opacity-50`}
+        className={`${styles} w-full text-left rounded-lg px-5 py-3.5 flex items-center gap-4 cursor-pointer active:translate-y-[2px] transition-all duration-100 disabled:opacity-50 disabled:shadow-none border-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--green-300)]`}
       >
-        <span className="text-white/90">{icon}</span>
+        <span style={{ color: isAccent ? 'var(--on-green)' : 'var(--text-2)' }}>{icon}</span>
         <span className="flex-1">
-          <span className="block text-white font-bold text-lg leading-tight">{title}</span>
-          <span className={`block text-xs mt-0.5 ${variant === 'accent' ? 'text-white/80' : 'text-white/50'}`}>{subtitle}</span>
+          <span className={`block font-bold text-lg leading-tight ${isAccent ? 'text-[var(--on-green)]' : 'text-[var(--text-1)]'}`}>{title}</span>
+          <span className={`block text-xs mt-0.5 ${isAccent ? 'text-[var(--on-green)]/80' : 'text-[var(--text-3)]'}`}>{subtitle}</span>
         </span>
         {children != null && (
-          <span className={`text-white/60 transition-transform ${expanded ? 'rotate-90' : ''}`}>&#8250;</span>
+          <span className={`transition-transform ${expanded ? 'rotate-90' : ''} ${isAccent ? 'text-[var(--on-green)]/70' : 'text-[var(--text-3)]'}`}>&#8250;</span>
         )}
       </button>
       {expanded && children != null && (

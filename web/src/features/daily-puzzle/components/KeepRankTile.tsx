@@ -13,11 +13,11 @@ export function KeepRankTile({ option, isPlayerPick = false, isOptimal = false, 
   let bgClass = 'bg-white/5'
 
   if (isPlayerPick && isOptimal) {
-    borderClass = 'border border-[var(--gold)]'
-    bgClass = 'bg-[var(--gold)]/15'
+    borderClass = 'border border-[var(--green-500)]'
+    bgClass = 'bg-[var(--green-500)]/15'
   } else if (isPlayerPick) {
-    borderClass = 'border border-[var(--gold)]'
-    bgClass = 'bg-[var(--gold)]/10'
+    borderClass = 'border border-[var(--green-500)]'
+    bgClass = 'bg-[var(--green-500)]/10'
   } else if (isOptimal) {
     borderClass = 'border border-green-500'
     bgClass = 'bg-green-500/10'
@@ -59,7 +59,7 @@ export function KeepRankTile({ option, isPlayerPick = false, isOptimal = false, 
 
       {/* Player pick indicator */}
       {isPlayerPick && (
-        <div className="ml-2 text-[var(--gold)] text-sm" title="Your pick">
+        <div className="ml-2 text-[var(--green-400)] text-sm" title="Your pick">
           &#9733;
         </div>
       )}

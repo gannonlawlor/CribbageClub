@@ -15,7 +15,7 @@ export function FriendsPage() {
   if (!isLoggedIn) {
     return (
       <div className="max-w-2xl mx-auto p-8 text-center">
-        <h1 className="text-2xl font-bold text-[var(--gold)] mb-4">Friends</h1>
+        <h1 className="text-2xl font-bold text-[var(--text-1)] mb-4">Friends</h1>
         <p className="text-white/50">Log in to manage friends.</p>
       </div>
     )
@@ -23,7 +23,7 @@ export function FriendsPage() {
 
   return (
     <div className="max-w-2xl mx-auto p-8">
-      <h1 className="text-2xl font-bold text-[var(--gold)] mb-6">Friends</h1>
+      <h1 className="text-2xl font-bold text-[var(--text-1)] mb-6">Friends</h1>
 
       {/* Tabs */}
       <div className="flex border-b border-white/20 mb-6">
@@ -33,7 +33,7 @@ export function FriendsPage() {
             onClick={() => setActiveTab(tab)}
             className={`px-4 py-2 text-sm font-medium border-b-2 bg-transparent cursor-pointer transition-colors ${
               activeTab === tab
-                ? 'border-[var(--gold)] text-[var(--gold)]'
+                ? 'border-[var(--green-500)] text-[var(--green-500)]'
                 : 'border-transparent text-white/50 hover:text-white/80'
             }`}
           >
@@ -105,7 +105,7 @@ function FriendsTab() {
           </div>
           <button
             onClick={() => handleChallenge(f.userId)}
-            className="text-[var(--gold)] text-sm bg-transparent border border-[var(--gold)]/50 rounded px-3 py-1 cursor-pointer hover:bg-[var(--gold)]/10"
+            className="text-[var(--green-500)] text-sm bg-transparent border border-[var(--green-500)]/50 rounded px-3 py-1 cursor-pointer hover:bg-[var(--green-500)]/10"
           >
             Challenge
           </button>
@@ -311,7 +311,7 @@ function FindTab() {
         placeholder="Search by username..."
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
-        className="w-full bg-white/10 border border-white/20 rounded px-3 py-2 text-white placeholder-white/40 outline-none focus:border-[var(--gold)] mb-4"
+        className="w-full bg-white/10 border border-white/20 rounded px-3 py-2 text-white placeholder-white/40 outline-none focus:border-[var(--green-300)] mb-4"
       />
 
       {isSearching && <div className="text-white/50 text-center py-4 text-sm">Searching...</div>}
@@ -340,7 +340,7 @@ function FindTab() {
                   {!u.relationshipStatus && (
                     <button
                       onClick={() => handleSendRequest(u.username)}
-                      className="text-[var(--gold)] text-sm bg-transparent border border-[var(--gold)]/50 rounded px-3 py-1 cursor-pointer hover:bg-[var(--gold)]/10"
+                      className="text-[var(--green-500)] text-sm bg-transparent border border-[var(--green-500)]/50 rounded px-3 py-1 cursor-pointer hover:bg-[var(--green-500)]/10"
                     >
                       Add Friend
                     </button>

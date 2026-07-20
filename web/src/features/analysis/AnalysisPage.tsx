@@ -63,7 +63,7 @@ export function AnalysisPage() {
         <div className="text-red-400 mb-4">{error ?? 'Analysis unavailable'}</div>
         <button
           onClick={() => navigate('/')}
-          className="text-[var(--gold)] bg-transparent border-none cursor-pointer"
+          className="text-[var(--green-500)] bg-transparent border-none cursor-pointer"
         >
           Back to Home
         </button>
@@ -162,7 +162,7 @@ function RoundCard({ round, playerId }: { round: RoundAnalysis; playerId: string
       <div className="p-3 flex items-center">
         <span className="text-white font-bold">Round {round.roundNumber}</span>
         {myAnalysis.isDealer && (
-          <span className="ml-2 px-1.5 py-0.5 bg-[var(--gold)]/20 text-[var(--gold)] text-xs rounded">
+          <span className="ml-2 px-1.5 py-0.5 bg-[var(--green-500)]/20 text-[var(--green-400)] text-xs rounded">
             Dealer
           </span>
         )}

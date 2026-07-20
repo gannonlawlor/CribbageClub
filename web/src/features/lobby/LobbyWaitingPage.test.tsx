@@ -52,7 +52,7 @@ describe('LobbyWaitingPage', () => {
     await waitFor(() => {
       expect(screen.getByText('CRIB-ABC1')).toBeInTheDocument()
     })
-    expect(screen.getByText('Copy')).toBeInTheDocument()
+    expect(screen.getByText('Click to copy')).toBeInTheDocument()
     expect(screen.getByText('TestUser')).toBeInTheDocument()
   })
 
@@ -72,14 +72,14 @@ describe('LobbyWaitingPage', () => {
     renderLobbyPage()
 
     await waitFor(() => {
-      expect(screen.getByText('Copy')).toBeInTheDocument()
+      expect(screen.getByText('CRIB-XY99')).toBeInTheDocument()
     })
 
-    await user.click(screen.getByText('Copy'))
+    await user.click(screen.getByText('CRIB-XY99'))
 
-    // "Copied!" feedback confirms clipboard.writeText was called and resolved
+    // "Copied" feedback confirms clipboard.writeText was called and resolved
     await waitFor(() => {
-      expect(screen.getByText('Copied!')).toBeInTheDocument()
+      expect(screen.getByText('Copied')).toBeInTheDocument()
     })
   })
 

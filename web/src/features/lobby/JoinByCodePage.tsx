@@ -30,7 +30,7 @@ export function JoinByCodePage() {
 
   return (
     <div className="max-w-md mx-auto p-8">
-      <h1 className="text-2xl font-bold text-[var(--gold)] mb-6 text-center">Join by Code</h1>
+      <h1 className="text-2xl font-bold text-[var(--text-1)] mb-6 text-center">Join by Code</h1>
 
       {error && (
         <div className="bg-red-500/20 border border-red-500/50 rounded-lg px-4 py-2 mb-4">
@@ -44,7 +44,7 @@ export function JoinByCodePage() {
           placeholder="Enter invite code"
           value={code}
           onChange={(e) => setCode(e.target.value.toUpperCase())}
-          className="w-full bg-white/10 border border-white/20 rounded px-4 py-3 text-white text-center text-2xl font-mono tracking-widest placeholder-white/40 outline-none focus:border-[var(--gold)]"
+          className="w-full bg-white/10 border border-white/20 rounded px-4 py-3 text-white text-center text-2xl font-mono tracking-widest placeholder-white/40 outline-none focus:border-[var(--green-300)]"
           autoFocus
         />
         <button

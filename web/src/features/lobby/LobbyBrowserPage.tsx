@@ -61,7 +61,7 @@ export function LobbyBrowserPage() {
           <button
             onClick={handleQuickMatch}
             disabled={isBusy}
-            className="bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white px-5 py-2 rounded-md font-bold text-sm border-b-2 border-[var(--accent-dark)] cursor-pointer disabled:opacity-50 transition-colors"
+            className="bg-[var(--green-500)] hover:bg-[var(--green-400)] text-[var(--on-green)] px-5 py-2 rounded-md font-bold text-sm shadow-[inset_0_-3px_0_var(--green-600)] border-none cursor-pointer disabled:opacity-50 disabled:shadow-none transition-colors"
           >
             Quick Match
           </button>
@@ -98,7 +98,7 @@ export function LobbyBrowserPage() {
             <div className="text-white/50 text-sm mb-3">{lobbies.error}</div>
             <button
               onClick={() => navigate('/login')}
-              className="bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white px-5 py-2 rounded-md font-bold text-sm border-none cursor-pointer transition-colors"
+              className="bg-[var(--green-500)] hover:bg-[var(--green-400)] text-[var(--on-green)] px-5 py-2 rounded-md font-bold text-sm border-none cursor-pointer transition-colors"
             >
               Create Free Account
             </button>
@@ -128,7 +128,7 @@ export function LobbyBrowserPage() {
             </span>
             <button
               onClick={() => handleJoin(lobby.id)}
-              className="w-20 bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white py-1.5 rounded-md font-bold text-sm border-none cursor-pointer transition-colors"
+              className="w-20 bg-[var(--green-500)] hover:bg-[var(--green-400)] text-[var(--on-green)] py-1.5 rounded-md font-bold text-sm border-none cursor-pointer transition-colors"
             >
               Join
             </button>
