@@ -200,7 +200,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
       decoration: BoxDecoration(
-        color: colors.accent.withValues(alpha: 0.1),
+        color: colors.ratingGold.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -208,7 +208,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           Text(
             '${p.rating.round()}',
             style: TextStyle(
-              color: colors.accent,
+              color: colors.ratingGold,
               fontSize: 48,
               fontWeight: FontWeight.bold,
             ),
