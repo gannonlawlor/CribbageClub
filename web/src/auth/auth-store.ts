@@ -39,7 +39,7 @@ function clearAuth() {
   localStorage.removeItem(IS_GUEST_KEY)
 }
 
-export const useAuthStore = create<AuthState>((set, get) => ({
+export const useAuthStore = create<AuthState>((set) => ({
   token: null,
   userId: null,
   username: null,
@@ -47,9 +47,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   isLoading: false,
   error: null,
 
-  get isLoggedIn() {
-    return get().token != null
-  },
+  // Kept as a plain flag updated alongside token: zustand's set() merges with
+  // Object.assign, which would collapse a getter into a stale snapshot value.
+  isLoggedIn: false,
 
   loadSavedAuth: () => {
     const token = localStorage.getItem(TOKEN_KEY)
@@ -58,7 +58,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     const isGuest = localStorage.getItem(IS_GUEST_KEY) === 'true'
 
     if (token && userId) {
-      set({ token, userId, username, isGuest })
+      set({ token, userId, username, isGuest, isLoggedIn: true })
     }
   },
 
@@ -67,7 +67,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       const res = await http.post<AuthResponse>('/api/auth/login', req)
       persistAuth(res)
-      set({ token: res.token, userId: res.userId, username: res.username, isGuest: res.isGuest, isLoading: false })
+      set({ token: res.token, userId: res.userId, username: res.username, isGuest: res.isGuest, isLoading: false, isLoggedIn: true })
     } catch (e) {
       set({ isLoading: false, error: e instanceof Error ? e.message : 'Login failed' })
       throw e
@@ -79,7 +79,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       const res = await http.post<AuthResponse>('/api/auth/register', req)
       persistAuth(res)
-      set({ token: res.token, userId: res.userId, username: res.username, isGuest: false, isLoading: false })
+      set({ token: res.token, userId: res.userId, username: res.username, isGuest: false, isLoading: false, isLoggedIn: true })
     } catch (e) {
       set({ isLoading: false, error: e instanceof Error ? e.message : 'Registration failed' })
       throw e
@@ -91,7 +91,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       const res = await http.post<AuthResponse>('/api/auth/guest')
       persistAuth(res)
-      set({ token: res.token, userId: res.userId, username: res.username, isGuest: true, isLoading: false })
+      set({ token: res.token, userId: res.userId, username: res.username, isGuest: true, isLoading: false, isLoggedIn: true })
     } catch (e) {
       set({ isLoading: false, error: e instanceof Error ? e.message : 'Guest login failed' })
       throw e
@@ -103,7 +103,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       const res = await http.post<AuthResponse>('/api/auth/upgrade', req)
       persistAuth(res)
-      set({ token: res.token, userId: res.userId, username: res.username, isGuest: false, isLoading: false })
+      set({ token: res.token, userId: res.userId, username: res.username, isGuest: false, isLoading: false, isLoggedIn: true })
     } catch (e) {
       set({ isLoading: false, error: e instanceof Error ? e.message : 'Upgrade failed' })
       throw e
@@ -112,6 +112,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   logout: () => {
     clearAuth()
-    set({ token: null, userId: null, username: null, isGuest: false, error: null })
+    set({ token: null, userId: null, username: null, isGuest: false, error: null, isLoggedIn: false })
   },
 }))

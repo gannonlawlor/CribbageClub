@@ -69,11 +69,7 @@ export function LobbyWaitingPage() {
   const l = lobby.data
 
   return (
-    <div className="max-w-md mx-auto p-8 text-center">
-      <h1 className="text-2xl font-bold text-[var(--gold)] mb-2">
-        {l?.name ?? 'Lobby'}
-      </h1>
-
+    <div className="max-w-md mx-auto p-6 lg:p-10">
       {error && (
         <div className="bg-red-500/20 border border-red-500/50 rounded px-3 py-2 mb-4 flex items-center justify-between">
           <span className="text-red-300 text-sm">{error}</span>
@@ -81,39 +77,60 @@ export function LobbyWaitingPage() {
         </div>
       )}
 
-      {l?.inviteCode && (
-        <div className="mb-6">
-          <div className="text-white/50 text-sm mb-1">Invite Code</div>
-          <div className="flex items-center justify-center gap-3">
-            <div className="text-white text-3xl font-mono tracking-widest">{l.inviteCode}</div>
-            <button
-              onClick={() => handleCopy(l.inviteCode!)}
-              className="text-white/60 hover:text-white bg-white/10 hover:bg-white/20 border-none rounded px-3 py-1.5 text-sm cursor-pointer transition-colors"
-            >
-              {copied ? 'Copied!' : 'Copy'}
-            </button>
+      <div className="bg-[var(--surface)] rounded-lg border border-[var(--border)] overflow-hidden">
+        <div className="px-5 py-4 border-b border-[var(--border)]">
+          <h1 className="text-lg font-extrabold text-white">{l?.name ?? 'Lobby'}</h1>
+          <div className="text-white/40 text-xs mt-0.5">
+            {l?.isPrivate ? 'Private lobby' : 'Open lobby'}
           </div>
         </div>
-      )}
 
-      <div className="bg-white/5 rounded-lg p-4 mb-6">
-        <div className="text-white/60 text-sm mb-2">
-          Players ({l?.players.length ?? 0}/{l?.maxPlayers ?? 2})
-        </div>
-        {l?.players.map((p) => (
-          <div key={p.id} className="text-white py-1">{p.name}</div>
-        ))}
-        {(l?.players.length ?? 0) < (l?.maxPlayers ?? 2) && (
-          <div className="text-white/30 py-1 animate-pulse">Waiting for opponent...</div>
+        {l?.inviteCode && (
+          <div className="px-5 py-4 border-b border-[var(--border)] text-center">
+            <div className="text-white/40 text-xs uppercase tracking-wider mb-2">Invite Code</div>
+            <div className="flex items-center justify-center gap-3">
+              <div className="text-white text-3xl font-mono font-bold tracking-[0.3em] bg-black/25 rounded-md px-4 py-2">
+                {l.inviteCode}
+              </div>
+              <button
+                onClick={() => handleCopy(l.inviteCode!)}
+                className="text-white/70 hover:text-white bg-[var(--surface-hover)] hover:bg-black/30 border border-[var(--border)] rounded-md px-3 py-2 text-sm cursor-pointer transition-colors"
+              >
+                {copied ? 'Copied!' : 'Copy'}
+              </button>
+            </div>
+          </div>
         )}
+
+        <div className="px-5 py-4">
+          <div className="text-white/40 text-xs uppercase tracking-wider mb-3">
+            Players ({l?.players.length ?? 0}/{l?.maxPlayers ?? 2})
+          </div>
+          {l?.players.map((p) => (
+            <div key={p.id} className="flex items-center gap-3 py-1.5">
+              <div className="w-8 h-8 rounded-md bg-[var(--accent)] text-white text-sm font-bold flex items-center justify-center">
+                {p.name[0]?.toUpperCase()}
+              </div>
+              <span className="text-white text-sm font-medium">{p.name}</span>
+            </div>
+          ))}
+          {(l?.players.length ?? 0) < (l?.maxPlayers ?? 2) && (
+            <div className="flex items-center gap-3 py-1.5">
+              <div className="w-8 h-8 rounded-md bg-black/25 border border-dashed border-white/20" />
+              <span className="text-white/30 text-sm animate-pulse">Waiting for opponent...</span>
+            </div>
+          )}
+        </div>
       </div>
 
-      <button
-        onClick={handleLeave}
-        className="text-red-400/60 text-sm bg-transparent border-none cursor-pointer hover:text-red-400"
-      >
-        Leave Lobby
-      </button>
+      <div className="text-center mt-4">
+        <button
+          onClick={handleLeave}
+          className="text-red-400/60 text-sm bg-transparent border-none cursor-pointer hover:text-red-400"
+        >
+          Leave Lobby
+        </button>
+      </div>
     </div>
   )
 }

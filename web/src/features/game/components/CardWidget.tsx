@@ -97,7 +97,7 @@ function CardBack({ width }: { width: number }) {
     <div
       className="w-full h-full rounded-md"
       style={{
-        background: 'linear-gradient(135deg, #2E7D32, #1B5E20)',
+        background: 'linear-gradient(135deg, #5d9948, #45753c)',
       }}
     >
       <div

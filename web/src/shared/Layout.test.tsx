@@ -21,10 +21,12 @@ afterEach(() => {
   })
 })
 
+// The layout renders both the desktop sidebar and the mobile top bar
+// (visibility is CSS-only), so shared labels appear twice in jsdom.
 describe('Layout', () => {
-  it('shows Sign In link when logged out', () => {
+  it('shows Log In link when logged out', () => {
     renderWithRouter(<Layout />)
-    expect(screen.getByText('Sign In')).toBeInTheDocument()
+    expect(screen.getAllByText('Log In').length).toBeGreaterThan(0)
     expect(screen.queryByText('Friends')).not.toBeInTheDocument()
   })
 
@@ -39,12 +41,12 @@ describe('Layout', () => {
     mockApi.getNotificationCount.mockResolvedValue({ friendRequests: 0, challenges: 0, total: 0 })
 
     renderWithRouter(<Layout />)
-    expect(screen.getByText('Friends')).toBeInTheDocument()
+    expect(screen.getAllByText('Friends').length).toBeGreaterThan(0)
     expect(screen.getByText('testuser')).toBeInTheDocument()
-    expect(screen.getByText('Logout')).toBeInTheDocument()
+    expect(screen.getAllByText('Log Out').length).toBeGreaterThan(0)
   })
 
-  it('hides Friends link for guest users', () => {
+  it('hides Friends link and offers Sign Up for guest users', () => {
     useAuthStore.setState({
       token: 'test-token',
       userId: 'u1',
@@ -55,7 +57,7 @@ describe('Layout', () => {
 
     renderWithRouter(<Layout />)
     expect(screen.queryByText('Friends')).not.toBeInTheDocument()
-    expect(screen.getByText('Upgrade')).toBeInTheDocument()
+    expect(screen.getAllByText('Sign Up').length).toBeGreaterThan(0)
   })
 
   it('shows notification badge when count > 0', async () => {
@@ -71,7 +73,7 @@ describe('Layout', () => {
     renderWithRouter(<Layout />)
 
     await waitFor(() => {
-      expect(screen.getByText('3')).toBeInTheDocument()
+      expect(screen.getAllByText('3').length).toBeGreaterThan(0)
     })
   })
 

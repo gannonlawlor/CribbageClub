@@ -11,11 +11,15 @@ export function HomePage() {
   const navigate = useNavigate()
   const [isCreating, setIsCreating] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
-  const [showDifficultyPicker, setShowDifficultyPicker] = useState(false)
-  const [showOnlineOptions, setShowOnlineOptions] = useState(false)
+  const [expanded, setExpanded] = useState<'online' | 'ai' | null>(null)
 
   const activeGames = useAsync(
     () => isLoggedIn ? api.getMyActiveGames() : Promise.resolve([]),
+    [isLoggedIn],
+  )
+
+  const myStats = useAsync(
+    () => isLoggedIn ? api.getMyStats().catch(() => null) : Promise.resolve(null),
     [isLoggedIn],
   )
 
@@ -29,7 +33,7 @@ export function HomePage() {
   async function createAIGame(difficulty: string) {
     setIsCreating(true)
     setCreateError(null)
-    setShowDifficultyPicker(false)
+    setExpanded(null)
     try {
       await ensureAuth()
       const game = await api.createAIGame({ difficulty })
@@ -43,7 +47,7 @@ export function HomePage() {
   async function handleQuickMatch() {
     setIsCreating(true)
     setCreateError(null)
-    setShowOnlineOptions(false)
+    setExpanded(null)
     try {
       await ensureAuth()
       const result = await api.quickMatch()
@@ -61,7 +65,7 @@ export function HomePage() {
   async function handleCreatePrivate() {
     setIsCreating(true)
     setCreateError(null)
-    setShowOnlineOptions(false)
+    setExpanded(null)
     try {
       await ensureAuth()
       const currentUsername = useAuthStore.getState().username
@@ -73,131 +77,220 @@ export function HomePage() {
     }
   }
 
+  const stats = myStats.data
+
   return (
-    <div className="max-w-md mx-auto p-8">
+    <div className="max-w-5xl mx-auto p-6 lg:p-10">
       {/* Error banner */}
       {createError && (
-        <div className="bg-red-500/20 border border-red-500/50 rounded-lg px-4 py-2 mb-4 flex items-center justify-between">
+        <div className="bg-red-500/20 border border-red-500/50 rounded-lg px-4 py-2 mb-6 flex items-center justify-between">
           <span className="text-red-300 text-sm">{createError}</span>
           <button onClick={() => setCreateError(null)} className="text-red-300 bg-transparent border-none cursor-pointer text-sm ml-2">x</button>
         </div>
       )}
 
-      {/* Guest upgrade banner */}
-      {isLoggedIn && isGuest && (
-        <div className="border border-[var(--gold)] rounded-lg p-4 mb-6 bg-[var(--gold)]/10">
-          <div className="flex items-center gap-3">
-            <span className="text-[var(--gold)]">i</span>
-            <span className="text-white/70 text-sm flex-1">
-              Create an account to save your progress and stats.
-            </span>
-            <Link to="/upgrade" className="text-[var(--gold)] text-sm font-bold no-underline hover:underline">
-              Upgrade
-            </Link>
+      <div className="grid lg:grid-cols-[1fr_320px] gap-8 items-start">
+        {/* ── Left: play menu ── */}
+        <div>
+          <h1 className="text-2xl lg:text-3xl font-extrabold text-white mb-6">
+            {isLoggedIn ? 'Play Cribbage' : 'Play Cribbage Online'}
+          </h1>
+
+          <div className="flex flex-col gap-3 max-w-xl">
+            {/* Play Online */}
+            <PlayMenuButton
+              title="Play Online"
+              subtitle="Rated matchmaking against real players"
+              icon={<BoltIcon />}
+              variant="accent"
+              disabled={isCreating}
+              expanded={expanded === 'online'}
+              onClick={() => setExpanded(expanded === 'online' ? null : 'online')}
+            >
+              <SubOption label="Quick Match" desc="Find a rated game instantly" onClick={handleQuickMatch} />
+              <SubOption label="Browse Lobbies" desc="Join an open lobby" onClick={() => { setExpanded(null); navigate('/lobbies') }} />
+              <SubOption label="Play a Friend" desc="Private lobby with invite code" onClick={handleCreatePrivate} />
+              <SubOption label="Join by Code" desc="Enter an invite code" onClick={() => { setExpanded(null); navigate('/join') }} />
+            </PlayMenuButton>
+
+            {/* Play Computer */}
+            <PlayMenuButton
+              title="Play Computer"
+              subtitle="Engine opponents at three strengths"
+              icon={<CpuIcon />}
+              variant="surface"
+              disabled={isCreating}
+              expanded={expanded === 'ai'}
+              onClick={() => setExpanded(expanded === 'ai' ? null : 'ai')}
+            >
+              <SubOption label="Easy" desc="Casual heuristics" onClick={() => createAIGame('basic')} />
+              <SubOption label="Medium" desc="Optimizes hand scoring" onClick={() => createAIGame('medium')} />
+              <SubOption label="Hard" desc="Full hand + crib optimization" onClick={() => createAIGame('hard')} />
+            </PlayMenuButton>
+
+            {/* Puzzles */}
+            <PlayMenuButton
+              title="Daily Challenge"
+              subtitle="Five new discard puzzles every day"
+              icon={<TargetIcon />}
+              variant="surface"
+              disabled={isCreating}
+              onClick={() => navigate('/daily-puzzle')}
+            />
+            <PlayMenuButton
+              title="Practice Puzzles"
+              subtitle="Unlimited positions, instant analysis"
+              icon={<PuzzlePieceIcon />}
+              variant="surface"
+              disabled={isCreating}
+              onClick={() => navigate('/puzzle')}
+            />
           </div>
         </div>
-      )}
 
-      {/* Active games */}
-      {activeGames.data && activeGames.data.length > 0 && (
-        <div className="mb-6">
-          <h2 className="text-white font-bold text-lg mb-2">Continue Game</h2>
-          {activeGames.data.map((game) => (
-            <ActiveGameTile key={game.gameId} game={game} playerId={userId ?? ''} />
-          ))}
-        </div>
-      )}
+        {/* ── Right: rating, active games ── */}
+        <div className="flex flex-col gap-4">
+          {/* Rating card */}
+          {isLoggedIn && (
+            <div className="bg-[var(--surface)] rounded-lg border border-[var(--border)] p-4">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-md bg-[var(--accent)] text-white font-bold flex items-center justify-center text-lg">
+                  {(username ?? '?')[0]?.toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-white font-semibold text-sm truncate">
+                    {username}{isGuest && <span className="text-white/40 font-normal"> (guest)</span>}
+                  </div>
+                  {stats != null && (
+                    <div className="text-white/40 text-xs">
+                      {stats.gamesWon}W / {stats.gamesLost}L &middot; {stats.gamesPlayed} games
+                    </div>
+                  )}
+                </div>
+                <div className="text-right">
+                  <div className="text-[var(--gold)] font-extrabold text-2xl tabular-nums leading-none">
+                    {stats?.rating ?? '—'}
+                  </div>
+                  <div className="text-white/40 text-[10px] uppercase tracking-wider mt-0.5">Rating</div>
+                </div>
+              </div>
+              {isGuest ? (
+                <Link
+                  to="/upgrade"
+                  className="block bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white text-center text-sm font-semibold py-2 rounded-md no-underline transition-colors"
+                >
+                  Create Account to Keep Your Rating
+                </Link>
+              ) : (
+                <div className="flex gap-2 text-xs">
+                  <Link to={`/profile/${userId}`} className="flex-1 text-center bg-black/20 hover:bg-black/30 text-white/70 py-1.5 rounded no-underline transition-colors">
+                    Profile
+                  </Link>
+                  <Link to="/history" className="flex-1 text-center bg-black/20 hover:bg-black/30 text-white/70 py-1.5 rounded no-underline transition-colors">
+                    Game Archive
+                  </Link>
+                </div>
+              )}
+            </div>
+          )}
 
-      <h1 className="text-2xl font-bold text-[var(--gold)] mb-6 text-center">
-        {isLoggedIn ? `Welcome, ${username}` : 'Cribbage Club'}
-      </h1>
+          {!isLoggedIn && (
+            <div className="bg-[var(--surface)] rounded-lg border border-[var(--border)] p-4">
+              <div className="text-white font-semibold mb-1">New here?</div>
+              <p className="text-white/50 text-sm mb-3">
+                Create a free account to get a rating and climb the leaderboard.
+              </p>
+              <Link
+                to="/login"
+                className="block bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white text-center text-sm font-semibold py-2 rounded-md no-underline transition-colors"
+              >
+                Sign Up
+              </Link>
+            </div>
+          )}
 
-      {!isLoggedIn && (
-        <p className="text-white/60 text-center mb-6 -mt-4 text-sm">
-          Play cribbage online against AI or friends.
-        </p>
-      )}
+          {/* Active games */}
+          {activeGames.data && activeGames.data.length > 0 && (
+            <div className="bg-[var(--surface)] rounded-lg border border-[var(--border)] overflow-hidden">
+              <div className="px-4 py-2.5 border-b border-[var(--border)] text-white/70 text-xs font-bold uppercase tracking-wider">
+                Games in Progress
+              </div>
+              {activeGames.data.map((game) => (
+                <ActiveGameTile key={game.gameId} game={game} playerId={userId ?? ''} />
+              ))}
+            </div>
+          )}
 
-      {/* Play vs AI */}
-      <div className="relative mb-3">
-        <button
-          onClick={() => setShowDifficultyPicker(!showDifficultyPicker)}
-          disabled={isCreating}
-          className="w-full bg-[var(--gold)] text-black font-semibold py-3 rounded hover:bg-[var(--gold-light)] disabled:opacity-50 text-lg border-none cursor-pointer"
-        >
-          Play vs AI
-        </button>
-        {showDifficultyPicker && (
-          <div className="absolute z-10 mt-1 w-full bg-[var(--felt-green)] border border-white/20 rounded-lg shadow-lg overflow-hidden">
-            <DifficultyOption label="Easy" desc="Basic heuristics" onClick={() => createAIGame('basic')} />
-            <DifficultyOption label="Medium" desc="Optimizes hand scoring" onClick={() => createAIGame('medium')} />
-            <DifficultyOption label="Hard" desc="Hand + crib optimization" onClick={() => createAIGame('hard')} />
-          </div>
-        )}
-      </div>
-
-      {/* Play Online */}
-      <div className="relative mb-3">
-        <button
-          onClick={() => setShowOnlineOptions(!showOnlineOptions)}
-          disabled={isCreating}
-          className="w-full bg-[var(--gold)] text-black font-semibold py-3 rounded hover:bg-[var(--gold-light)] disabled:opacity-50 text-lg border-none cursor-pointer"
-        >
-          Play Online
-        </button>
-        {showOnlineOptions && (
-          <div className="absolute z-10 mt-1 w-full bg-[var(--felt-green)] border border-white/20 rounded-lg shadow-lg overflow-hidden">
-            <DifficultyOption label="Quick Game" desc="Find a match instantly" onClick={handleQuickMatch} />
-            <DifficultyOption label="Browse Lobbies" desc="Join an open lobby" onClick={() => { setShowOnlineOptions(false); navigate('/lobbies') }} />
-            <DifficultyOption label="Create Private" desc="Invite a friend by code" onClick={handleCreatePrivate} />
-            <DifficultyOption label="Join by Code" desc="Enter an invite code" onClick={() => { setShowOnlineOptions(false); navigate('/join') }} />
-          </div>
-        )}
-      </div>
-
-      {/* Daily Challenge */}
-      <button
-        onClick={() => navigate('/daily-puzzle')}
-        className="w-full border border-orange-500 text-white py-3 rounded bg-transparent hover:bg-white/5 text-lg mb-3 cursor-pointer"
-      >
-        Daily Challenge
-      </button>
-
-      {/* Practice Puzzles */}
-      <button
-        onClick={() => navigate('/puzzle')}
-        className="w-full border border-white/30 text-white py-3 rounded bg-transparent hover:bg-white/5 text-lg mb-6 cursor-pointer"
-      >
-        Practice Puzzles
-      </button>
-
-      {/* Bottom links */}
-      <div className="flex justify-center gap-4 text-sm">
-        {isLoggedIn && !isGuest && (
-          <Link to="/friends" className="text-white/70 hover:text-white no-underline">Friends</Link>
-        )}
-        {isLoggedIn && (
-          <Link to="/history" className="text-white/70 hover:text-white no-underline">History</Link>
-        )}
-        <Link to="/leaderboard" className="text-white/70 hover:text-white no-underline">Leaderboard</Link>
-        {!isLoggedIn && (
-          <Link to="/login" className="text-[var(--gold)] hover:text-[var(--gold-light)] no-underline">
-            Sign In
+          {/* Leaderboard link */}
+          <Link
+            to="/leaderboard"
+            className="flex items-center gap-3 bg-[var(--surface)] hover:bg-[var(--surface-hover)] rounded-lg border border-[var(--border)] px-4 py-3 no-underline transition-colors"
+          >
+            <span className="text-[var(--gold)]"><TrophySmallIcon /></span>
+            <span className="text-white/80 text-sm font-semibold flex-1">Leaderboard</span>
+            <span className="text-white/30">&#8250;</span>
           </Link>
-        )}
+        </div>
       </div>
     </div>
   )
 }
 
-function DifficultyOption({ label, desc, onClick }: { label: string; desc: string; onClick: () => void }) {
+function PlayMenuButton({
+  title,
+  subtitle,
+  icon,
+  variant,
+  disabled,
+  expanded,
+  onClick,
+  children,
+}: {
+  title: string
+  subtitle: string
+  icon: React.ReactNode
+  variant: 'accent' | 'surface'
+  disabled?: boolean
+  expanded?: boolean
+  onClick: () => void
+  children?: React.ReactNode
+}) {
+  const styles = variant === 'accent'
+    ? 'bg-[var(--accent)] hover:bg-[var(--accent-hover)] border-b-4 border-[var(--accent-dark)]'
+    : 'bg-[var(--surface)] hover:bg-[var(--surface-hover)] border border-[var(--border)]'
+  return (
+    <div>
+      <button
+        onClick={onClick}
+        disabled={disabled}
+        className={`${styles} w-full text-left rounded-md px-5 py-3.5 flex items-center gap-4 cursor-pointer active:scale-[0.99] transition-all disabled:opacity-50`}
+      >
+        <span className="text-white/90">{icon}</span>
+        <span className="flex-1">
+          <span className="block text-white font-bold text-lg leading-tight">{title}</span>
+          <span className={`block text-xs mt-0.5 ${variant === 'accent' ? 'text-white/80' : 'text-white/50'}`}>{subtitle}</span>
+        </span>
+        {children != null && (
+          <span className={`text-white/60 transition-transform ${expanded ? 'rotate-90' : ''}`}>&#8250;</span>
+        )}
+      </button>
+      {expanded && children != null && (
+        <div className="mt-1 bg-[var(--bg-deep)] border border-[var(--border)] rounded-md overflow-hidden">
+          {children}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function SubOption({ label, desc, onClick }: { label: string; desc: string; onClick: () => void }) {
   return (
     <button
       onClick={onClick}
-      className="w-full text-left px-4 py-3 hover:bg-white/10 transition-colors bg-transparent border-none cursor-pointer"
+      className="w-full text-left px-5 py-2.5 hover:bg-[var(--surface)] transition-colors bg-transparent border-none cursor-pointer"
     >
-      <div className="text-white font-medium">{label}</div>
-      <div className="text-white/50 text-xs">{desc}</div>
+      <div className="text-white font-semibold text-sm">{label}</div>
+      <div className="text-white/40 text-xs">{desc}</div>
     </button>
   )
 }
@@ -210,18 +303,64 @@ function ActiveGameTile({ game, playerId }: { game: GameState; playerId: string 
   return (
     <Link
       to={`/game/${game.gameId}`}
-      className="block bg-white/10 rounded-lg px-4 py-3 mb-2 no-underline hover:bg-white/15 transition-colors"
+      className="flex items-center gap-3 px-4 py-2.5 no-underline hover:bg-[var(--surface-hover)] transition-colors border-b border-[var(--border)] last:border-b-0"
     >
-      <div className="flex items-center gap-3">
-        <span className="text-[var(--gold)]">&#9654;</span>
-        <div className="flex-1">
-          <div className="text-white text-sm">vs {opponent.name}</div>
-          <div className="text-white/50 text-xs">
-            {GAME_STAGE_DISPLAY[game.stage]} — {player.score} to {opponent.score}
-          </div>
+      <span className="text-[var(--accent)] text-xs">&#9654;</span>
+      <div className="flex-1 min-w-0">
+        <div className="text-white text-sm truncate">vs {opponent.name}</div>
+        <div className="text-white/40 text-xs">
+          {GAME_STAGE_DISPLAY[game.stage]} &middot; {player.score}&ndash;{opponent.score}
         </div>
-        <span className="text-white/30">&#8250;</span>
       </div>
+      <span className="text-white/30">&#8250;</span>
     </Link>
+  )
+}
+
+function BoltIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className="w-7 h-7">
+      <path d="M13 2 4 14h6l-1 8 9-12h-6z" />
+    </svg>
+  )
+}
+
+function CpuIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-7 h-7">
+      <rect x="5" y="5" width="14" height="14" rx="2" />
+      <rect x="10" y="10" width="4" height="4" />
+      <path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3" />
+    </svg>
+  )
+}
+
+function TargetIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-7 h-7">
+      <circle cx="12" cy="12" r="9" />
+      <circle cx="12" cy="12" r="5" />
+      <circle cx="12" cy="12" r="1" fill="currentColor" />
+    </svg>
+  )
+}
+
+function PuzzlePieceIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-7 h-7">
+      <rect x="4" y="4" width="7" height="7" rx="1" />
+      <rect x="13" y="4" width="7" height="7" rx="1" />
+      <rect x="4" y="13" width="7" height="7" rx="1" />
+      <rect x="13" y="13" width="7" height="7" rx="1" />
+    </svg>
+  )
+}
+
+function TrophySmallIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
+      <path d="M8 21h8M12 17v4M7 4h10v6a5 5 0 0 1-10 0z" />
+      <path d="M7 6H4v2a3 3 0 0 0 3 3M17 6h3v2a3 3 0 0 1-3 3" />
+    </svg>
   )
 }

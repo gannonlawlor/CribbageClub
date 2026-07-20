@@ -1,6 +1,8 @@
 import { useNavigate } from 'react-router'
 import { motion } from 'motion/react'
 import { useAuthStore } from '@/auth/auth-store'
+import { useAsync } from '@/shared/hooks'
+import * as api from '@/api/rest-client'
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -10,6 +12,7 @@ const fadeUp = {
 export function LandingPage() {
   const navigate = useNavigate()
   const loginAsGuest = useAuthStore((s) => s.loginAsGuest)
+  const leaderboard = useAsync(() => api.getLeaderboard().catch(() => []))
 
   async function handlePlayNow() {
     await loginAsGuest()
@@ -17,128 +20,173 @@ export function LandingPage() {
   }
 
   return (
-    <div className="-mt-[1px]">
-      {/* Hero */}
-      <section className="min-h-[calc(100vh-52px)] flex items-center bg-gradient-to-br from-[var(--felt-green-dark)] to-[#0a2e0f]">
-        <div className="max-w-5xl mx-auto px-6 py-16 grid lg:grid-cols-2 gap-12 items-center">
+    <div>
+      {/* ── Hero ── */}
+      <section className="min-h-[calc(100vh-52px)] lg:min-h-screen flex items-center bg-[var(--bg)]">
+        <div className="max-w-6xl mx-auto px-6 py-16 grid lg:grid-cols-2 gap-14 items-center w-full">
+          <div className="hidden lg:block">
+            <GameSnapshot />
+          </div>
+
           <div>
-            <h1 className="text-5xl lg:text-6xl font-extrabold text-[var(--card-white)] leading-tight mb-5">
-              The Card Game.<br />
-              <span className="text-[var(--gold)]">Elevated.</span>
+            <h1 className="text-4xl lg:text-5xl font-extrabold text-white leading-tight mb-4">
+              Play Cribbage Online<br />on the Rated Ladder
             </h1>
-            <p className="text-lg text-white/70 leading-relaxed mb-8 max-w-md">
-              A modern cribbage experience with real-time multiplayer, AI opponents at every skill level, and deep post-game analysis. Play anywhere.
+            <p className="text-lg text-white/60 leading-relaxed mb-8 max-w-md">
+              Real opponents, Glicko-2 ratings, and engine-backed analysis of
+              every discard. Built for players who keep score.
             </p>
-            <div className="flex flex-wrap gap-3">
-              <button
+            <div className="flex flex-col gap-3 max-w-sm">
+              <BigCta
                 onClick={handlePlayNow}
-                className="bg-[var(--gold)] text-black font-semibold text-lg px-8 py-3 rounded-lg hover:bg-[var(--gold-light)] active:scale-[0.97] transition-all border-none cursor-pointer"
-              >
-                Play Now
-              </button>
+                title="Play Online"
+                subtitle="Rated matchmaking against real players"
+                variant="accent"
+                icon={<BoltIcon />}
+              />
+              <BigCta
+                onClick={handlePlayNow}
+                title="Play Computer"
+                subtitle="Three engine difficulties, instant start"
+                variant="surface"
+                icon={<CpuIcon />}
+              />
               <button
                 onClick={() => navigate('/login')}
-                className="border border-white/30 text-white font-semibold text-lg px-8 py-3 rounded-lg hover:bg-white/10 active:scale-[0.97] transition-all bg-transparent cursor-pointer"
+                className="text-white/50 hover:text-white text-sm bg-transparent border-none cursor-pointer py-1"
               >
-                Sign In
+                Already have an account? <span className="text-[var(--accent)] font-semibold">Log In</span>
               </button>
             </div>
           </div>
+        </div>
+      </section>
 
-          <div className="hidden lg:block">
-            <div className="aspect-[3/2] rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
-              <div className="text-center text-white/30">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 80" className="w-32 h-32 mx-auto mb-2 opacity-40">
-                  <rect x="10" y="5" width="35" height="50" rx="4" fill="none" stroke="currentColor" strokeWidth="2" transform="rotate(-10 27 30)" />
-                  <rect x="30" y="5" width="35" height="50" rx="4" fill="none" stroke="currentColor" strokeWidth="2" />
-                  <rect x="50" y="5" width="35" height="50" rx="4" fill="none" stroke="currentColor" strokeWidth="2" transform="rotate(10 67 30)" />
-                  <ellipse cx="50" cy="70" rx="40" ry="6" fill="none" stroke="currentColor" strokeWidth="1.5" opacity="0.5" />
-                </svg>
-              </div>
+      {/* ── Ratings / ladder ── */}
+      <section className="py-20 bg-[var(--bg-deep)]">
+        <div className="max-w-5xl mx-auto px-6 grid lg:grid-cols-2 gap-12 items-center">
+          <div>
+            <motion.h2
+              variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}
+              className="text-3xl font-extrabold text-white mb-3"
+            >
+              Earn a Rating That Means Something
+            </motion.h2>
+            <motion.p
+              variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}
+              className="text-white/60 leading-relaxed mb-6 max-w-md"
+            >
+              Every rated game moves your Glicko-2 rating. Track win streaks,
+              head-to-head records, and your place on the global leaderboard.
+            </motion.p>
+            <motion.button
+              variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}
+              onClick={() => navigate('/leaderboard')}
+              className="bg-[var(--surface)] hover:bg-[var(--surface-hover)] text-white font-semibold px-6 py-2.5 rounded-md border border-[var(--border)] cursor-pointer transition-colors"
+            >
+              View Leaderboard
+            </motion.button>
+          </div>
+
+          <motion.div
+            variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}
+            className="bg-[var(--surface)] rounded-lg border border-[var(--border)] overflow-hidden"
+          >
+            <div className="px-4 py-3 border-b border-[var(--border)] flex items-center gap-2">
+              <span className="text-[var(--gold)]"><TrophySmallIcon /></span>
+              <span className="text-white font-bold text-sm">Top Players</span>
             </div>
+            {(leaderboard.data ?? []).slice(0, 5).map((entry, i) => (
+              <div key={entry.playerId} className="flex items-center gap-3 px-4 py-2.5 border-b border-[var(--border)] last:border-b-0">
+                <span className="text-white/40 text-sm w-4 text-right">{i + 1}</span>
+                <span className="text-white text-sm font-medium flex-1 truncate">{entry.displayName}</span>
+                <span className="text-white/40 text-xs">{entry.gamesWon}W</span>
+                <span className="text-[var(--gold)] font-bold text-sm tabular-nums">{entry.rating}</span>
+              </div>
+            ))}
+            {!leaderboard.data?.length && (
+              <div className="px-4 py-6 text-white/40 text-sm text-center">
+                The ladder is waiting. Be the first to climb it.
+              </div>
+            )}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ── Analysis ── */}
+      <section className="py-20 bg-[var(--bg)]">
+        <div className="max-w-5xl mx-auto px-6 grid lg:grid-cols-2 gap-12 items-center">
+          <motion.div
+            variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}
+            className="order-2 lg:order-1 bg-[var(--surface)] rounded-lg border border-[var(--border)] p-4"
+          >
+            <div className="text-white/50 text-xs uppercase tracking-wider mb-3">Discard Analysis</div>
+            <AnalysisRow label="Best keep" cards="5♥ 5♠ 10♦ J♣" ev="+9.2" best />
+            <AnalysisRow label="Your keep" cards="5♥ 5♠ 10♦ Q♦" ev="+8.4" />
+            <AnalysisRow label="Alternative" cards="5♠ 10♦ J♣ Q♦" ev="+6.1" />
+            <div className="text-white/40 text-xs mt-3">
+              All 15 possible keeps evaluated across every cut card.
+            </div>
+          </motion.div>
+
+          <div className="order-1 lg:order-2">
+            <motion.h2
+              variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}
+              className="text-3xl font-extrabold text-white mb-3"
+            >
+              Review Every Decision
+            </motion.h2>
+            <motion.p
+              variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}
+              className="text-white/60 leading-relaxed max-w-md"
+            >
+              After each game, the engine grades your discards against the
+              mathematically best line — the same exhaustive analysis on web,
+              iOS, and Android. Find the points you left in the crib.
+            </motion.p>
           </div>
         </div>
       </section>
 
-      {/* Features */}
-      <section className="py-20 bg-[var(--felt-green)]">
-        <div className="max-w-5xl mx-auto px-6">
+      {/* ── Puzzles ── */}
+      <section className="py-20 bg-[var(--bg-deep)]">
+        <div className="max-w-4xl mx-auto px-6 text-center">
           <motion.h2
             variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}
-            className="text-3xl lg:text-4xl font-extrabold text-center text-[var(--card-white)] mb-2"
+            className="text-3xl font-extrabold text-white mb-3"
           >
-            Why Cribbage Club?
+            Train Daily
           </motion.h2>
           <motion.p
             variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}
-            className="text-center text-white/60 mb-12 max-w-lg mx-auto"
+            className="text-white/60 mb-10 max-w-lg mx-auto"
           >
-            Everything you need for the perfect cribbage experience.
+            Five new discard puzzles every day, plus unlimited practice
+            positions. Build streaks and sharpen the judgment that wins close games.
           </motion.p>
-
-          <div className="grid sm:grid-cols-2 gap-6">
-            <FeatureCard
-              icon={<RobotIcon />}
-              title="Play vs AI"
-              description="Three difficulty levels from beginner-friendly to ruthlessly strategic. Perfect your game at your own pace."
-            />
-            <FeatureCard
-              icon={<GlobeIcon />}
-              title="Real-Time Multiplayer"
-              description="Find opponents instantly with matchmaking, or create a private lobby and invite friends."
-            />
-            <FeatureCard
-              icon={<ChartIcon />}
-              title="Stats & Analysis"
-              description="Track your rating, win rate, and scoring patterns. Review past hands and learn where points were missed."
-            />
-            <FeatureCard
-              icon={<DevicesIcon />}
-              title="Play Anywhere"
-              description="Available on iOS, Android, and the web. Your account syncs across every device."
-            />
+          <div className="grid sm:grid-cols-3 gap-4 text-left">
+            <MiniFeature title="Daily Challenge" description="Five curated discard decisions each day, scored against the engine." />
+            <MiniFeature title="Practice Puzzles" description="Unlimited random positions, analyzed instantly in your browser." />
+            <MiniFeature title="Game Replay" description="Step through any finished game card by card." />
           </div>
         </div>
       </section>
 
-      {/* How It Works */}
-      <section className="py-20 bg-[var(--felt-green-dark)]">
-        <div className="max-w-4xl mx-auto px-6">
-          <motion.h2
-            variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}
-            className="text-3xl lg:text-4xl font-extrabold text-center text-[var(--card-white)] mb-2"
-          >
-            Get Started in Minutes
-          </motion.h2>
-          <motion.p
-            variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}
-            className="text-center text-white/60 mb-12 max-w-lg mx-auto"
-          >
-            Three simple steps to your first game.
-          </motion.p>
-
-          <div className="grid sm:grid-cols-3 gap-8">
-            <Step number={1} title="Sign Up" description="Create a free account in seconds. No credit card required." />
-            <Step number={2} title="Find a Game" description="Jump into matchmaking, challenge the AI, or invite a friend to a private lobby." />
-            <Step number={3} title="Play & Improve" description="Climb the ladder, track your stats, and sharpen your strategy with every hand." />
-          </div>
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="py-20 bg-gradient-to-br from-[var(--felt-green)] to-[var(--felt-green-dark)]">
+      {/* ── Final CTA ── */}
+      <section className="py-20 bg-[var(--bg)]">
         <div className="max-w-2xl mx-auto px-6 text-center">
           <motion.h2
             variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}
-            className="text-3xl lg:text-4xl font-extrabold text-[var(--card-white)] mb-4"
+            className="text-3xl font-extrabold text-white mb-4"
           >
-            Ready to Play?
+            Your Rating Starts Today
           </motion.h2>
           <motion.p
             variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}
             className="text-white/60 mb-8 max-w-md mx-auto"
           >
-            Jump in as a guest instantly, or create an account to track your progress.
+            Play instantly as a guest, or create a free account to start
+            climbing the ladder. Also on iOS and Android.
           </motion.p>
           <motion.div
             variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}
@@ -146,13 +194,13 @@ export function LandingPage() {
           >
             <button
               onClick={handlePlayNow}
-              className="bg-[var(--gold)] text-black font-semibold text-lg px-8 py-3 rounded-lg hover:bg-[var(--gold-light)] active:scale-[0.97] transition-all border-none cursor-pointer"
+              className="bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white font-bold text-lg px-10 py-3 rounded-md active:scale-[0.98] transition-all border-b-4 border-[var(--accent-dark)] cursor-pointer"
             >
               Play Now
             </button>
             <button
               onClick={() => navigate('/login')}
-              className="border border-white/30 text-white font-semibold text-lg px-8 py-3 rounded-lg hover:bg-white/10 active:scale-[0.97] transition-all bg-transparent cursor-pointer"
+              className="bg-[var(--surface)] hover:bg-[var(--surface-hover)] text-white font-semibold text-lg px-8 py-3 rounded-md transition-colors border border-[var(--border)] cursor-pointer"
             >
               Create Account
             </button>
@@ -160,82 +208,135 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-[#071f0b] py-8 text-center">
+      {/* ── Footer ── */}
+      <footer className="bg-[var(--bg-deep)] border-t border-[var(--border)] py-8 text-center">
         <p className="text-white/30 text-sm">&copy; 2026 Cribbage Club. All rights reserved.</p>
       </footer>
     </div>
   )
 }
 
-function FeatureCard({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
+/* ── Hero mock: a game in progress ── */
+
+function GameSnapshot() {
+  return (
+    <div className="bg-[var(--bg-deep)] rounded-xl border border-[var(--border)] p-5 shadow-2xl max-w-md">
+      <SnapshotPlayerBar name="pegmaster_63" rating={1874} score={96} />
+      <div className="flex justify-center gap-2 py-6">
+        <MockCard label="5" suit="♥" red />
+        <MockCard label="J" suit="♣" />
+        <MockCard label="10" suit="♦" red />
+        <MockCard label="5" suit="♠" />
+      </div>
+      <div className="text-center text-white/40 text-xs mb-4 uppercase tracking-wider">
+        Pegging &middot; count 25
+      </div>
+      <SnapshotPlayerBar name="you" rating={1841} score={102} accent />
+    </div>
+  )
+}
+
+function SnapshotPlayerBar({ name, rating, score, accent }: { name: string; rating: number; score: number; accent?: boolean }) {
+  return (
+    <div className="flex items-center gap-3">
+      <div className={`w-9 h-9 rounded-md flex items-center justify-center font-bold text-sm ${accent ? 'bg-[var(--accent)] text-white' : 'bg-[var(--surface)] text-white/60'}`}>
+        {name[0].toUpperCase()}
+      </div>
+      <div className="flex-1">
+        <span className="text-white text-sm font-semibold">{name}</span>
+        <span className="text-white/40 text-xs ml-2">({rating})</span>
+      </div>
+      <span className="text-white font-bold text-lg tabular-nums">{score}</span>
+    </div>
+  )
+}
+
+function MockCard({ label, suit, red }: { label: string; suit: string; red?: boolean }) {
+  return (
+    <div className="w-14 h-20 bg-[var(--card-white)] rounded-md shadow-md flex flex-col items-center justify-center">
+      <span className={`text-lg font-bold ${red ? 'text-[var(--card-red)]' : 'text-[var(--card-black)]'}`}>{label}</span>
+      <span className={`text-lg leading-none ${red ? 'text-[var(--card-red)]' : 'text-[var(--card-black)]'}`}>{suit}</span>
+    </div>
+  )
+}
+
+/* ── Shared pieces ── */
+
+function BigCta({
+  onClick,
+  title,
+  subtitle,
+  variant,
+  icon,
+}: {
+  onClick: () => void
+  title: string
+  subtitle: string
+  variant: 'accent' | 'surface'
+  icon: React.ReactNode
+}) {
+  const styles = variant === 'accent'
+    ? 'bg-[var(--accent)] hover:bg-[var(--accent-hover)] border-b-4 border-[var(--accent-dark)]'
+    : 'bg-[var(--surface)] hover:bg-[var(--surface-hover)] border border-[var(--border)]'
+  return (
+    <button
+      onClick={onClick}
+      className={`${styles} text-left rounded-md px-5 py-3.5 flex items-center gap-4 cursor-pointer active:scale-[0.99] transition-all`}
+    >
+      <span className="text-white/90">{icon}</span>
+      <span>
+        <span className="block text-white font-bold text-lg leading-tight">{title}</span>
+        <span className={`block text-xs mt-0.5 ${variant === 'accent' ? 'text-white/80' : 'text-white/50'}`}>{subtitle}</span>
+      </span>
+    </button>
+  )
+}
+
+function MiniFeature({ title, description }: { title: string; description: string }) {
   return (
     <motion.div
       variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}
-      className="bg-white/10 rounded-xl p-6 hover:bg-white/15 transition-colors"
+      className="bg-[var(--surface)] rounded-lg border border-[var(--border)] p-5"
     >
-      <div className="w-12 h-12 rounded-lg bg-[var(--gold)]/20 text-[var(--gold)] flex items-center justify-center mb-4">
-        {icon}
-      </div>
-      <h3 className="text-lg font-bold text-[var(--card-white)] mb-2">{title}</h3>
-      <p className="text-white/60 text-sm leading-relaxed">{description}</p>
+      <h3 className="text-white font-bold mb-1.5">{title}</h3>
+      <p className="text-white/50 text-sm leading-relaxed">{description}</p>
     </motion.div>
   )
 }
 
-function Step({ number, title, description }: { number: number; title: string; description: string }) {
+function AnalysisRow({ label, cards, ev, best }: { label: string; cards: string; ev: string; best?: boolean }) {
   return (
-    <motion.div
-      variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}
-      className="text-center"
-    >
-      <div className="w-14 h-14 rounded-full bg-[var(--felt-green)] text-[var(--gold)] text-xl font-bold flex items-center justify-center mx-auto mb-4">
-        {number}
-      </div>
-      <h3 className="text-lg font-bold text-[var(--card-white)] mb-2">{title}</h3>
-      <p className="text-white/60 text-sm leading-relaxed">{description}</p>
-    </motion.div>
+    <div className={`flex items-center gap-3 rounded-md px-3 py-2 mb-1.5 ${best ? 'bg-[var(--accent)]/15 border border-[var(--accent)]/40' : 'bg-black/20'}`}>
+      <span className={`text-xs w-20 flex-shrink-0 ${best ? 'text-[var(--accent)] font-semibold' : 'text-white/40'}`}>{label}</span>
+      <span className="text-white/90 text-sm font-mono flex-1">{cards}</span>
+      <span className={`text-sm font-bold tabular-nums ${best ? 'text-[var(--accent)]' : 'text-white/50'}`}>{ev}</span>
+    </div>
   )
 }
 
-function RobotIcon() {
+function BoltIcon() {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
-      <rect x="3" y="11" width="18" height="10" rx="2" />
-      <circle cx="12" cy="5" r="2" />
-      <path d="M12 7v4" />
-      <line x1="8" y1="16" x2="8" y2="16" />
-      <line x1="16" y1="16" x2="16" y2="16" />
+    <svg viewBox="0 0 24 24" fill="currentColor" className="w-7 h-7">
+      <path d="M13 2 4 14h6l-1 8 9-12h-6z" />
     </svg>
   )
 }
 
-function GlobeIcon() {
+function CpuIcon() {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
-      <circle cx="12" cy="12" r="10" />
-      <path d="M2 12h20" />
-      <path d="M12 2a15 15 0 0 1 4 10 15 15 0 0 1-4 10 15 15 0 0 1-4-10A15 15 0 0 1 12 2z" />
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-7 h-7">
+      <rect x="5" y="5" width="14" height="14" rx="2" />
+      <rect x="10" y="10" width="4" height="4" />
+      <path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3" />
     </svg>
   )
 }
 
-function ChartIcon() {
+function TrophySmallIcon() {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
-      <path d="M18 20V10" />
-      <path d="M12 20V4" />
-      <path d="M6 20v-6" />
-    </svg>
-  )
-}
-
-function DevicesIcon() {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
-      <rect x="2" y="3" width="20" height="14" rx="2" />
-      <line x1="8" y1="21" x2="16" y2="21" />
-      <line x1="12" y1="17" x2="12" y2="21" />
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
+      <path d="M8 21h8M12 17v4M7 4h10v6a5 5 0 0 1-10 0z" />
+      <path d="M7 6H4v2a3 3 0 0 0 3 3M17 6h3v2a3 3 0 0 1-3 3" />
     </svg>
   )
 }

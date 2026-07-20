@@ -1,21 +1,39 @@
 @import "tailwindcss";
 
 :root {
-  --felt-green: #1a5c2a;
-  --felt-green-light: #2d7a3f;
-  --felt-green-dark: #0f3d1a;
-  --gold: #d4a843;
-  --gold-light: #e8c96a;
+  /* Core dark theme (chess.com-inspired charcoal) */
+  --bg: #312e2b;
+  --bg-deep: #262421;
+  --surface: #3c3936;
+  --surface-hover: #47433f;
+  --border: rgba(255, 255, 255, 0.08);
+
+  /* Primary action green */
+  --accent: #81b64c;
+  --accent-hover: #93c757;
+  --accent-dark: #5d9948;
+
+  /* Rating / highlight gold */
+  --gold: #e3aa24;
+  --gold-light: #f0c14b;
+
+  /* Cards */
   --card-white: #f5f0e8;
   --card-red: #c0392b;
   --card-black: #1a1a1a;
+
+  /* Legacy aliases — older components reference the felt palette.
+     They now resolve to the dark charcoal surfaces. */
+  --felt-green: #3c3936;
+  --felt-green-light: #47433f;
+  --felt-green-dark: #312e2b;
 }
 
 body {
   margin: 0;
-  background-color: var(--felt-green-dark);
+  background-color: var(--bg);
   color: white;
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   min-height: 100vh;
 }
 
