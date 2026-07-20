@@ -70,7 +70,7 @@ function ActionButton({
     <button
       onClick={onClick}
       disabled={disabled}
-      className="bg-[var(--felt-green)] text-white px-4 py-2 rounded font-medium hover:bg-[var(--felt-green-light)] disabled:opacity-40 disabled:cursor-not-allowed border-none cursor-pointer text-sm"
+      className="bg-[var(--accent)] text-white px-5 py-2 rounded-md font-bold hover:bg-[var(--accent-hover)] disabled:opacity-40 disabled:cursor-not-allowed border-b-2 border-[var(--accent-dark)] cursor-pointer text-sm"
     >
       {label}
     </button>

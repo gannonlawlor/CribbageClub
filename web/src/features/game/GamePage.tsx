@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router'
 import { useGameStore, isLocalGame } from './game-store'
 import { useAuthStore } from '@/auth/auth-store'
+import * as api from '@/api/rest-client'
 import { GameStage } from '@/models/game-state'
 import { RANK_PEGGING_VALUE } from '@/models/card'
 import type { PlayingCard } from '@/models'
@@ -14,6 +15,28 @@ import { GameControls } from './components/GameControls'
 import { CutCard } from './components/CutCard'
 import { ScorePopupOverlay } from './components/ScorePopup'
 import { HistoryLog } from './components/HistoryLog'
+
+/** Fetch Glicko ratings for the players in the game. AI opponents and
+    unknown ids simply resolve to no rating. */
+function usePlayerRatings(players: { id: string }[]): Record<string, number> {
+  const [ratings, setRatings] = useState<Record<string, number>>({})
+  const ids = players.map((p) => p.id).join(',')
+
+  useEffect(() => {
+    let cancelled = false
+    for (const id of ids.split(',')) {
+      if (!id) continue
+      api.getProfile(id)
+        .then((profile) => {
+          if (!cancelled) setRatings((r) => ({ ...r, [id]: profile.rating }))
+        })
+        .catch(() => {})
+    }
+    return () => { cancelled = true }
+  }, [ids])
+
+  return ratings
+}
 
 function useIsDesktop(): boolean {
   const query = '(min-width: 1024px)'
@@ -144,6 +167,7 @@ function GameBoard({
   onNavigate,
 }: GameBoardProps) {
   const isDesktop = useIsDesktop()
+  const ratings = usePlayerRatings(gameState.players)
   const playerIndex = gameState.players.findIndex((p) => p.id === userId)
   const player = playerIndex >= 0 ? gameState.players[playerIndex] : gameState.players[0]
   const opponent = gameState.players[playerIndex >= 0 ? 1 - playerIndex : 1]
@@ -199,6 +223,7 @@ function GameBoard({
     return (
       <DesktopGameBoard
         gameState={gameState}
+        ratings={ratings}
         player={player}
         opponent={opponent}
         isMyTurn={isMyTurn}
@@ -223,6 +248,7 @@ function GameBoard({
   return (
     <MobileGameBoard
       gameState={gameState}
+      ratings={ratings}
       player={player}
       opponent={opponent}
       isMyTurn={isMyTurn}
@@ -246,6 +272,7 @@ function GameBoard({
 
 interface InnerBoardProps {
   gameState: import('@/models').GameState
+  ratings: Record<string, number>
   player: import('@/models').Player
   opponent: import('@/models').Player
   isMyTurn: boolean
@@ -269,6 +296,7 @@ interface InnerBoardProps {
 
 function DesktopGameBoard({
   gameState,
+  ratings,
   player,
   opponent,
   isMyTurn,
@@ -300,29 +328,14 @@ function DesktopGameBoard({
       <div className="flex gap-8">
         {/* Main game column */}
         <div className="flex-1 min-w-0 flex flex-col gap-6 relative">
-          {/* Score header */}
-          <div className="flex items-center justify-between bg-black/20 rounded-xl px-6 py-3">
-            <div className="flex items-center gap-3">
-              <span className="text-white/60 text-sm">{opponent.name}</span>
-              <span className="text-white font-bold text-2xl">{opponent.score}</span>
-              {!isDealer && <span className="text-white/25 text-xs">(dealer)</span>}
-            </div>
-            <div className="flex flex-col items-center">
-              <span className="text-white/30 text-xs uppercase tracking-wide">
-                {stage === GameStage.GAME_OVER ? 'Final' : 'Score'}
-              </span>
-              <div className="flex items-center gap-2 mt-0.5">
-                <ScoreBar score={player.score} color="var(--gold)" />
-                <span className="text-white/20 text-xs">vs</span>
-                <ScoreBar score={opponent.score} color="white" />
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              {isDealer && <span className="text-white/25 text-xs">(dealer)</span>}
-              <span className="text-[var(--gold)] font-bold text-2xl">{player.score}</span>
-              <span className="text-[var(--gold)]/70 text-sm">You</span>
-            </div>
-          </div>
+          {/* Opponent bar */}
+          <PlayerBar
+            name={opponent.name}
+            rating={ratings[opponent.id]}
+            score={opponent.score}
+            isDealer={!isDealer}
+            isTurn={gameState.currentPlayerId === opponent.id && stage !== GameStage.GAME_OVER}
+          />
 
           {/* Opponent hand */}
           <div className="flex justify-center">
@@ -360,27 +373,27 @@ function DesktopGameBoard({
 
           {/* Game over */}
           {stage === GameStage.GAME_OVER && (
-            <div className="text-center bg-white/10 rounded-xl p-6 mx-auto max-w-md">
-              <div className="text-2xl font-bold mb-2">
+            <div className="text-center bg-[var(--surface)] border border-[var(--border)] rounded-xl p-6 mx-auto max-w-md">
+              <div className="text-2xl font-extrabold mb-2">
                 {player.score >= 121 ? (
-                  <span className="text-[var(--gold)]">You Won!</span>
+                  <span className="text-[var(--accent)]">You Won</span>
                 ) : (
                   <span className="text-red-400">You Lost</span>
                 )}
               </div>
-              <div className="text-white/60 mb-4">
+              <div className="text-white/60 mb-4 tabular-nums">
                 {player.score} &ndash; {opponent.score}
               </div>
               <div className="flex gap-3 justify-center">
                 <button
                   onClick={() => onNavigate(`/analysis/${gameState.gameId}`)}
-                  className="bg-white/10 text-white px-5 py-2 rounded-lg hover:bg-white/20 border-none cursor-pointer"
+                  className="bg-black/25 text-white px-5 py-2 rounded-md hover:bg-black/40 border border-[var(--border)] cursor-pointer font-semibold"
                 >
-                  Analysis
+                  Game Review
                 </button>
                 <button
                   onClick={() => onNavigate('/')}
-                  className="bg-[var(--gold)] text-black px-5 py-2 rounded-lg hover:bg-[var(--gold-light)] border-none cursor-pointer font-semibold"
+                  className="bg-[var(--accent)] text-white px-5 py-2 rounded-md hover:bg-[var(--accent-hover)] border-b-2 border-[var(--accent-dark)] cursor-pointer font-bold"
                 >
                   New Game
                 </button>
@@ -414,6 +427,16 @@ function DesktopGameBoard({
             </div>
           )}
 
+          {/* Player bar */}
+          <PlayerBar
+            name={player.name}
+            rating={ratings[player.id]}
+            score={player.score}
+            isDealer={isDealer}
+            isTurn={isMyTurn && stage !== GameStage.GAME_OVER}
+            isSelf
+          />
+
           {/* Score popups */}
           <ScorePopupOverlay history={gameState.history} playerId={userId} />
         </div>
@@ -422,20 +445,22 @@ function DesktopGameBoard({
         <div className="w-80 flex-shrink-0">
           <div className="sticky top-4 flex flex-col gap-4 h-[calc(100vh-5rem)]">
             {/* Cribbage board */}
-            <div className="h-48 rounded-xl overflow-hidden">
-              <CribbageBoardStandard
-                playerScore={player.score}
-                opponentScore={opponent.score}
-              />
-            </div>
-            <div className="flex justify-between text-xs px-1">
-              <div className="flex items-center gap-1.5">
-                <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#FFD54F' }} />
-                <span className="text-white/50">You: {player.score}</span>
+            <div className="bg-[var(--surface)] border border-[var(--border)] rounded-lg overflow-hidden">
+              <div className="h-48">
+                <CribbageBoardStandard
+                  playerScore={player.score}
+                  opponentScore={opponent.score}
+                />
               </div>
-              <div className="flex items-center gap-1.5">
-                <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#EEEEEE' }} />
-                <span className="text-white/50">{opponent.name}: {opponent.score}</span>
+              <div className="flex justify-between text-xs px-3 py-2 border-t border-[var(--border)]">
+                <div className="flex items-center gap-1.5">
+                  <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#FFD54F' }} />
+                  <span className="text-white/50">You: {player.score}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#EEEEEE' }} />
+                  <span className="text-white/50">{opponent.name}: {opponent.score}</span>
+                </div>
               </div>
             </div>
 
@@ -462,11 +487,63 @@ function DesktopGameBoard({
   )
 }
 
-function ScoreBar({ score, color }: { score: number; color: string }) {
+/** Chess.com-style player bar: avatar, name, rating, progress to 121, score. */
+function PlayerBar({
+  name,
+  rating,
+  score,
+  isDealer,
+  isTurn,
+  isSelf = false,
+  compact = false,
+}: {
+  name: string
+  rating?: number
+  score: number
+  isDealer: boolean
+  isTurn: boolean
+  isSelf?: boolean
+  compact?: boolean
+}) {
   const pct = Math.min((score / 121) * 100, 100)
   return (
-    <div className="w-16 h-1.5 bg-white/10 rounded-full overflow-hidden">
-      <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: color, opacity: 0.6 }} />
+    <div
+      className={`flex items-center bg-[var(--surface)] rounded-md border transition-colors ${
+        isTurn ? 'border-[var(--accent)]/70' : 'border-[var(--border)]'
+      } ${compact ? 'gap-2 px-2 py-1.5' : 'gap-3 px-4 py-2.5'}`}
+    >
+      <div
+        className={`rounded-md flex items-center justify-center font-bold ${
+          isSelf ? 'bg-[var(--accent)] text-white' : 'bg-black/30 text-white/60'
+        } ${compact ? 'w-7 h-7 text-xs' : 'w-9 h-9 text-sm'}`}
+      >
+        {name[0]?.toUpperCase() ?? '?'}
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <span className={`text-white font-semibold truncate ${compact ? 'text-xs' : 'text-sm'}`}>
+            {isSelf ? 'You' : name}
+          </span>
+          {rating != null && (
+            <span className="text-white/40 text-xs tabular-nums">({Math.round(rating)})</span>
+          )}
+          {isDealer && (
+            <span className="text-[9px] font-bold uppercase tracking-wider bg-black/30 text-white/50 rounded px-1.5 py-0.5">
+              Dealer
+            </span>
+          )}
+          {isTurn && <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] animate-pulse" />}
+        </div>
+        <div className={`h-1 bg-black/30 rounded-full overflow-hidden ${compact ? 'w-20 mt-1' : 'w-28 mt-1.5'}`}>
+          <div
+            className={`h-full rounded-full ${isSelf ? 'bg-[var(--accent)]' : 'bg-white/40'}`}
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+      </div>
+      <span className={`text-white font-extrabold tabular-nums ${compact ? 'text-lg' : 'text-2xl'}`}>
+        {score}
+      </span>
     </div>
   )
 }
@@ -475,6 +552,7 @@ function ScoreBar({ score, color }: { score: number; color: string }) {
 
 function MobileGameBoard({
   gameState,
+  ratings,
   player,
   opponent,
   isMyTurn,
@@ -512,15 +590,15 @@ function MobileGameBoard({
 
         {/* Content inside the board frame */}
         <div className="flex flex-col gap-2" style={{ paddingTop: 28, paddingLeft: 28, paddingRight: 28 }}>
-          {/* Opponent info */}
-          <div className="flex items-center justify-between px-2">
-            <div>
-              <span className="text-white/60 text-xs">{opponent.name}</span>
-              <span className="text-white font-bold text-lg ml-2">{opponent.score}</span>
-            </div>
-            {isDealer && <span className="text-white/30 text-xs">You deal</span>}
-            {!isDealer && <span className="text-white/30 text-xs">They deal</span>}
-          </div>
+          {/* Opponent bar */}
+          <PlayerBar
+            name={opponent.name}
+            rating={ratings[opponent.id]}
+            score={opponent.score}
+            isDealer={!isDealer}
+            isTurn={gameState.currentPlayerId === opponent.id && stage !== GameStage.GAME_OVER}
+            compact
+          />
 
           {/* Opponent hand (face-down) */}
           <OpponentHand cardCount={opponent.hand.length} cardWidth={36} cardHeight={50} />
@@ -556,27 +634,27 @@ function MobileGameBoard({
 
           {/* Game over */}
           {stage === GameStage.GAME_OVER && (
-            <div className="text-center bg-white/10 rounded-lg p-4">
-              <div className="text-xl font-bold mb-1">
+            <div className="text-center bg-[var(--surface)] border border-[var(--border)] rounded-lg p-4">
+              <div className="text-xl font-extrabold mb-1">
                 {player.score >= 121 ? (
-                  <span className="text-[var(--gold)]">You Won!</span>
+                  <span className="text-[var(--accent)]">You Won</span>
                 ) : (
                   <span className="text-red-400">You Lost</span>
                 )}
               </div>
-              <div className="text-white/60 text-sm mb-3">
+              <div className="text-white/60 text-sm mb-3 tabular-nums">
                 {player.score} - {opponent.score}
               </div>
               <div className="flex gap-2 justify-center">
                 <button
                   onClick={() => onNavigate(`/analysis/${gameState.gameId}`)}
-                  className="bg-white/10 text-white px-4 py-1.5 rounded hover:bg-white/20 border-none cursor-pointer text-sm"
+                  className="bg-black/25 text-white px-4 py-1.5 rounded-md hover:bg-black/40 border border-[var(--border)] cursor-pointer text-sm font-semibold"
                 >
-                  Analysis
+                  Game Review
                 </button>
                 <button
                   onClick={() => onNavigate('/')}
-                  className="bg-[var(--gold)] text-black px-4 py-1.5 rounded hover:bg-[var(--gold-light)] border-none cursor-pointer font-semibold text-sm"
+                  className="bg-[var(--accent)] text-white px-4 py-1.5 rounded-md hover:bg-[var(--accent-hover)] border-b-2 border-[var(--accent-dark)] cursor-pointer font-bold text-sm"
                 >
                   New Game
                 </button>
@@ -611,13 +689,16 @@ function MobileGameBoard({
             </div>
           )}
 
-          {/* Player score */}
-          <div className="flex items-center justify-between px-2">
-            <div>
-              <span className="text-[var(--gold)] text-xs font-medium">{player.name} (you)</span>
-              <span className="text-white font-bold text-lg ml-2">{player.score}</span>
-            </div>
-          </div>
+          {/* Player bar */}
+          <PlayerBar
+            name={player.name}
+            rating={ratings[player.id]}
+            score={player.score}
+            isDealer={isDealer}
+            isTurn={isMyTurn && stage !== GameStage.GAME_OVER}
+            isSelf
+            compact
+          />
         </div>
 
         {/* Score popups */}

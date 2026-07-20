@@ -9,6 +9,20 @@ vi.mock('@/api/rest-client')
 
 const mockApi = vi.mocked(api)
 
+const statsFixture = {
+  playerId: 'u1',
+  gamesPlayed: 10,
+  gamesWon: 6,
+  gamesLost: 4,
+  winRate: 0.6,
+  averageScore: 100,
+  highestGameScore: 121,
+  currentWinStreak: 2,
+  longestWinStreak: 4,
+  rating: 1500,
+  ratingDeviation: 60,
+}
+
 afterEach(() => {
   vi.clearAllMocks()
   useAuthStore.setState({
@@ -23,14 +37,14 @@ afterEach(() => {
 })
 
 describe('HomePage', () => {
-  it('shows welcome message when logged out', () => {
+  it('shows play menu when logged out', () => {
     renderWithRouter(<HomePage />)
-    expect(screen.getByText('Cribbage Club')).toBeInTheDocument()
-    expect(screen.getByText('Play vs AI')).toBeInTheDocument()
+    expect(screen.getByText('Play Cribbage Online')).toBeInTheDocument()
+    expect(screen.getByText('Play Computer')).toBeInTheDocument()
     expect(screen.getByText('Play Online')).toBeInTheDocument()
   })
 
-  it('shows welcome with username when logged in', () => {
+  it('shows username and rating when logged in', async () => {
     useAuthStore.setState({
       token: 'test-token',
       userId: 'u1',
@@ -39,22 +53,26 @@ describe('HomePage', () => {
       isLoggedIn: true,
     })
     mockApi.getMyActiveGames.mockResolvedValue([])
+    mockApi.getMyStats.mockResolvedValue(statsFixture)
 
     renderWithRouter(<HomePage />)
-    expect(screen.getByText('Welcome, testuser')).toBeInTheDocument()
+    expect(screen.getByText('testuser')).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.getByText('1500')).toBeInTheDocument()
+    })
   })
 
-  it('shows Play Online dropdown with Join by Code option', async () => {
+  it('shows Play Online options with Join by Code', async () => {
     const user = userEvent.setup()
     renderWithRouter(<HomePage />)
 
     await user.click(screen.getByText('Play Online'))
 
     await waitFor(() => {
-      expect(screen.getByText('Quick Game')).toBeInTheDocument()
+      expect(screen.getByText('Quick Match')).toBeInTheDocument()
     })
     expect(screen.getByText('Browse Lobbies')).toBeInTheDocument()
-    expect(screen.getByText('Create Private')).toBeInTheDocument()
+    expect(screen.getByText('Play a Friend')).toBeInTheDocument()
     expect(screen.getByText('Join by Code')).toBeInTheDocument()
     expect(screen.getByText('Enter an invite code')).toBeInTheDocument()
   })
@@ -63,7 +81,7 @@ describe('HomePage', () => {
     const user = userEvent.setup()
     renderWithRouter(<HomePage />)
 
-    await user.click(screen.getByText('Play vs AI'))
+    await user.click(screen.getByText('Play Computer'))
 
     await waitFor(() => {
       expect(screen.getByText('Easy')).toBeInTheDocument()

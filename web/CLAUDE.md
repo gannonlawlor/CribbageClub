@@ -10,6 +10,7 @@ React SPA for playing Cribbage Club in the browser. TypeScript, Tailwind CSS, Zu
 npm install              # install dependencies
 npm run dev              # dev server (Vite, hot reload)
 npm run build            # production build (tsc -b && vite build)
+npm run build:wasm       # build Rust engine to WASM (wasm-pack, output: ../engine/pkg)
 npm test                 # run tests (vitest)
 npm run test:watch       # tests in watch mode
 npm run lint             # ESLint
@@ -44,8 +45,10 @@ web/src/
 ├── services/
 │   └── analysis-cache.ts         # localStorage analysis cache
 ├── engine/
-│   └── wasm-engine.ts            # WASM engine stub (not yet wired)
+│   └── wasm-engine.ts            # Rust engine via WASM (wasm-pack build, aliased to
+│                                 # ../engine/pkg in vite.config.ts) — puzzle analysis
 ├── features/
+│   ├── landing/                  # Marketing landing page (shown at / when logged out)
 │   ├── game/                     # Core gameplay
 │   │   ├── GamePage.tsx          # Game board with responsive layout
 │   │   ├── game-store.ts         # Zustand: game state, actions, WebSocket subs
@@ -62,7 +65,7 @@ web/src/
 │   ├── friends/                  # Friends list, requests, challenges, search
 │   ├── lobby/                    # Lobby browser, join-by-code, waiting room
 │   ├── profile/                  # Public player profiles with stats
-│   ├── puzzle/                   # Custom puzzle (stub)
+│   ├── puzzle/                   # Practice puzzles (unlimited, WASM-analyzed)
 │   └── ...
 ├── shared/
 │   ├── Layout.tsx                # App shell: nav bar, notification badge
@@ -89,7 +92,7 @@ web/src/
 
 | Path | Component | Status |
 |------|-----------|--------|
-| `/` | HomePage | Complete |
+| `/` | RootPage (LandingPage logged out, HomePage logged in) | Complete |
 | `/login` | LoginPage | Complete |
 | `/upgrade` | UpgradePage | Complete |
 | `/game/:gameId` | GamePage | Complete |
@@ -103,7 +106,7 @@ web/src/
 | `/join` | JoinByCodePage | Complete |
 | `/lobby/:lobbyId` | LobbyWaitingPage | Complete |
 | `/profile/:userId` | ProfilePage | Complete |
-| `/puzzle` | PuzzlePage | Stub |
+| `/puzzle` | PuzzlePage (practice puzzles) | Complete |
 
 ## Key Patterns
 
@@ -133,7 +136,8 @@ web/src/
 - Feature-folder organization (`features/[feature]/`)
 - Components in `components/` subdirectory within feature
 - Tailwind utility classes (no CSS modules, no styled-components)
-- CSS variables for theme colors (`--gold`, `--felt-green`, `--card-red`, etc.) defined in `index.css`
+- CSS variables for theme colors defined in `index.css`: dark charcoal surfaces (`--bg`, `--bg-deep`, `--surface`), primary action green (`--accent`), rating gold (`--gold`); legacy `--felt-green*` names alias to the charcoal surfaces
+- Chess.com-style chrome: left sidebar app shell on desktop (`Layout.tsx`), player bars with Glicko ratings in-game, green primary CTAs
 - `lg:` breakpoint (1024px) for desktop-specific styles
 - Framer Motion for all animations (card selection, score popups, page transitions)
 - Tests colocated with feature files (`*.test.tsx`)

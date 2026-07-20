@@ -11,6 +11,17 @@ class HttpError extends Error {
   }
 }
 
+/** Pull the human-readable `message` out of a Spring error body; fall back to raw text. */
+function extractErrorMessage(text: string): string | null {
+  if (!text) return null
+  try {
+    const parsed = JSON.parse(text) as { message?: string; error?: string }
+    return parsed.message ?? parsed.error ?? text
+  } catch {
+    return text
+  }
+}
+
 async function request<T>(
   method: string,
   path: string,
@@ -38,7 +49,7 @@ async function request<T>(
 
   if (!res.ok) {
     const text = await res.text().catch(() => res.statusText)
-    throw new HttpError(res.status, text)
+    throw new HttpError(res.status, extractErrorMessage(text) ?? res.statusText)
   }
 
   if (res.status === 204) return undefined as T
