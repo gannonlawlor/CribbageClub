@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../config/constants.dart';
 import '../../../config/theme/app_colors.dart';
 import '../../../core/models/card.dart';
+import '../../../shared/widgets/cc_buttons.dart';
 import '../../game/widgets/card_widget.dart';
 import '../services/puzzle_generator.dart';
 import '../state/puzzle_provider.dart';
@@ -154,13 +155,15 @@ class _PlayingView extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
+                      crossAxisAlignment: CrossAxisAlignment.baseline,
+                      textBaseline: TextBaseline.alphabetic,
                       children: [
                         Text(
                           'Daily Challenge',
                           style: TextStyle(
                             color: colors.textPrimary,
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
+                            fontSize: 26,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -168,16 +171,20 @@ class _PlayingView extends ConsumerWidget {
                           '$puzzleNum/$total',
                           style: TextStyle(
                             color: colors.textTertiary,
-                            fontSize: 16,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            fontFeatures: const [FontFeature.tabularFigures()],
                           ),
                         ),
                       ],
                     ),
+                    const SizedBox(height: 2),
                     Text(
                       dateStr,
                       style: TextStyle(
                         color: colors.textTertiary,
-                        fontSize: 14,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
@@ -201,15 +208,22 @@ class _PlayingView extends ConsumerWidget {
             'You are ${puzzle.isDealer ? 'the dealer' : 'not the dealer'}. '
             'Choose the best 4 cards to keep.',
             textAlign: TextAlign.center,
-            style: TextStyle(color: colors.textSecondary, fontSize: 16),
+            style: TextStyle(
+              color: colors.textSecondary,
+              fontSize: 15,
+              height: 1.4,
+            ),
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 10),
         Text(
-          '${state.selectedCards.length}/4 selected',
+          '${state.selectedCards.length} / 4 SELECTED',
           style: TextStyle(
-            color: canSubmit ? colors.accent : colors.textDisabled,
-            fontSize: 14,
+            color: canSubmit ? colors.accent : colors.textTertiary,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.72,
+            fontFeatures: const [FontFeature.tabularFigures()],
           ),
         ),
         const SizedBox(height: 24),
@@ -228,15 +242,11 @@ class _PlayingView extends ConsumerWidget {
         // Submit button
         Padding(
           padding: const EdgeInsets.all(24),
-          child: SizedBox(
-            width: double.infinity,
-            height: 56,
-            child: ElevatedButton(
-              onPressed: canSubmit
-                  ? () => ref.read(dailyPuzzleProvider.notifier).submitKeep()
-                  : null,
-              child: const Text('Submit', style: TextStyle(fontSize: 18)),
-            ),
+          child: CcPrimaryButton(
+            label: 'Submit',
+            onPressed: canSubmit
+                ? () => ref.read(dailyPuzzleProvider.notifier).submitKeep()
+                : null,
           ),
         ),
       ],

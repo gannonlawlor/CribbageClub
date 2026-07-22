@@ -3,10 +3,12 @@ import 'package:flutter/services.dart';
 
 import '../../../config/theme/app_colors.dart';
 import '../../../core/models/card.dart';
+import '../../../shared/widgets/cc_buttons.dart';
 import '../../game/widgets/card_widget.dart';
 import '../models/daily_puzzle.dart';
+import '../../../shared/widgets/cc_dialog.dart';
 import '../services/puzzle_generator.dart';
-import 'explain_bottom_sheet.dart';
+import 'explain_dialog.dart';
 import 'keep_rank_tile.dart';
 import 'streak_badge.dart';
 
@@ -88,15 +90,17 @@ class _PuzzleSummaryState extends State<PuzzleSummary> {
                       'Daily Challenge',
                       style: TextStyle(
                         color: colors.textPrimary,
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
+                        fontSize: 26,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
+                    const SizedBox(height: 2),
                     Text(
                       dateStr,
                       style: TextStyle(
                         color: colors.textTertiary,
-                        fontSize: 14,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
@@ -147,27 +151,22 @@ class _PuzzleSummaryState extends State<PuzzleSummary> {
           child: Row(
             children: [
               Expanded(
-                child: OutlinedButton.icon(
+                child: CcSecondaryButton(
+                  label: 'Share',
+                  icon: Icons.share,
+                  height: 52,
                   onPressed: _allResultsReady
                       ? () => _shareResults(context)
                       : null,
-                  icon: const Icon(Icons.share, size: 18),
-                  label: const Text('Share'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: colors.textPrimary,
-                    side: BorderSide(color: colors.divider),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: ElevatedButton(
+                child: CcPrimaryButton(
+                  label: 'Back to Home',
+                  height: 52,
+                  fontSize: 15,
                   onPressed: widget.onBackToHome,
-                  child: const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 14),
-                    child: Text('Back to Home'),
-                  ),
                 ),
               ),
             ],
@@ -192,7 +191,7 @@ class _PuzzleSummaryState extends State<PuzzleSummary> {
       );
     }
     if (_allOptimal) {
-      buffer.writeln('Perfect score!');
+      buffer.writeln('Perfect score');
     }
     if (widget.streak > 0) {
       buffer.writeln(
@@ -201,7 +200,7 @@ class _PuzzleSummaryState extends State<PuzzleSummary> {
     }
     Clipboard.setData(ClipboardData(text: buffer.toString().trim()));
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Results copied to clipboard!')),
+      const SnackBar(content: Text('Results copied to clipboard')),
     );
   }
 }
@@ -242,11 +241,11 @@ class _ScoreBanner extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(bottom: 4),
               child: Text(
-                'Perfect!',
+                'Perfect',
                 style: TextStyle(
-                  color: colors.evOptimal,
+                  color: colors.success,
                   fontSize: 20,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ),
@@ -258,9 +257,10 @@ class _ScoreBanner extends StatelessWidget {
               Text(
                 totalScore.toStringAsFixed(1),
                 style: TextStyle(
-                  color: colors.accent,
+                  color: allOptimal ? colors.success : colors.textPrimary,
                   fontSize: 28,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w700,
+                  fontFeatures: const [FontFeature.tabularFigures()],
                 ),
               ),
               const SizedBox(width: 4),
@@ -270,6 +270,7 @@ class _ScoreBanner extends StatelessWidget {
                   style: TextStyle(
                     color: colors.textTertiary,
                     fontSize: 18,
+                    fontFeatures: const [FontFeature.tabularFigures()],
                   ),
                 ),
                 const SizedBox(width: 6),
@@ -293,7 +294,7 @@ class _ScoreBanner extends StatelessWidget {
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    '$streak day streak!',
+                    '$streak day streak',
                     style: TextStyle(
                       color: colors.streak,
                       fontSize: 16,
@@ -429,7 +430,10 @@ class _PuzzleRow extends StatelessWidget {
                               style: TextStyle(
                                 color: colors.textPrimary,
                                 fontSize: 15,
-                                fontWeight: FontWeight.bold,
+                                fontWeight: FontWeight.w700,
+                                fontFeatures: const [
+                                  FontFeature.tabularFigures()
+                                ],
                               ),
                             ),
                             Text(
@@ -437,6 +441,9 @@ class _PuzzleRow extends StatelessWidget {
                               style: TextStyle(
                                 color: colors.textTertiary,
                                 fontSize: 12,
+                                fontFeatures: const [
+                                  FontFeature.tabularFigures()
+                                ],
                               ),
                             ),
                           ],
@@ -482,11 +489,13 @@ class _PuzzleRow extends StatelessWidget {
                     padding: const EdgeInsets.fromLTRB(12, 8, 12, 2),
                     child: Text(
                       puzzle.isDealer
-                          ? 'Dealer (crib is yours)'
-                          : 'Non-dealer (crib is opponent\'s)',
+                          ? 'DEALER · CRIB IS YOURS'
+                          : 'NON-DEALER · CRIB IS OPPONENT\'S',
                       style: TextStyle(
                         color: colors.textTertiary,
-                        fontSize: 12,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.6,
                       ),
                     ),
                   ),
@@ -534,11 +543,9 @@ void _showExplain(
   KeepOption option,
   bool isDealer,
 ) {
-  showModalBottomSheet(
+  showCcDialog(
     context: context,
-    backgroundColor: Colors.transparent,
-    isScrollControlled: true,
-    builder: (_) => ExplainBottomSheet(
+    builder: (_) => ExplainDialog(
       rank: option.rank,
       keep: option.keep,
       discard: option.discard,
@@ -579,9 +586,10 @@ class _RankBadge extends StatelessWidget {
       child: Text(
         '#$rank',
         style: TextStyle(
-          color: isOptimal ? colors.evOptimal : colors.textSecondary,
+          color: isOptimal ? colors.success : colors.textSecondary,
           fontSize: 10,
-          fontWeight: FontWeight.bold,
+          fontWeight: FontWeight.w700,
+          fontFeatures: const [FontFeature.tabularFigures()],
         ),
       ),
     );

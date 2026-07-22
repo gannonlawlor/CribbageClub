@@ -9,7 +9,8 @@ import '../../../core/models/game_analysis.dart';
 import '../../../core/models/game_state.dart';
 import '../../../core/services/analysis_cache_service.dart';
 import '../../../core/services/local_game_history_provider.dart';
-import '../../daily_puzzle/widgets/explain_bottom_sheet.dart';
+import '../../../shared/widgets/cc_dialog.dart';
+import '../../daily_puzzle/widgets/explain_dialog.dart';
 import '../../game/state/game_providers.dart';
 import '../../game/widgets/card_widget.dart';
 
@@ -667,11 +668,9 @@ class _OptionRow extends StatelessWidget {
   });
 
   void _showExplain(BuildContext context) {
-    showModalBottomSheet(
+    showCcDialog(
       context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (_) => ExplainBottomSheet(
+      builder: (_) => ExplainDialog(
         rank: rank,
         keep: option.keep,
         discard: option.discard,
