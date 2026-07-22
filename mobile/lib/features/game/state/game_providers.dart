@@ -404,10 +404,17 @@ final localGameNotifierProvider =
       final animController = ref.read(gameAnimationProvider(gameId));
       final feedbackService = ref.read(gameFeedbackServiceProvider(gameId));
       final auth = ref.read(authProvider);
+      // Prefer the human player already in the restored game: a guest whose
+      // account was recreated (fresh install, sign-out) gets a new user id,
+      // and actions sent under it are rejected as "player not found".
+      final humanId = service.currentState?.players
+          .where((p) => p.id != service.aiPlayerId && !p.id.startsWith('ai_'))
+          .firstOrNull
+          ?.id;
       return LocalGameNotifier(
         gameId: gameId,
         service: service,
-        playerId: auth.userId ?? 'local_player',
+        playerId: humanId ?? auth.userId ?? 'local_player',
         animationController: animController,
         feedbackService: feedbackService,
         getAiDelay: () {

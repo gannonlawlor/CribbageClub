@@ -7,15 +7,28 @@ import '../../../shared/widgets/cc_list.dart';
 
 /// Opens the shared game-settings dialog (auto-play toggles + animation
 /// speed). Reachable in-game, from the Play tab, and from Settings.
-void showGameSettingsDialog(BuildContext context) {
+///
+/// In-game the dialog carries the exits at its foot — the game screen has no
+/// chrome of its own.
+void showGameSettingsDialog(
+  BuildContext context, {
+  VoidCallback? onLeave,
+  VoidCallback? onResign,
+}) {
   showCcDialog(
     context: context,
-    builder: (_) => const GameSettingsDialog(),
+    builder: (_) => GameSettingsDialog(onLeave: onLeave, onResign: onResign),
   );
 }
 
 class GameSettingsDialog extends ConsumerWidget {
-  const GameSettingsDialog({super.key});
+  /// Leaves the game. Null outside a game.
+  final VoidCallback? onLeave;
+
+  /// Forfeits then leaves. Null for local games and once the game is over.
+  final VoidCallback? onResign;
+
+  const GameSettingsDialog({super.key, this.onLeave, this.onResign});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -116,6 +129,36 @@ class GameSettingsDialog extends ConsumerWidget {
               ],
             ),
           ),
+          if (onResign != null || onLeave != null) ...[
+            const SizedBox(height: 18),
+            const _SectionCaption('Leave'),
+            const SizedBox(height: 8),
+            if (onResign != null) ...[
+              CcOptionRow(
+                icon: Icons.flag_outlined,
+                iconColor: colors.error,
+                title: 'Forfeit & leave',
+                subtitle: 'It counts as a loss.',
+                showChevron: false,
+                onTap: () {
+                  Navigator.of(context).pop();
+                  onResign!();
+                },
+              ),
+              const SizedBox(height: 8),
+            ],
+            if (onLeave != null)
+              CcOptionRow(
+                icon: Icons.arrow_back,
+                iconColor: colors.textTertiary,
+                title: 'Leave game',
+                showChevron: false,
+                onTap: () {
+                  Navigator.of(context).pop();
+                  onLeave!();
+                },
+              ),
+          ],
         ],
       ),
     );
