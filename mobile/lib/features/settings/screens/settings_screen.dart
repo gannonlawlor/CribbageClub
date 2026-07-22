@@ -71,7 +71,7 @@ class SettingsScreen extends ConsumerWidget {
                     _ValueRow(
                       label: 'Game settings',
                       value: gameSettingsSummary(settings),
-                      onTap: () => showGameSettingsSheet(context),
+                      onTap: () => showGameSettingsDialog(context),
                     ),
                     _ToggleRow(
                       label: 'Sounds',

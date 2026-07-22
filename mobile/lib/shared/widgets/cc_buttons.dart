@@ -87,6 +87,10 @@ class CcSecondaryButton extends StatelessWidget {
   final IconData? icon;
   final bool filled;
 
+  /// Overrides the label colour — use `colors.error` to mark a destructive
+  /// action (e.g. Resign) without giving it a full-weight CTA fill.
+  final Color? labelColor;
+
   const CcSecondaryButton({
     super.key,
     required this.label,
@@ -95,6 +99,7 @@ class CcSecondaryButton extends StatelessWidget {
     this.fontSize = 14,
     this.icon,
     this.filled = true,
+    this.labelColor,
   });
 
   @override
@@ -123,7 +128,11 @@ class CcSecondaryButton extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   if (icon != null) ...[
-                    Icon(icon, size: fontSize + 3, color: colors.textSecondary),
+                    Icon(
+                      icon,
+                      size: fontSize + 3,
+                      color: labelColor ?? colors.textSecondary,
+                    ),
                     const SizedBox(width: 7),
                   ],
                   Flexible(
@@ -132,7 +141,7 @@ class CcSecondaryButton extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        color: colors.textPrimary,
+                        color: labelColor ?? colors.textPrimary,
                         fontSize: fontSize,
                         fontWeight: FontWeight.w600,
                       ),
