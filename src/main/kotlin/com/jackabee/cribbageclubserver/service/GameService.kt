@@ -341,8 +341,15 @@ class GameService(
                 val remapped = remapGameState(state, newGameId, userId, username)
 
                 // Determine player order (human is player1)
-                val humanPlayer = remapped.players.first { it.id == userId }
-                val aiPlayer = remapped.players.first { it.id != userId }
+                val humanPlayer = remapped.players.firstOrNull { it.id == userId }
+                val aiPlayer = remapped.players.firstOrNull { it.id != userId }
+                if (humanPlayer == null || aiPlayer == null) {
+                    errors.add(
+                        "${game.localGameId}: could not tell which player is you " +
+                            "(players: ${remapped.players.joinToString { it.id }})"
+                    )
+                    continue
+                }
 
                 // Determine timestamps
                 val completedAt = game.completedAt?.let {
@@ -405,9 +412,13 @@ class GameService(
         userId: String,
         username: String
     ): GameState {
-        val oldLocalId = "local_player"
-        // Check if remapping is needed (games played while logged in already have real userId)
-        val needsRemap = state.players.any { it.id == oldLocalId }
+        // The human is whichever player isn't the engine. Their recorded id
+        // may be "local_player", a guest id, or an id from a previous sign-in —
+        // all of them have to become the importing user, or the game can never
+        // be attributed to anyone.
+        val aiId = state.players.firstOrNull { it.id.startsWith("ai_") }?.id
+        val oldLocalId = state.players.firstOrNull { it.id != aiId }?.id
+        val needsRemap = oldLocalId != null && oldLocalId != userId
         val remapId = { id: String -> if (needsRemap && id == oldLocalId) userId else id }
 
         val remappedPlayers = state.players.map { player ->

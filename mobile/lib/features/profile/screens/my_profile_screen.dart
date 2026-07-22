@@ -5,12 +5,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../config/theme/app_colors.dart';
 import '../../../core/auth/auth_provider.dart';
-import '../../../core/models/local_game_record.dart';
 import '../../../core/models/profile_response.dart';
 import '../../../core/providers/notification_provider.dart';
 import '../../../core/services/local_game_history_provider.dart';
 import '../../../shared/widgets/cc_bottom_nav.dart';
 import '../../daily_puzzle/state/puzzle_provider.dart';
+import '../../../shared/widgets/game_history_row.dart';
 import '../state/my_profile_provider.dart';
 
 const _months = [
@@ -38,6 +38,8 @@ class MyProfileScreen extends ConsumerWidget {
     final auth = ref.watch(authProvider);
     final profile = ref.watch(myProfileProvider).valueOrNull;
     final records = ref.watch(localGameHistoryProvider).valueOrNull ?? const [];
+    final serverGames =
+        ref.watch(serverGameHistoryProvider).valueOrNull ?? const [];
     final puzzle = ref.watch(dailyPuzzleStatusProvider);
     final streak = puzzle.valueOrNull?.streak ?? 0;
 
@@ -249,7 +251,15 @@ class MyProfileScreen extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 8),
-                _HistoryList(records: records.take(8).toList()),
+                GameHistoryList(
+                  games: [
+                    // Uploaded games live on the server; anything still on the
+                    // device hasn't made it there yet. Both are your history.
+                    for (final r in records) GameSummary.fromLocal(r),
+                    for (final g in serverGames)
+                      GameSummary.fromGameState(g, auth.userId ?? ''),
+                  ].take(8).toList(),
+                ),
               ],
             ),
           ),
@@ -492,155 +502,6 @@ class _LinkRow extends StatelessWidget {
               Icon(Icons.chevron_right, size: 18, color: colors.textDisabled),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _HistoryList extends StatelessWidget {
-  final List<LocalGameRecord> records;
-
-  const _HistoryList({required this.records});
-
-  String _dayLabel(DateTime when) {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final day = DateTime(when.year, when.month, when.day);
-    final diff = today.difference(day).inDays;
-    if (diff == 0) return 'TODAY';
-    if (diff == 1) return 'YESTERDAY';
-    return '${_months[when.month - 1].substring(0, 3)} ${when.day}'
-        .toUpperCase();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.appColors;
-
-    if (records.isEmpty) {
-      return Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: colors.border),
-        ),
-        child: Text(
-          'No games yet. Your first game starts your record.',
-          style: TextStyle(color: colors.textTertiary, fontSize: 12.5),
-        ),
-      );
-    }
-
-    final children = <Widget>[];
-    String? currentLabel;
-    for (final record in records) {
-      final label = _dayLabel(record.completedAt);
-      if (label != currentLabel) {
-        currentLabel = label;
-        children.add(
-          Container(
-            width: double.infinity,
-            color: colors.surfacePrimary,
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-            child: Text(
-              label,
-              style: TextStyle(
-                color: colors.textTertiary,
-                fontSize: 10.5,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 0.7,
-              ),
-            ),
-          ),
-        );
-      } else {
-        children.add(Divider(height: 1, color: colors.border));
-      }
-      children.add(_HistoryRow(record: record));
-    }
-
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: colors.border),
-        ),
-        child: Column(children: children),
-      ),
-    );
-  }
-}
-
-class _HistoryRow extends StatelessWidget {
-  final LocalGameRecord record;
-
-  const _HistoryRow({required this.record});
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.appColors;
-    final resultColor = record.isWin ? colors.success : colors.error;
-
-    return InkWell(
-      onTap: () => context.go('/replay/${record.gameId}'),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        child: Row(
-          children: [
-            Container(
-              width: 22,
-              height: 22,
-              decoration: BoxDecoration(
-                color: resultColor.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(5),
-              ),
-              child: Center(
-                child: Text(
-                  record.isWin ? 'W' : 'L',
-                  style: TextStyle(
-                    color: resultColor,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    record.opponentName,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: colors.textPrimary,
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  Text(
-                    'Engine · ${record.difficulty}',
-                    style: TextStyle(
-                      color: colors.textTertiary,
-                      fontSize: 11.5,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Text(
-              '${record.playerScore}–${record.opponentScore}',
-              style: TextStyle(
-                color: colors.textTertiary,
-                fontSize: 13.5,
-                fontFeatures: const [FontFeature.tabularFigures()],
-              ),
-            ),
-          ],
         ),
       ),
     );

@@ -7,7 +7,8 @@ import 'package:share_plus/share_plus.dart';
 import '../../../config/theme/app_colors.dart';
 import '../../../core/auth/auth_provider.dart';
 import '../../../core/models/lobby.dart';
-import '../../../shared/utils/text_utils.dart';
+import '../../../shared/widgets/cc_buttons.dart';
+import '../../../shared/widgets/cc_screen.dart';
 
 class LobbyWaitingScreen extends ConsumerStatefulWidget {
   final String lobbyId;
@@ -24,6 +25,10 @@ class _LobbyWaitingScreenState extends ConsumerState<LobbyWaitingScreen> {
   bool _isLoading = true;
   String? _error;
 
+  /// Flashes the invite card green for 400ms after a copy (design §4).
+  bool _justCopied = false;
+  Timer? _copyTimer;
+
   @override
   void initState() {
     super.initState();
@@ -37,6 +42,7 @@ class _LobbyWaitingScreenState extends ConsumerState<LobbyWaitingScreen> {
   @override
   void dispose() {
     _pollTimer?.cancel();
+    _copyTimer?.cancel();
     super.dispose();
   }
 
@@ -59,7 +65,7 @@ class _LobbyWaitingScreenState extends ConsumerState<LobbyWaitingScreen> {
       if (!mounted) return;
       setState(() {
         _isLoading = false;
-        _error = 'Failed to load lobby: $e';
+        _error = '$e';
       });
     }
   }
@@ -74,211 +80,301 @@ class _LobbyWaitingScreenState extends ConsumerState<LobbyWaitingScreen> {
     if (mounted) context.go('/');
   }
 
+  void _copyCode(String code) {
+    Clipboard.setData(ClipboardData(text: code));
+    setState(() => _justCopied = true);
+    _copyTimer?.cancel();
+    _copyTimer = Timer(const Duration(milliseconds: 400), () {
+      if (mounted) setState(() => _justCopied = false);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = context.appColors;
+    final lobby = _lobby;
+    final isPrivate = lobby?.inviteCode != null;
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Waiting Room'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: _leaveLobby,
-        ),
-      ),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 400),
-          child: Padding(
-            padding: const EdgeInsets.all(32),
-            child: _isLoading
-                ? const CircularProgressIndicator()
-                : _error != null
-                ? Text(_error!, style: TextStyle(color: colors.error))
-                : _buildLobbyContent(),
+      backgroundColor: colors.scaffoldBg,
+      body: SafeArea(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 420),
+            child: Column(
+              children: [
+                CcScreenHeader(
+                  title: isPrivate ? 'Private game' : 'Finding a game',
+                  onBack: _leaveLobby,
+                ),
+                Expanded(
+                  child: _isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : _error != null
+                      ? CcMessage(
+                          title: 'This lobby is unavailable',
+                          detail: _error,
+                          action: 'Back to home',
+                          onAction: () => context.go('/'),
+                        )
+                      : _buildLobbyContent(lobby!),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildLobbyContent() {
+  Widget _buildLobbyContent(Lobby lobby) {
     final colors = context.appColors;
-    final lobby = _lobby!;
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
+    final auth = ref.read(authProvider);
+    final open = lobby.maxPlayers - lobby.players.length;
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
       children: [
-        // Invite Code section
         if (lobby.inviteCode != null) ...[
-          Text(
-            'INVITE CODE',
-            style: TextStyle(
-              color: colors.textTertiary,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 1.5,
-            ),
+          const CcSectionCaption('Invite code'),
+          _InviteCode(
+            code: lobby.inviteCode!,
+            flash: _justCopied,
+            onCopy: () => _copyCode(lobby.inviteCode!),
           ),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-            decoration: BoxDecoration(
-              color: colors.surfaceDim,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: colors.accent,
-                width: 2,
-              ),
-            ),
-            child: Text(
-              lobby.inviteCode!,
-              style: TextStyle(
-                color: colors.accent,
-                fontSize: 32,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 6,
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           Row(
-            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              TextButton.icon(
-                onPressed: () {
-                  Clipboard.setData(ClipboardData(text: lobby.inviteCode!));
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Invite code copied!')),
-                  );
-                },
-                icon: const Icon(Icons.copy, size: 16),
-                label: const Text('Copy'),
+              Expanded(
+                child: CcSecondaryButton(
+                  label: _justCopied ? 'Copied' : 'Copy code',
+                  icon: Icons.copy,
+                  height: 40,
+                  fontSize: 13,
+                  onPressed: () => _copyCode(lobby.inviteCode!),
+                ),
               ),
-              const SizedBox(width: 8),
-              TextButton.icon(
-                onPressed: () {
-                  Share.share(
-                    'Join my Cribbage Club game! Code: ${lobby.inviteCode!}',
-                  );
-                },
-                icon: const Icon(Icons.share, size: 16),
-                label: const Text('Share'),
+              const SizedBox(width: 10),
+              Expanded(
+                child: CcSecondaryButton(
+                  label: 'Share',
+                  icon: Icons.ios_share,
+                  height: 40,
+                  fontSize: 13,
+                  onPressed: () => Share.share(
+                    'Join my Cribbage Club game. Code: ${lobby.inviteCode!}',
+                  ),
+                ),
               ),
             ],
           ),
+          const SizedBox(height: 22),
         ],
 
-        const SizedBox(height: 32),
+        const CcSectionCaption('Table'),
+        CcPanel(
+          rows: [
+            for (final player in lobby.players)
+              _PlayerRow(
+                name: player.name,
+                isYou: player.id == auth.userId,
+                seated: true,
+              ),
+            for (var i = 0; i < open; i++)
+              const _PlayerRow(name: '', isYou: false, seated: false),
+          ],
+        ),
+        const SizedBox(height: 22),
 
-        // Players section
-        Text(
-          'PLAYERS',
-          style: TextStyle(
-            color: colors.textTertiary,
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            letterSpacing: 1.5,
-          ),
-        ),
-        const SizedBox(height: 12),
-        ...lobby.players.map(
-          (p) => Container(
-            margin: const EdgeInsets.only(bottom: 8),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: colors.surfaceDim,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: 18,
-                  backgroundColor: colors.accent.withValues(alpha: 0.15),
-                  child: Text(
-                    initials(p.name),
-                    style: TextStyle(
-                      color: colors.accent,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  p.name,
-                  style: TextStyle(
-                    color: colors.textPrimary,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const Spacer(),
-                Icon(Icons.check_circle, color: colors.success, size: 20),
-              ],
-            ),
-          ),
-        ),
-        // Empty slots
-        for (var i = lobby.players.length; i < lobby.maxPlayers; i++)
-          Container(
-            margin: const EdgeInsets.only(bottom: 8),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: colors.surfaceDim,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: colors.divider,
-                style: BorderStyle.solid,
+        // Status line — states the fact, no cheerleading (§8).
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SizedBox(
+              width: 13,
+              height: 13,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: colors.textTertiary,
               ),
             ),
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: 18,
-                  backgroundColor: colors.divider,
-                  child: Icon(
-                    Icons.person_outline,
-                    color: colors.textDisabled,
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  'Waiting for opponent...',
-                  style: TextStyle(
-                    color: colors.textDisabled,
-                    fontSize: 14,
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
-              ],
+            const SizedBox(width: 10),
+            Flexible(
+              child: Text(
+                lobby.inviteCode != null
+                    ? 'Waiting for someone to join with your code.'
+                    : 'Looking for an opponent.',
+                style: TextStyle(color: colors.textTertiary, fontSize: 13),
+              ),
             ),
-          ),
-
+          ],
+        ),
         const SizedBox(height: 24),
 
-        // Spinner
-        const SizedBox(
-          width: 24,
-          height: 24,
-          child: CircularProgressIndicator(strokeWidth: 2),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'Waiting for opponent to join...',
-          style: TextStyle(color: colors.textTertiary),
-        ),
-
-        const SizedBox(height: 32),
-
-        OutlinedButton(
-          onPressed: _leaveLobby,
-          style: OutlinedButton.styleFrom(
-            foregroundColor: colors.error,
-            side: BorderSide(color: colors.error),
+        Center(
+          child: SizedBox(
+            width: 200,
+            child: CcSecondaryButton(
+              label: 'Leave',
+              height: 40,
+              fontSize: 13,
+              filled: false,
+              labelColor: colors.error,
+              onPressed: _leaveLobby,
+            ),
           ),
-          child: const Text('Leave'),
         ),
       ],
+    );
+  }
+}
+
+/// Invite-code display (design language §4): chrome surface, 1px **dashed**
+/// border to signal "share me", monospace with wide tracking, and the whole
+/// card is the copy target.
+class _InviteCode extends StatelessWidget {
+  final String code;
+  final bool flash;
+  final VoidCallback onCopy;
+
+  const _InviteCode({
+    required this.code,
+    required this.flash,
+    required this.onCopy,
+  });
+
+  /// Grouped in fours, the way a code meant to be read aloud should be.
+  String get _grouped {
+    final clean = code.replaceAll('-', '');
+    final chunks = <String>[];
+    for (var i = 0; i < clean.length; i += 4) {
+      chunks.add(clean.substring(i, (i + 4).clamp(0, clean.length)));
+    }
+    return chunks.join('-');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+    return GestureDetector(
+      onTap: onCopy,
+      child: CustomPaint(
+        // A foreground painter is sized to the whole card, so the dashes
+        // trace the border rather than the text inside it.
+        foregroundPainter: _DashedBorder(
+          color: flash ? colors.accent : colors.borderStrong,
+          radius: 8,
+        ),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            color: colors.surfaceChrome,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Center(
+            child: Text(
+              _grouped,
+              style: TextStyle(
+                color: flash ? colors.accent : colors.textPrimary,
+                fontSize: 20,
+                fontFamily: 'monospace',
+                fontWeight: FontWeight.w600,
+                letterSpacing: 3.6,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DashedBorder extends CustomPainter {
+  final Color color;
+  final double radius;
+
+  _DashedBorder({required this.color, required this.radius});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1;
+
+    // Inset by half the stroke so neither edge of the line is clipped.
+    final rect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(0.5, 0.5, size.width - 1, size.height - 1),
+      Radius.circular(radius),
+    );
+    final path = Path()..addRRect(rect);
+
+    for (final metric in path.computeMetrics()) {
+      var distance = 0.0;
+      while (distance < metric.length) {
+        canvas.drawPath(metric.extractPath(distance, distance + 5), paint);
+        distance += 9;
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_DashedBorder old) => old.color != color;
+}
+
+/// One seat at the table — taken, or still open.
+class _PlayerRow extends StatelessWidget {
+  final String name;
+  final bool isYou;
+  final bool seated;
+
+  const _PlayerRow({
+    required this.name,
+    required this.isYou,
+    required this.seated,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      child: Row(
+        children: [
+          if (seated)
+            CcAvatar(name: name, size: 32)
+          else
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: colors.borderStrong),
+              ),
+              child: Icon(
+                Icons.person_outline,
+                size: 17,
+                color: colors.textDisabled,
+              ),
+            ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              seated ? name : 'Open seat',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: seated ? colors.textPrimary : colors.textDisabled,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          if (seated && isYou) const CcChip(label: 'YOU'),
+        ],
+      ),
     );
   }
 }

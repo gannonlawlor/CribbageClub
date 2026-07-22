@@ -7,8 +7,10 @@ import '../../../core/auth/auth_provider.dart';
 import '../../../core/models/friend.dart';
 import '../../../core/models/lobby.dart';
 import '../../../core/providers/notification_provider.dart';
-import '../../../shared/utils/responsive.dart';
-import '../../../shared/utils/text_utils.dart';
+import '../../../shared/widgets/cc_buttons.dart';
+import '../../../shared/widgets/cc_dialog.dart';
+import '../../../shared/widgets/cc_field.dart';
+import '../../../shared/widgets/cc_screen.dart';
 
 // Providers
 final _friendsProvider = FutureProvider.autoDispose<List<FriendInfo>>((
@@ -54,21 +56,8 @@ class FriendsScreen extends ConsumerStatefulWidget {
   ConsumerState<FriendsScreen> createState() => _FriendsScreenState();
 }
 
-class _FriendsScreenState extends ConsumerState<FriendsScreen>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 3, vsync: this);
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
+class _FriendsScreenState extends ConsumerState<FriendsScreen> {
+  int _tab = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -77,261 +66,30 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen>
     final total = notifCount.whenOrNull(data: (n) => n.total) ?? 0;
 
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/'),
-        ),
-        title: const Text('Friends'),
-        bottom: TabBar(
-          controller: _tabController,
-          indicatorColor: colors.accent,
-          labelColor: colors.accent,
-          unselectedLabelColor: colors.textTertiary,
-          tabs: [
-            const Tab(text: 'Friends'),
-            Tab(
-              child: Badge(
-                isLabelVisible: total > 0,
-                label: Text('$total', style: const TextStyle(fontSize: 10)),
-                backgroundColor: colors.error,
-                child: const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 8),
-                  child: Text('Requests'),
-                ),
-              ),
-            ),
-            const Tab(text: 'Find'),
-          ],
-        ),
-      ),
-      body: TabBarView(
-        controller: _tabController,
-        children: const [_FriendsTab(), _RequestsTab(), _FindTab()],
-      ),
-    );
-  }
-}
-
-// ──────────────────────────────────────────
-// Tab 1: Friends list
-// ──────────────────────────────────────────
-class _FriendsTab extends ConsumerWidget {
-  const _FriendsTab();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final colors = context.appColors;
-    final friends = ref.watch(_friendsProvider);
-
-    return friends.when(
-      data: (unsorted) {
-        // Sort: online first, then alphabetical by display name
-        final list = [...unsorted]..sort((a, b) {
-          if (a.isOnline != b.isOnline) return a.isOnline ? -1 : 1;
-          final nameA = (a.displayName ?? a.username).toLowerCase();
-          final nameB = (b.displayName ?? b.username).toLowerCase();
-          return nameA.compareTo(nameB);
-        });
-        if (list.isEmpty) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(32),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.group_add, size: 64, color: colors.textDisabled),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No friends yet',
-                    style: TextStyle(color: colors.textTertiary, fontSize: 16),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Use the Find tab to search for players and send friend requests.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: colors.textDisabled, fontSize: 13),
-                  ),
-                ],
-              ),
-            ),
-          );
-        }
-        if (Responsive.isTabletLandscape(context)) {
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: list.map((f) => SizedBox(
-                width: (MediaQuery.of(context).size.width - 48) / 2,
-                child: _FriendTile(friend: f),
-              )).toList(),
-            ),
-          );
-        }
-        return ListView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: list.length,
-          itemBuilder: (context, index) => _FriendTile(friend: list[index]),
-        );
-      },
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, _) => Center(
-        child: Text(
-          'Failed to load friends: $error',
-          style: TextStyle(color: colors.error),
-        ),
-      ),
-    );
-  }
-}
-
-class _FriendTile extends ConsumerWidget {
-  final FriendInfo friend;
-  const _FriendTile({required this.friend});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final colors = context.appColors;
-    final name = friend.displayName ?? friend.username;
-    return Dismissible(
-      key: Key(friend.friendshipId),
-      direction: DismissDirection.endToStart,
-      background: Container(
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 16),
-        color: colors.error.withValues(alpha: 0.3),
-        child: Icon(Icons.person_remove, color: colors.error),
-      ),
-      confirmDismiss: (direction) async {
-        return await showDialog<bool>(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            backgroundColor: colors.surfacePrimary,
-            title: Text(
-              'Remove Friend',
-              style: TextStyle(color: colors.textPrimary),
-            ),
-            content: Text(
-              'Remove $name from your friends?',
-              style: TextStyle(color: colors.textSecondary),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(false),
-                child: const Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(true),
-                child: Text(
-                  'Remove',
-                  style: TextStyle(color: colors.error),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-      onDismissed: (_) async {
-        try {
-          final restClient = ref.read(restClientProvider);
-          await restClient.removeFriend(friend.friendshipId);
-          ref.invalidate(_friendsProvider);
-        } catch (e) {
-          debugPrint('[Friends] Failed to remove friend: $e');
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Failed to remove friend: $e')),
-            );
-          }
-        }
-      },
-      child: GestureDetector(
-        onTap: () => context.push('/profile/${friend.userId}'),
-        child: Container(
-          margin: const EdgeInsets.only(bottom: 8),
-          decoration: BoxDecoration(
-            color: colors.surfaceDim,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Row(
+      backgroundColor: colors.scaffoldBg,
+      body: SafeArea(
+        bottom: false,
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 480),
+            child: Column(
               children: [
-                Stack(
-                  children: [
-                    CircleAvatar(
-                      radius: 20,
-                      backgroundColor: colors.accent.withValues(alpha: 0.15),
-                      child: Text(
-                        initials(name),
-                        style: TextStyle(
-                          color: colors.accent,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      right: 0,
-                      bottom: 0,
-                      child: Container(
-                        width: 12,
-                        height: 12,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: friend.isOnline ? colors.success : colors.divider,
-                          border: Border.all(
-                            color: colors.surfaceDim,
-                            width: 2,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        name,
-                        style: TextStyle(
-                          color: colors.textPrimary,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      if (friend.displayName != null)
-                        Text(
-                          '@${friend.username}',
-                          style: TextStyle(
-                            color: colors.textTertiary,
-                            fontSize: 12,
-                          ),
-                        ),
-                      Text(
-                        'Friends since ${_formatDate(friend.since)}',
-                        style: TextStyle(
-                          color: colors.textDisabled,
-                          fontSize: 11,
-                        ),
-                      ),
-                    ],
+                CcScreenHeader(title: 'Friends', onBack: () => context.go('/')),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
+                  child: CcSegmented(
+                    labels: const ['Club', 'Requests', 'Find'],
+                    badges: [null, total, null],
+                    selected: _tab,
+                    onChanged: (i) => setState(() => _tab = i),
                   ),
                 ),
-                FilledButton.tonalIcon(
-                  onPressed: () => _challengeFriend(context, ref),
-                  icon: const Icon(Icons.sports_esports, size: 16),
-                  label: const Text('Play'),
-                  style: FilledButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
-                    ),
-                    textStyle: const TextStyle(fontSize: 12),
+                Expanded(
+                  child: IndexedStack(
+                    index: _tab,
+                    // Keeps the search field and its results alive across
+                    // tab switches.
+                    children: const [_ClubTab(), _RequestsTab(), _FindTab()],
                   ),
                 ),
               ],
@@ -341,32 +99,190 @@ class _FriendTile extends ConsumerWidget {
       ),
     );
   }
+}
 
-  String _formatDate(String isoDate) {
-    try {
-      final date = DateTime.parse(isoDate);
-      final months = [
-        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-      ];
-      return '${months[date.month - 1]} ${date.year}';
-    } catch (_) {
-      return isoDate;
-    }
+// ──────────────────────────────────────────
+// Tab 1: Your club
+// ──────────────────────────────────────────
+class _ClubTab extends ConsumerWidget {
+  const _ClubTab();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final friends = ref.watch(_friendsProvider);
+
+    return friends.when(
+      data: (unsorted) {
+        // Online first, then alphabetical
+        final list = [...unsorted]
+          ..sort((a, b) {
+            if (a.isOnline != b.isOnline) return a.isOnline ? -1 : 1;
+            final nameA = (a.displayName ?? a.username).toLowerCase();
+            final nameB = (b.displayName ?? b.username).toLowerCase();
+            return nameA.compareTo(nameB);
+          });
+
+        if (list.isEmpty) {
+          return const CcMessage(
+            title: 'No club members yet',
+            detail: 'Find a player by username to send the first request.',
+          );
+        }
+
+        final online = list.where((f) => f.isOnline).length;
+
+        return RefreshIndicator(
+          color: context.appColors.accent,
+          onRefresh: () async {
+            ref.invalidate(_friendsProvider);
+            await ref.read(_friendsProvider.future);
+          },
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 28),
+            children: [
+              CcSectionCaption(
+                online > 0
+                    ? '${list.length} members · $online online'
+                    : '${list.length} member${list.length == 1 ? '' : 's'}',
+              ),
+              CcPanel(rows: [for (final f in list) _FriendRow(friend: f)]),
+            ],
+          ),
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (error, _) =>
+          CcMessage(title: 'Friends unavailable', detail: '$error'),
+    );
+  }
+}
+
+class _FriendRow extends ConsumerWidget {
+  final FriendInfo friend;
+  const _FriendRow({required this.friend});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.appColors;
+    final name = friend.displayName ?? friend.username;
+
+    return Dismissible(
+      key: Key(friend.friendshipId),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 16),
+        color: colors.error.withValues(alpha: 0.25),
+        child: Icon(Icons.person_remove, size: 18, color: colors.error),
+      ),
+      confirmDismiss: (_) => _confirmRemove(context, name),
+      onDismissed: (_) async {
+        try {
+          final restClient = ref.read(restClientProvider);
+          await restClient.removeFriend(friend.friendshipId);
+          ref.invalidate(_friendsProvider);
+        } catch (e) {
+          debugPrint('[Friends] Failed to remove friend: $e');
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Could not remove $name: $e')),
+            );
+          }
+        }
+      },
+      child: InkWell(
+        onTap: () => context.push('/profile/${friend.userId}'),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+          child: Row(
+            children: [
+              CcAvatar(name: name, size: 34, isOnline: friend.isOnline),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: colors.textPrimary,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    Text(
+                      friend.isOnline ? 'Online' : '@${friend.username}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: friend.isOnline
+                            ? colors.accent
+                            : colors.textTertiary,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 10),
+              CcSecondaryButton(
+                label: 'Challenge',
+                height: 32,
+                fontSize: 12,
+                onPressed: () => _challenge(context, ref),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
-  Future<void> _challengeFriend(BuildContext context, WidgetRef ref) async {
+  Future<bool> _confirmRemove(BuildContext context, String name) async {
+    final colors = context.appColors;
+    final result = await showCcDialog<bool>(
+      context: context,
+      builder: (ctx) => CcDialog(
+        title: 'Remove $name?',
+        showCloseButton: false,
+        actions: [
+          CcSecondaryButton(
+            label: 'Remove',
+            labelColor: colors.error,
+            onPressed: () => Navigator.of(ctx).pop(true),
+          ),
+          CcPrimaryButton(
+            label: 'Keep',
+            height: 44,
+            fontSize: 14,
+            onPressed: () => Navigator.of(ctx).pop(false),
+          ),
+        ],
+        child: Text(
+          'They leave your club. You can send a new request later.',
+          style: TextStyle(
+            color: colors.textSecondary,
+            fontSize: 14,
+            height: 1.35,
+          ),
+        ),
+      ),
+    );
+    return result ?? false;
+  }
+
+  Future<void> _challenge(BuildContext context, WidgetRef ref) async {
     try {
       final restClient = ref.read(restClientProvider);
       final lobby = await restClient.createChallenge(friend.userId);
-      if (context.mounted) {
-        context.go('/lobby/${lobby.id}');
-      }
+      if (context.mounted) context.go('/lobby/${lobby.id}');
     } catch (e) {
       debugPrint('[Friends] Failed to create challenge: $e');
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to create challenge: $e')),
+          SnackBar(content: Text('Could not send the challenge: $e')),
         );
       }
     }
@@ -374,7 +290,7 @@ class _FriendTile extends ConsumerWidget {
 }
 
 // ──────────────────────────────────────────
-// Tab 2: Requests + Challenges
+// Tab 2: Challenges + requests
 // ──────────────────────────────────────────
 class _RequestsTab extends ConsumerWidget {
   const _RequestsTab();
@@ -386,353 +302,112 @@ class _RequestsTab extends ConsumerWidget {
     final outgoing = ref.watch(_outgoingRequestsProvider);
     final challenges = ref.watch(_incomingChallengesProvider);
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    final challengeList = challenges.valueOrNull ?? const <Lobby>[];
+    final requestList = requests.valueOrNull ?? const <FriendRequestInfo>[];
+    final sentList = outgoing.valueOrNull ?? const <FriendRequestInfo>[];
+
+    if (challenges.isLoading && requests.isLoading && outgoing.isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (challengeList.isEmpty && requestList.isEmpty && sentList.isEmpty) {
+      return const CcMessage(
+        title: 'Nothing waiting',
+        detail: 'Challenges and friend requests land here.',
+      );
+    }
+
+    return RefreshIndicator(
+      color: colors.accent,
+      onRefresh: () async {
+        ref.invalidate(_incomingChallengesProvider);
+        ref.invalidate(_incomingRequestsProvider);
+        ref.invalidate(_outgoingRequestsProvider);
+        await ref.read(_incomingChallengesProvider.future);
+      },
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 28),
         children: [
-          // Incoming friend requests
-          Text(
-            'Friend Requests',
-            style: TextStyle(
-              color: colors.textPrimary,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
+          // Challenges first — they're the ones with a game behind them.
+          if (challengeList.isNotEmpty) ...[
+            const CcSectionCaption('Challenges'),
+            CcPanel(
+              rows: [
+                for (final c in challengeList) _ChallengeRow(challenge: c),
+              ],
             ),
-          ),
-          const SizedBox(height: 8),
-          requests.when(
-            data: (list) {
-              if (list.isEmpty) {
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  child: Text(
-                    'No pending requests',
-                    style: TextStyle(color: colors.textDisabled),
-                  ),
-                );
-              }
-              return Column(
-                children: list
-                    .map((r) => _FriendRequestTile(request: r))
-                    .toList(),
-              );
-            },
-            loading: () => const Padding(
-              padding: EdgeInsets.symmetric(vertical: 16),
-              child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+            const SizedBox(height: 20),
+          ],
+          if (requestList.isNotEmpty) ...[
+            const CcSectionCaption('Friend requests'),
+            CcPanel(
+              rows: [for (final r in requestList) _RequestRow(request: r)],
             ),
-            error: (e, _) => Text(
-              'Error: $e',
-              style: TextStyle(color: colors.error),
-            ),
-          ),
-
-          const SizedBox(height: 24),
-
-          // Outgoing friend requests
-          Text(
-            'Sent Requests',
-            style: TextStyle(
-              color: colors.textPrimary,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 8),
-          outgoing.when(
-            data: (list) {
-              if (list.isEmpty) {
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  child: Text(
-                    'No sent requests',
-                    style: TextStyle(color: colors.textDisabled),
-                  ),
-                );
-              }
-              return Column(
-                children: list
-                    .map((r) => _OutgoingRequestTile(request: r))
-                    .toList(),
-              );
-            },
-            loading: () => const Padding(
-              padding: EdgeInsets.symmetric(vertical: 16),
-              child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-            ),
-            error: (e, _) => Text(
-              'Error: $e',
-              style: TextStyle(color: colors.error),
-            ),
-          ),
-
-          const SizedBox(height: 24),
-
-          // Incoming challenges
-          Text(
-            'Challenges',
-            style: TextStyle(
-              color: colors.textPrimary,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 8),
-          challenges.when(
-            data: (list) {
-              if (list.isEmpty) {
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  child: Text(
-                    'No pending challenges',
-                    style: TextStyle(color: colors.textDisabled),
-                  ),
-                );
-              }
-              return Column(
-                children: list
-                    .map((c) => _ChallengeTile(challenge: c))
-                    .toList(),
-              );
-            },
-            loading: () => const Padding(
-              padding: EdgeInsets.symmetric(vertical: 16),
-              child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-            ),
-            error: (e, _) => Text(
-              'Error: $e',
-              style: TextStyle(color: colors.error),
-            ),
-          ),
+            const SizedBox(height: 20),
+          ],
+          if (sentList.isNotEmpty) ...[
+            const CcSectionCaption('Sent'),
+            CcPanel(rows: [for (final r in sentList) _SentRow(request: r)]),
+          ],
         ],
       ),
     );
   }
 }
 
-class _FriendRequestTile extends ConsumerWidget {
-  final FriendRequestInfo request;
-  const _FriendRequestTile({required this.request});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final colors = context.appColors;
-    final name = request.fromDisplayName ?? request.fromUsername;
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      decoration: BoxDecoration(
-        color: colors.surfaceDim,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Row(
-          children: [
-            CircleAvatar(
-              radius: 18,
-              backgroundColor: colors.accent.withValues(alpha: 0.15),
-              child: Text(
-                initials(name),
-                style: TextStyle(
-                  color: colors.accent,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    name,
-                    style: TextStyle(color: colors.textPrimary, fontSize: 14),
-                  ),
-                  if (request.fromDisplayName != null)
-                    Text(
-                      '@${request.fromUsername}',
-                      style: TextStyle(
-                        color: colors.textTertiary,
-                        fontSize: 12,
-                      ),
-                    ),
-                ],
-              ),
-            ),
-            IconButton(
-              icon: Icon(Icons.check, color: colors.success),
-              onPressed: () => _accept(context, ref),
-              tooltip: 'Accept',
-            ),
-            IconButton(
-              icon: Icon(Icons.close, color: colors.error),
-              onPressed: () => _decline(context, ref),
-              tooltip: 'Decline',
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Future<void> _accept(BuildContext context, WidgetRef ref) async {
-    try {
-      final restClient = ref.read(restClientProvider);
-      await restClient.acceptFriendRequest(request.friendshipId);
-      ref.invalidate(_incomingRequestsProvider);
-      ref.invalidate(_friendsProvider);
-      ref.invalidate(notificationCountProvider);
-    } catch (e) {
-      debugPrint('[Friends] Failed to accept friend request: $e');
-      if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed to accept: $e')));
-      }
-    }
-  }
-
-  Future<void> _decline(BuildContext context, WidgetRef ref) async {
-    try {
-      final restClient = ref.read(restClientProvider);
-      await restClient.declineFriendRequest(request.friendshipId);
-      ref.invalidate(_incomingRequestsProvider);
-      ref.invalidate(notificationCountProvider);
-    } catch (e) {
-      debugPrint('[Friends] Failed to decline friend request: $e');
-      if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed to decline: $e')));
-      }
-    }
-  }
-}
-
-class _OutgoingRequestTile extends StatelessWidget {
-  final FriendRequestInfo request;
-  const _OutgoingRequestTile({required this.request});
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.appColors;
-    // Outgoing requests reuse the same model; fromUsername is the recipient
-    final name = request.fromDisplayName ?? request.fromUsername;
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      decoration: BoxDecoration(
-        color: colors.surfaceDim,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Row(
-          children: [
-            CircleAvatar(
-              radius: 18,
-              backgroundColor: colors.accent.withValues(alpha: 0.15),
-              child: Text(
-                initials(name),
-                style: TextStyle(
-                  color: colors.accent,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                name,
-                style: TextStyle(color: colors.textPrimary, fontSize: 14),
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                color: colors.accent.withValues(alpha: 0.1),
-              ),
-              child: Text(
-                'Pending',
-                style: TextStyle(
-                  color: colors.accent,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ChallengeTile extends ConsumerWidget {
+class _ChallengeRow extends ConsumerWidget {
   final Lobby challenge;
-  const _ChallengeTile({required this.challenge});
+  const _ChallengeRow({required this.challenge});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.appColors;
-    final challengerName = challenge.players.isNotEmpty
+    final name = challenge.players.isNotEmpty
         ? challenge.players.first.name
-        : 'Unknown';
+        : 'A player';
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      decoration: BoxDecoration(
-        color: colors.surfaceDim,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: colors.accent.withValues(alpha: 0.3)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Row(
-          children: [
-            CircleAvatar(
-              radius: 18,
-              backgroundColor: colors.accent.withValues(alpha: 0.15),
-              child: Text(
-                initials(challengerName),
-                style: TextStyle(
-                  color: colors.accent,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+      child: Row(
+        children: [
+          CcAvatar(name: name, size: 34),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: colors.textPrimary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                '$challengerName wants to play!',
-                style: TextStyle(color: colors.textPrimary, fontSize: 14),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () => _accept(context, ref),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
+                Text(
+                  'Wants a game',
+                  style: TextStyle(color: colors.textTertiary, fontSize: 12),
                 ),
-                textStyle: const TextStyle(fontSize: 12),
-              ),
-              child: const Text('Accept'),
+              ],
             ),
-            const SizedBox(width: 8),
-            TextButton(
-              onPressed: () => _decline(context, ref),
-              child: Text(
-                'Decline',
-                style: TextStyle(color: colors.textTertiary, fontSize: 12),
-              ),
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(width: 8),
+          _IconAction(
+            icon: Icons.close,
+            tooltip: 'Decline',
+            color: colors.textTertiary,
+            onPressed: () => _decline(context, ref),
+          ),
+          const SizedBox(width: 6),
+          CcPrimaryButton(
+            label: 'Accept',
+            height: 32,
+            fontSize: 12,
+            onPressed: () => _accept(context, ref),
+          ),
+        ],
       ),
     );
   }
@@ -752,7 +427,7 @@ class _ChallengeTile extends ConsumerWidget {
       debugPrint('[Friends] Failed to accept challenge ${challenge.id}: $e');
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to accept challenge: $e')),
+          SnackBar(content: Text('Could not accept the challenge: $e')),
         );
       }
     }
@@ -768,15 +443,141 @@ class _ChallengeTile extends ConsumerWidget {
       debugPrint('[Friends] Failed to decline challenge ${challenge.id}: $e');
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to decline challenge: $e')),
+          SnackBar(content: Text('Could not decline the challenge: $e')),
         );
       }
     }
   }
 }
 
+class _RequestRow extends ConsumerWidget {
+  final FriendRequestInfo request;
+  const _RequestRow({required this.request});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.appColors;
+    final name = request.fromDisplayName ?? request.fromUsername;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+      child: Row(
+        children: [
+          CcAvatar(name: name, size: 34),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: colors.textPrimary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Text(
+                  '@${request.fromUsername}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: colors.textTertiary, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          _IconAction(
+            icon: Icons.close,
+            tooltip: 'Decline',
+            color: colors.textTertiary,
+            onPressed: () => _decline(context, ref),
+          ),
+          const SizedBox(width: 6),
+          CcPrimaryButton(
+            label: 'Accept',
+            height: 32,
+            fontSize: 12,
+            onPressed: () => _accept(context, ref),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _accept(BuildContext context, WidgetRef ref) async {
+    try {
+      final restClient = ref.read(restClientProvider);
+      await restClient.acceptFriendRequest(request.friendshipId);
+      ref.invalidate(_incomingRequestsProvider);
+      ref.invalidate(_friendsProvider);
+      ref.invalidate(notificationCountProvider);
+    } catch (e) {
+      debugPrint('[Friends] Failed to accept friend request: $e');
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Could not accept: $e')));
+      }
+    }
+  }
+
+  Future<void> _decline(BuildContext context, WidgetRef ref) async {
+    try {
+      final restClient = ref.read(restClientProvider);
+      await restClient.declineFriendRequest(request.friendshipId);
+      ref.invalidate(_incomingRequestsProvider);
+      ref.invalidate(notificationCountProvider);
+    } catch (e) {
+      debugPrint('[Friends] Failed to decline friend request: $e');
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Could not decline: $e')));
+      }
+    }
+  }
+}
+
+class _SentRow extends StatelessWidget {
+  final FriendRequestInfo request;
+  const _SentRow({required this.request});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+    // Outgoing requests reuse the same model; fromUsername is the recipient
+    final name = request.fromDisplayName ?? request.fromUsername;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      child: Row(
+        children: [
+          CcAvatar(name: name, size: 30),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: colors.textSecondary,
+                fontSize: 13.5,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          const CcChip(label: 'PENDING'),
+        ],
+      ),
+    );
+  }
+}
+
 // ──────────────────────────────────────────
-// Tab 3: Find users
+// Tab 3: Find players
 // ──────────────────────────────────────────
 class _FindTab extends ConsumerStatefulWidget {
   const _FindTab();
@@ -799,7 +600,9 @@ class _FindTabState extends ConsumerState<_FindTab> {
   void _onSearchChanged(String value) {
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 400), () {
-      ref.read(_searchQueryProvider.notifier).state = value.trim();
+      if (mounted) {
+        ref.read(_searchQueryProvider.notifier).state = value.trim();
+      }
     });
   }
 
@@ -812,165 +615,119 @@ class _FindTabState extends ConsumerState<_FindTab> {
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 14),
           child: TextField(
             controller: _searchController,
-            autofocus: true,
             onChanged: _onSearchChanged,
-            decoration: InputDecoration(
-              hintText: 'Search by username...',
-              hintStyle: TextStyle(color: colors.textDisabled),
-              prefixIcon: Icon(Icons.search, color: colors.textDisabled),
-              border: const OutlineInputBorder(),
-              filled: true,
-              fillColor: colors.surfaceDim,
-            ),
-            style: TextStyle(color: colors.textPrimary),
+            textInputAction: TextInputAction.search,
+            style: TextStyle(color: colors.textPrimary, fontSize: 15),
+            decoration: CcTextField.decoration(colors, 'Search by username')
+                .copyWith(
+                  prefixIcon: Icon(
+                    Icons.search,
+                    size: 19,
+                    color: colors.textTertiary,
+                  ),
+                ),
           ),
         ),
-        if (query.isEmpty)
-          Expanded(
-            child: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.person_search, size: 64, color: colors.textDisabled),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Search by username',
-                    style: TextStyle(color: colors.textTertiary, fontSize: 16),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Find players and send friend requests',
-                    style: TextStyle(color: colors.textDisabled, fontSize: 13),
-                  ),
-                ],
-              ),
-            ),
-          )
-        else if (query.length < 2)
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Text(
-              'Type at least 2 characters to search',
-              style: TextStyle(color: colors.textDisabled),
-            ),
-          )
-        else
-          Expanded(
-            child: results.when(
-              data: (list) {
-                if (list.isEmpty) {
-                  return Center(
-                    child: Text(
-                      'No users found',
-                      style: TextStyle(color: colors.textTertiary),
-                    ),
-                  );
-                }
-                return ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: list.length,
-                  itemBuilder: (context, index) =>
-                      _SearchResultTile(result: list[index]),
-                );
-              },
-              loading: () =>
-                  const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-              error: (e, _) => Center(
-                child: Text(
-                  'Search failed: $e',
-                  style: TextStyle(color: colors.error),
+        Expanded(
+          child: query.length < 2
+              ? CcMessage(
+                  title: query.isEmpty ? 'Find a player' : 'Keep typing',
+                  detail: query.isEmpty
+                      ? 'Search by username to send a friend request.'
+                      : 'Two characters or more.',
+                )
+              : results.when(
+                  data: (list) {
+                    if (list.isEmpty) {
+                      return CcMessage(
+                        title: 'No players match “$query”',
+                        detail: 'Usernames must match exactly.',
+                      );
+                    }
+                    return ListView(
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 28),
+                      children: [
+                        CcPanel(
+                          rows: [for (final r in list) _SearchRow(result: r)],
+                        ),
+                      ],
+                    );
+                  },
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
+                  error: (e, _) =>
+                      CcMessage(title: 'Search failed', detail: '$e'),
                 ),
-              ),
-            ),
-          ),
+        ),
       ],
     );
   }
 }
 
-class _SearchResultTile extends ConsumerWidget {
+class _SearchRow extends ConsumerWidget {
   final UserSearchResult result;
-  const _SearchResultTile({required this.result});
+  const _SearchRow({required this.result});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.appColors;
     final name = result.displayName ?? result.username;
-    final statusLabel = switch (result.relationshipStatus) {
-      'FRIENDS' => 'Friends',
-      'PENDING_SENT' => 'Request Sent',
-      'PENDING_RECEIVED' => 'Pending',
+    final status = switch (result.relationshipStatus) {
+      'FRIENDS' => 'IN YOUR CLUB',
+      'PENDING_SENT' => 'REQUESTED',
+      'PENDING_RECEIVED' => 'AWAITING YOU',
       _ => null,
     };
     final canAdd = result.relationshipStatus == null;
 
-    return GestureDetector(
+    return InkWell(
       onTap: () => context.push('/profile/${result.userId}'),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        decoration: BoxDecoration(
-          color: colors.surfaceDim,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Row(
-            children: [
-              CircleAvatar(
-                radius: 18,
-                backgroundColor: colors.accent.withValues(alpha: 0.15),
-                child: Text(
-                  initials(name),
-                  style: TextStyle(
-                    color: colors.accent,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      name,
-                      style: TextStyle(color: colors.textPrimary, fontSize: 14),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+        child: Row(
+          children: [
+            CcAvatar(name: name, size: 34),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: colors.textPrimary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
                     ),
-                    if (result.displayName != null)
-                      Text(
-                        '@${result.username}',
-                        style: TextStyle(
-                          color: colors.textTertiary,
-                          fontSize: 12,
-                        ),
+                  ),
+                  if (result.displayName != null)
+                    Text(
+                      '@${result.username}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: colors.textTertiary,
+                        fontSize: 12,
                       ),
-                  ],
-                ),
+                    ),
+                ],
               ),
-              if (statusLabel != null)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    color: colors.accent.withValues(alpha: 0.1),
-                  ),
-                  child: Text(
-                    statusLabel,
-                    style: TextStyle(color: colors.textTertiary, fontSize: 11),
-                  ),
-                ),
-              if (canAdd)
-                IconButton(
-                  icon: Icon(Icons.person_add, color: colors.accent),
-                  onPressed: () => _sendRequest(context, ref),
-                  tooltip: 'Add Friend',
-                ),
-            ],
-          ),
+            ),
+            const SizedBox(width: 8),
+            if (status != null) CcChip(label: status),
+            if (canAdd)
+              CcSecondaryButton(
+                label: 'Add',
+                height: 32,
+                fontSize: 12,
+                onPressed: () => _sendRequest(context, ref),
+              ),
+          ],
         ),
       ),
     );
@@ -982,17 +739,49 @@ class _SearchResultTile extends ConsumerWidget {
       await restClient.sendFriendRequest(result.username);
       ref.invalidate(_searchResultsProvider);
       if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Friend request sent!')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Request sent to ${result.username}.')),
+        );
       }
     } catch (e) {
-      debugPrint('[Friends] Failed to send friend request to ${result.username}: $e');
+      debugPrint(
+        '[Friends] Failed to send friend request to ${result.username}: $e',
+      );
       if (context.mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Failed to send request: $e')));
+        ).showSnackBar(SnackBar(content: Text('Could not send request: $e')));
       }
     }
+  }
+}
+
+/// Compact tertiary icon button used beside the accept CTAs.
+class _IconAction extends StatelessWidget {
+  final IconData icon;
+  final String tooltip;
+  final Color color;
+  final VoidCallback onPressed;
+
+  const _IconAction({
+    required this.icon,
+    required this.tooltip,
+    required this.color,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.all(7),
+          child: Icon(icon, size: 18, color: color),
+        ),
+      ),
+    );
   }
 }

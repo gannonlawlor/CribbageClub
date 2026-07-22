@@ -103,8 +103,11 @@ class PlayerStatsService(
             loserStats.ratingVolatility = loserResult.newVolatility
         }
 
-        playerStatsRepository.save(winnerStats)
-        playerStatsRepository.save(loserStats)
+        // The engine has no profile and is excluded from every leaderboard, so
+        // its row is never read — and two imports of games against the same
+        // engine id race each other to insert it, failing the whole import.
+        if (!winnerId.startsWith("ai_")) playerStatsRepository.save(winnerStats)
+        if (!loserId.startsWith("ai_")) playerStatsRepository.save(loserStats)
 
         logger.info("Recorded game result: {} beat {} ({}-{}){}",
             winnerId, loserId, winnerScore, loserScore,
