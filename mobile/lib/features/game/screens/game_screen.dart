@@ -14,6 +14,7 @@ import '../../../core/models/game_state.dart';
 import '../../../core/models/score_breakdown.dart';
 import '../../../core/services/local_game_history_provider.dart';
 import '../../../shared/utils/card_utils.dart';
+import '../../../shared/utils/forfeit_text.dart';
 import '../../../core/services/settings_provider.dart';
 import '../state/game_providers.dart';
 import '../state/local_game_notifier.dart';
@@ -552,7 +553,7 @@ class GameScreen extends ConsumerWidget {
                                 minHeight: 32,
                               ),
                             ),
-                          if (!_isLocal && gs.stage != GameStage.gameOver)
+                          if (gs.stage != GameStage.gameOver)
                             IconButton(
                               icon: Icon(
                                 Icons.flag,
@@ -710,8 +711,7 @@ class GameScreen extends ConsumerWidget {
                         onSettings: () => _showSettingsSheet(
                           context,
                           ref,
-                          canResign:
-                              !_isLocal && gs.stage != GameStage.gameOver,
+                          canResign: gs.stage != GameStage.gameOver,
                           onLeave: () {
                             ref.invalidate(activeLocalGameProvider);
                             ref.invalidate(localGameHistoryProvider);
@@ -898,6 +898,7 @@ class GameScreen extends ConsumerWidget {
               Navigator.of(ctx).pop();
               final n = _readNotifier(ref);
               if (n is GameNotifier) n.resign();
+              if (n is LocalGameNotifier) n.resign();
             },
           ),
           CcPrimaryButton(
@@ -964,17 +965,12 @@ class GameScreen extends ConsumerWidget {
     final handCounts = gs.history.whereType<HandCounted>().toList();
     final cribCounts = gs.history.whereType<CribCounted>().toList();
 
-    String? forfeitText;
-    if (forfeit != null) {
-      final reason = forfeit.reason;
-      final isMe = forfeit.forfeitingPlayerId == playerId;
-      forfeitText = switch (reason) {
-        'RESIGN' => isMe ? 'You resigned' : 'Opponent resigned',
-        'TIMEOUT' => isMe ? 'You ran out of time' : 'Opponent ran out of time',
-        'DISCONNECT' => isMe ? 'You disconnected' : 'Opponent disconnected',
-        _ => isMe ? 'You forfeited' : 'Opponent forfeited',
-      };
-    }
+    final forfeitText = forfeit == null
+        ? null
+        : forfeitSentence(
+            forfeit.reason,
+            isSelf: forfeit.forfeitingPlayerId == playerId,
+          );
 
     // Result subtitle: forfeit reason, or score + margin
     final scoreLine = forfeitText != null

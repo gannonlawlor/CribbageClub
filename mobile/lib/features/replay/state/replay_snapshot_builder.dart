@@ -1,6 +1,7 @@
 import '../../../core/models/card.dart';
 import '../../../core/models/game_history_event.dart';
 import '../../../core/models/score_breakdown.dart';
+import '../../../shared/utils/forfeit_text.dart';
 
 /// A snapshot of visual state at a given event index during replay.
 class ReplaySnapshot {
@@ -145,7 +146,7 @@ class ReplaySnapshotBuilder {
           orElse: () => playerIds.first,
         );
         eventDescription =
-            '${getName(event.forfeitingPlayerId)} forfeited${event.reason != null ? ' — ${event.reason}' : ''}';
+            '${getName(event.forfeitingPlayerId)} ${forfeitVerb(event.reason)}';
       }
     }
 

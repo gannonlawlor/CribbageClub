@@ -8,8 +8,8 @@ import '../../../shared/widgets/cc_list.dart';
 /// Opens the shared game-settings dialog (auto-play toggles + animation
 /// speed). Reachable in-game, from the Play tab, and from Settings.
 ///
-/// In-game the dialog carries the exits at its foot — the game screen has no
-/// chrome of its own.
+/// In-game the dialog carries the two exits at its foot — the game screen has
+/// no chrome of its own.
 void showGameSettingsDialog(
   BuildContext context, {
   VoidCallback? onLeave,
@@ -22,10 +22,10 @@ void showGameSettingsDialog(
 }
 
 class GameSettingsDialog extends ConsumerWidget {
-  /// Leaves the game. Null outside a game.
+  /// Steps away and keeps the game open to resume. Null outside a game.
   final VoidCallback? onLeave;
 
-  /// Forfeits then leaves. Null for local games and once the game is over.
+  /// Ends the game on the spot as a loss. Null once the game is over.
   final VoidCallback? onResign;
 
   const GameSettingsDialog({super.key, this.onLeave, this.onResign});
@@ -36,12 +36,57 @@ class GameSettingsDialog extends ConsumerWidget {
     final settings = ref.watch(settingsProvider);
     final notifier = ref.read(settingsProvider.notifier);
 
+    // In-game exits lead the dialog: they act on this game, everything below
+    // is app-wide preferences.
+    final exits = <Widget>[
+      if (onLeave != null)
+        _ExitTile(
+          icon: Icons.pause_circle_outline,
+          label: 'Leave',
+          caption: 'Resume it later',
+          tint: colors.textTertiary,
+          onTap: () {
+            Navigator.of(context).pop();
+            onLeave!();
+          },
+        ),
+      if (onResign != null)
+        _ExitTile(
+          icon: Icons.flag_outlined,
+          label: 'Resign',
+          caption: 'Counts as a loss',
+          tint: colors.error,
+          onTap: () {
+            Navigator.of(context).pop();
+            onResign!();
+          },
+        ),
+    ];
+
     return CcDialog(
       title: 'Game settings',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
+          if (exits.isNotEmpty) ...[
+            const _SectionCaption('This game'),
+            const SizedBox(height: 8),
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (int i = 0; i < exits.length; i++) ...[
+                    if (i > 0) const SizedBox(width: 10),
+                    Expanded(child: exits[i]),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(height: 18),
+            Divider(color: colors.border, height: 1),
+            const SizedBox(height: 16),
+          ],
           Text(
             'Applies to all games. Change anytime, even mid-game.',
             style: TextStyle(
@@ -129,37 +174,79 @@ class GameSettingsDialog extends ConsumerWidget {
               ],
             ),
           ),
-          if (onResign != null || onLeave != null) ...[
-            const SizedBox(height: 18),
-            const _SectionCaption('Leave'),
-            const SizedBox(height: 8),
-            if (onResign != null) ...[
-              CcOptionRow(
-                icon: Icons.flag_outlined,
-                iconColor: colors.error,
-                title: 'Forfeit & leave',
-                subtitle: 'It counts as a loss.',
-                showChevron: false,
-                onTap: () {
-                  Navigator.of(context).pop();
-                  onResign!();
-                },
-              ),
-              const SizedBox(height: 8),
-            ],
-            if (onLeave != null)
-              CcOptionRow(
-                icon: Icons.arrow_back,
-                iconColor: colors.textTertiary,
-                title: 'Leave game',
-                showChevron: false,
-                onTap: () {
-                  Navigator.of(context).pop();
-                  onLeave!();
-                },
-              ),
-          ],
         ],
+      ),
+    );
+  }
+}
+
+/// A [CcOptionRow] turned on its side: icon chip over label over caption, so
+/// two of them sit side by side in the dialog without the captions crowding.
+class _ExitTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String caption;
+  final Color tint;
+  final VoidCallback onTap;
+
+  const _ExitTile({
+    required this.icon,
+    required this.label,
+    required this.caption,
+    required this.tint,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+    return Material(
+      color: colors.surfaceDim,
+      borderRadius: BorderRadius.circular(10),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: colors.border),
+          ),
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 11),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 34,
+                height: 34,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: tint.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, color: tint, size: 19),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                label,
+                style: TextStyle(
+                  color: colors.textPrimary,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                caption,
+                style: TextStyle(
+                  color: colors.textTertiary,
+                  fontSize: 12.5,
+                  height: 1.25,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

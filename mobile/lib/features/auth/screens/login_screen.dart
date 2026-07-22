@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../config/theme/app_colors.dart';
 import '../../../core/auth/auth_provider.dart';
 import '../../../shared/widgets/cc_buttons.dart';
+import '../../../shared/widgets/cc_field.dart';
 import '../../../shared/widgets/loading_overlay.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -80,49 +81,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     return null;
   }
 
-  InputDecoration _fieldDecoration(AppColors colors, String hint) {
-    OutlineInputBorder border(Color color, {double width = 1}) =>
-        OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: color, width: width),
-        );
-
-    return InputDecoration(
-      hintText: hint,
-      hintStyle: TextStyle(color: colors.textDisabled, fontSize: 15),
-      filled: true,
-      fillColor: colors.surfacePrimary,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-      enabledBorder: border(colors.borderStrong),
-      focusedBorder: border(colors.selectedBorder, width: 2),
-      errorBorder: border(colors.error),
-      focusedErrorBorder: border(colors.error, width: 2),
-      errorStyle: TextStyle(
-        color: colors.error,
-        fontSize: 13,
-        fontWeight: FontWeight.w500,
-      ),
-    );
-  }
-
-  Widget _fieldCaption(AppColors colors, String text) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: Text(
-          text.toUpperCase(),
-          style: TextStyle(
-            color: colors.textTertiary,
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-            letterSpacing: 0.72,
-          ),
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final colors = context.appColors;
@@ -176,23 +134,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ),
                     ),
                     const SizedBox(height: 40),
-                    _fieldCaption(colors, 'Username'),
-                    TextFormField(
+                    CcTextField(
+                      label: 'Username',
                       controller: _usernameController,
                       validator: _validateUsername,
-                      decoration: _fieldDecoration(colors, 'Username'),
-                      style: TextStyle(color: colors.textPrimary, fontSize: 15),
-                      textInputAction: TextInputAction.next,
                     ),
                     const SizedBox(height: 16),
-                    _fieldCaption(colors, 'Password'),
-                    TextFormField(
+                    CcTextField(
+                      label: 'Password',
                       controller: _passwordController,
                       validator: _validatePassword,
-                      decoration: _fieldDecoration(colors, 'Password'),
-                      style: TextStyle(color: colors.textPrimary, fontSize: 15),
                       obscureText: true,
-                      onFieldSubmitted: (_) => _submit(),
+                      textInputAction: TextInputAction.done,
+                      onSubmitted: (_) => _submit(),
                     ),
                     if (auth.error != null) ...[
                       const SizedBox(height: 12),
@@ -234,7 +188,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       onPressed: auth.isLoading
                           ? null
                           : () =>
-                              ref.read(authProvider.notifier).loginAsGuest(),
+                                ref.read(authProvider.notifier).loginAsGuest(),
                     ),
                     const SizedBox(height: 12),
                     TextButton(
