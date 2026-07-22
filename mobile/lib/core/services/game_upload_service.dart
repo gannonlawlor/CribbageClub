@@ -1,8 +1,39 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 
 import '../api/rest_client.dart';
 import '../models/import_games.dart';
 import 'local_game_history_service.dart';
+
+/// The Rust engine leaves `timestamp` empty on history events, and the server
+/// maps an empty string to a null `Instant` — which its non-nullable Kotlin
+/// constructors reject, failing the whole import. Stamp the blanks before
+/// sending so a locally-played game can actually land.
+String repairStateJson(String stateJson, DateTime fallback) {
+  try {
+    final json = jsonDecode(stateJson);
+    if (json is! Map<String, dynamic>) return stateJson;
+    final history = json['history'];
+    if (history is! List) return stateJson;
+
+    final stamp = fallback.toUtc().toIso8601String();
+    var changed = false;
+    for (final event in history) {
+      if (event is Map<String, dynamic>) {
+        final ts = event['timestamp'];
+        if (ts == null || ts == '') {
+          event['timestamp'] = stamp;
+          changed = true;
+        }
+      }
+    }
+    return changed ? jsonEncode(json) : stateJson;
+  } catch (e) {
+    debugPrint('[GameUpload] Could not repair state JSON: $e');
+    return stateJson;
+  }
+}
 
 class GameUploadService {
   final RestClient _restClient;
@@ -19,8 +50,20 @@ class GameUploadService {
   /// Best-effort: catches errors silently so auth/login is never blocked.
   Future<void> uploadAllLocalGames() async {
     try {
-      final games = await _historyService.exportAllForUpload();
-      if (games.isEmpty) return;
+      final exported = await _historyService.exportAllForUpload();
+      if (exported.isEmpty) return;
+
+      final games = [
+        for (final game in exported)
+          ImportGameRequest(
+            localGameId: game.localGameId,
+            stateJson: repairStateJson(
+              game.stateJson,
+              DateTime.tryParse(game.completedAt ?? '') ?? DateTime.now(),
+            ),
+            completedAt: game.completedAt,
+          ),
+      ];
 
       final response = await _restClient.importLocalGames(games);
 
@@ -60,7 +103,10 @@ class GameUploadService {
     try {
       final request = ImportGameRequest(
         localGameId: gameId,
-        stateJson: stateJson,
+        stateJson: repairStateJson(
+          stateJson,
+          DateTime.tryParse(completedAt) ?? DateTime.now(),
+        ),
         completedAt: completedAt,
       );
       final response = await _restClient.importLocalGames([request]);

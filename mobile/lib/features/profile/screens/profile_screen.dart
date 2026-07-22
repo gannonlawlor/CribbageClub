@@ -6,16 +6,14 @@ import '../../../core/auth/auth_provider.dart';
 import '../../../core/models/game_state.dart';
 import '../../../core/models/head_to_head_response.dart';
 import '../../../core/models/profile_response.dart';
+import '../../../shared/widgets/cc_screen.dart';
 import '../../../shared/widgets/game_history_row.dart';
 
-final _profileProvider =
-    FutureProvider.autoDispose.family<ProfileResponse, String>((
-  ref,
-  userId,
-) async {
-  final restClient = ref.read(restClientProvider);
-  return restClient.getProfile(userId);
-});
+final _profileProvider = FutureProvider.autoDispose
+    .family<ProfileResponse, String>((ref, userId) async {
+      final restClient = ref.read(restClientProvider);
+      return restClient.getProfile(userId);
+    });
 
 final _gameHistoryProvider = FutureProvider.autoDispose<List<GameState>>((
   ref,
@@ -26,21 +24,18 @@ final _gameHistoryProvider = FutureProvider.autoDispose<List<GameState>>((
   return restClient.getMyGameHistory();
 });
 
-final _headToHeadProvider =
-    FutureProvider.autoDispose.family<HeadToHeadResponse?, String>((
-  ref,
-  userId,
-) async {
-  final auth = ref.read(authProvider);
-  if (!auth.isLoggedIn || auth.userId == userId) return null;
-  try {
-    final restClient = ref.read(restClientProvider);
-    return await restClient.getHeadToHead(userId);
-  } catch (e) {
-    debugPrint('[Profile] Failed to load head-to-head: $e');
-    return null;
-  }
-});
+final _headToHeadProvider = FutureProvider.autoDispose
+    .family<HeadToHeadResponse?, String>((ref, userId) async {
+      final auth = ref.read(authProvider);
+      if (!auth.isLoggedIn || auth.userId == userId) return null;
+      try {
+        final restClient = ref.read(restClientProvider);
+        return await restClient.getHeadToHead(userId);
+      } catch (e) {
+        debugPrint('[Profile] Failed to load head-to-head: $e');
+        return null;
+      }
+    });
 
 class ProfileScreen extends ConsumerStatefulWidget {
   final String userId;
@@ -156,8 +151,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       style: SegmentedButton.styleFrom(
                         foregroundColor: colors.textSecondary,
                         selectedForegroundColor: colors.accent,
-                        selectedBackgroundColor:
-                            colors.accent.withValues(alpha: 0.15),
+                        selectedBackgroundColor: colors.accent.withValues(
+                          alpha: 0.15,
+                        ),
                       ),
                     ),
 
@@ -215,11 +211,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           ),
           const SizedBox(height: 2),
           Text(
-            isProvisional ? 'Provisional' : '\u00b1${p.ratingDeviation.round()}',
-            style: TextStyle(
-              color: colors.textTertiary,
-              fontSize: 14,
-            ),
+            isProvisional
+                ? 'Provisional'
+                : '\u00b1${p.ratingDeviation.round()}',
+            style: TextStyle(color: colors.textTertiary, fontSize: 14),
           ),
         ],
       ),
@@ -316,33 +311,30 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final colors = context.appColors;
     return switch (p.relationshipStatus) {
       'FRIENDS' => Chip(
-          avatar: Icon(Icons.check, size: 16, color: colors.success),
-          label: Text(
-            'Friends',
-            style: TextStyle(color: colors.textSecondary),
-          ),
-          backgroundColor: colors.surfaceDim,
-          side: BorderSide.none,
-        ),
+        avatar: Icon(Icons.check, size: 16, color: colors.success),
+        label: Text('Friends', style: TextStyle(color: colors.textSecondary)),
+        backgroundColor: colors.surfaceDim,
+        side: BorderSide.none,
+      ),
       'PENDING_SENT' => Chip(
-          avatar: Icon(Icons.schedule, size: 16, color: colors.textDisabled),
-          label: Text(
-            'Request Sent',
-            style: TextStyle(color: colors.textTertiary),
-          ),
-          backgroundColor: colors.surfaceDim,
-          side: BorderSide.none,
+        avatar: Icon(Icons.schedule, size: 16, color: colors.textDisabled),
+        label: Text(
+          'Request Sent',
+          style: TextStyle(color: colors.textTertiary),
         ),
+        backgroundColor: colors.surfaceDim,
+        side: BorderSide.none,
+      ),
       'PENDING_RECEIVED' => ElevatedButton.icon(
-          onPressed: () => _acceptRequest(ref, p),
-          icon: const Icon(Icons.person_add, size: 18),
-          label: const Text('Accept Request'),
-        ),
+        onPressed: () => _acceptRequest(ref, p),
+        icon: const Icon(Icons.person_add, size: 18),
+        label: const Text('Accept Request'),
+      ),
       _ => ElevatedButton.icon(
-          onPressed: () => _addFriend(ref, p),
-          icon: const Icon(Icons.person_add, size: 18),
-          label: const Text('Add Friend'),
-        ),
+        onPressed: () => _addFriend(ref, p),
+        icon: const Icon(Icons.person_add, size: 18),
+        label: const Text('Add Friend'),
+      ),
     };
   }
 
@@ -351,7 +343,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final h2h = ref.watch(_headToHeadProvider(widget.userId));
     return h2h.when(
       data: (data) {
-        if (data == null || data.gamesPlayed == 0) return const SizedBox.shrink();
+        if (data == null || data.gamesPlayed == 0) {
+          return const SizedBox.shrink();
+        }
         final total = data.gamesPlayed;
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -436,20 +430,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Recent Games',
-              style: TextStyle(
-                color: colors.textPrimary,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+            const CcSectionCaption('Recent games'),
+            GameHistoryList(
+              games: [
+                for (final game in recent)
+                  GameSummary.fromGameState(game, playerId),
+              ],
             ),
-            const SizedBox(height: 12),
-            for (final game in recent)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: GameHistoryRow(game: game, playerId: playerId),
-              ),
             const SizedBox(height: 8),
             Center(
               child: TextButton(
@@ -481,9 +468,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     } catch (e) {
       debugPrint('[Profile] Failed to challenge ${p.username}: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to send challenge: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to send challenge: $e')));
       }
     }
   }
@@ -494,16 +481,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       await restClient.sendFriendRequest(p.username);
       ref.invalidate(_profileProvider(widget.userId));
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Friend request sent!')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Friend request sent!')));
       }
     } catch (e) {
-      debugPrint('[Profile] Failed to send friend request to ${p.username}: $e');
+      debugPrint(
+        '[Profile] Failed to send friend request to ${p.username}: $e',
+      );
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to send request: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to send request: $e')));
       }
     }
   }
@@ -523,11 +512,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         }
       }
     } catch (e) {
-      debugPrint('[Profile] Failed to accept friend request from ${p.username}: $e');
+      debugPrint(
+        '[Profile] Failed to accept friend request from ${p.username}: $e',
+      );
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to accept request: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to accept request: $e')));
       }
     }
   }
@@ -544,8 +535,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     try {
       final date = DateTime.parse(isoDate);
       final months = [
-        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
       ];
       return '${months[date.month - 1]} ${date.year}';
     } catch (_) {
@@ -582,10 +583,7 @@ class _HighlightBox extends StatelessWidget {
             fontWeight: FontWeight.bold,
           ),
         ),
-        Text(
-          label,
-          style: TextStyle(color: colors.textTertiary, fontSize: 11),
-        ),
+        Text(label, style: TextStyle(color: colors.textTertiary, fontSize: 11)),
       ],
     );
   }
@@ -611,10 +609,7 @@ class _StatBox extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 2),
-        Text(
-          label,
-          style: TextStyle(color: colors.textTertiary, fontSize: 12),
-        ),
+        Text(label, style: TextStyle(color: colors.textTertiary, fontSize: 12)),
       ],
     );
   }

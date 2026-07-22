@@ -4,8 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../config/theme/app_colors.dart';
 import '../../../core/auth/auth_provider.dart';
 import '../../../core/models/leaderboard_entry.dart';
-import '../../../shared/utils/responsive.dart';
-import '../../../shared/utils/text_utils.dart';
+import '../../../shared/widgets/cc_screen.dart';
 
 final _leaderboardProvider = FutureProvider.autoDispose<List<LeaderboardEntry>>(
   (ref) async {
@@ -19,163 +18,87 @@ class LeaderboardScreen extends ConsumerWidget {
 
   Future<void> _refresh(WidgetRef ref) async {
     ref.invalidate(_leaderboardProvider);
-    // Wait for the new data to load
     await ref.read(_leaderboardProvider.future);
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.appColors;
-    final leaderboard = ref.watch(_leaderboardProvider);
     final auth = ref.watch(authProvider);
 
+    Widget body;
     if (!auth.isLoggedIn) {
-      return Scaffold(
-        appBar: AppBar(
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () => context.go('/'),
-          ),
-          title: const Text('Leaderboard'),
-        ),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.lock_outline, size: 48, color: colors.textDisabled),
-              const SizedBox(height: 16),
-              Text(
-                'Log in to see the leaderboard',
-                style: TextStyle(color: colors.textTertiary, fontSize: 16),
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => context.go('/login'),
-                child: const Text('Log In'),
-              ),
-            ],
-          ),
-        ),
+      body = CcMessage(
+        title: 'Sign in to see the ladder',
+        detail: 'The leaderboard ranks players by rating.',
+        action: 'Sign in',
+        onAction: () => context.go('/login'),
       );
-    }
-
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/'),
-        ),
-        title: const Text('Leaderboard'),
-      ),
-      body: leaderboard.when(
+    } else {
+      final leaderboard = ref.watch(_leaderboardProvider);
+      body = leaderboard.when(
         data: (entries) {
           if (entries.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.emoji_events, size: 64, color: colors.textDisabled),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No players yet',
-                    style: TextStyle(color: colors.textTertiary, fontSize: 16),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Play some games to appear on the leaderboard!',
-                    style: TextStyle(color: colors.textDisabled, fontSize: 13),
-                  ),
-                ],
-              ),
+            return const CcMessage(
+              title: 'No ranked players yet',
+              detail: 'Play a rated game to put yourself on the ladder.',
             );
           }
 
-          // Split into top 3 and rest
-          final top3 = entries.take(3).toList();
-          final rest = entries.length > 3 ? entries.sublist(3) : <LeaderboardEntry>[];
-          final myEntry = entries.cast<LeaderboardEntry?>().firstWhere(
-            (e) => e!.playerId == auth.userId,
-            orElse: () => null,
-          );
-          final myRank = myEntry != null
-              ? entries.indexOf(myEntry) + 1
-              : null;
+          final myIndex = entries.indexWhere((e) => e.playerId == auth.userId);
+          final me = myIndex >= 0 ? entries[myIndex] : null;
 
           return RefreshIndicator(
             color: colors.accent,
             onRefresh: () => _refresh(ref),
             child: ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              // My Rank card
-              if (myEntry != null && myRank != null)
-                _MyRankCard(
-                  entry: myEntry,
-                  rank: myRank,
-                  colors: colors,
-                  onTap: () => context.push('/profile/${myEntry.playerId}'),
-                ),
-              if (myEntry != null) const SizedBox(height: 16),
-
-              // Podium for top 3
-              if (top3.length >= 3)
-                _Podium(
-                  entries: top3,
-                  currentUserId: auth.userId,
-                  colors: colors,
+              padding: const EdgeInsets.fromLTRB(20, 4, 20, 28),
+              children: [
+                if (me != null) ...[
+                  const CcSectionCaption('Your standing'),
+                  _MyStanding(
+                    entry: me,
+                    rank: myIndex + 1,
+                    onTap: () => context.push('/profile/${me.playerId}'),
+                  ),
+                  const SizedBox(height: 20),
+                ],
+                const CcSectionCaption('Top players'),
+                _LadderTable(
+                  entries: entries,
+                  meId: auth.userId,
                   onTap: (id) => context.push('/profile/$id'),
-                )
-              else
-                // If less than 3 entries, show them as regular tiles
-                ...top3.asMap().entries.map(
-                  (e) => _LeaderboardTile(
-                    entry: e.value,
-                    rank: e.key + 1,
-                    isCurrentUser: e.value.playerId == auth.userId,
-                    colors: colors,
-                    onTap: () => context.push('/profile/${e.value.playerId}'),
-                  ),
                 ),
-
-              if (top3.length >= 3) const SizedBox(height: 16),
-
-              // Rest of leaderboard (4+) — 2-column on tablet landscape
-              if (rest.isNotEmpty && Responsive.isTabletLandscape(context))
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 0,
-                  children: rest.asMap().entries.map(
-                    (e) => SizedBox(
-                      width: (MediaQuery.of(context).size.width - 48) / 2,
-                      child: _LeaderboardTile(
-                        entry: e.value,
-                        rank: e.key + 4,
-                        isCurrentUser: e.value.playerId == auth.userId,
-                        colors: colors,
-                        onTap: () => context.push('/profile/${e.value.playerId}'),
-                      ),
-                    ),
-                  ).toList(),
-                )
-              else
-                ...rest.asMap().entries.map(
-                  (e) => _LeaderboardTile(
-                    entry: e.value,
-                    rank: e.key + 4,
-                    isCurrentUser: e.value.playerId == auth.userId,
-                    colors: colors,
-                    onTap: () => context.push('/profile/${e.value.playerId}'),
-                  ),
-                ),
-            ],
-          ),
+              ],
+            ),
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => Center(
-          child: Text(
-            'Failed to load leaderboard: $error',
-            style: TextStyle(color: colors.error),
+        error: (error, _) => CcMessage(
+          title: 'Leaderboard unavailable',
+          detail: '$error',
+          action: 'Back to home',
+          onAction: () => context.go('/'),
+        ),
+      );
+    }
+
+    return Scaffold(
+      backgroundColor: colors.scaffoldBg,
+      body: SafeArea(
+        bottom: false,
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 480),
+            child: Column(
+              children: [
+                CcScreenHeader(
+                  title: 'Leaderboard',
+                  onBack: () => context.go('/'),
+                ),
+                Expanded(child: body),
+              ],
+            ),
           ),
         ),
       ),
@@ -183,114 +106,170 @@ class LeaderboardScreen extends ConsumerWidget {
   }
 }
 
-class _MyRankCard extends StatelessWidget {
+/// Where you sit, pulled out of the table so you never have to hunt for
+/// your own row. Rating is the only gold on the screen (§2).
+class _MyStanding extends StatelessWidget {
   final LeaderboardEntry entry;
   final int rank;
-  final AppColors colors;
   final VoidCallback onTap;
 
-  const _MyRankCard({
+  const _MyStanding({
     required this.entry,
     required this.rank,
-    required this.colors,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: colors.accent.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: colors.accent.withValues(alpha: 0.5),
-            width: 1.5,
-          ),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: colors.accent.withValues(alpha: 0.15),
-              ),
-              child: Center(
-                child: Text(
-                  '#$rank',
-                  style: TextStyle(
-                    color: colors.accent,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
+    final colors = context.appColors;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: CcPanel(
+          padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+          child: Row(
+            children: [
+              Text(
+                '#$rank',
+                style: TextStyle(
+                  color: colors.textSecondary,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  fontFeatures: const [FontFeature.tabularFigures()],
                 ),
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      entry.displayName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: colors.textPrimary,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${entry.gamesWon}–${entry.gamesLost} · '
+                      '${(entry.winRate * 100).round()}% wins',
+                      style: TextStyle(
+                        color: colors.textTertiary,
+                        fontSize: 12,
+                        fontFeatures: const [FontFeature.tabularFigures()],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 10),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    'Your Rank',
+                    '${entry.rating.round()}',
                     style: TextStyle(
-                      color: colors.accent,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
+                      color: colors.ratingGold,
+                      fontSize: 24,
+                      height: 1,
+                      fontWeight: FontWeight.w700,
+                      fontFeatures: const [FontFeature.tabularFigures()],
                     ),
                   ),
-                  Text(
-                    entry.displayName,
-                    style: TextStyle(
-                      color: colors.textPrimary,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                  if (entry.currentWinStreak > 1) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      '${entry.currentWinStreak} straight',
+                      style: TextStyle(
+                        color: colors.streak,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
+                  ],
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The ladder as a data table (design language §4): caption header row,
+/// hairline separators, right-aligned tabular numerals, and a green wash on
+/// your own row.
+class _LadderTable extends StatelessWidget {
+  final List<LeaderboardEntry> entries;
+  final String? meId;
+  final void Function(String playerId) onTap;
+
+  const _LadderTable({
+    required this.entries,
+    required this.meId,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+
+    Widget headerCell(String text, {TextAlign align = TextAlign.left}) => Text(
+      text.toUpperCase(),
+      textAlign: align,
+      style: TextStyle(
+        color: colors.textTertiary,
+        fontSize: 10,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.6,
+      ),
+    );
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: colors.border),
+        ),
+        child: Column(
+          children: [
+            Container(
+              color: colors.surfacePrimary,
+              padding: const EdgeInsets.fromLTRB(14, 7, 14, 7),
+              child: Row(
+                children: [
+                  SizedBox(width: 26, child: headerCell('#')),
+                  const SizedBox(width: 10),
+                  Expanded(child: headerCell('Player')),
+                  SizedBox(
+                    width: 54,
+                    child: headerCell('W–L', align: TextAlign.right),
+                  ),
+                  const SizedBox(width: 12),
+                  SizedBox(
+                    width: 44,
+                    child: headerCell('Rating', align: TextAlign.right),
                   ),
                 ],
               ),
             ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  '${entry.rating.round()}',
-                  style: TextStyle(
-                    color: colors.textPrimary,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 20,
-                  ),
-                ),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      '${(entry.winRate * 100).toStringAsFixed(0)}% win',
-                      style: TextStyle(
-                        color: colors.textTertiary,
-                        fontSize: 12,
-                      ),
-                    ),
-                    if (entry.currentWinStreak > 0) ...[
-                      const SizedBox(width: 6),
-                      Icon(Icons.local_fire_department, size: 14, color: colors.warning),
-                      Text(
-                        '${entry.currentWinStreak}',
-                        style: TextStyle(
-                          color: colors.warning,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ],
-            ),
+            for (var i = 0; i < entries.length; i++) ...[
+              Divider(height: 1, color: colors.border),
+              _LadderRow(
+                entry: entries[i],
+                rank: i + 1,
+                isMe: entries[i].playerId == meId,
+                onTap: () => onTap(entries[i].playerId),
+              ),
+            ],
           ],
         ),
       ),
@@ -298,303 +277,112 @@ class _MyRankCard extends StatelessWidget {
   }
 }
 
-class _Podium extends StatelessWidget {
-  final List<LeaderboardEntry> entries;
-  final String? currentUserId;
-  final AppColors colors;
-  final void Function(String playerId) onTap;
-
-  const _Podium({
-    required this.entries,
-    required this.currentUserId,
-    required this.colors,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final first = entries[0];
-    final second = entries[1];
-    final third = entries[2];
-
-    return SizedBox(
-      height: 220,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          // 2nd place (left)
-          Expanded(child: _PodiumEntry(
-            entry: second,
-            rank: 2,
-            height: 130,
-            medalColor: colors.medalSilver,
-            colors: colors,
-            isCurrentUser: second.playerId == currentUserId,
-            onTap: () => onTap(second.playerId),
-          )),
-          const SizedBox(width: 8),
-          // 1st place (center, tallest)
-          Expanded(child: _PodiumEntry(
-            entry: first,
-            rank: 1,
-            height: 170,
-            medalColor: colors.medalGold,
-            colors: colors,
-            isCurrentUser: first.playerId == currentUserId,
-            onTap: () => onTap(first.playerId),
-          )),
-          const SizedBox(width: 8),
-          // 3rd place (right)
-          Expanded(child: _PodiumEntry(
-            entry: third,
-            rank: 3,
-            height: 100,
-            medalColor: colors.medalBronze,
-            colors: colors,
-            isCurrentUser: third.playerId == currentUserId,
-            onTap: () => onTap(third.playerId),
-          )),
-        ],
-      ),
-    );
-  }
-}
-
-class _PodiumEntry extends StatelessWidget {
+class _LadderRow extends StatelessWidget {
   final LeaderboardEntry entry;
   final int rank;
-  final double height;
-  final Color medalColor;
-  final AppColors colors;
-  final bool isCurrentUser;
+  final bool isMe;
   final VoidCallback onTap;
 
-  const _PodiumEntry({
+  const _LadderRow({
     required this.entry,
     required this.rank,
-    required this.height,
-    required this.medalColor,
-    required this.colors,
-    required this.isCurrentUser,
+    required this.isMe,
     required this.onTap,
   });
 
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          // Avatar + medal
-          Stack(
-            clipBehavior: Clip.none,
-            children: [
-              CircleAvatar(
-                radius: rank == 1 ? 28 : 22,
-                backgroundColor: isCurrentUser
-                    ? colors.accent.withValues(alpha: 0.2)
-                    : colors.surfaceDim,
-                child: Text(
-                  initials(entry.displayName),
-                  style: TextStyle(
-                    color: isCurrentUser ? colors.accent : colors.textPrimary,
-                    fontWeight: FontWeight.bold,
-                    fontSize: rank == 1 ? 16 : 13,
-                  ),
-                ),
-              ),
-              Positioned(
-                right: -2,
-                bottom: -2,
-                child: Icon(
-                  Icons.emoji_events,
-                  size: 18,
-                  color: medalColor,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Text(
-            entry.displayName,
-            style: TextStyle(
-              color: isCurrentUser ? colors.accent : colors.textPrimary,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-            ),
-            textAlign: TextAlign.center,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          Text(
-            '${entry.rating.round()}',
-            style: TextStyle(
-              color: colors.textTertiary,
-              fontSize: 11,
-            ),
-          ),
-          const SizedBox(height: 4),
-          // Pedestal
-          Container(
-            width: double.infinity,
-            height: height,
-            decoration: BoxDecoration(
-              color: medalColor.withValues(alpha: 0.15),
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(8),
-              ),
-              border: Border.all(
-                color: medalColor.withValues(alpha: 0.3),
-              ),
-            ),
-            child: Center(
-              child: Text(
-                '#$rank',
-                style: TextStyle(
-                  color: medalColor,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _LeaderboardTile extends StatelessWidget {
-  final LeaderboardEntry entry;
-  final int rank;
-  final bool isCurrentUser;
-  final AppColors colors;
-  final VoidCallback onTap;
-
-  const _LeaderboardTile({
-    required this.entry,
-    required this.rank,
-    required this.isCurrentUser,
-    required this.colors,
-    required this.onTap,
-  });
+  /// The top three carry a medal tint on the rank alone — the table stays a
+  /// table, but the podium is still legible at a glance.
+  Color? _medal(AppColors colors) => switch (rank) {
+    1 => colors.medalGold,
+    2 => colors.medalSilver,
+    3 => colors.medalBronze,
+    _ => null,
+  };
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    final colors = context.appColors;
+    final medal = _medal(colors);
+
+    return InkWell(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        decoration: BoxDecoration(
-          color: isCurrentUser
-              ? colors.accent.withValues(alpha: 0.1)
-              : colors.surfaceDim,
-          borderRadius: BorderRadius.circular(12),
-          border: isCurrentUser
-              ? Border.all(
-                  color: colors.accent.withValues(alpha: 0.4),
-                )
-              : null,
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 12,
-          ),
-          child: Row(
-            children: [
-              SizedBox(
-                width: 32,
-                child: Text(
-                  '#$rank',
-                  style: TextStyle(
-                    color: colors.textTertiary,
-                    fontWeight: FontWeight.w500,
-                    fontSize: 14,
-                  ),
+        color: isMe ? colors.pegPlayer.withValues(alpha: 0.08) : null,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 26,
+              child: Text(
+                '$rank',
+                style: TextStyle(
+                  color: medal ?? colors.textTertiary,
+                  fontSize: 13,
+                  fontWeight: medal != null ? FontWeight.w700 : FontWeight.w500,
+                  fontFeatures: const [FontFeature.tabularFigures()],
                 ),
               ),
-              const SizedBox(width: 8),
-              CircleAvatar(
-                radius: 18,
-                backgroundColor: isCurrentUser
-                    ? colors.accent.withValues(alpha: 0.15)
-                    : colors.surfaceDim,
-                child: Text(
-                  initials(entry.displayName),
-                  style: TextStyle(
-                    color: isCurrentUser ? colors.accent : colors.textPrimary,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
+            ),
+            const SizedBox(width: 10),
+            CcAvatar(name: entry.displayName, size: 28),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Row(
+                children: [
+                  Flexible(
+                    child: Text(
                       entry.displayName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        color: isCurrentUser
-                            ? colors.accent
-                            : colors.textPrimary,
-                        fontSize: 14,
-                        fontWeight: isCurrentUser
-                            ? FontWeight.bold
-                            : FontWeight.w500,
+                        color: colors.textPrimary,
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                    Row(
-                      children: [
-                        Text(
-                          '${entry.gamesPlayed} games',
-                          style: TextStyle(
-                            color: colors.textTertiary,
-                            fontSize: 12,
-                          ),
-                        ),
-                        if (entry.currentWinStreak > 0) ...[
-                          const SizedBox(width: 6),
-                          Icon(Icons.local_fire_department, size: 12, color: colors.warning),
-                          Text(
-                            '${entry.currentWinStreak}',
-                            style: TextStyle(
-                              color: colors.warning,
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ],
+                  ),
+                  if (entry.currentWinStreak > 1) ...[
+                    const SizedBox(width: 6),
+                    Text(
+                      '${entry.currentWinStreak}▲',
+                      style: TextStyle(
+                        color: colors.streak,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        fontFeatures: const [FontFeature.tabularFigures()],
+                      ),
                     ),
                   ],
-                ),
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    '${entry.rating.round()}',
-                    style: TextStyle(
-                      color: colors.textPrimary,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                  Text(
-                    '${(entry.winRate * 100).toStringAsFixed(0)}%',
-                    style: TextStyle(
-                      color: colors.textTertiary,
-                      fontSize: 12,
-                    ),
-                  ),
                 ],
               ),
-            ],
-          ),
+            ),
+            SizedBox(
+              width: 54,
+              child: Text(
+                '${entry.gamesWon}–${entry.gamesLost}',
+                textAlign: TextAlign.right,
+                style: TextStyle(
+                  color: colors.textTertiary,
+                  fontSize: 12.5,
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            SizedBox(
+              width: 44,
+              child: Text(
+                '${entry.rating.round()}',
+                textAlign: TextAlign.right,
+                style: TextStyle(
+                  color: colors.ratingGold,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
