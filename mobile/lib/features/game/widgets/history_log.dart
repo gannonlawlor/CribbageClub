@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../config/theme/app_colors.dart';
 import '../../../core/models/game_history_event.dart';
 import '../../../core/models/score_breakdown.dart';
+import '../../../shared/utils/forfeit_text.dart';
 
 /// Chronological game log. Each entry is attributed with the design language's
 /// player identity colours — `--player-self` (green) for you, `--player-opp`
@@ -32,10 +33,10 @@ class HistoryLog extends StatelessWidget {
   ) {
     return switch (event) {
       RoundStarted(:final roundNumber) => (
-          actorId: null,
-          text: 'Round $roundNumber',
-          emphasize: false,
-        ),
+        actorId: null,
+        text: 'Round $roundNumber',
+        emphasize: false,
+      ),
       CardsDealt() => (actorId: null, text: 'Cards dealt', emphasize: false),
       DeckCut(
         :final cuttingPlayerId,
@@ -44,7 +45,8 @@ class HistoryLog extends StatelessWidget {
       ) =>
         (
           actorId: cuttingPlayerId,
-          text: 'cut ${cutCard.rank.display}${cutCard.suit.symbol}'
+          text:
+              'cut ${cutCard.rank.display}${cutCard.suit.symbol}'
               '${dealerScoredNobs ? ' · nobs +2' : ''}',
           emphasize: false,
         ),
@@ -56,20 +58,21 @@ class HistoryLog extends StatelessWidget {
       ) =>
         (
           actorId: playerId,
-          text: 'played ${card.rank.display}${card.suit.symbol}'
+          text:
+              'played ${card.rank.display}${card.suit.symbol}'
               ' · count $newCount${pointsScored > 0 ? ' · +$pointsScored' : ''}',
           emphasize: false,
         ),
       GoAnnounced(:final playerId, :final pointsScored) => (
-          actorId: playerId,
-          text: 'said Go${pointsScored > 0 ? ' · +$pointsScored' : ''}',
-          emphasize: false,
-        ),
+        actorId: playerId,
+        text: 'said Go${pointsScored > 0 ? ' · +$pointsScored' : ''}',
+        emphasize: false,
+      ),
       PeggingEnded() => (
-          actorId: null,
-          text: 'Pegging ended',
-          emphasize: false,
-        ),
+        actorId: null,
+        text: 'Pegging ended',
+        emphasize: false,
+      ),
       HandCounted(:final playerId, :final totalPoints, :final scoreBreakdown) =>
         (
           actorId: playerId,
@@ -83,21 +86,23 @@ class HistoryLog extends StatelessWidget {
       ) =>
         (
           actorId: dealerPlayerId,
-          text: 'counted $totalPoints in crib'
+          text:
+              'counted $totalPoints in crib'
               '${_breakdownSummary(scoreBreakdown)}',
           emphasize: false,
         ),
       GameEnded(:final winnerPlayerId, :final finalScore) => (
-          actorId: winnerPlayerId,
-          text: '${winnerPlayerId == viewerId ? 'win' : 'wins'}'
-              ' with $finalScore',
-          emphasize: true,
-        ),
+        actorId: winnerPlayerId,
+        text:
+            '${winnerPlayerId == viewerId ? 'win' : 'wins'}'
+            ' with $finalScore',
+        emphasize: true,
+      ),
       GameForfeited(:final forfeitingPlayerId, :final reason) => (
-          actorId: forfeitingPlayerId,
-          text: 'forfeited ($reason)',
-          emphasize: true,
-        ),
+        actorId: forfeitingPlayerId,
+        text: forfeitVerb(reason),
+        emphasize: true,
+      ),
     };
   }
 
@@ -159,8 +164,7 @@ class HistoryLog extends StatelessWidget {
                       Container(width: 3, color: identity),
                       Expanded(
                         child: Padding(
-                          padding:
-                              const EdgeInsets.fromLTRB(9, 6, 10, 6),
+                          padding: const EdgeInsets.fromLTRB(9, 6, 10, 6),
                           child: Text.rich(
                             TextSpan(
                               children: [

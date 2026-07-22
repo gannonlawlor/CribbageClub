@@ -3,8 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../config/theme/app_colors.dart';
 import '../../../core/auth/auth_provider.dart';
+import '../../../shared/widgets/cc_buttons.dart';
+import '../../../shared/widgets/cc_field.dart';
 import '../../../shared/widgets/loading_overlay.dart';
 
+/// Guest → full account. Mirrors the login screen's layout so the two auth
+/// forms read as one flow; the copy is the design language's guest upsell
+/// (§8) rather than generic "save your progress" language.
 class UpgradeScreen extends ConsumerStatefulWidget {
   const UpgradeScreen({super.key});
 
@@ -91,107 +96,138 @@ class _UpgradeScreenState extends ConsumerState<UpgradeScreen> {
     });
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Create Account'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/'),
-        ),
-      ),
       body: LoadingOverlay(
         isLoading: auth.isLoading,
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(32),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 400),
-              child: Form(
-                key: _formKey,
-                autovalidateMode: _autovalidate
-                    ? AutovalidateMode.onUserInteraction
-                    : AutovalidateMode.disabled,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.upgrade,
-                      size: 64,
-                      color: colors.accent,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Upgrade Your Account',
-                      style: TextStyle(
-                        color: colors.textPrimary,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Save your progress and stats by creating a permanent account.',
-                      style: TextStyle(color: colors.textSecondary),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 32),
-                    TextFormField(
-                      controller: _usernameController,
-                      validator: _validateUsername,
-                      decoration: InputDecoration(
-                        labelText: 'Username',
-                        border: const OutlineInputBorder(),
-                        filled: true,
-                        fillColor: colors.surfaceDim,
-                      ),
-                      style: TextStyle(color: colors.textPrimary),
-                      textInputAction: TextInputAction.next,
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _passwordController,
-                      validator: _validatePassword,
-                      decoration: InputDecoration(
-                        labelText: 'Password',
-                        border: const OutlineInputBorder(),
-                        filled: true,
-                        fillColor: colors.surfaceDim,
-                      ),
-                      style: TextStyle(color: colors.textPrimary),
-                      obscureText: true,
-                      textInputAction: TextInputAction.next,
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _displayNameController,
-                      decoration: InputDecoration(
-                        labelText: 'Display Name (optional)',
-                        border: const OutlineInputBorder(),
-                        filled: true,
-                        fillColor: colors.surfaceDim,
-                      ),
-                      style: TextStyle(color: colors.textPrimary),
-                      onFieldSubmitted: (_) => _submit(),
-                    ),
-                    if (auth.error != null) ...[
-                      const SizedBox(height: 12),
-                      Text(
-                        auth.error!,
-                        style: TextStyle(color: colors.error),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                    const SizedBox(height: 24),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: auth.isLoading ? null : _submit,
-                        child: const Text('Create Account'),
-                      ),
-                    ),
-                  ],
+        child: SafeArea(
+          child: Stack(
+            children: [
+              Align(
+                alignment: Alignment.topLeft,
+                child: IconButton(
+                  icon: Icon(Icons.arrow_back, color: colors.textSecondary),
+                  onPressed: () => context.go('/'),
                 ),
               ),
-            ),
+              Center(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(32),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 400),
+                    child: Form(
+                      key: _formKey,
+                      autovalidateMode: _autovalidate
+                          ? AutovalidateMode.onUserInteraction
+                          : AutovalidateMode.disabled,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Center(
+                            child: Container(
+                              width: 56,
+                              height: 56,
+                              decoration: BoxDecoration(
+                                color: colors.accent,
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  'CC',
+                                  style: TextStyle(
+                                    color: colors.accentOnSurface,
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Create an account',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: colors.textPrimary,
+                              fontSize: 28,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            "You're playing unrated. Create an account to "
+                            'keep a rating and your game history.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: colors.textTertiary,
+                              fontSize: 14,
+                              height: 1.4,
+                            ),
+                          ),
+                          const SizedBox(height: 32),
+                          CcTextField(
+                            label: 'Username',
+                            controller: _usernameController,
+                            validator: _validateUsername,
+                          ),
+                          const SizedBox(height: 16),
+                          CcTextField(
+                            label: 'Password',
+                            controller: _passwordController,
+                            validator: _validatePassword,
+                            obscureText: true,
+                          ),
+                          const SizedBox(height: 16),
+                          CcTextField(
+                            label: 'Display name',
+                            hint: 'Optional',
+                            controller: _displayNameController,
+                            textInputAction: TextInputAction.done,
+                            textCapitalization: TextCapitalization.words,
+                            onSubmitted: (_) => _submit(),
+                          ),
+                          if (auth.error != null) ...[
+                            const SizedBox(height: 12),
+                            Text(
+                              auth.error!,
+                              style: TextStyle(color: colors.error),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                          const SizedBox(height: 24),
+                          CcPrimaryButton(
+                            label: 'Create account',
+                            onPressed: auth.isLoading ? null : _submit,
+                          ),
+                          const SizedBox(height: 12),
+                          TextButton(
+                            onPressed: () => context.go('/'),
+                            child: Text(
+                              'Not now',
+                              style: TextStyle(
+                                color: colors.textTertiary,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Divider(color: colors.border, height: 1),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Your games so far carry over.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: colors.textTertiary,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),

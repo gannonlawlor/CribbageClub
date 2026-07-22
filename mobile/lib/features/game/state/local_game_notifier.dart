@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/engine/local_game_service.dart';
 import '../../../core/models/card.dart';
 import '../../../core/models/game_action.dart';
+import '../../../core/models/game_history_event.dart';
 import '../../../core/models/game_state.dart';
 import '../../../core/services/game_feedback_service.dart';
 import '../animation/game_animation_controller.dart';
@@ -100,7 +101,10 @@ class LocalGameNotifier extends StateNotifier<GameNotifierState> {
     } catch (e) {
       if (!_disposed) {
         debugPrint('[LocalGame] Discard failed for $gameId: $e');
-        state = state.copyWith(isDiscarding: false, error: 'Discard failed: $e');
+        state = state.copyWith(
+          isDiscarding: false,
+          error: 'Discard failed: $e',
+        );
       }
     }
   }
@@ -133,6 +137,42 @@ class LocalGameNotifier extends StateNotifier<GameNotifierState> {
         state = state.copyWith(error: 'Deal failed: $e');
       }
     }
+  }
+
+  /// Concede the game on the spot. The Rust engine has no forfeit action —
+  /// it only ever ends a game by reaching 121 — so the terminal state is
+  /// assembled here: the same GameForfeited + GameEnded pair the server
+  /// writes, which is what the game-over panel and history already read.
+  void resign() {
+    final gs = state.gameState;
+    if (gs == null || gs.stage == GameStage.gameOver) return;
+
+    final winner = gs.players.firstWhere(
+      (p) => p.id != _playerId,
+      orElse: () => gs.players.first,
+    );
+    final now = DateTime.now().toUtc().toIso8601String();
+
+    final ended = gs.copyWith(
+      stage: GameStage.gameOver,
+      currentPlayerId: null,
+      history: [
+        ...gs.history,
+        GameHistoryEvent.gameForfeited(
+          timestamp: now,
+          forfeitingPlayerId: _playerId,
+          reason: 'RESIGN',
+        ),
+        GameHistoryEvent.gameEnded(
+          timestamp: now,
+          winnerPlayerId: winner.id,
+          finalScore: winner.score,
+        ),
+      ],
+    );
+
+    state = GameNotifierState(gameState: ended);
+    _notifyAnimation(ended);
   }
 
   void clearError() {
