@@ -2,23 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../config/theme/app_colors.dart';
 import '../../../core/services/settings_provider.dart';
+import '../../../shared/widgets/cc_dialog.dart';
+import '../../../shared/widgets/cc_list.dart';
 
-/// Opens the shared game-settings sheet (auto-play toggles + animation
+/// Opens the shared game-settings dialog (auto-play toggles + animation
 /// speed). Reachable in-game, from the Play tab, and from Settings.
-void showGameSettingsSheet(BuildContext context) {
-  final colors = context.appColors;
-  showModalBottomSheet(
+void showGameSettingsDialog(BuildContext context) {
+  showCcDialog(
     context: context,
-    backgroundColor: colors.surfacePrimary,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-    ),
-    builder: (ctx) => const GameSettingsSheet(),
+    builder: (_) => const GameSettingsDialog(),
   );
 }
 
-class GameSettingsSheet extends ConsumerWidget {
-  const GameSettingsSheet({super.key});
+class GameSettingsDialog extends ConsumerWidget {
+  const GameSettingsDialog({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -26,70 +23,68 @@ class GameSettingsSheet extends ConsumerWidget {
     final settings = ref.watch(settingsProvider);
     final notifier = ref.read(settingsProvider.notifier);
 
-    return SafeArea(
+    return CcDialog(
+      title: 'Game settings',
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
-            child: Column(
-              children: [
-                Text(
-                  'Game settings',
-                  style: TextStyle(
-                    color: colors.textPrimary,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  'Applies to all games. Change anytime, even mid-game.',
-                  style: TextStyle(color: colors.textTertiary, fontSize: 12),
-                ),
-              ],
+          Text(
+            'Applies to all games. Change anytime, even mid-game.',
+            style: TextStyle(
+              color: colors.textTertiary,
+              fontSize: 13,
+              height: 1.35,
             ),
           ),
-          SwitchListTile.adaptive(
-            title: Text('Auto-Deal', style: TextStyle(color: colors.textPrimary)),
-            value: settings.autoDeal,
-            activeTrackColor: colors.accent,
-            onChanged: (val) => notifier.setAutoDeal(val),
-          ),
-          SwitchListTile.adaptive(
-            title: Text('Auto-Cut Deck', style: TextStyle(color: colors.textPrimary)),
-            value: settings.autoCut,
-            activeTrackColor: colors.accent,
-            onChanged: (val) => notifier.setAutoCut(val),
-          ),
-          SwitchListTile.adaptive(
-            title: Text('Auto-Go', style: TextStyle(color: colors.textPrimary)),
-            value: settings.autoGo,
-            activeTrackColor: colors.accent,
-            onChanged: (val) => notifier.setAutoGo(val),
-          ),
-          SwitchListTile.adaptive(
-            title: Text('Auto-Play All', style: TextStyle(color: colors.textPrimary)),
-            value: settings.autoPlayAll,
-            activeTrackColor: colors.accent,
-            onChanged: (val) => notifier.setAutoPlayAll(val),
-          ),
-          SwitchListTile.adaptive(
-            title: Text(
-              'Auto-Play Pegging',
-              style: TextStyle(
-                color: settings.autoPlayAll ? colors.textDisabled : colors.textPrimary,
+          const SizedBox(height: 14),
+          CcGroup(
+            children: [
+              CcToggleRow(
+                title: 'Auto-deal',
+                value: settings.autoDeal,
+                onChanged: notifier.setAutoDeal,
               ),
-            ),
-            value: settings.autoPlayPegging,
-            activeTrackColor: colors.accent,
-            onChanged: settings.autoPlayAll ? null : (val) => notifier.setAutoPlayPegging(val),
+              CcToggleRow(
+                title: 'Auto-cut deck',
+                value: settings.autoCut,
+                onChanged: notifier.setAutoCut,
+              ),
+              CcToggleRow(
+                title: 'Auto-go',
+                value: settings.autoGo,
+                onChanged: notifier.setAutoGo,
+              ),
+              CcToggleRow(
+                title: 'Auto-play all',
+                value: settings.autoPlayAll,
+                onChanged: notifier.setAutoPlayAll,
+              ),
+              CcToggleRow(
+                title: 'Auto-play pegging',
+                value: settings.autoPlayPegging,
+                onChanged: settings.autoPlayAll
+                    ? null
+                    : notifier.setAutoPlayPegging,
+              ),
+            ],
           ),
-          ListTile(
-            title: Text('Animation Speed', style: TextStyle(color: colors.textPrimary)),
-            subtitle: Row(
+          const SizedBox(height: 18),
+          const _SectionCaption('Animation speed'),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.fromLTRB(14, 8, 14, 10),
+            decoration: BoxDecoration(
+              color: colors.surfaceDim,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: colors.border),
+            ),
+            child: Row(
               children: [
-                Text('0.5x', style: TextStyle(color: colors.textTertiary, fontSize: 11)),
+                Text(
+                  '0.5x',
+                  style: TextStyle(color: colors.textTertiary, fontSize: 11),
+                ),
                 Expanded(
                   child: Slider(
                     value: settings.animationSpeed,
@@ -97,23 +92,51 @@ class GameSettingsSheet extends ConsumerWidget {
                     max: 2.0,
                     divisions: 6,
                     activeColor: colors.accent,
-                    onChanged: (val) => notifier.setAnimationSpeed(val),
+                    onChanged: notifier.setAnimationSpeed,
                   ),
                 ),
-                Text('2.0x', style: TextStyle(color: colors.textTertiary, fontSize: 11)),
+                Text(
+                  '2.0x',
+                  style: TextStyle(color: colors.textTertiary, fontSize: 11),
+                ),
+                const SizedBox(width: 8),
+                SizedBox(
+                  width: 34,
+                  child: Text(
+                    '${settings.animationSpeed.toStringAsFixed(1)}x',
+                    textAlign: TextAlign.right,
+                    style: TextStyle(
+                      color: colors.textPrimary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                    ),
+                  ),
+                ),
               ],
             ),
-            trailing: Text(
-              '${settings.animationSpeed.toStringAsFixed(1)}x',
-              style: TextStyle(
-                color: colors.textPrimary,
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
           ),
-          const SizedBox(height: 8),
         ],
+      ),
+    );
+  }
+}
+
+class _SectionCaption extends StatelessWidget {
+  final String text;
+
+  const _SectionCaption(this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+    return Text(
+      text.toUpperCase(),
+      style: TextStyle(
+        color: colors.textTertiary,
+        fontSize: 11,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.7,
       ),
     );
   }

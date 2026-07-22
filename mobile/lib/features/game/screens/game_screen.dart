@@ -18,6 +18,7 @@ import '../state/game_providers.dart';
 import '../state/local_game_notifier.dart';
 import '../../../shared/utils/responsive.dart';
 import '../../../shared/widgets/cc_buttons.dart';
+import '../../../shared/widgets/cc_dialog.dart';
 import '../widgets/board_strip.dart';
 import '../widgets/crib_area.dart';
 import '../widgets/cut_card.dart';
@@ -729,63 +730,51 @@ class GameScreen extends ConsumerWidget {
   }
 
   void _showHistorySheet(BuildContext context, List<GameHistoryEvent> events, String playerId) {
-    final colors = context.appColors;
-    showModalBottomSheet(
+    showCcDialog(
       context: context,
-      backgroundColor: colors.surfacePrimary,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Text(
-                'Game History',
-                style: TextStyle(
-                  color: colors.textPrimary,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            SizedBox(
-              height: 300,
-              child: HistoryLog(events: events, playerId: playerId),
-            ),
-          ],
-        ),
+      builder: (_) => CcDialog(
+        title: 'Game history',
+        child: HistoryLog(events: events, playerId: playerId),
       ),
     );
   }
 
   void _showSettingsSheet(BuildContext context, WidgetRef ref) {
-    showGameSettingsSheet(context);
+    showGameSettingsDialog(context);
   }
 
   void _confirmResign(BuildContext context, WidgetRef ref) {
-    showDialog(
+    final colors = context.appColors;
+    showCcDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Resign this game?'),
-        content: const Text('It counts as a loss.'),
+      builder: (ctx) => CcDialog(
+        title: 'Resign this game?',
+        showCloseButton: false,
         actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Keep playing'),
-          ),
-          TextButton(
+          CcSecondaryButton(
+            label: 'Resign',
+            labelColor: colors.error,
             onPressed: () {
               Navigator.of(ctx).pop();
               final n = _readNotifier(ref);
               if (n is GameNotifier) n.resign();
             },
-            style: TextButton.styleFrom(foregroundColor: context.appColors.error),
-            child: const Text('Resign'),
+          ),
+          CcPrimaryButton(
+            label: 'Keep playing',
+            height: 44,
+            fontSize: 14,
+            onPressed: () => Navigator.of(ctx).pop(),
           ),
         ],
+        child: Text(
+          'It counts as a loss.',
+          style: TextStyle(
+            color: colors.textSecondary,
+            fontSize: 14,
+            height: 1.35,
+          ),
+        ),
       ),
     );
   }
@@ -1084,34 +1073,11 @@ class _TopBar extends StatelessWidget {
   }
 
   void _showHistorySheet(BuildContext context) {
-    final colors = context.appColors;
-    showModalBottomSheet(
+    showCcDialog(
       context: context,
-      backgroundColor: colors.surfacePrimary,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Text(
-                'Game History',
-                style: TextStyle(
-                  color: colors.textPrimary,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            SizedBox(
-              height: 300,
-              child: HistoryLog(events: events, playerId: playerId),
-            ),
-          ],
-        ),
+      builder: (_) => CcDialog(
+        title: 'Game history',
+        child: HistoryLog(events: events, playerId: playerId),
       ),
     );
   }

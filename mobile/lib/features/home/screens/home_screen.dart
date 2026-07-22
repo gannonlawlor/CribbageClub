@@ -8,6 +8,8 @@ import '../../../core/models/local_game_record.dart';
 import '../../../shared/widgets/auth_required.dart';
 import '../../../shared/widgets/cc_bottom_nav.dart';
 import '../../../shared/widgets/cc_buttons.dart';
+import '../../../shared/widgets/cc_dialog.dart';
+import '../../../shared/widgets/cc_list.dart';
 import '../../../shared/widgets/loading_overlay.dart';
 import '../../daily_puzzle/state/puzzle_provider.dart';
 import '../../game/widgets/game_settings_sheet.dart';
@@ -125,7 +127,7 @@ class HomeScreen extends ConsumerWidget {
                                     height: 40,
                                     fontSize: 13,
                                     onPressed: () =>
-                                        showGameSettingsSheet(context),
+                                        showGameSettingsDialog(context),
                                   ),
                                 ),
                               ],
@@ -148,56 +150,45 @@ class HomeScreen extends ConsumerWidget {
   }
 
   void _showDifficultyPicker(BuildContext context, WidgetRef ref) {
-    final colors = context.appColors;
-    showModalBottomSheet(
+    showCcDialog(
       context: context,
-      backgroundColor: colors.surfacePrimary,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (ctx) => SafeArea(
+      builder: (dialogContext) => CcDialog(
+        title: 'Choose difficulty',
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text(
-                'Choose Difficulty',
-                style: TextStyle(
-                  color: colors.textPrimary,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            _DifficultyTile(
-              label: 'Easy',
-              description: 'Basic heuristics',
+            CcOptionRow(
               icon: Icons.sentiment_satisfied,
+              title: 'Easy',
+              subtitle: 'Basic heuristics',
+              showChevron: false,
               onTap: () {
-                Navigator.pop(ctx);
+                Navigator.pop(dialogContext);
                 _createLocalAIGame(context, ref, 'basic');
               },
             ),
-            _DifficultyTile(
-              label: 'Medium',
-              description: 'Optimizes hand scoring',
+            const SizedBox(height: 8),
+            CcOptionRow(
               icon: Icons.psychology,
+              title: 'Medium',
+              subtitle: 'Optimizes hand scoring',
+              showChevron: false,
               onTap: () {
-                Navigator.pop(ctx);
+                Navigator.pop(dialogContext);
                 _createLocalAIGame(context, ref, 'medium');
               },
             ),
-            _DifficultyTile(
-              label: 'Hard',
-              description: 'Hand + crib optimization, advanced pegging',
+            const SizedBox(height: 8),
+            CcOptionRow(
               icon: Icons.local_fire_department,
+              title: 'Hard',
+              subtitle: 'Hand + crib optimization, advanced pegging',
+              showChevron: false,
               onTap: () {
-                Navigator.pop(ctx);
+                Navigator.pop(dialogContext);
                 _createLocalAIGame(context, ref, 'hard');
               },
             ),
-            const SizedBox(height: 8),
           ],
         ),
       ),
@@ -205,81 +196,52 @@ class HomeScreen extends ConsumerWidget {
   }
 
   void _showOnlineOptions(BuildContext context, WidgetRef ref) {
-    final colors = context.appColors;
-    showModalBottomSheet(
+    showCcDialog(
       context: context,
-      backgroundColor: colors.surfacePrimary,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (ctx) => SafeArea(
+      builder: (dialogContext) => CcDialog(
+        title: 'Play online',
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text(
-                'Play Online',
-                style: TextStyle(
-                  color: colors.textPrimary,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            ListTile(
-              leading: Icon(Icons.flash_on, color: colors.accent),
-              title: Text('Quick Game',
-                  style: TextStyle(color: colors.textPrimary)),
-              subtitle: Text('Find a match instantly',
-                  style: TextStyle(color: colors.textTertiary, fontSize: 12)),
-              trailing:
-                  Icon(Icons.chevron_right, color: colors.textDisabled),
+            CcOptionRow(
+              icon: Icons.flash_on,
+              title: 'Quick game',
+              subtitle: 'Find a match instantly',
               onTap: () {
-                Navigator.pop(ctx);
+                Navigator.pop(dialogContext);
                 _quickMatch(context, ref);
               },
             ),
-            ListTile(
-              leading: Icon(Icons.list, color: colors.accent),
-              title: Text('Browse Lobbies',
-                  style: TextStyle(color: colors.textPrimary)),
-              subtitle: Text('Join an open lobby',
-                  style: TextStyle(color: colors.textTertiary, fontSize: 12)),
-              trailing:
-                  Icon(Icons.chevron_right, color: colors.textDisabled),
+            const SizedBox(height: 8),
+            CcOptionRow(
+              icon: Icons.list,
+              title: 'Browse lobbies',
+              subtitle: 'Join an open lobby',
               onTap: () {
-                Navigator.pop(ctx);
+                Navigator.pop(dialogContext);
                 _browseLobbies(context, ref);
               },
             ),
-            ListTile(
-              leading: Icon(Icons.lock, color: colors.accent),
-              title: Text('Create Private Game',
-                  style: TextStyle(color: colors.textPrimary)),
-              subtitle: Text('Invite a friend by code',
-                  style: TextStyle(color: colors.textTertiary, fontSize: 12)),
-              trailing:
-                  Icon(Icons.chevron_right, color: colors.textDisabled),
+            const SizedBox(height: 8),
+            CcOptionRow(
+              icon: Icons.lock,
+              title: 'Create private game',
+              subtitle: 'Invite a friend by code',
               onTap: () {
-                Navigator.pop(ctx);
+                Navigator.pop(dialogContext);
                 _createPrivateGame(context, ref);
               },
             ),
-            ListTile(
-              leading: Icon(Icons.vpn_key, color: colors.accent),
-              title: Text('Join by Code',
-                  style: TextStyle(color: colors.textPrimary)),
-              subtitle: Text('Enter an invite code',
-                  style: TextStyle(color: colors.textTertiary, fontSize: 12)),
-              trailing:
-                  Icon(Icons.chevron_right, color: colors.textDisabled),
+            const SizedBox(height: 8),
+            CcOptionRow(
+              icon: Icons.vpn_key,
+              title: 'Join by code',
+              subtitle: 'Enter an invite code',
               onTap: () {
-                Navigator.pop(ctx);
+                Navigator.pop(dialogContext);
                 _showJoinByCodeDialog(context, ref);
               },
             ),
-            const SizedBox(height: 8),
           ],
         ),
       ),
@@ -371,45 +333,59 @@ class HomeScreen extends ConsumerWidget {
     final colors = context.appColors;
     final codeController = TextEditingController();
     if (!context.mounted) return;
-    showDialog(
+
+    OutlineInputBorder border(Color color, {double width = 1}) =>
+        OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: color, width: width),
+        );
+
+    showCcDialog(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        backgroundColor: colors.surfacePrimary,
-        title: Text(
-          'Join by Code',
-          style: TextStyle(color: colors.textPrimary),
-        ),
-        content: TextField(
+      builder: (dialogContext) => CcDialog(
+        title: 'Join by code',
+        actions: [
+          CcSecondaryButton(
+            label: 'Cancel',
+            onPressed: () => Navigator.of(dialogContext).pop(),
+          ),
+          CcPrimaryButton(
+            label: 'Join',
+            height: 44,
+            fontSize: 14,
+            onPressed: () =>
+                _joinByCode(dialogContext, context, ref, codeController),
+          ),
+        ],
+        child: TextField(
           controller: codeController,
           autofocus: true,
           textCapitalization: TextCapitalization.characters,
           decoration: InputDecoration(
-            hintText: 'Enter invite code',
-            hintStyle: TextStyle(color: colors.textDisabled),
-            border: const OutlineInputBorder(),
+            hintText: 'INVITE CODE',
+            hintStyle: TextStyle(
+              color: colors.textDisabled,
+              fontSize: 15,
+              letterSpacing: 2,
+            ),
             filled: true,
             fillColor: colors.surfaceDim,
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+            enabledBorder: border(colors.borderStrong),
+            focusedBorder: border(colors.selectedBorder, width: 2),
           ),
           style: TextStyle(
             color: colors.textPrimary,
             fontSize: 20,
+            fontWeight: FontWeight.w700,
             letterSpacing: 4,
+            fontFeatures: const [FontFeature.tabularFigures()],
           ),
           textAlign: TextAlign.center,
           onSubmitted: (_) =>
               _joinByCode(dialogContext, context, ref, codeController),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () =>
-                _joinByCode(dialogContext, context, ref, codeController),
-            child: const Text('Join'),
-          ),
-        ],
       ),
     );
   }
@@ -974,35 +950,6 @@ class _ContinueGameSection extends StatelessWidget {
         ...onlineGames.map((game) => _ActiveGameTile(game: game)),
         const SizedBox(height: 14),
       ],
-    );
-  }
-}
-
-class _DifficultyTile extends StatelessWidget {
-  final String label;
-  final String description;
-  final IconData icon;
-  final VoidCallback onTap;
-
-  const _DifficultyTile({
-    required this.label,
-    required this.description,
-    required this.icon,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.appColors;
-    return ListTile(
-      leading: Icon(icon, color: colors.accent),
-      title: Text(label, style: TextStyle(color: colors.textPrimary)),
-      subtitle: Text(
-        description,
-        style: TextStyle(color: colors.textTertiary, fontSize: 12),
-      ),
-      trailing: Icon(Icons.chevron_right, color: colors.textDisabled),
-      onTap: onTap,
     );
   }
 }
