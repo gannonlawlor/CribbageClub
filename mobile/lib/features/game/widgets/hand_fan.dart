@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../config/constants.dart';
 import '../../../core/models/card.dart';
 import '../../../core/services/settings_provider.dart';
 import '../../../shared/utils/card_dimensions.dart';
@@ -8,8 +10,18 @@ import '../../../shared/utils/card_utils.dart';
 import 'card_widget.dart';
 
 class HandFan extends ConsumerStatefulWidget {
+  /// Design target for a hand card; shrinks only when the hand won't fit.
+  static const double maxCardWidth = 74;
+  static const double maxCardHeight = 104;
+
+  /// Lift room reserved above the cards for the selected-card raise.
+  static const double liftRoom = 8;
+
   final List<PlayingCard> cards;
   final Set<int> selectedIndices;
+
+  /// Cards that can't legally be played right now — rendered at 45% opacity.
+  final Set<int> dimmedIndices;
   final bool enabled;
   final void Function(int index)? onCardTap;
 
@@ -17,6 +29,7 @@ class HandFan extends ConsumerStatefulWidget {
     super.key,
     required this.cards,
     this.selectedIndices = const {},
+    this.dimmedIndices = const {},
     this.enabled = true,
     this.onCardTap,
   });
@@ -107,32 +120,42 @@ class _HandFanState extends ConsumerState<HandFan> {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final dims = CardDimensions(constraints.maxWidth);
-        final cardW = dims.handCardWidth;
-        final cardH = dims.handCardHeight;
+        final available = constraints.maxWidth;
+        final n = sorted.length;
+        final cardW = math.min(HandFan.maxCardWidth, available * 0.28);
+        final cardH = cardW / AppConstants.cardAspectRatio;
+        final slotH = cardH + HandFan.liftRoom;
 
-        if (sorted.isEmpty) {
-          return SizedBox(height: cardH + 12);
+        if (n == 0) {
+          return SizedBox(height: slotH);
         }
 
-        final available = constraints.maxWidth;
-        final visibleW = dims.handCardVisibleForCount(sorted.length, available);
-        final stackWidth = dims.handStackWidthForCount(sorted.length, available);
+        // 10px gaps at the design size; the hand tightens into an overlap
+        // only once six cards no longer fit.
+        final step = n > 1
+            ? math
+                .min(cardW + 10, (available - cardW) / (n - 1))
+                .clamp(cardW * 0.45, cardW + 10)
+            : 0.0;
+        final stackWidth = cardW + (n - 1) * step;
         final startX = (available - stackWidth) / 2;
         final centerX = (available - cardW) / 2;
+        // Once the cards tuck under each other the far-corner pip is only
+        // half visible, so the index carries the card on its own.
+        final overlapping = n > 1 && step < cardW;
 
         if (_isAnimating) {
           final flipStagger = settings.scaleDuration(const Duration(milliseconds: 80));
           return SizedBox(
-            height: cardH + 12,
+            height: slotH,
             child: Stack(
               clipBehavior: Clip.none,
               children: [
-                for (int i = 0; i < sorted.length; i++)
+                for (int i = 0; i < n; i++)
                   AnimatedPositioned(
                     duration: const Duration(milliseconds: 300),
                     curve: Curves.easeOutCubic,
-                    left: i < _revealedCount ? startX + i * visibleW : centerX,
+                    left: i < _revealedCount ? startX + i * step : centerX,
                     bottom: 0,
                     child: AnimatedOpacity(
                       duration: const Duration(milliseconds: 150),
@@ -153,20 +176,22 @@ class _HandFanState extends ConsumerState<HandFan> {
 
         // Normal (non-animating) render
         return SizedBox(
-          height: cardH + 12,
+          height: slotH,
           child: Stack(
             clipBehavior: Clip.none,
             children: [
-              for (int i = 0; i < sorted.length; i++)
+              for (int i = 0; i < n; i++)
                 AnimatedPositioned(
                   duration: const Duration(milliseconds: 250),
                   curve: Curves.easeOutCubic,
-                  left: startX + i * visibleW,
+                  left: startX + i * step,
                   bottom: 0,
                   child: CardWidget(
                     card: sorted[i],
                     faceUp: true,
                     selected: widget.selectedIndices.contains(i),
+                    dimmed: widget.dimmedIndices.contains(i),
+                    indexOnly: overlapping && i < n - 1,
                     enabled: widget.enabled,
                     onTap: widget.onCardTap != null ? () => widget.onCardTap!(i) : null,
                     width: cardW,

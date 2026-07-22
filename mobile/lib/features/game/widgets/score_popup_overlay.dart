@@ -15,11 +15,20 @@ class ScorePopupOverlay extends ConsumerStatefulWidget {
   final String playerId;
   final String opponentName;
 
+  /// Distance from the top of the stack for opponent popups. When null the
+  /// popup sits at a fraction of the height instead (tablet layout).
+  final double? opponentTop;
+
+  /// Distance from the bottom of the stack for the local player's popups.
+  final double? playerBottom;
+
   const ScorePopupOverlay({
     super.key,
     required this.gameId,
     required this.playerId,
     required this.opponentName,
+    this.opponentTop,
+    this.playerBottom,
   });
 
   @override
@@ -198,7 +207,12 @@ class _ScorePopupOverlayState extends ConsumerState<ScorePopupOverlay>
 
     return Stack(
       children: [
-        _ScorePopupWidget(key: ValueKey(popup.id), popup: popup),
+        _ScorePopupWidget(
+          key: ValueKey(popup.id),
+          popup: popup,
+          top: popup.isPlayer ? null : widget.opponentTop,
+          bottom: popup.isPlayer ? widget.playerBottom : null,
+        ),
       ],
     );
   }
@@ -235,206 +249,141 @@ class _CoalescedPopup {
   int get totalPoints => components.fold(0, (sum, c) => sum + c.points);
 }
 
+/// Score popup (design language §4): a pill filled with the scorer's identity
+/// colour, dark text, anchored clear of the count. Rises 6px, holds, fades.
 class _ScorePopupWidget extends StatelessWidget {
   final _CoalescedPopup popup;
+  final double? top;
+  final double? bottom;
 
-  const _ScorePopupWidget({super.key, required this.popup});
+  const _ScorePopupWidget({
+    super.key,
+    required this.popup,
+    this.top,
+    this.bottom,
+  });
 
   @override
   Widget build(BuildContext context) {
     final colors = context.appColors;
-    final slideUp = Tween<Offset>(
-      begin: Offset.zero,
-      end: const Offset(0, -0.5),
-    ).animate(
-        CurvedAnimation(parent: popup.controller, curve: Curves.easeOut));
 
-    final fade = Tween<double>(begin: 1.0, end: 0.0).animate(
+    final rise = Tween<Offset>(
+      begin: const Offset(0, 0.2),
+      end: Offset.zero,
+    ).animate(
       CurvedAnimation(
         parent: popup.controller,
-        // Hold fully visible for first 60%, then fade out
-        curve: const Interval(0.6, 1.0, curve: Curves.easeIn),
+        curve: const Interval(0, 0.12, curve: Curves.easeOut),
       ),
     );
 
-    final scale = TweenSequence<double>([
-      TweenSequenceItem(
-        tween: Tween(
-          begin: 0.5,
-          end: 1.2,
-        ).chain(CurveTween(curve: Curves.easeOut)),
-        weight: 20,
-      ),
-      TweenSequenceItem(
-        tween: Tween(
-          begin: 1.2,
-          end: 1.0,
-        ).chain(CurveTween(curve: Curves.elasticOut)),
-        weight: 30,
-      ),
-      TweenSequenceItem(tween: ConstantTween(1.0), weight: 50),
-    ]).animate(popup.controller);
+    final fade = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 0.0, end: 1.0), weight: 12),
+      TweenSequenceItem(tween: ConstantTween(1.0), weight: 68),
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.0), weight: 20),
+    ]).animate(
+      CurvedAnimation(parent: popup.controller, curve: Curves.easeInOut),
+    );
 
-    // Position: player popups near bottom, opponent near top
-    final baseVertical = popup.isPlayer ? 0.55 : 0.05;
+    final pill = SlideTransition(
+      position: rise,
+      child: FadeTransition(opacity: fade, child: _buildPill(colors)),
+    );
+
+    // Explicit anchor when the caller knows where the free bands are;
+    // otherwise fall back to a fraction of the available height.
+    if (top != null || bottom != null) {
+      return Positioned(
+        left: 0,
+        right: 0,
+        top: top,
+        bottom: bottom,
+        child: Align(alignment: Alignment.center, child: pill),
+      );
+    }
 
     return Positioned.fill(
       child: Align(
-        alignment: Alignment(0, baseVertical),
-        child: SlideTransition(
-          position: slideUp,
-          child: FadeTransition(
-            opacity: fade,
-            child: ScaleTransition(scale: scale, child: _buildContent(colors)),
-          ),
+        alignment: Alignment(0, popup.isPlayer ? 0.55 : -0.55),
+        child: pill,
+      ),
+    );
+  }
+
+  Widget _buildPill(AppColors colors) {
+    final fill = popup.isPlayer ? colors.pegPlayer : colors.pegOpponent;
+    const onFill = Color(0xFF16240C);
+    const onFillOpp = Color(0xFF26221E);
+    final textColor = popup.isPlayer ? onFill : onFillOpp;
+    final detail = _detailText();
+
+    return IgnorePointer(
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+        decoration: BoxDecoration(
+          color: fill,
+          borderRadius: BorderRadius.circular(999),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x59000000),
+              blurRadius: 10,
+              offset: Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              '+${popup.totalPoints}',
+              style: TextStyle(
+                color: textColor,
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                height: 1.2,
+                fontFeatures: const [FontFeature.tabularFigures()],
+              ),
+            ),
+            if (detail != null) ...[
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  detail,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: textColor.withValues(alpha: 0.75),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    height: 1.2,
+                  ),
+                ),
+              ),
+            ],
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildContent(AppColors colors) {
-    final pegColor = popup.isPlayer ? colors.pegPlayer : colors.pegOpponent;
-    final playerLabel = popup.isPlayer ? 'You' : popup.opponentName;
-    final isSingle = popup.components.length == 1;
-
-    if (isSingle) {
-      return _buildSingleContent(colors, pegColor, playerLabel);
+  /// "fifteen", "Hand · 2 fifteens, 1 pair" — the why behind the number.
+  String? _detailText() {
+    final parts = <String>[];
+    for (final comp in popup.components) {
+      final label = _sourceLabel(comp.source);
+      final reason = comp.reason;
+      final hasReason = reason != null && reason.isNotEmpty;
+      if (label != null && hasReason) {
+        parts.add('$label · $reason');
+      } else if (label != null) {
+        parts.add(label);
+      } else if (hasReason) {
+        parts.add(reason);
+      }
     }
-    return _buildMultiContent(colors, pegColor, playerLabel);
-  }
-
-  /// Single component: same layout as before.
-  Widget _buildSingleContent(
-      AppColors colors, Color pegColor, String playerLabel) {
-    final comp = popup.components.first;
-    final sourceLabel = _sourceLabel(comp.source);
-
-    return IgnorePointer(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            playerLabel,
-            style: TextStyle(
-              color: pegColor.withValues(alpha: 0.9),
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          if (sourceLabel != null)
-            Text(
-              sourceLabel,
-              style: TextStyle(
-                color: pegColor.withValues(alpha: 0.8),
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          Text(
-            '+${comp.points}',
-            style: TextStyle(
-              color: pegColor,
-              fontSize: 36,
-              fontWeight: FontWeight.bold,
-              shadows: const [
-                Shadow(
-                  color: Colors.black54,
-                  blurRadius: 4,
-                  offset: Offset(1, 1),
-                ),
-              ],
-            ),
-          ),
-          if (comp.reason != null && comp.reason!.isNotEmpty)
-            Text(
-              comp.reason!,
-              style: TextStyle(
-                color: colors.textPrimary.withValues(alpha: 0.9),
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                shadows: const [
-                  Shadow(
-                    color: Colors.black54,
-                    blurRadius: 3,
-                    offset: Offset(1, 1),
-                  ),
-                ],
-              ),
-              textAlign: TextAlign.center,
-            ),
-        ],
-      ),
-    );
-  }
-
-  /// Multiple components: total on top, then each component line below.
-  Widget _buildMultiContent(
-      AppColors colors, Color pegColor, String playerLabel) {
-    return IgnorePointer(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            playerLabel,
-            style: TextStyle(
-              color: pegColor.withValues(alpha: 0.9),
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          Text(
-            '+${popup.totalPoints}',
-            style: TextStyle(
-              color: pegColor,
-              fontSize: 36,
-              fontWeight: FontWeight.bold,
-              shadows: const [
-                Shadow(
-                  color: Colors.black54,
-                  blurRadius: 4,
-                  offset: Offset(1, 1),
-                ),
-              ],
-            ),
-          ),
-          for (final comp in popup.components) _buildComponentLine(colors, pegColor, comp),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildComponentLine(
-      AppColors colors, Color pegColor, _ScoreComponent comp) {
-    final label = _sourceLabel(comp.source);
-    final reason = comp.reason;
-    final hasReason = reason != null && reason.isNotEmpty;
-
-    // Build line text: "Hand: +8 — 2 fifteens, 1 pair" or "+3 — pair" or "+2"
-    final buffer = StringBuffer();
-    if (label != null) {
-      buffer.write('$label: ');
-    }
-    buffer.write('+${comp.points}');
-    if (hasReason) {
-      buffer.write(' \u2014 $reason');
-    }
-
-    return Text(
-      buffer.toString(),
-      style: TextStyle(
-        color: colors.textPrimary.withValues(alpha: 0.9),
-        fontSize: 13,
-        fontWeight: FontWeight.w500,
-        shadows: const [
-          Shadow(
-            color: Colors.black54,
-            blurRadius: 3,
-            offset: Offset(1, 1),
-          ),
-        ],
-      ),
-      textAlign: TextAlign.center,
-    );
+    if (parts.isEmpty) return null;
+    return parts.join(', ');
   }
 
   static String? _sourceLabel(ScoreSource? source) {
