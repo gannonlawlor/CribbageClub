@@ -4,11 +4,21 @@ import '../../../config/theme/app_colors.dart';
 import '../../../core/models/card.dart';
 import '../../../shared/utils/card_utils.dart';
 
+/// Playing card (design language §4 "Playing card"): corner index — rank over
+/// suit — plus one large pip in the far corner. No pip grids; that is what
+/// keeps the face readable down to 40px.
 class CardWidget extends StatelessWidget {
   final PlayingCard? card;
   final bool faceUp;
   final bool selected;
   final bool enabled;
+
+  /// Illegal-to-play cards sit at 45% opacity.
+  final bool dimmed;
+
+  /// Drops the large corner pip, leaving the index alone. Used when cards
+  /// overlap and the pip would be half-hidden by its neighbour.
+  final bool indexOnly;
   final VoidCallback? onTap;
   final double width;
   final double height;
@@ -19,6 +29,8 @@ class CardWidget extends StatelessWidget {
     this.faceUp = true,
     this.selected = false,
     this.enabled = true,
+    this.dimmed = false,
+    this.indexOnly = false,
     this.onTap,
     this.width = 60,
     this.height = 84,
@@ -27,38 +39,49 @@ class CardWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.appColors;
+    final radius = width * 0.08;
+
     return GestureDetector(
       onTap: enabled ? onTap : null,
+      behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOutCubic,
         width: width,
         height: height,
-        transform: Matrix4.translationValues(0, selected ? -10 : 0, 0),
+        transform: Matrix4.translationValues(0, selected ? -8 : 0, 0),
         decoration: BoxDecoration(
-          color: faceUp ? colors.cardFace : null,
-          borderRadius: BorderRadius.circular(6),
-          border: Border.all(
-            color: selected ? colors.selectedBorder : colors.textDisabled.withValues(alpha: 0.3),
-            width: selected ? 2.0 : 0.5,
-          ),
-          boxShadow: [
-            if (selected)
-              BoxShadow(
-                color: colors.selectedGlow,
-                blurRadius: 10,
-                spreadRadius: 1,
-              )
-            else
-              const BoxShadow(
-                color: Colors.black26,
-                blurRadius: 3,
-                offset: Offset(1, 2),
-              ),
-          ],
+          color: faceUp ? colors.cardFace : colors.cardBackPrimary,
+          borderRadius: BorderRadius.circular(radius),
+          boxShadow: selected
+              ? [
+                  BoxShadow(
+                    color: colors.selectedBorder,
+                    spreadRadius: 2,
+                    blurRadius: 0,
+                  ),
+                  const BoxShadow(
+                    color: Color(0x73000000),
+                    blurRadius: 16,
+                    offset: Offset(0, 8),
+                  ),
+                ]
+              : const [
+                  BoxShadow(
+                    color: Color(0x66000000),
+                    blurRadius: 5,
+                    offset: Offset(0, 2),
+                  ),
+                ],
         ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(5),
-          child: faceUp && card != null ? _buildFace(colors) : _buildBack(colors),
+        child: Opacity(
+          opacity: dimmed ? 0.45 : 1.0,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(radius),
+            child: faceUp && card != null
+                ? _buildFace(colors)
+                : _buildBack(colors),
+          ),
         ),
       ),
     );
@@ -66,113 +89,119 @@ class CardWidget extends StatelessWidget {
 
   Widget _buildFace(AppColors colors) {
     final color = CardUtils.suitColor(card!.suit, colors);
-    final scale = height / 84;
-    final rankText = card!.rank.display;
-    final suitText = card!.suit.symbol;
-    return Padding(
-      padding: EdgeInsets.all(2 * scale),
-      child: Stack(
-        clipBehavior: Clip.hardEdge,
-        children: [
-          // Top-left: rank + suit
-          Positioned(
-            top: 0,
-            left: 0,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  rankText,
-                  style: TextStyle(
-                    color: color,
-                    fontSize: 16 * scale,
-                    fontWeight: FontWeight.w800,
-                    height: 1.1,
-                  ),
+    final pad = width * 0.09;
+    final rankSize = width * 0.26;
+    final suitSize = width * 0.19;
+    final pipSize = width * 0.34;
+
+    return Stack(
+      clipBehavior: Clip.hardEdge,
+      children: [
+        Positioned(
+          left: pad,
+          top: pad,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                card!.rank.display,
+                style: TextStyle(
+                  color: color,
+                  fontSize: rankSize,
+                  height: 1,
+                  fontWeight: FontWeight.w700,
+                  fontFeatures: const [FontFeature.tabularFigures()],
                 ),
-                Text(
-                  suitText,
-                  style: TextStyle(
-                    color: color,
-                    fontSize: 12 * scale,
-                    height: 1.0,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // Center: large suit
-          Center(
-            child: Text(
-              suitText,
-              style: TextStyle(color: color, fontSize: 28 * scale),
-            ),
-          ),
-          // Bottom-right: rank + suit (rotated 180)
-          Positioned(
-            bottom: 0,
-            right: 0,
-            child: Transform.rotate(
-              angle: math.pi,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    rankText,
-                    style: TextStyle(
-                      color: color,
-                      fontSize: 16 * scale,
-                      fontWeight: FontWeight.w800,
-                      height: 1.1,
-                    ),
-                  ),
-                  Text(
-                    suitText,
-                    style: TextStyle(
-                      color: color,
-                      fontSize: 12 * scale,
-                      height: 1.0,
-                    ),
-                  ),
-                ],
               ),
+              SizedBox(height: pad * 0.35),
+              Text(
+                card!.suit.symbol,
+                style: TextStyle(color: color, fontSize: suitSize, height: 1),
+              ),
+            ],
+          ),
+        ),
+        if (!indexOnly)
+          Positioned(
+            right: width * 0.125,
+            bottom: pad,
+            child: Text(
+              card!.suit.symbol,
+              style: TextStyle(color: color, fontSize: pipSize, height: 1),
             ),
           ),
-        ],
-      ),
+      ],
     );
   }
 
   Widget _buildBack(AppColors colors) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [colors.cardBackPrimary, colors.cardBackSecondary],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+    final border = width * 0.055;
+    return CustomPaint(
+      painter: _CardBackPainter(
+        slate: colors.cardBackPrimary,
+        stripe: colors.cardBackDetail,
+        border: colors.cardFace,
+        borderWidth: border.clamp(2.0, 4.0),
+        radius: width * 0.08,
       ),
-      child: Container(
-        margin: EdgeInsets.all(width * 0.08),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(3),
-          border: Border.all(
-            color: colors.cardBackDetail,
-            width: 1,
-          ),
-        ),
-        child: Center(
-          child: Icon(
-            Icons.style,
-            color: colors.cardBackDetail,
-            size: width * 0.4,
-          ),
-        ),
-      ),
+      size: Size(width, height),
     );
   }
+}
+
+/// Card back: cool slate, 45° hairline stripes, card-stock border, no logo.
+class _CardBackPainter extends CustomPainter {
+  final Color slate;
+  final Color stripe;
+  final Color border;
+  final double borderWidth;
+  final double radius;
+
+  _CardBackPainter({
+    required this.slate,
+    required this.stripe,
+    required this.border,
+    required this.borderWidth,
+    required this.radius,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = Offset.zero & size;
+    canvas.drawRect(rect, Paint()..color = slate);
+
+    canvas.save();
+    canvas.clipRect(rect);
+    final paint = Paint()
+      ..color = stripe
+      ..strokeWidth = 2;
+    // 45° hairlines on a 6px perpendicular pitch.
+    const pitch = 6 * math.sqrt2;
+    for (double d = 0; d < size.width + size.height; d += pitch) {
+      canvas.drawLine(Offset(d, 0), Offset(d - size.height, size.height), paint);
+    }
+    canvas.restore();
+
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        rect.deflate(borderWidth / 2),
+        Radius.circular(math.max(radius - borderWidth / 2, 0)),
+      ),
+      Paint()
+        ..color = border
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = borderWidth,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_CardBackPainter old) =>
+      old.slate != slate ||
+      old.stripe != stripe ||
+      old.border != border ||
+      old.borderWidth != borderWidth ||
+      old.radius != radius;
 }
 
 /// A card widget that animates a flip from back to face.
