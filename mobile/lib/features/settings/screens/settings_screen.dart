@@ -45,9 +45,7 @@ class SettingsScreen extends ConsumerWidget {
                       _ValueRow(
                         label: 'Username',
                         value: auth.username ?? '—',
-                        onTap: auth.userId != null
-                            ? () => context.push('/profile/${auth.userId}')
-                            : null,
+                        onTap: () => context.go('/me'),
                       ),
                       if (auth.isGuest)
                         _ValueRow(

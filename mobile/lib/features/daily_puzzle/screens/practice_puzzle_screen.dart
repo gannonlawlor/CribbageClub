@@ -5,9 +5,13 @@ import 'package:go_router/go_router.dart';
 import '../../../config/constants.dart';
 import '../../../config/theme/app_colors.dart';
 import '../../../core/models/card.dart';
+import '../../../shared/widgets/cc_buttons.dart';
+import '../../../shared/widgets/cc_dialog.dart';
 import '../../game/widgets/card_widget.dart';
+import '../models/daily_puzzle.dart';
 import '../state/practice_puzzle_provider.dart';
 import '../state/puzzle_provider.dart';
+import '../widgets/explain_dialog.dart';
 import '../widgets/keep_rank_tile.dart';
 
 class PracticePuzzleScreen extends ConsumerStatefulWidget {
@@ -89,15 +93,18 @@ class _PlayingView extends ConsumerWidget {
                       'Practice Puzzle',
                       style: TextStyle(
                         color: colors.textPrimary,
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
+                        fontSize: 26,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
+                    const SizedBox(height: 2),
                     Text(
                       'Puzzle #${state.puzzleNumber}',
                       style: TextStyle(
                         color: colors.textTertiary,
-                        fontSize: 14,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        fontFeatures: const [FontFeature.tabularFigures()],
                       ),
                     ),
                   ],
@@ -119,15 +126,22 @@ class _PlayingView extends ConsumerWidget {
             'You are ${puzzle.isDealer ? 'the dealer' : 'not the dealer'}. '
             'Choose the best 4 cards to keep.',
             textAlign: TextAlign.center,
-            style: TextStyle(color: colors.textSecondary, fontSize: 16),
+            style: TextStyle(
+              color: colors.textSecondary,
+              fontSize: 15,
+              height: 1.4,
+            ),
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 10),
         Text(
-          '${state.selectedCards.length}/4 selected',
+          '${state.selectedCards.length} / 4 SELECTED',
           style: TextStyle(
-            color: canSubmit ? colors.accent : colors.textDisabled,
-            fontSize: 14,
+            color: canSubmit ? colors.accent : colors.textTertiary,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.72,
+            fontFeatures: const [FontFeature.tabularFigures()],
           ),
         ),
         const SizedBox(height: 24),
@@ -146,16 +160,11 @@ class _PlayingView extends ConsumerWidget {
         // Submit button
         Padding(
           padding: const EdgeInsets.all(24),
-          child: SizedBox(
-            width: double.infinity,
-            height: 56,
-            child: ElevatedButton(
-              onPressed: canSubmit
-                  ? () =>
-                      ref.read(practicePuzzleProvider.notifier).submitKeep()
-                  : null,
-              child: const Text('Submit', style: TextStyle(fontSize: 18)),
-            ),
+          child: CcPrimaryButton(
+            label: 'Submit',
+            onPressed: canSubmit
+                ? () => ref.read(practicePuzzleProvider.notifier).submitKeep()
+                : null,
           ),
         ),
       ],
@@ -195,15 +204,18 @@ class _RevealedView extends ConsumerWidget {
                       'Practice Puzzle',
                       style: TextStyle(
                         color: colors.textPrimary,
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
+                        fontSize: 26,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
+                    const SizedBox(height: 2),
                     Text(
                       'Puzzle #${state.puzzleNumber}',
                       style: TextStyle(
                         color: colors.textTertiary,
-                        fontSize: 14,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        fontFeatures: const [FontFeature.tabularFigures()],
                       ),
                     ),
                   ],
@@ -239,21 +251,24 @@ class _RevealedView extends ConsumerWidget {
                 children: [
                   Text(
                     isOptimalPick
-                        ? 'Optimal!'
+                        ? 'Optimal keep'
                         : 'Your pick: #$playerRank of 15',
                     style: TextStyle(
-                      color: isOptimalPick ? colors.evOptimal : colors.textPrimary,
+                      color: isOptimalPick ? colors.success : colors.textPrimary,
                       fontSize: 20,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w700,
+                      fontFeatures: const [FontFeature.tabularFigures()],
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.only(top: 8),
+                    padding: const EdgeInsets.only(top: 6),
                     child: Text(
-                      '${state.optimalCount}/${state.totalSolved} optimal',
+                      '${state.optimalCount} / ${state.totalSolved} optimal',
                       style: TextStyle(
                         color: colors.textTertiary,
-                        fontSize: 14,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        fontFeatures: const [FontFeature.tabularFigures()],
                       ),
                     ),
                   ),
@@ -267,22 +282,27 @@ class _RevealedView extends ConsumerWidget {
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Text(
             puzzle.isDealer
-                ? 'Dealer (crib is yours)'
-                : 'Non-dealer (crib is opponent\'s)',
-            style: TextStyle(color: colors.textTertiary, fontSize: 13),
+                ? 'DEALER · CRIB IS YOURS'
+                : 'NON-DEALER · CRIB IS OPPONENT\'S',
+            style: TextStyle(
+              color: colors.textTertiary,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.6,
+            ),
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         // Legend
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Text(
             'Average points per hand across all possible cut cards.',
-            style: TextStyle(color: colors.textDisabled, fontSize: 12),
+            style: TextStyle(color: colors.textTertiary, fontSize: 12),
             textAlign: TextAlign.center,
           ),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 6),
         // Results list
         Expanded(
           child: ListView.builder(
@@ -296,6 +316,8 @@ class _RevealedView extends ConsumerWidget {
                 option: option,
                 isPlayerPick: isPlayerPick,
                 isOptimal: option.rank == 1,
+                onExplain: () =>
+                    _showExplain(context, puzzle.hand, option, puzzle.isDealer),
               );
             },
           ),
@@ -306,27 +328,22 @@ class _RevealedView extends ConsumerWidget {
           child: Row(
             children: [
               Expanded(
-                child: OutlinedButton(
+                child: CcSecondaryButton(
+                  label: 'Back to Home',
+                  height: 52,
                   onPressed: () => context.go('/'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: colors.textPrimary,
-                    side: BorderSide(color: colors.textDisabled),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                  child: const Text('Back to Home'),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: ElevatedButton.icon(
+                child: CcPrimaryButton(
+                  label: 'Next Puzzle',
+                  icon: Icons.arrow_forward,
+                  height: 52,
+                  fontSize: 15,
                   onPressed: () {
                     ref.read(practicePuzzleProvider.notifier).nextPuzzle();
                   },
-                  icon: const Icon(Icons.arrow_forward, size: 18),
-                  label: const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 14),
-                    child: Text('Next Puzzle'),
-                  ),
                 ),
               ),
             ],
@@ -335,6 +352,24 @@ class _RevealedView extends ConsumerWidget {
       ],
     );
   }
+}
+
+void _showExplain(
+  BuildContext context,
+  List<dynamic> hand,
+  KeepOption option,
+  bool isDealer,
+) {
+  showCcDialog(
+    context: context,
+    builder: (_) => ExplainDialog(
+      rank: option.rank,
+      keep: option.keep,
+      discard: option.discard,
+      hand: hand,
+      isDealer: isDealer,
+    ),
+  );
 }
 
 class _StatsBadge extends StatelessWidget {
