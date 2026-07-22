@@ -24,6 +24,10 @@ class GameUploadService {
 
       final response = await _restClient.importLocalGames(games);
 
+      if (response.errors.isNotEmpty) {
+        debugPrint('[GameUpload] Server rejected: ${response.errors}');
+      }
+
       // Clear both successfully imported and duplicate games from local storage
       final idsToRemove = [
         ...response.imported.map((m) => m.localGameId),
@@ -45,7 +49,10 @@ class GameUploadService {
 
   /// Uploads a single game immediately. On failure, the game stays
   /// in local storage for later retry.
-  Future<void> uploadSingleGame({
+  ///
+  /// Returns true when the server took the game — the caller uses that to
+  /// refresh anything derived from server-side stats.
+  Future<bool> uploadSingleGame({
     required String gameId,
     required String stateJson,
     required String completedAt,
@@ -58,6 +65,12 @@ class GameUploadService {
       );
       final response = await _restClient.importLocalGames([request]);
 
+      // A rejected game comes back in `errors` with a 200, so this is the
+      // only place the reason is visible.
+      if (response.errors.isNotEmpty) {
+        debugPrint('[GameUpload] Server rejected $gameId: ${response.errors}');
+      }
+
       final idsToRemove = [
         ...response.imported.map((m) => m.localGameId),
         ...response.duplicates,
@@ -65,8 +78,10 @@ class GameUploadService {
       if (idsToRemove.isNotEmpty) {
         await _historyService.clearUploadedGames(idsToRemove);
       }
+      return response.imported.isNotEmpty;
     } catch (e) {
       debugPrint('[GameUpload] Failed to upload game $gameId: $e');
+      return false;
     }
   }
 }

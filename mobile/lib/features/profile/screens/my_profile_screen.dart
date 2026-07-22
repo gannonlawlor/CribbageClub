@@ -14,8 +14,18 @@ import '../../daily_puzzle/state/puzzle_provider.dart';
 import '../state/my_profile_provider.dart';
 
 const _months = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
 ];
 
 /// "Me" tab (design comp 3c): identity, rating, stat tiles, game history.
@@ -27,8 +37,7 @@ class MyProfileScreen extends ConsumerWidget {
     final colors = context.appColors;
     final auth = ref.watch(authProvider);
     final profile = ref.watch(myProfileProvider).valueOrNull;
-    final records =
-        ref.watch(localGameHistoryProvider).valueOrNull ?? const [];
+    final records = ref.watch(localGameHistoryProvider).valueOrNull ?? const [];
     final puzzle = ref.watch(dailyPuzzleStatusProvider);
     final streak = puzzle.valueOrNull?.streak ?? 0;
 
@@ -36,17 +45,20 @@ class MyProfileScreen extends ConsumerWidget {
     final localWins = records.where((r) => r.isWin).length;
     final localLosses = records.length - localWins;
 
-    // Prefer server stats when signed in; fall back to on-device history.
-    final wins = profile?.overallStats.gamesWon ?? localWins;
-    final losses = profile?.overallStats.gamesLost ?? localLosses;
+    // On-device records are the games that haven't reached the server yet —
+    // they clear as soon as an upload succeeds. Counting both keeps a game you
+    // just finished from reading as 0–0 while its upload is still pending.
+    final wins = (profile?.overallStats.gamesWon ?? 0) + localWins;
+    final losses = (profile?.overallStats.gamesLost ?? 0) + localLosses;
     final gamesPlayed =
-        profile?.overallStats.gamesPlayed ?? records.length;
+        (profile?.overallStats.gamesPlayed ?? 0) + records.length;
 
     String? memberSince;
     if (profile != null) {
       final created = DateTime.tryParse(profile.createdAt);
       if (created != null) {
-        memberSince = 'Member since ${_months[created.month - 1]} ${created.year}';
+        memberSince =
+            'Member since ${_months[created.month - 1]} ${created.year}';
       }
     }
     final subtitle = [
@@ -166,9 +178,11 @@ class MyProfileScreen extends ConsumerWidget {
                     children: [
                       Expanded(
                         child: _StatTile(
+                          // Local records are all engine games, so they land
+                          // in this tile too until they upload.
                           caption: 'vs engine',
                           value:
-                              '${profile.aiStats.gamesWon}–${profile.aiStats.gamesLost}',
+                              '${profile.aiStats.gamesWon + localWins}–${profile.aiStats.gamesLost + localLosses}',
                           suffix: null,
                           suffixColor: colors.streak,
                         ),
