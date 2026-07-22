@@ -13,6 +13,7 @@ import '../../../core/models/game_history_event.dart';
 import '../../../core/models/game_state.dart';
 import '../../../core/models/score_breakdown.dart';
 import '../../../core/services/local_game_history_provider.dart';
+import '../../profile/state/my_profile_provider.dart';
 import '../../../shared/utils/card_utils.dart';
 import '../../../shared/utils/forfeit_text.dart';
 import '../../../core/services/settings_provider.dart';
@@ -139,12 +140,15 @@ class GameScreen extends ConsumerWidget {
           // If logged in, upload to server immediately
           if (auth.isLoggedIn) {
             final uploadService = ref.read(gameUploadServiceProvider);
-            await uploadService.uploadSingleGame(
+            final uploaded = await uploadService.uploadSingleGame(
               gameId: gs.gameId,
               stateJson: _encodeGameState(gs),
               completedAt: DateTime.now().toUtc().toIso8601String(),
             );
             ref.invalidate(localGameHistoryProvider);
+            // The server records the result on import, so the profile's
+            // rating and record are stale the moment this lands.
+            if (uploaded) ref.invalidate(myProfileProvider);
           }
         });
       }
@@ -1306,25 +1310,28 @@ class _Table extends StatelessWidget {
               cardWidth: cardWidth,
             ),
           ),
-        Positioned(
-          right: 6,
-          top: 18,
-          child: Column(
-            children: [
-              GameIconButton(
-                icon: Icons.tune,
-                tooltip: 'Game settings',
-                onPressed: onSettings,
-              ),
-              const SizedBox(height: 8),
-              GameIconButton(
-                icon: Icons.history,
-                tooltip: 'Play history',
-                onPressed: onHistory,
-              ),
-            ],
+        // The result panel is the only thing to act on once the game is over,
+        // and it sits under these in the stack — so they step aside.
+        if (gameOver == null)
+          Positioned(
+            right: 6,
+            top: 18,
+            child: Column(
+              children: [
+                GameIconButton(
+                  icon: Icons.tune,
+                  tooltip: 'Game settings',
+                  onPressed: onSettings,
+                ),
+                const SizedBox(height: 8),
+                GameIconButton(
+                  icon: Icons.history,
+                  tooltip: 'Play history',
+                  onPressed: onHistory,
+                ),
+              ],
+            ),
           ),
-        ),
       ],
     );
   }
