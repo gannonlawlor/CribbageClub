@@ -28,6 +28,12 @@ interface GameRepository : JpaRepository<GameEntity, String> {
 
     fun findByOriginalLocalGameId(originalLocalGameId: String): GameEntity?
 
-    @Query("SELECT g FROM GameEntity g WHERE g.winnerId IS NULL AND g.isAIGame = false AND g.turnStartedAt IS NOT NULL")
+    @Query("""
+        SELECT g FROM GameEntity g
+        WHERE g.winnerId IS NULL
+        AND g.isAIGame = false
+        AND g.turnStartedAt IS NOT NULL
+        AND g.timeControl <> 'UNLIMITED'
+    """)
     fun findActiveTimedGames(): List<GameEntity>
 }

@@ -45,8 +45,8 @@ src/main/kotlin/com/jackabee/cribbageclubserver/
 - **Rate limiting**: Sliding-window `RateLimitFilter` on `/api/auth/*` (10 req/60s).
 - **GameStateFilter**: Hides opponent hands, deck, and crib per player. Applied in all controllers before returning state.
 - **Optimistic locking**: `@Version` on all mutable entities.
-- **Flyway**: 10 migrations (V1–V10). `ddl-auto=validate` in production.
-- **Turn timers & forfeit**: Per-player time banks on `games` (V8), `TurnTimerService`/`TimeoutCheckService` enforce them, `ForfeitService` handles timeouts and resignations.
+- **Flyway**: 11 migrations (V1–V11). `ddl-auto=validate` in production.
+- **Turn timers & forfeit**: Named time controls (BLITZ/RAPID/CASUAL/UNLIMITED) chosen per lobby and frozen onto the game at creation (V11), so config changes never alter a live game. `TurnTimerService` runs a **per-player** clock — `DISCARDING_TO_CRIB` lets both players act concurrently, so a single shared clock charged the wrong player. `TimeoutCheckService` sweeps every 5s; `ForfeitService` handles timeouts and resignations and publishes `GameEndedEvent` so `GameService` drops its cached engine handle.
 - **Push notifications**: FCM HTTP v1 via `PushNotificationService`; `FcmConfig` holds credentials (no-op when unconfigured). Sent only when `WebSocketSessionRegistry.isUserOnline()` is false. Events: friend request, challenge received, game found. Device tokens registered via `/api/device-tokens`.
 
 ## Database Schema (Flyway Migrations)
@@ -63,6 +63,7 @@ src/main/kotlin/com/jackabee/cribbageclubserver/
 | V8 | (alters games) | Turn timers (time banks) and forfeit reason |
 | V9 | (alters users, player_stats) | Avatar index, AI-vs-human split stats |
 | V10 | device_tokens | Push notification device tokens |
+| V11 | (alters games, lobbies) | Configurable time controls (preset + frozen turn limit) |
 
 ## Serialization
 
@@ -81,7 +82,9 @@ src/main/kotlin/com/jackabee/cribbageclubserver/
 
 ## Testing
 
-23 test files covering controllers, services, security, WebSocket, models. Uses JUnit 5, Mockito, H2 for integration tests.
+26 test files covering controllers, services, security, WebSocket, models. Uses JUnit 5, Mockito, H2 for integration tests.
+
+`TurnTimerService` takes an injectable `java.time.Clock` so timer tests advance time instead of sleeping (see `MutableClock` in `TurnTimerServiceTest`).
 
 ## Conventions
 

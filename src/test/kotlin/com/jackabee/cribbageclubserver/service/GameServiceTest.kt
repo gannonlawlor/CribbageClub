@@ -9,7 +9,9 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -124,6 +126,20 @@ class GameServiceTest {
         assertEquals(2, gameState.players.size)
         assertEquals("human1", gameState.players[0].id)
         assertEquals("Alice", gameState.players[0].name)
+    }
+
+    @Test
+    fun `should drop the cached engine when a game ends by forfeit`() {
+        gameService.createGameWithAI("human1", "Alice")
+        val gameId = gameService.listGames().keys.first()
+        assertNotNull(gameService.getGameState(gameId))
+
+        gameService.onGameEnded(GameEndedEvent(gameId))
+
+        // With the handle dropped, reads fall through to the database rather than
+        // being served a game the forfeit already ended.
+        assertFalse(gameService.listGames().containsKey(gameId))
+        assertThrows<IllegalArgumentException> { gameService.getGameState(gameId) }
     }
 
     @Test

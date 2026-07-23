@@ -30,7 +30,8 @@ class GameWebSocketService(
                     turnTimeLimitMs = timing?.turnTimeLimitMs ?: 30000,
                     player1TimeBankMs = timing?.player1TimeBankMs ?: 120000,
                     player2TimeBankMs = timing?.player2TimeBankMs ?: 120000,
-                    isTimed = timing?.isTimed ?: false
+                    isTimed = timing?.isTimed ?: false,
+                    timeControl = timing?.timeControl ?: "RAPID"
                 )
                 messagingTemplate.convertAndSendToUser(
                     session.sessionId,
@@ -49,7 +50,8 @@ class GameWebSocketService(
             turnTimeLimitMs = timing?.turnTimeLimitMs ?: 30000,
             player1TimeBankMs = timing?.player1TimeBankMs ?: 120000,
             player2TimeBankMs = timing?.player2TimeBankMs ?: 120000,
-            isTimed = timing?.isTimed ?: false
+            isTimed = timing?.isTimed ?: false,
+            timeControl = timing?.timeControl ?: "RAPID"
         )
         messagingTemplate.convertAndSend("/topic/game/$gameId", spectatorMessage)
     }

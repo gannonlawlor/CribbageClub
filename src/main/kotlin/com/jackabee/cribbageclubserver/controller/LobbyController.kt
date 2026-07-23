@@ -1,7 +1,9 @@
 package com.jackabee.cribbageclubserver.controller
 
+import com.jackabee.cribbageclubserver.config.TimerProperties
 import com.jackabee.cribbageclubserver.model.lobby.Lobby
 import com.jackabee.cribbageclubserver.model.game.GameState
+import com.jackabee.cribbageclubserver.model.game.TimeControl
 import com.jackabee.cribbageclubserver.service.LobbyService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -12,7 +14,8 @@ import org.springframework.web.bind.annotation.*
 @RequestMapping("/api/lobbies")
 @Tag(name = "Lobbies", description = "Lobby management and matchmaking")
 class LobbyController(
-    private val lobbyService: LobbyService
+    private val lobbyService: LobbyService,
+    private val timerProperties: TimerProperties
 ) {
 
     @Operation(summary = "List all lobbies")
@@ -44,10 +47,26 @@ class LobbyController(
     fun quickMatch(
         @RequestAttribute("userId") userId: String,
         @RequestAttribute("username") username: String,
-        @RequestAttribute("isGuest") isGuest: Boolean
+        @RequestAttribute("isGuest") isGuest: Boolean,
+        @RequestBody(required = false) request: QuickMatchRequest?
     ): LobbyService.JoinByCodeResult {
         require(!isGuest) { "Guests cannot use quick match" }
-        return lobbyService.quickMatch(userId, username)
+        return lobbyService.quickMatch(userId, username, parseTimeControl(request?.timeControl))
+    }
+
+    @Operation(summary = "List the available time control presets")
+    @GetMapping("/time-controls")
+    fun getTimeControls(): List<TimeControlOption> {
+        return TimeControl.entries.map { preset ->
+            val settings = timerProperties.resolve(preset)
+            TimeControlOption(
+                name = preset.name,
+                turnTimeLimitMs = settings.turnTimeLimitMs,
+                timeBankMs = settings.timeBankMs,
+                isTimed = settings.isTimed,
+                isDefault = preset == timerProperties.defaultTimeControl
+            )
+        }
     }
 
     @Operation(summary = "Get a lobby by ID")
@@ -72,7 +91,8 @@ class LobbyController(
             name = request.name,
             creatorId = userId,
             creatorName = request.creatorName ?: username,
-            isPrivate = request.isPrivate
+            isPrivate = request.isPrivate,
+            timeControl = parseTimeControl(request.timeControl)
         )
     }
 
@@ -130,15 +150,40 @@ class LobbyController(
     }
 }
 
+/**
+ * Resolves a client-supplied preset name. Null means "use the server default";
+ * an unrecognised name is rejected rather than silently downgraded.
+ */
+private fun parseTimeControl(value: String?): TimeControl? {
+    if (value.isNullOrBlank()) return null
+    return TimeControl.entries.firstOrNull { it.name.equals(value, ignoreCase = true) }
+        ?: throw IllegalArgumentException(
+            "Unknown time control: $value (expected one of ${TimeControl.entries.joinToString { it.name }})"
+        )
+}
+
 // Request DTOs
 data class CreateLobbyRequest(
     val name: String,
     val creatorName: String? = null,
-    val isPrivate: Boolean = false
+    val isPrivate: Boolean = false,
+    val timeControl: String? = null
+)
+
+data class QuickMatchRequest(
+    val timeControl: String? = null
 )
 
 data class JoinLobbyRequest(
     val playerName: String? = null
+)
+
+data class TimeControlOption(
+    val name: String,
+    val turnTimeLimitMs: Long,
+    val timeBankMs: Long,
+    val isTimed: Boolean,
+    val isDefault: Boolean
 )
 
 data class JoinByCodeRequest(

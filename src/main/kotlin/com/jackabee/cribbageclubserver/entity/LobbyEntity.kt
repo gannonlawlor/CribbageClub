@@ -46,6 +46,10 @@ class LobbyEntity(
     @Column(nullable = true)
     val challengedUserId: String? = null,
 
+    /** Time control games started from this lobby will be played under. */
+    @Column(name = "time_control", nullable = false)
+    val timeControl: String = "RAPID",
+
     @Version
     var version: Long = 0
 )

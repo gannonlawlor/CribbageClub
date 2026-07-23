@@ -31,6 +31,7 @@ data class GameStateUpdateMessage(
     val player1TimeBankMs: Long = 120000,
     val player2TimeBankMs: Long = 120000,
     val isTimed: Boolean = false,
+    val timeControl: String = "RAPID",
     val timestamp: Long = System.currentTimeMillis()
 )
 

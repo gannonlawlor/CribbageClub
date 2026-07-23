@@ -1,6 +1,7 @@
 package com.jackabee.cribbageclubserver.service
 
 import com.jackabee.cribbageclubserver.entity.LobbyEntity
+import com.jackabee.cribbageclubserver.model.game.TimeControl
 import com.jackabee.cribbageclubserver.model.lobby.Lobby
 import com.jackabee.cribbageclubserver.model.lobby.LobbyPlayer
 import com.jackabee.cribbageclubserver.model.lobby.LobbyStatus
@@ -22,7 +23,8 @@ class LobbyService(
     private val lobbyRepository: LobbyRepository,
     private val objectMapper: ObjectMapper,
     private val notificationService: NotificationWebSocketService,
-    private val pushNotificationService: PushNotificationService
+    private val pushNotificationService: PushNotificationService,
+    private val turnTimerService: TurnTimerService
 ) {
     private val logger = LoggerFactory.getLogger(LobbyService::class.java)
 
@@ -40,7 +42,13 @@ class LobbyService(
      * @param isPrivate Whether the lobby is private (invite-only)
      * @return The created lobby
      */
-    fun createLobby(name: String, creatorId: String, creatorName: String, isPrivate: Boolean = false): Lobby {
+    fun createLobby(
+        name: String,
+        creatorId: String,
+        creatorName: String,
+        isPrivate: Boolean = false,
+        timeControl: TimeControl? = null
+    ): Lobby {
         val lobbyId = generateLobbyId()
         val creator = LobbyPlayer(creatorId, creatorName)
         val inviteCode = if (isPrivate) generateInviteCode() else null
@@ -49,11 +57,15 @@ class LobbyService(
             name = name,
             players = listOf(creator),
             isPrivate = isPrivate,
-            inviteCode = inviteCode
+            inviteCode = inviteCode,
+            timeControl = timeControl ?: turnTimerService.defaultTimeControl()
         )
 
         saveLobbyEntity(lobby)
-        logger.info("Created {} lobby {} by {}", if (isPrivate) "private" else "public", lobbyId, creatorName)
+        logger.info(
+            "Created {} lobby {} by {} ({})",
+            if (isPrivate) "private" else "public", lobbyId, creatorName, lobby.timeControl
+        )
         return lobby
     }
 
@@ -105,20 +117,25 @@ class LobbyService(
      * @return The join result (lobby + optional gameState if auto-started)
      */
     @Transactional
-    fun quickMatch(userId: String, username: String): JoinByCodeResult {
+    fun quickMatch(userId: String, username: String, timeControl: TimeControl? = null): JoinByCodeResult {
+        val wanted = timeControl ?: turnTimerService.defaultTimeControl()
+
+        // Only match players who asked for the same time control — nobody should be
+        // dropped into a blitz game after requesting a casual one.
         val waitingLobbies = lobbyRepository
             .findByStatusAndIsPrivateFalseAndChallengedUserIdIsNull(LobbyStatus.WAITING.name)
             .map { toLobby(it) }
             .filter { lobby -> lobby.players.none { it.id == userId } }
+            .filter { it.timeControl == wanted }
 
         if (waitingLobbies.isNotEmpty()) {
             val match = waitingLobbies.first()
-            logger.info("Quick-match: user {} joining existing lobby {}", username, match.id)
+            logger.info("Quick-match: user {} joining existing {} lobby {}", username, wanted, match.id)
             return joinLobbyById(match.id, userId, username)
         }
 
-        val lobby = createLobby("Quick Game", userId, username, isPrivate = false)
-        logger.info("Quick-match: user {} created new lobby {}", username, lobby.id)
+        val lobby = createLobby("Quick Game", userId, username, isPrivate = false, timeControl = wanted)
+        logger.info("Quick-match: user {} created new {} lobby {}", username, wanted, lobby.id)
         return JoinByCodeResult(lobby = lobby)
     }
 
@@ -164,7 +181,7 @@ class LobbyService(
         // Auto-start if full
         if (updatedLobby.isReady) {
             val gamePlayers = updatedLobby.players.map { Player(it.id, it.name) }
-            val gameState = gameService.createGame(gamePlayers)
+            val gameState = gameService.createGame(gamePlayers, updatedLobby.timeControl)
             val startedLobby = updatedLobby.startGame(gameState.gameId)
             saveLobbyEntity(startedLobby)
             logger.info("Auto-started game {} from private lobby {}", gameState.gameId, lobby.id)
@@ -196,7 +213,7 @@ class LobbyService(
         }
 
         // Create game using existing GameService
-        val gameState = gameService.createGame(gamePlayers)
+        val gameState = gameService.createGame(gamePlayers, lobby.timeControl)
 
         // Update lobby status
         val updatedLobby = lobby.startGame(gameState.gameId)
@@ -266,7 +283,12 @@ class LobbyService(
     /**
      * Creates a challenge lobby (private lobby with challengedUserId).
      */
-    fun createChallenge(challengerId: String, challengerName: String, challengedUserId: String): Lobby {
+    fun createChallenge(
+        challengerId: String,
+        challengerName: String,
+        challengedUserId: String,
+        timeControl: TimeControl? = null
+    ): Lobby {
         val lobbyId = generateLobbyId()
         val creator = LobbyPlayer(challengerId, challengerName)
         val inviteCode = generateInviteCode()
@@ -276,7 +298,8 @@ class LobbyService(
             players = listOf(creator),
             isPrivate = true,
             inviteCode = inviteCode,
-            challengedUserId = challengedUserId
+            challengedUserId = challengedUserId,
+            timeControl = timeControl ?: turnTimerService.defaultTimeControl()
         )
 
         saveLobbyEntity(lobby)
@@ -310,7 +333,7 @@ class LobbyService(
         // Auto-start if full
         if (updatedLobby.isReady) {
             val gamePlayers = updatedLobby.players.map { Player(it.id, it.name) }
-            val gameState = gameService.createGame(gamePlayers)
+            val gameState = gameService.createGame(gamePlayers, updatedLobby.timeControl)
             val startedLobby = updatedLobby.startGame(gameState.gameId)
             saveLobbyEntity(startedLobby)
             logger.info("Auto-started game {} from lobby {}", gameState.gameId, lobbyId)
@@ -361,7 +384,8 @@ class LobbyService(
                 challengedUserId = lobby.challengedUserId,
                 createdAt = lobby.createdAt,
                 updatedAt = Instant.now(),
-                playersJson = objectMapper.writeValueAsString(lobby.players)
+                playersJson = objectMapper.writeValueAsString(lobby.players),
+                timeControl = lobby.timeControl.name
             )
             lobbyRepository.save(entity)
         }
@@ -379,7 +403,8 @@ class LobbyService(
             gameId = entity.gameId,
             isPrivate = entity.isPrivate,
             inviteCode = entity.inviteCode,
-            challengedUserId = entity.challengedUserId
+            challengedUserId = entity.challengedUserId,
+            timeControl = TimeControl.parse(entity.timeControl)
         )
     }
 
