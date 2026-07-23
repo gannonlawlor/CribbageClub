@@ -71,6 +71,9 @@ class GameController(
         @RequestBody action: GameAction,
         @RequestAttribute("userId") userId: String
     ): GameResponse {
+        // The action names its acting player; it must be the authenticated caller.
+        // Without this, anyone can act — or forfeit — as either player in any game.
+        require(action.playerId == userId) { "Cannot act as another player" }
         val state = gameService.applyHumanAction(gameId, action)
         val entity = gameService.getGameEntity(gameId)
         return if (entity != null) {
@@ -112,8 +115,12 @@ class GameController(
 
     @Operation(summary = "Delete a game")
     @DeleteMapping("/{gameId}")
-    fun deleteGame(@PathVariable gameId: String): ResponseEntity<Void> {
-        gameService.getGameState(gameId) // verify it exists, throws if not found
+    fun deleteGame(
+        @PathVariable gameId: String,
+        @RequestAttribute("userId") userId: String
+    ): ResponseEntity<Void> {
+        val state = gameService.getGameState(gameId) // throws if not found
+        require(state.players.any { it.id == userId }) { "You are not a participant in this game" }
         gameService.removeGame(gameId)
         return ResponseEntity.noContent().build()
     }

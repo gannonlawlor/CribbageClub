@@ -53,6 +53,17 @@ class GameService(
     // In-memory cache of active Rust engine handles (rebuilt from DB on cache miss)
     private val games = ConcurrentHashMap<String, CachedGame>()
 
+    // Per-game monitors. An engine handle is a raw pointer into Rust memory, and
+    // the engine is not thread-safe — two concurrent calls on the same handle are
+    // a data race in native code, not just a logic bug. Concurrent actions on one
+    // game are routine (both players discard at once), so every engine touch for
+    // a game must hold that game's lock. Also prevents closing a handle out from
+    // under a thread that is still using it.
+    private val gameLocks = ConcurrentHashMap<String, Any>()
+
+    private inline fun <T> withGameLock(gameId: String, block: () -> T): T =
+        synchronized(gameLocks.computeIfAbsent(gameId) { Any() }, block)
+
     /**
      * Creates a new game with the provided players.
      * Broadcasts the initial game state via WebSocket.
@@ -157,68 +168,84 @@ class GameService(
         }
 
         val adapter = requireAdapter()
-        val cached = games[gameId] ?: loadGame(gameId)
-            ?: throw IllegalArgumentException("Game not found: $gameId")
 
-        // Load the row once. Every mutation below lands on this instance and is
-        // flushed in a single save, so the action never writes the row twice —
-        // a second write against a stale copy would trip @Version optimistic locking.
-        val entity = gameRepository?.findById(gameId)?.orElse(null)
+        return withGameLock(gameId) {
+            val cached = games[gameId] ?: loadGame(gameId)
+                ?: throw IllegalArgumentException("Game not found: $gameId")
 
-        // Charge any overage to the acting player before their clock is restarted.
-        // No-ops for AI and UNLIMITED games.
-        if (entity != null) {
-            turnTimerService?.onActionReceived(gameId, action.playerId, entity)
-        }
+            // Load the row once. Every mutation below lands on this instance and is
+            // flushed in a single save, so the action never writes the row twice —
+            // a second write against a stale copy would trip @Version optimistic locking.
+            val entity = gameRepository?.findById(gameId)?.orElse(null)
 
-        // Apply human action
-        adapter.applyAction(cached.engine, action)
-
-        // Process any AI actions that should follow
-        val finalState = processAIActions(gameId)
-
-        if (entity != null) {
-            applyStateToEntity(entity, finalState)
-
-            if (finalState.stage == GameStage.GAME_OVER) {
-                entity.turnStartedAt = null
-                turnTimerService?.clearGame(gameId)
-            } else {
-                turnTimerService?.onTurnStart(gameId, entity, finalState)
+            // The timeout sweep may have forfeited this game between the client
+            // seeing it live and this action arriving. Without this guard the
+            // action would overwrite the terminal row with a live stage.
+            if (entity?.winnerId != null) {
+                throw IllegalStateException("Game is already over")
             }
 
-            gameRepository?.save(entity)
+            // Apply human action. Deliberately before any timer bookkeeping: a
+            // rejected action must leave the player's clock running, or an invalid
+            // move would take them off the clock and let them stall unswept.
+            adapter.applyAction(cached.engine, action)
+
+            // Charge any overage to the acting player. No-ops for AI and UNLIMITED games.
+            if (entity != null) {
+                turnTimerService?.onActionReceived(gameId, action.playerId, entity)
+            }
+
+            // Process any AI actions that should follow
+            val finalState = processAIActions(gameId)
+
+            if (entity != null) {
+                applyStateToEntity(entity, finalState)
+
+                if (finalState.stage == GameStage.GAME_OVER) {
+                    entity.turnStartedAt = null
+                    turnTimerService?.clearGame(gameId)
+                } else {
+                    turnTimerService?.onTurnStart(gameId, entity, finalState)
+                }
+
+                gameRepository?.save(entity)
+            }
+
+            // Finished games must not linger as live engine handles.
+            if (finalState.stage == GameStage.GAME_OVER) {
+                evictCachedEngine(gameId)
+            }
+
+            // Broadcast with timing info
+            val timing = entity?.let { turnTimerService?.getTimingFields(gameId, it) }
+            webSocketService?.broadcastGameStateUpdate(gameId, finalState, timing)
+
+            finalState
         }
-
-        // Broadcast with timing info
-        val timing = entity?.let { turnTimerService?.getTimingFields(gameId, it) }
-        webSocketService?.broadcastGameStateUpdate(gameId, finalState, timing)
-
-        return finalState
     }
 
     /**
      * Gets the current state of a game.
      */
-    fun getGameState(gameId: String): GameState {
+    fun getGameState(gameId: String): GameState = withGameLock(gameId) {
         val adapter = requireAdapter()
 
         // Try in-memory cache first
         val cached = games[gameId]
         if (cached != null) {
-            return adapter.getState(cached.engine)
+            return@withGameLock adapter.getState(cached.engine)
         }
 
         // Try to restore active game from database
         val restored = loadGame(gameId)
         if (restored != null) {
-            return adapter.getState(restored.engine)
+            return@withGameLock adapter.getState(restored.engine)
         }
 
         // Fall back to raw DB state (for finished games)
         val entity = gameRepository?.findById(gameId)?.orElse(null)
         if (entity != null) {
-            return deserializeGameState(entity)
+            return@withGameLock deserializeGameState(entity)
         }
 
         throw IllegalArgumentException("Game not found: $gameId")
@@ -237,22 +264,37 @@ class GameService(
         fallbackExecution = true
     )
     fun onGameEnded(event: GameEndedEvent) {
-        val cached = games.remove(event.gameId) ?: return
-        cached.engine.close()
-        logger.info("Dropped cached engine for ended game {}", event.gameId)
+        withGameLock(event.gameId) {
+            if (evictCachedEngine(event.gameId)) {
+                logger.info("Dropped cached engine for ended game {}", event.gameId)
+            }
+        }
     }
 
     /**
      * Removes a game from the service and database.
      */
     fun removeGame(gameId: String) {
-        turnTimerService?.clearGame(gameId)
-        val cached = games.remove(gameId)
-        cached?.engine?.close()
+        withGameLock(gameId) {
+            turnTimerService?.clearGame(gameId)
+            evictCachedEngine(gameId)
 
-        // Remove from database
-        gameRepository?.deleteById(gameId)
+            // Remove from database
+            gameRepository?.deleteById(gameId)
+        }
+        gameLocks.remove(gameId)
         logger.info("Removed game {}", gameId)
+    }
+
+    /**
+     * Closes and forgets the in-memory engine handle for a game, if any.
+     * Callers must hold the game lock — closing frees native memory, and a
+     * concurrent engine call on the freed handle is a use-after-free.
+     */
+    private fun evictCachedEngine(gameId: String): Boolean {
+        val cached = games.remove(gameId) ?: return false
+        cached.engine.close()
+        return true
     }
 
     /**
@@ -310,29 +352,48 @@ class GameService(
      * Removes games that have been inactive for longer than the given duration.
      * Finished games (GAME_OVER) are always eligible for removal.
      */
+    /**
+     * Evicts in-memory engine handles for games that are finished or idle past
+     * [inactiveThreshold], so the native-memory cache doesn't grow unbounded.
+     *
+     * This releases memory only — it must never delete rows. Completed games are
+     * the user's history (`/me/history`, head-to-head, post-game analysis), and
+     * an idle game is not an abandoned one: UNLIMITED games can legitimately sit
+     * for days, and timed games are ended by the timeout sweep, not by cleanup.
+     * An earlier version deleted both, which silently destroyed every finished
+     * game within minutes of it ending. Evicted games reload from the database
+     * on the next access.
+     */
     fun removeInactiveGames(inactiveThreshold: Instant): List<String> {
-        val removed = mutableListOf<String>()
+        val evicted = mutableListOf<String>()
         val repo = gameRepository
-        if (repo != null) {
-            val allGames = repo.findAll()
-            for (entity in allGames) {
-                if (entity.updatedAt.isBefore(inactiveThreshold) || entity.stage == GameStage.GAME_OVER.name) {
-                    removeGame(entity.id)
-                    removed.add(entity.id)
+
+        for (gameId in games.keys.toList()) {
+            val shouldEvict = if (repo != null) {
+                val entity = repo.findById(gameId).orElse(null)
+                // Row gone (explicitly deleted) counts as evictable too.
+                entity == null ||
+                    entity.stage == GameStage.GAME_OVER.name ||
+                    entity.updatedAt.isBefore(inactiveThreshold)
+            } else {
+                // No DB: evict only finished games (no activity tracking without a row)
+                val adapter = requireAdapter()
+                withGameLock(gameId) {
+                    games[gameId]?.let { adapter.getState(it.engine).stage == GameStage.GAME_OVER } ?: false
                 }
             }
-        } else {
-            // Fallback: clean up only cached games (no activity tracking without DB)
-            val adapter = requireAdapter()
-            for ((gameId, cached) in games) {
-                val state = adapter.getState(cached.engine)
-                if (state.stage == GameStage.GAME_OVER) {
-                    removeGame(gameId)
-                    removed.add(gameId)
+
+            if (shouldEvict) {
+                withGameLock(gameId) {
+                    turnTimerService?.clearGame(gameId)
+                    if (evictCachedEngine(gameId)) {
+                        evicted.add(gameId)
+                    }
                 }
+                gameLocks.remove(gameId)
             }
         }
-        return removed
+        return evicted
     }
 
     /**

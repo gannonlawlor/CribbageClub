@@ -33,14 +33,14 @@ class GameWebSocketController(
         }
 
         try {
-            // Verify sender is a participant in the game
-            val currentState = gameService.getGameState(message.gameId)
-            val isParticipant = currentState.players.any { it.id == playerId }
-            if (!isParticipant) {
+            // The action must name the authenticated sender as its acting player.
+            // Participation alone is not enough — a participant could otherwise
+            // submit actions (including Forfeit) as their opponent.
+            if (message.action.playerId != playerId) {
                 webSocketService.sendErrorToPlayer(
                     headerAccessor.sessionId!!,
                     message.gameId,
-                    "You are not a participant in this game"
+                    "Cannot act as another player"
                 )
                 return
             }

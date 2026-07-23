@@ -2,14 +2,28 @@ package com.jackabee.cribbageclubserver.service
 
 import com.jackabee.cribbageclubserver.bridge.CribbageEngineLib
 import com.jackabee.cribbageclubserver.bridge.RustEngineAdapter
+import com.jackabee.cribbageclubserver.config.TimerProperties
+import com.jackabee.cribbageclubserver.entity.GameEntity
 import com.jackabee.cribbageclubserver.model.action.GameAction
+import com.jackabee.cribbageclubserver.model.card.Card
+import com.jackabee.cribbageclubserver.model.card.Rank
+import com.jackabee.cribbageclubserver.model.card.Suit
 import com.jackabee.cribbageclubserver.model.game.GameStage
+import com.jackabee.cribbageclubserver.model.player.Player
+import com.jackabee.cribbageclubserver.repository.GameRepository
+import com.jackabee.cribbageclubserver.testutil.MutableClock
+import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import org.mockito.kotlin.whenever
+import java.time.Duration
+import java.util.Optional
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
@@ -126,6 +140,104 @@ class GameServiceTest {
         assertEquals(2, gameState.players.size)
         assertEquals("human1", gameState.players[0].id)
         assertEquals("Alice", gameState.players[0].name)
+    }
+
+    private class TimedFixture(
+        val service: GameService,
+        val timer: TurnTimerService,
+        val clock: MutableClock,
+        val repo: GameRepository,
+    )
+
+    /** GameService wired with a stubbed repository and a hand-advanced clock. */
+    private fun timedService(): TimedFixture {
+        val clock = MutableClock()
+        val timer = TurnTimerService(TimerProperties(), clock)
+        val savedEntity = AtomicReference<GameEntity>()
+        val repo = org.mockito.kotlin.mock<GameRepository>()
+        whenever(repo.save(org.mockito.kotlin.any<GameEntity>())).thenAnswer {
+            val entity = it.arguments[0] as GameEntity
+            savedEntity.set(entity)
+            entity
+        }
+        whenever(repo.findById(org.mockito.kotlin.any<String>())).thenAnswer {
+            Optional.ofNullable(savedEntity.get())
+        }
+        // Persistence serializes GameState, whose history events carry Instants.
+        val mapper = jacksonObjectMapper()
+            .registerModule(JavaTimeModule())
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+        val service = GameService(
+            objectMapper = mapper,
+            rustEngineAdapter = RustEngineAdapter(lib, mapper),
+            gameRepository = repo,
+            turnTimerService = timer,
+        )
+        return TimedFixture(service, timer, clock, repo)
+    }
+
+    /** A card guaranteed not to be in [hand]. */
+    private fun cardNotIn(hand: List<Card>): Card {
+        for (rank in Rank.entries) for (suit in Suit.entries) {
+            val card = Card(rank, suit)
+            if (card !in hand) return card
+        }
+        error("unreachable")
+    }
+
+    @Test
+    fun `rejected action leaves the acting player on the clock`() {
+        val fixture = timedService()
+        val state = fixture.service.createGame(listOf(Player("p1", "Alice"), Player("p2", "Bob")))
+        val gameId = state.gameId
+
+        // Bob discards promptly, taking himself off the clock.
+        val bobHand = state.players.first { it.id == "p2" }.hand
+        fixture.service.applyHumanAction(gameId, GameAction.DiscardToCrib("p2", bobHand[0]))
+        fixture.service.applyHumanAction(gameId, GameAction.DiscardToCrib("p2", bobHand[1]))
+
+        // Alice stalls past her whole bank, then submits an invalid action.
+        fixture.clock.advance(Duration.ofSeconds(200))
+        val aliceHand = fixture.service.getGameState(gameId).players.first { it.id == "p1" }.hand
+        assertThrows<Exception> {
+            fixture.service.applyHumanAction(gameId, GameAction.DiscardToCrib("p1", cardNotIn(aliceHand)))
+        }
+
+        // The failed action must not have stopped her clock or charged her bank —
+        // otherwise an invalid move would let a player escape the timeout sweep.
+        val entity = fixture.service.getGameEntity(gameId)!!
+        assertEquals("p1", fixture.timer.checkTimeout(gameId, entity))
+        assertEquals(120_000, entity.player1TimeBankMs)
+    }
+
+    @Test
+    fun `rejects actions on a game the sweep already forfeited`() {
+        val fixture = timedService()
+        val state = fixture.service.createGame(listOf(Player("p1", "Alice"), Player("p2", "Bob")))
+        val entity = fixture.service.getGameEntity(state.gameId)!!
+        entity.winnerId = "p2"
+
+        val hand = state.players.first { it.id == "p1" }.hand
+        assertThrows<IllegalStateException> {
+            fixture.service.applyHumanAction(state.gameId, GameAction.DiscardToCrib("p1", hand[0]))
+        }
+    }
+
+    @Test
+    fun `cleanup evicts idle engines but never deletes game rows`() {
+        val fixture = timedService()
+        val state = fixture.service.createGame(listOf(Player("p1", "Alice"), Player("p2", "Bob")))
+        val entity = fixture.service.getGameEntity(state.gameId)!!
+        entity.stage = GameStage.GAME_OVER.name
+
+        val evicted = fixture.service.removeInactiveGames(fixture.clock.instant())
+
+        assertEquals(listOf(state.gameId), evicted)
+        assertFalse(fixture.service.listGames().containsKey(state.gameId))
+        // History depends on completed rows surviving cleanup: eviction must
+        // release the engine handle without ever touching the database row.
+        org.mockito.kotlin.verify(fixture.repo, org.mockito.Mockito.never()).deleteById(org.mockito.kotlin.any())
+        assertNotNull(fixture.service.getGameEntity(state.gameId))
     }
 
     @Test

@@ -31,6 +31,76 @@ class GameControllerTest {
         return objectMapper.readTree(result.response.contentAsString).get("token").asText()
     }
 
+    /** Creates an AI game for the token's user; returns (gameId, aiPlayerId, humanHandFirstCard). */
+    private fun createAIGame(token: String): Triple<String, String, com.fasterxml.jackson.databind.JsonNode> {
+        val result = mockMvc.perform(
+            post("/api/games/ai")
+                .header("Authorization", "Bearer $token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"difficulty":"basic"}""")
+        ).andExpect(status().isOk).andReturn()
+
+        val body = objectMapper.readTree(result.response.contentAsString)
+        val players = body.get("players")
+        val ai = players.first { it.get("id").asText().startsWith("ai_") }
+        val human = players.first { !it.get("id").asText().startsWith("ai_") }
+        return Triple(body.get("gameId").asText(), ai.get("id").asText(), human.get("hand").get(0))
+    }
+
+    @Test
+    fun `should reject actions submitted as another player`() {
+        val token = registerAndGetToken("forgery_victim")
+        val (gameId, aiPlayerId, _) = createAIGame(token)
+
+        // Try to act as the AI opponent — must be rejected before reaching the engine.
+        val forged = """{"type":"Go","playerId":"$aiPlayerId"}"""
+        mockMvc.perform(
+            post("/api/games/$gameId/actions")
+                .header("Authorization", "Bearer $token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(forged)
+        ).andExpect(status().isBadRequest)
+    }
+
+    @Test
+    fun `should reject a forged forfeit of another player`() {
+        val attacker = registerAndGetToken("forfeit_attacker")
+        val victim = registerAndGetToken("forfeit_victim")
+        val (gameId, _, _) = createAIGame(victim)
+        val victimId = objectMapper.readTree(
+            mockMvc.perform(
+                get("/api/games/$gameId")
+                    .header("Authorization", "Bearer $victim")
+            ).andReturn().response.contentAsString
+        ).get("gameState").get("players").first { !it.get("id").asText().startsWith("ai_") }.get("id").asText()
+
+        // Attacker tries to resign the victim's game on their behalf.
+        mockMvc.perform(
+            post("/api/games/$gameId/actions")
+                .header("Authorization", "Bearer $attacker")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"type":"Forfeit","playerId":"$victimId","reason":"RESIGN"}""")
+        ).andExpect(status().isBadRequest)
+    }
+
+    @Test
+    fun `should reject deleting a game you are not part of`() {
+        val owner = registerAndGetToken("delete_owner")
+        val stranger = registerAndGetToken("delete_stranger")
+        val (gameId, _, _) = createAIGame(owner)
+
+        mockMvc.perform(
+            delete("/api/games/$gameId")
+                .header("Authorization", "Bearer $stranger")
+        ).andExpect(status().isBadRequest)
+
+        // The participant can still delete their own game.
+        mockMvc.perform(
+            delete("/api/games/$gameId")
+                .header("Authorization", "Bearer $owner")
+        ).andExpect(status().isNoContent)
+    }
+
     @Test
     fun `should return 403 when listing games without auth`() {
         mockMvc.perform(get("/api/games"))
