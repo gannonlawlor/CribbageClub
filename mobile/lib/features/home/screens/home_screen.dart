@@ -917,6 +917,10 @@ class _PuzzleCards extends StatelessWidget {
       width: 44,
       height: 58,
       child: Stack(
+        // The back card is offset 8px and tilted, so its corner reaches past
+        // the 44px box — let it spill into the card's padding rather than
+        // shaving the edge off.
+        clipBehavior: Clip.none,
         children: [
           Positioned(
             left: 8,
@@ -999,7 +1003,8 @@ class _PuzzleModeCard extends StatelessWidget {
             width: 44,
             height: 58,
             child: Center(
-              child: _PuzzlePiece(background: colors.surfacePrimary),
+              // Sized to sit level with the card mark on the daily card.
+              child: _PuzzlePiece(background: colors.surfacePrimary, size: 52),
             ),
           ),
           const SizedBox(height: 10),
@@ -1028,32 +1033,50 @@ class _PuzzleModeCard extends StatelessWidget {
 class _PuzzlePiece extends StatelessWidget {
   final Color background;
 
-  const _PuzzlePiece({required this.background});
+  /// Drawn against a 40px grid and scaled from there, so the piece can be
+  /// sized to sit level with the daily card mark beside it.
+  final double size;
+
+  const _PuzzlePiece({required this.background, this.size = 40});
 
   @override
   Widget build(BuildContext context) {
     final colors = context.appColors;
+    final k = size / 40;
+
     return SizedBox(
-      width: 40,
-      height: 40,
+      width: size,
+      height: size,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
           Positioned(
-            left: 4,
-            top: 10,
+            left: 4 * k,
+            top: 10 * k,
             child: Container(
-              width: 26,
-              height: 26,
+              width: 26 * k,
+              height: 26 * k,
               decoration: BoxDecoration(
                 color: colors.accent,
-                borderRadius: BorderRadius.circular(5),
+                borderRadius: BorderRadius.circular(5 * k),
               ),
             ),
           ),
-          Positioned(left: 12, top: 3, child: _Knob(color: colors.accent)),
-          Positioned(left: 25, top: 18, child: _Knob(color: colors.accent)),
-          Positioned(left: -1, top: 18, child: _Knob(color: background)),
+          Positioned(
+            left: 12 * k,
+            top: 3 * k,
+            child: _Knob(color: colors.accent, size: 11 * k),
+          ),
+          Positioned(
+            left: 25 * k,
+            top: 18 * k,
+            child: _Knob(color: colors.accent, size: 11 * k),
+          ),
+          Positioned(
+            left: -1 * k,
+            top: 18 * k,
+            child: _Knob(color: background, size: 11 * k),
+          ),
         ],
       ),
     );
@@ -1062,14 +1085,15 @@ class _PuzzlePiece extends StatelessWidget {
 
 class _Knob extends StatelessWidget {
   final Color color;
+  final double size;
 
-  const _Knob({required this.color});
+  const _Knob({required this.color, required this.size});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 11,
-      height: 11,
+      width: size,
+      height: size,
       decoration: BoxDecoration(color: color, shape: BoxShape.circle),
     );
   }
