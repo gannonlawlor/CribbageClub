@@ -86,19 +86,32 @@ class PracticePuzzleNotifier extends StateNotifier<PracticePuzzleState> {
     );
   }
 
-  void toggleCard(PlayingCard card) {
+  /// Drops the current picks — used when the puzzle switches between asking
+  /// for the keep and asking for the throw, so a half-made choice under the
+  /// old question can't be submitted under the new one.
+  void clearSelection() {
+    if (state.selectedCards.isEmpty) return;
+    state = state.copyWith(selectedCards: {});
+  }
+
+  /// [limit] is how many cards the puzzle is asking for — four when picking
+  /// the keep, two when picking the throw.
+  void toggleCard(PlayingCard card, {int limit = 4}) {
     if (state.phase != PuzzlePhase.playing) return;
     final selected = Set<PlayingCard>.from(state.selectedCards);
     if (selected.contains(card)) {
       selected.remove(card);
-    } else if (selected.length < 4) {
+    } else if (selected.length < limit) {
       selected.add(card);
     }
     state = state.copyWith(selectedCards: selected);
   }
 
-  void submitKeep() {
-    if (state.selectedCards.length != 4 || state.puzzle == null) return;
+  /// [pickedDiscards] flips what the taps meant: the keep is then the four
+  /// cards the player left alone.
+  void submitKeep({bool pickedDiscards = false}) {
+    final needed = pickedDiscards ? 2 : 4;
+    if (state.selectedCards.length != needed || state.puzzle == null) return;
 
     final puzzle = state.puzzle!;
     final results = PuzzleGenerator.evaluateAllKeeps(
@@ -108,7 +121,9 @@ class PracticePuzzleNotifier extends StateNotifier<PracticePuzzleState> {
     puzzle.results = results;
 
     // Find player's rank
-    final playerKeep = state.selectedCards;
+    final playerKeep = pickedDiscards
+        ? puzzle.hand.where((c) => !state.selectedCards.contains(c)).toSet()
+        : state.selectedCards;
     int? playerRank;
     for (final option in results) {
       if (option.keep.toSet().containsAll(playerKeep) &&

@@ -39,6 +39,16 @@ class SettingsService {
     await prefs.setString(AppConstants.themeModeKey, mode);
   }
 
+  Future<bool> getPuzzlePickDiscards() async {
+    final prefs = await _preferences;
+    return prefs.getBool(AppConstants.puzzlePickDiscardsKey) ?? false;
+  }
+
+  Future<void> setPuzzlePickDiscards(bool enabled) async {
+    final prefs = await _preferences;
+    await prefs.setBool(AppConstants.puzzlePickDiscardsKey, enabled);
+  }
+
   Future<bool> getAutoDeal() async {
     final prefs = await _preferences;
     return prefs.getBool(AppConstants.autoDealKey) ?? true;
@@ -100,17 +110,21 @@ class SettingsService {
   }
 
   /// Load all settings at once (used during app startup).
-  Future<({
-    bool soundEnabled,
-    bool hapticsEnabled,
-    String themeMode,
-    bool autoDeal,
-    bool autoCut,
-    bool autoGo,
-    bool autoPlayAll,
-    bool autoPlayPegging,
-    double animationSpeed,
-  })> loadAll() async {
+  Future<
+    ({
+      bool soundEnabled,
+      bool hapticsEnabled,
+      String themeMode,
+      bool autoDeal,
+      bool autoCut,
+      bool autoGo,
+      bool autoPlayAll,
+      bool autoPlayPegging,
+      double animationSpeed,
+      bool puzzlePickDiscards,
+    })
+  >
+  loadAll() async {
     final prefs = await _preferences;
     return (
       soundEnabled: prefs.getBool(AppConstants.soundEnabledKey) ?? true,
@@ -122,6 +136,8 @@ class SettingsService {
       autoPlayAll: prefs.getBool(AppConstants.autoPlayAllKey) ?? false,
       autoPlayPegging: prefs.getBool(AppConstants.autoPlayPeggingKey) ?? true,
       animationSpeed: prefs.getDouble(AppConstants.animationSpeedKey) ?? 1.0,
+      puzzlePickDiscards:
+          prefs.getBool(AppConstants.puzzlePickDiscardsKey) ?? false,
     );
   }
 }

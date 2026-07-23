@@ -6,13 +6,14 @@ import '../../../config/theme/app_colors.dart';
 import '../../../shared/widgets/cc_buttons.dart';
 import '../../../shared/widgets/cc_dialog.dart';
 import '../../../shared/widgets/cc_screen.dart';
-import '../../game/widgets/count_block.dart';
+import '../../../core/services/settings_provider.dart';
 import '../models/daily_puzzle.dart';
 import '../state/practice_puzzle_provider.dart';
 import '../state/puzzle_provider.dart';
 import '../widgets/explain_dialog.dart';
 import '../widgets/keep_rank_tile.dart';
 import '../widgets/puzzle_hand.dart';
+import '../widgets/puzzle_prompt.dart';
 
 class PracticePuzzleScreen extends ConsumerStatefulWidget {
   const PracticePuzzleScreen({super.key});
@@ -70,7 +71,13 @@ class _PlayingView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(practicePuzzleProvider);
     final puzzle = state.puzzle!;
+    final pickDiscards = ref.watch(settingsProvider).puzzlePickDiscards;
     final picked = state.selectedCards.length;
+    final needed = pickDiscards ? 2 : 4;
+
+    ref.listen(settingsProvider.select((s) => s.puzzlePickDiscards), (_, _) {
+      ref.read(practicePuzzleProvider.notifier).clearSelection();
+    });
 
     return Column(
       children: [
@@ -87,13 +94,10 @@ class _PlayingView extends ConsumerWidget {
           ],
         ),
         const Spacer(),
-        // The same block the game screen uses for the discard step, asking
-        // the same question.
-        CountBlock(
-          label: puzzle.isDealer ? 'Your crib' : "Opponent's crib",
-          headline: 'Keep four',
-          instruction: '$picked of 4 selected',
-          isMyTurn: picked == 4,
+        PuzzlePrompt(
+          isDealer: puzzle.isDealer,
+          pickDiscards: pickDiscards,
+          picked: picked,
         ),
         const SizedBox(height: 28),
         Padding(
@@ -101,8 +105,9 @@ class _PlayingView extends ConsumerWidget {
           child: PuzzleHand(
             cards: puzzle.hand,
             selected: state.selectedCards,
-            onTap: (card) =>
-                ref.read(practicePuzzleProvider.notifier).toggleCard(card),
+            onTap: (card) => ref
+                .read(practicePuzzleProvider.notifier)
+                .toggleCard(card, limit: needed),
           ),
         ),
         const Spacer(),
@@ -110,8 +115,10 @@ class _PlayingView extends ConsumerWidget {
           padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
           child: CcPrimaryButton(
             label: 'Submit',
-            onPressed: picked == 4
-                ? () => ref.read(practicePuzzleProvider.notifier).submitKeep()
+            onPressed: picked == needed
+                ? () => ref
+                      .read(practicePuzzleProvider.notifier)
+                      .submitKeep(pickedDiscards: pickDiscards)
                 : null,
           ),
         ),
@@ -162,15 +169,15 @@ class _RevealedView extends ConsumerWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                '${state.optimalCount} of ${state.totalSolved} solved best · '
-                '${puzzle.isDealer ? 'your crib' : "opponent's crib"}',
-                textAlign: TextAlign.center,
+                '${state.optimalCount} of ${state.totalSolved} solved best',
                 style: TextStyle(
                   color: colors.textTertiary,
                   fontSize: 12.5,
                   fontFeatures: const [FontFeature.tabularFigures()],
                 ),
               ),
+              const SizedBox(height: 10),
+              CribBadge(isDealer: puzzle.isDealer),
             ],
           ),
         ),
@@ -179,7 +186,7 @@ class _RevealedView extends ConsumerWidget {
           padding: EdgeInsets.fromLTRB(20, 0, 20, 8),
           child: Align(
             alignment: Alignment.centerLeft,
-            child: CcSectionCaption('All 15 keeps · average points'),
+            child: CcSectionCaption('All 15 options · average points'),
           ),
         ),
         Expanded(
