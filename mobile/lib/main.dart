@@ -3,6 +3,7 @@ import 'dart:io' show Platform;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart'
     show ExternalLibrary;
@@ -17,7 +18,11 @@ import 'core/services/settings_service.dart';
 import 'src/rust/frb_generated.dart';
 
 Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  final binding = WidgetsFlutterBinding.ensureInitialized();
+  // Hold the native launch splash through async startup (Firebase, the Rust
+  // engine, saved auth and settings) so there's no blank frame before the
+  // first screen is ready.
+  FlutterNativeSplash.preserve(widgetsBinding: binding);
   await Firebase.initializeApp();
   await RustLib.init(
     externalLibrary: Platform.isIOS
@@ -71,4 +76,6 @@ Future<void> main() async {
   }
 
   runApp(UncontrolledProviderScope(container: container, child: const App()));
+  // First frame is up — let the splash go.
+  FlutterNativeSplash.remove();
 }
