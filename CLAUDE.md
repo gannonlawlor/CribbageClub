@@ -95,7 +95,8 @@ docker compose up -d     # start PostgreSQL + app (dev)
 | GET | `/api/games/{id}/analysis` | Get/compute discard analysis |
 | POST | `/api/games/{id}/analysis` | Upload client-computed analysis |
 | POST | `/api/games/import` | Import local games to server |
-| POST | `/api/lobbies/quick-match` | Quick game matchmaking |
+| POST | `/api/lobbies/quick-match` | Quick game matchmaking (matches on time control) |
+| GET | `/api/lobbies/time-controls` | Available time control presets |
 | GET | `/api/lobbies/public` | Lobby browser |
 | POST | `/api/lobbies` / `.../join` / `/api/lobbies/join-by-code` | Create/join lobbies |
 | GET/POST | `/api/friends/**` | Friends: search, requests, accept/decline |
@@ -119,7 +120,7 @@ docker compose up -d     # start PostgreSQL + app (dev)
 - **Game state filtering**: `GameStateFilter` hides opponent hands, deck, and crib from each player's view
 - **Auth**: JWT with 90-day expiry, guest accounts, rate-limited auth endpoints
 - **Real-time**: STOMP over WebSocket with authenticated subscriptions, REST for action ordering guarantees
-- **Turn timers**: Per-player time banks with server-side timeout forfeit
+- **Turn timers**: Selectable time controls (BLITZ/RAPID/CASUAL/UNLIMITED) with per-player time banks and server-side timeout forfeit
 - **Push notifications**: FCM (friend requests, challenges, game found), sent only when the user is offline
 
 ## Current Focus

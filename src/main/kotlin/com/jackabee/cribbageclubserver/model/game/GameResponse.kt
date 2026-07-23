@@ -8,5 +8,7 @@ data class GameResponse(
     val turnTimeLimitMs: Long = 30000,
     val myTimeBankMs: Long = 120000,
     val opponentTimeBankMs: Long = 120000,
-    val isTimed: Boolean = false
+    val isTimed: Boolean = false,
+    /** Name of the [TimeControl] preset this game is played under. */
+    val timeControl: String = TimeControl.RAPID.name
 )

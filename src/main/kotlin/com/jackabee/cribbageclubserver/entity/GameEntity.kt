@@ -66,6 +66,14 @@ class GameEntity(
     @Column(nullable = true)
     var turnStartedAt: Instant? = null,
 
+    /** Name of the [com.jackabee.cribbageclubserver.model.game.TimeControl] preset this game is played under. */
+    @Column(name = "time_control", nullable = false)
+    var timeControl: String = "RAPID",
+
+    /** Per-turn limit frozen at creation, so config changes don't alter a live game. */
+    @Column(name = "turn_time_limit_ms", nullable = false)
+    var turnTimeLimitMs: Long = 30000,
+
     @Column(name = "player1_time_bank_ms", nullable = false)
     var player1TimeBankMs: Long = 120000,
 

@@ -1,5 +1,6 @@
 package com.jackabee.cribbageclubserver.model.lobby
 
+import com.jackabee.cribbageclubserver.model.game.TimeControl
 import java.time.Instant
 
 data class Lobby(
@@ -12,7 +13,9 @@ data class Lobby(
     val gameId: String? = null,
     val isPrivate: Boolean = false,
     val inviteCode: String? = null,
-    val challengedUserId: String? = null
+    val challengedUserId: String? = null,
+    /** Time control the game started from this lobby will use. */
+    val timeControl: TimeControl = TimeControl.RAPID
 ) {
     val isReady: Boolean get() = players.size == maxPlayers
     val hasSpace: Boolean get() = players.size < maxPlayers

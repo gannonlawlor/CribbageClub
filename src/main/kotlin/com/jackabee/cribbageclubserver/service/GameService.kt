@@ -11,12 +11,15 @@ import com.jackabee.cribbageclubserver.model.action.GameAction
 import com.jackabee.cribbageclubserver.model.game.GameHistoryEvent
 import com.jackabee.cribbageclubserver.model.game.GameState
 import com.jackabee.cribbageclubserver.model.game.GameStage
+import com.jackabee.cribbageclubserver.model.game.TimeControl
 import com.jackabee.cribbageclubserver.model.player.Player
 import com.jackabee.cribbageclubserver.repository.GameRepository
 import com.jackabee.cribbageclubserver.websocket.GameWebSocketService
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.transaction.event.TransactionPhase
+import org.springframework.transaction.event.TransactionalEventListener
 import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.random.Random
@@ -54,7 +57,7 @@ class GameService(
      * Creates a new game with the provided players.
      * Broadcasts the initial game state via WebSocket.
      */
-    fun createGame(players: List<Player>): GameState {
+    fun createGame(players: List<Player>, timeControl: TimeControl? = null): GameState {
         require(players.size == 2) { "Game must have exactly 2 players" }
         val adapter = requireAdapter()
 
@@ -66,12 +69,19 @@ class GameService(
         )
         games[gameId] = CachedGame(engine)
 
+        val resolved = timeControl
+            ?: turnTimerService?.defaultTimeControl()
+            ?: TimeControl.RAPID
+
         // Persist to database
-        val entity = saveGameEntity(gameId, players[0], players[1], initialState, isAIGame = false)
+        val entity = saveGameEntity(
+            gameId, players[0], players[1], initialState,
+            isAIGame = false, timeControl = resolved
+        )
 
         // Start turn timer for online games
         if (entity != null) {
-            turnTimerService?.onTurnStart(gameId, entity)
+            turnTimerService?.onTurnStart(gameId, entity, initialState)
             gameRepository?.save(entity)
         }
 
@@ -124,7 +134,8 @@ class GameService(
             Player(humanPlayerId, humanPlayerName),
             Player(aiPlayerId, aiPlayerName),
             initialState,
-            isAIGame = true, aiPlayerId = aiPlayerId, aiDifficulty = normalizedDifficulty
+            isAIGame = true, aiPlayerId = aiPlayerId, aiDifficulty = normalizedDifficulty,
+            timeControl = TimeControl.UNLIMITED
         )
 
         // Broadcast the initial game state via WebSocket if available
@@ -149,9 +160,14 @@ class GameService(
         val cached = games[gameId] ?: loadGame(gameId)
             ?: throw IllegalArgumentException("Game not found: $gameId")
 
-        // Deduct time bank if over turn limit (non-AI games only)
+        // Load the row once. Every mutation below lands on this instance and is
+        // flushed in a single save, so the action never writes the row twice —
+        // a second write against a stale copy would trip @Version optimistic locking.
         val entity = gameRepository?.findById(gameId)?.orElse(null)
-        if (entity != null && !entity.isAIGame) {
+
+        // Charge any overage to the acting player before their clock is restarted.
+        // No-ops for AI and UNLIMITED games.
+        if (entity != null) {
             turnTimerService?.onActionReceived(gameId, action.playerId, entity)
         }
 
@@ -161,17 +177,17 @@ class GameService(
         // Process any AI actions that should follow
         val finalState = processAIActions(gameId)
 
-        // Update database snapshot
-        updateGameEntity(gameId, finalState)
+        if (entity != null) {
+            applyStateToEntity(entity, finalState)
 
-        // Start new turn timer (non-AI games, if game not over)
-        if (entity != null && !entity.isAIGame && finalState.stage != GameStage.GAME_OVER) {
-            turnTimerService?.onTurnStart(gameId, entity)
+            if (finalState.stage == GameStage.GAME_OVER) {
+                entity.turnStartedAt = null
+                turnTimerService?.clearGame(gameId)
+            } else {
+                turnTimerService?.onTurnStart(gameId, entity, finalState)
+            }
+
             gameRepository?.save(entity)
-        } else if (entity != null && finalState.stage == GameStage.GAME_OVER) {
-            entity.turnStartedAt = null
-            gameRepository?.save(entity)
-            turnTimerService?.clearGame(gameId)
         }
 
         // Broadcast with timing info
@@ -206,6 +222,24 @@ class GameService(
         }
 
         throw IllegalArgumentException("Game not found: $gameId")
+    }
+
+    /**
+     * Drops a finished game's engine handle so reads fall back to the database.
+     * Without this, a forfeit or timeout leaves the in-memory engine in play and
+     * `getGameState` keeps returning the game as if it were still running.
+     *
+     * Runs after commit so a concurrent read can't reload and re-cache the
+     * pre-forfeit row; `fallbackExecution` keeps it working outside a transaction.
+     */
+    @TransactionalEventListener(
+        phase = TransactionPhase.AFTER_COMMIT,
+        fallbackExecution = true
+    )
+    fun onGameEnded(event: GameEndedEvent) {
+        val cached = games.remove(event.gameId) ?: return
+        cached.engine.close()
+        logger.info("Dropped cached engine for ended game {}", event.gameId)
     }
 
     /**
@@ -374,6 +408,8 @@ class GameService(
                     updatedAt = completedAt,
                     stateJson = mapper.writeValueAsString(remapped),
                     originalLocalGameId = game.localGameId,
+                    timeControl = TimeControl.UNLIMITED.name,
+                    turnTimeLimitMs = 0,
                 )
                 repo.save(entity)
 
@@ -536,7 +572,8 @@ class GameService(
         state: GameState,
         isAIGame: Boolean,
         aiPlayerId: String? = null,
-        aiDifficulty: String? = null
+        aiDifficulty: String? = null,
+        timeControl: TimeControl = TimeControl.RAPID
     ): GameEntity? {
         val mapper = objectMapper ?: return null
         val repo = gameRepository ?: return null
@@ -556,15 +593,22 @@ class GameService(
             aiDifficulty = aiDifficulty,
             stateJson = mapper.writeValueAsString(state)
         )
+
+        // Freeze the resolved time limits onto the game before its first save.
+        turnTimerService?.initializeGame(entity, timeControl)
+            ?: run { entity.timeControl = timeControl.name }
+
         repo.save(entity)
         return entity
     }
 
-    private fun updateGameEntity(gameId: String, state: GameState) {
+    /**
+     * Copies a game state onto its entity without saving. The caller owns the save,
+     * so a single action results in exactly one write to the row.
+     */
+    private fun applyStateToEntity(entity: GameEntity, state: GameState) {
         val mapper = objectMapper ?: return
-        val repo = gameRepository ?: return
 
-        val entity = repo.findById(gameId).orElse(null) ?: return
         entity.player1Score = state.players[0].score
         entity.player2Score = state.players[1].score
         entity.stage = state.stage.name
@@ -588,8 +632,6 @@ class GameService(
                 )
             }
         }
-
-        repo.save(entity)
     }
 
     private fun deserializeGameState(entity: GameEntity): GameState {

@@ -1,5 +1,6 @@
 package com.jackabee.cribbageclubserver.controller
 
+import com.jackabee.cribbageclubserver.model.game.TimeControl
 import com.jackabee.cribbageclubserver.model.lobby.Lobby
 import com.jackabee.cribbageclubserver.service.FriendService
 import com.jackabee.cribbageclubserver.service.LobbyService
@@ -33,7 +34,12 @@ class ChallengeController(
             "You can only challenge friends"
         }
 
-        val lobby = lobbyService.createChallenge(userId, username, request.friendUserId)
+        val lobby = lobbyService.createChallenge(
+            userId,
+            username,
+            request.friendUserId,
+            request.timeControl?.let { TimeControl.parse(it) }
+        )
 
         notificationService.sendChallengeNotification(
             request.friendUserId,
@@ -129,4 +135,8 @@ class ChallengeController(
     }
 }
 
-data class CreateChallengeRequest(val friendUserId: String)
+data class CreateChallengeRequest(
+    val friendUserId: String,
+    /** Optional time control preset name; falls back to the server default. */
+    val timeControl: String? = null
+)

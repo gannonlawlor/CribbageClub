@@ -10,6 +10,7 @@ import com.jackabee.cribbageclubserver.repository.GameRepository
 import com.jackabee.cribbageclubserver.websocket.GameWebSocketService
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.slf4j.LoggerFactory
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
@@ -20,7 +21,8 @@ class ForfeitService(
     private val objectMapper: ObjectMapper,
     private val playerStatsService: PlayerStatsService,
     private val webSocketService: GameWebSocketService,
-    private val turnTimerService: TurnTimerService
+    private val turnTimerService: TurnTimerService,
+    private val eventPublisher: ApplicationEventPublisher
 ) {
     private val logger = LoggerFactory.getLogger(ForfeitService::class.java)
 
@@ -93,8 +95,10 @@ class ForfeitService(
         val timing = turnTimerService.getTimingFields(gameId, entity)
         webSocketService.broadcastGameStateUpdate(gameId, terminalState, timing)
 
-        // Clean up timer
+        // Clean up timer and drop GameService's live engine handle, which would
+        // otherwise keep serving the pre-forfeit state to REST callers.
         turnTimerService.clearGame(gameId)
+        eventPublisher.publishEvent(GameEndedEvent(gameId))
 
         logger.info(
             "Game {} forfeited by player {} (reason: {}). Winner: {}",
