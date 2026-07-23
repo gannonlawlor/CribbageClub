@@ -8,6 +8,10 @@ class KeepRankTile extends StatelessWidget {
   final KeepOption option;
   final bool isPlayerPick;
   final bool isOptimal;
+
+  /// The crib is only added to your total when it's yours; otherwise the
+  /// engine subtracts it, so the sign has to say which.
+  final bool isDealer;
   final VoidCallback? onExplain;
 
   const KeepRankTile({
@@ -15,6 +19,7 @@ class KeepRankTile extends StatelessWidget {
     required this.option,
     this.isPlayerPick = false,
     this.isOptimal = false,
+    this.isDealer = false,
     this.onExplain,
   });
 
@@ -24,41 +29,35 @@ class KeepRankTile extends StatelessWidget {
     // Green = "you". Only the player's own pick gets the ring + wash so the two
     // greens (best vs. yours) never fight; the best keep is marked by its "#1"
     // rank and score reading in the win color instead.
-    final Color? borderColor = isPlayerPick ? colors.accent : null;
-    final Color bgColor = isPlayerPick
-        ? colors.accent.withValues(alpha: 0.12)
-        : colors.surfaceDim;
     final Color rankColor = isOptimal
-        ? colors.success
-        : (isPlayerPick ? colors.accent : colors.textSecondary);
-    final Color scoreColor = isOptimal ? colors.success : colors.textPrimary;
+        ? colors.evOptimal
+        : (isPlayerPick ? colors.accent : colors.textTertiary);
+    final Color scoreColor = isOptimal ? colors.evOptimal : colors.textPrimary;
 
-    return GestureDetector(
+    // A row in a grouped panel, not a floating tile: your own pick takes the
+    // data-table "you" wash and an accent rank (design language §4) — no room
+    // for a label, and colour is how identity reads everywhere else.
+    return InkWell(
       onTap: onExplain,
       child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 3),
+        color: isPlayerPick
+            ? colors.pegPlayer.withValues(alpha: 0.08)
+            : Colors.transparent,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: bgColor,
-          borderRadius: BorderRadius.circular(8),
-          border: borderColor != null
-              ? Border.all(color: borderColor, width: 1.5)
-              : Border.all(color: colors.border),
-        ),
         child: Row(
           children: [
             // Rank
             SizedBox(
-              width: 36,
+              width: 26,
               child: Text(
-                '#${option.rank}',
+                '${option.rank}',
                 maxLines: 1,
                 softWrap: false,
                 overflow: TextOverflow.visible,
                 style: TextStyle(
                   color: rankColor,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
                   fontFeatures: const [FontFeature.tabularFigures()],
                 ),
               ),
@@ -115,7 +114,8 @@ class KeepRankTile extends StatelessWidget {
                   const SizedBox(height: 1),
                   Text(
                     'hand ${option.averageHandScore.toStringAsFixed(1)}'
-                    '  ·  crib ${option.averageCribScore > 0 ? '+' : ''}${option.averageCribScore.toStringAsFixed(1)}',
+                    '  ·  crib ${isDealer ? '+' : '−'}'
+                    '${option.averageCribScore.toStringAsFixed(1)}',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
@@ -128,18 +128,13 @@ class KeepRankTile extends StatelessWidget {
               ),
             ),
             // Trailing indicators
-            if (isPlayerPick)
-              Padding(
-                padding: const EdgeInsets.only(left: 8),
-                child: Icon(Icons.person, color: colors.accent, size: 16),
-              ),
             if (onExplain != null)
               Padding(
                 padding: const EdgeInsets.only(left: 6),
                 child: Icon(
                   Icons.info_outline,
-                  color: colors.textTertiary,
-                  size: 16,
+                  color: colors.textDisabled,
+                  size: 15,
                 ),
               ),
           ],

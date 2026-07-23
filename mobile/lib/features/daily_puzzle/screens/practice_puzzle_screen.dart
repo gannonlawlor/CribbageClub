@@ -2,17 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../config/constants.dart';
 import '../../../config/theme/app_colors.dart';
-import '../../../core/models/card.dart';
 import '../../../shared/widgets/cc_buttons.dart';
 import '../../../shared/widgets/cc_dialog.dart';
-import '../../game/widgets/card_widget.dart';
+import '../../../shared/widgets/cc_screen.dart';
+import '../../game/widgets/count_block.dart';
 import '../models/daily_puzzle.dart';
 import '../state/practice_puzzle_provider.dart';
 import '../state/puzzle_provider.dart';
 import '../widgets/explain_dialog.dart';
 import '../widgets/keep_rank_tile.dart';
+import '../widgets/puzzle_hand.dart';
 
 class PracticePuzzleScreen extends ConsumerStatefulWidget {
   const PracticePuzzleScreen({super.key});
@@ -68,101 +68,49 @@ class _PlayingView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final colors = context.appColors;
     final state = ref.watch(practicePuzzleProvider);
     final puzzle = state.puzzle!;
-    final canSubmit = state.selectedCards.length == 4;
+    final picked = state.selectedCards.length;
 
     return Column(
       children: [
-        // Header
-        Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              IconButton(
-                icon: Icon(Icons.arrow_back, color: colors.textPrimary),
-                onPressed: () => context.go('/'),
+        CcScreenHeader(
+          title: 'Puzzle mode',
+          subtitle: 'Puzzle ${state.puzzleNumber}',
+          onBack: () => context.go('/'),
+          actions: [
+            if (state.totalSolved > 0)
+              _StatsBadge(
+                totalSolved: state.totalSolved,
+                optimalCount: state.optimalCount,
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Practice Puzzle',
-                      style: TextStyle(
-                        color: colors.textPrimary,
-                        fontSize: 26,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'Puzzle #${state.puzzleNumber}',
-                      style: TextStyle(
-                        color: colors.textTertiary,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        fontFeatures: const [FontFeature.tabularFigures()],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              if (state.totalSolved > 0)
-                _StatsBadge(
-                  totalSolved: state.totalSolved,
-                  optimalCount: state.optimalCount,
-                ),
-            ],
-          ),
+          ],
         ),
         const Spacer(),
-        // Instruction
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Text(
-            'You are ${puzzle.isDealer ? 'the dealer' : 'not the dealer'}. '
-            'Choose the best 4 cards to keep.',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: colors.textSecondary,
-              fontSize: 15,
-              height: 1.4,
-            ),
-          ),
+        // The same block the game screen uses for the discard step, asking
+        // the same question.
+        CountBlock(
+          label: puzzle.isDealer ? 'Your crib' : "Opponent's crib",
+          headline: 'Keep four',
+          instruction: '$picked of 4 selected',
+          isMyTurn: picked == 4,
         ),
-        const SizedBox(height: 10),
-        Text(
-          '${state.selectedCards.length} / 4 SELECTED',
-          style: TextStyle(
-            color: canSubmit ? colors.accent : colors.textTertiary,
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            letterSpacing: 0.72,
-            fontFeatures: const [FontFeature.tabularFigures()],
-          ),
-        ),
-        const SizedBox(height: 24),
-        // Cards — 2 rows of 3
+        const SizedBox(height: 28),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: _CardGrid(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: PuzzleHand(
             cards: puzzle.hand,
-            selectedCards: state.selectedCards,
-            onCardTap: (card) {
-              ref.read(practicePuzzleProvider.notifier).toggleCard(card);
-            },
+            selected: state.selectedCards,
+            onTap: (card) =>
+                ref.read(practicePuzzleProvider.notifier).toggleCard(card),
           ),
         ),
         const Spacer(),
-        // Submit button
         Padding(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
           child: CcPrimaryButton(
             label: 'Submit',
-            onPressed: canSubmit
+            onPressed: picked == 4
                 ? () => ref.read(practicePuzzleProvider.notifier).submitKeep()
                 : null,
           ),
@@ -182,168 +130,103 @@ class _RevealedView extends ConsumerWidget {
     final puzzle = state.puzzle!;
     final results = puzzle.results!;
     final playerRank = state.playerRank;
-    final isOptimalPick = playerRank == 1;
+    final foundBest = playerRank == 1;
 
     return Column(
       children: [
-        // Header
+        CcScreenHeader(
+          title: 'Puzzle mode',
+          subtitle: 'Puzzle ${state.puzzleNumber}',
+          onBack: () => context.go('/'),
+          actions: [
+            if (state.totalSolved > 0)
+              _StatsBadge(
+                totalSolved: state.totalSolved,
+                optimalCount: state.optimalCount,
+              ),
+          ],
+        ),
+        // Verdict — the result word is never coloured; the rank carries it.
         Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
+          padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
+          child: Column(
             children: [
-              IconButton(
-                icon: Icon(Icons.arrow_back, color: colors.textPrimary),
-                onPressed: () => context.go('/'),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Practice Puzzle',
-                      style: TextStyle(
-                        color: colors.textPrimary,
-                        fontSize: 26,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'Puzzle #${state.puzzleNumber}',
-                      style: TextStyle(
-                        color: colors.textTertiary,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        fontFeatures: const [FontFeature.tabularFigures()],
-                      ),
-                    ),
-                  ],
+              Text(
+                foundBest ? 'Best keep' : 'Rank $playerRank of 15',
+                style: TextStyle(
+                  color: foundBest ? colors.evOptimal : colors.textPrimary,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
+                  fontFeatures: const [FontFeature.tabularFigures()],
                 ),
               ),
-              if (state.totalSolved > 0)
-                _StatsBadge(
-                  totalSolved: state.totalSolved,
-                  optimalCount: state.optimalCount,
+              const SizedBox(height: 4),
+              Text(
+                '${state.optimalCount} of ${state.totalSolved} solved best · '
+                '${puzzle.isDealer ? 'your crib' : "opponent's crib"}',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: colors.textTertiary,
+                  fontSize: 12.5,
+                  fontFeatures: const [FontFeature.tabularFigures()],
                 ),
+              ),
             ],
           ),
         ),
-        // Result banner
-        if (playerRank != null)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                color: isOptimalPick
-                    ? colors.evOptimal.withValues(alpha: 0.15)
-                    : colors.surfaceDim,
-                border: Border.all(
-                  color: isOptimalPick
-                      ? colors.evOptimal.withValues(alpha: 0.5)
-                      : colors.divider,
-                ),
-              ),
-              child: Column(
-                children: [
-                  Text(
-                    isOptimalPick
-                        ? 'Optimal keep'
-                        : 'Your pick: #$playerRank of 15',
-                    style: TextStyle(
-                      color: isOptimalPick ? colors.success : colors.textPrimary,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                      fontFeatures: const [FontFeature.tabularFigures()],
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 6),
-                    child: Text(
-                      '${state.optimalCount} / ${state.totalSolved} optimal',
-                      style: TextStyle(
-                        color: colors.textTertiary,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        fontFeatures: const [FontFeature.tabularFigures()],
+        const SizedBox(height: 16),
+        const Padding(
+          padding: EdgeInsets.fromLTRB(20, 0, 20, 8),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: CcSectionCaption('All 15 keeps · average points'),
+          ),
+        ),
+        Expanded(
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+            children: [
+              CcPanel(
+                rows: [
+                  for (final option in results)
+                    KeepRankTile(
+                      option: option,
+                      isPlayerPick:
+                          playerRank != null && option.rank == playerRank,
+                      isOptimal: option.rank == 1,
+                      isDealer: puzzle.isDealer,
+                      onExplain: () => _showExplain(
+                        context,
+                        puzzle.hand,
+                        option,
+                        puzzle.isDealer,
                       ),
                     ),
-                  ),
                 ],
               ),
-            ),
-          ),
-        const SizedBox(height: 8),
-        // Dealer context
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Text(
-            puzzle.isDealer
-                ? 'DEALER · CRIB IS YOURS'
-                : 'NON-DEALER · CRIB IS OPPONENT\'S',
-            style: TextStyle(
-              color: colors.textTertiary,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.6,
-            ),
+            ],
           ),
         ),
-        const SizedBox(height: 6),
-        // Legend
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Text(
-            'Average points per hand across all possible cut cards.',
-            style: TextStyle(color: colors.textTertiary, fontSize: 12),
-            textAlign: TextAlign.center,
-          ),
-        ),
-        const SizedBox(height: 6),
-        // Results list
-        Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: results.length,
-            itemBuilder: (context, index) {
-              final option = results[index];
-              final isPlayerPick =
-                  playerRank != null && option.rank == playerRank;
-              return KeepRankTile(
-                option: option,
-                isPlayerPick: isPlayerPick,
-                isOptimal: option.rank == 1,
-                onExplain: () =>
-                    _showExplain(context, puzzle.hand, option, puzzle.isDealer),
-              );
-            },
-          ),
-        ),
-        // Bottom buttons
-        Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
           child: Row(
             children: [
               Expanded(
                 child: CcSecondaryButton(
-                  label: 'Back to Home',
-                  height: 52,
+                  label: 'Done',
+                  height: 48,
                   onPressed: () => context.go('/'),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: CcPrimaryButton(
-                  label: 'Next Puzzle',
+                  label: 'Next puzzle',
                   icon: Icons.arrow_forward,
-                  height: 52,
+                  height: 48,
                   fontSize: 15,
-                  onPressed: () {
-                    ref.read(practicePuzzleProvider.notifier).nextPuzzle();
-                  },
+                  onPressed: () =>
+                      ref.read(practicePuzzleProvider.notifier).nextPuzzle(),
                 ),
               ),
             ],
@@ -376,10 +259,7 @@ class _StatsBadge extends StatelessWidget {
   final int totalSolved;
   final int optimalCount;
 
-  const _StatsBadge({
-    required this.totalSolved,
-    required this.optimalCount,
-  });
+  const _StatsBadge({required this.totalSolved, required this.optimalCount});
 
   @override
   Widget build(BuildContext context) {
@@ -399,64 +279,6 @@ class _StatsBadge extends StatelessWidget {
           fontWeight: FontWeight.bold,
         ),
       ),
-    );
-  }
-}
-
-class _CardGrid extends StatelessWidget {
-  final List<PlayingCard> cards;
-  final Set<PlayingCard> selectedCards;
-  final void Function(PlayingCard card) onCardTap;
-
-  const _CardGrid({
-    required this.cards,
-    required this.selectedCards,
-    required this.onCardTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    // 2 rows of 3 cards
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final cardWidth = (constraints.maxWidth - 16) / 3; // 3 cards + gaps
-        final cardHeight = cardWidth / AppConstants.cardAspectRatio;
-        return Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                for (var i = 0; i < 3; i++) ...[
-                  if (i > 0) const SizedBox(width: 8),
-                  CardWidget(
-                    card: cards[i],
-                    selected: selectedCards.contains(cards[i]),
-                    onTap: () => onCardTap(cards[i]),
-                    width: cardWidth,
-                    height: cardHeight,
-                  ),
-                ],
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                for (var i = 3; i < 6; i++) ...[
-                  if (i > 3) const SizedBox(width: 8),
-                  CardWidget(
-                    card: cards[i],
-                    selected: selectedCards.contains(cards[i]),
-                    onTap: () => onCardTap(cards[i]),
-                    width: cardWidth,
-                    height: cardHeight,
-                  ),
-                ],
-              ],
-            ),
-          ],
-        );
-      },
     );
   }
 }

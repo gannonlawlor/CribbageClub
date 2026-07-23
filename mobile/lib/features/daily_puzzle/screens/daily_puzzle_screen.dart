@@ -2,14 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../config/constants.dart';
 import '../../../config/theme/app_colors.dart';
 import '../../../core/models/card.dart';
 import '../../../shared/widgets/cc_buttons.dart';
-import '../../game/widgets/card_widget.dart';
+import '../../../shared/widgets/cc_screen.dart';
+import '../../game/widgets/count_block.dart';
 import '../services/puzzle_generator.dart';
 import '../state/puzzle_provider.dart';
 import '../widgets/puzzle_summary.dart';
+import '../widgets/puzzle_hand.dart';
 import '../widgets/streak_badge.dart';
 
 const _months = [
@@ -27,8 +28,7 @@ const _months = [
   'Dec',
 ];
 
-String _formatDate(DateTime d) =>
-    '${_months[d.month - 1]} ${d.day}, ${d.year}';
+String _formatDate(DateTime d) => '${_months[d.month - 1]} ${d.day}, ${d.year}';
 
 class DailyPuzzleScreen extends ConsumerStatefulWidget {
   const DailyPuzzleScreen({super.key});
@@ -65,18 +65,19 @@ class _DailyPuzzleScreenState extends ConsumerState<DailyPuzzleScreen> {
                       duration: const Duration(milliseconds: 400),
                       child: switch (state.phase) {
                         PuzzlePhase.playing => _PlayingView(
-                            key: ValueKey('playing_${state.currentPuzzleIndex}'),
-                          ),
-                        PuzzlePhase.revealed || PuzzlePhase.summary => PuzzleSummary(
-                            key: const ValueKey('summary'),
-                            puzzleSet: puzzleSet,
-                            playerScores: state.playerScores,
-                            playerRanks: state.playerRanks,
-                            allResults: state.allResults,
-                            playerKeeps: state.playerKeeps,
-                            streak: state.streak,
-                            onBackToHome: () => context.go('/'),
-                          ),
+                          key: ValueKey('playing_${state.currentPuzzleIndex}'),
+                        ),
+                        PuzzlePhase.revealed ||
+                        PuzzlePhase.summary => PuzzleSummary(
+                          key: const ValueKey('summary'),
+                          puzzleSet: puzzleSet,
+                          playerScores: state.playerScores,
+                          playerRanks: state.playerRanks,
+                          allResults: state.allResults,
+                          playerKeeps: state.playerKeeps,
+                          streak: state.streak,
+                          onBackToHome: () => context.go('/'),
+                        ),
                       },
                     ),
             ),
@@ -111,9 +112,7 @@ class _ProgressDots extends StatelessWidget {
             height: 10,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: keeps[i] != null
-                  ? colors.textSecondary
-                  : colors.divider,
+              color: keeps[i] != null ? colors.textSecondary : colors.divider,
               border: i == current
                   ? Border.all(color: colors.textPrimary, width: 1.5)
                   : null,
@@ -130,184 +129,56 @@ class _PlayingView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final colors = context.appColors;
     final state = ref.watch(dailyPuzzleProvider);
     final puzzle = state.currentPuzzle!;
-    final dateStr = _formatDate(puzzle.date);
-    final canSubmit = state.selectedCards.length == 4;
+    final picked = state.selectedCards.length;
     final puzzleNum = state.currentPuzzleIndex + 1;
     final total = PuzzleGenerator.puzzlesPerDay;
 
     return Column(
       children: [
-        // Header
-        Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              IconButton(
-                icon: Icon(Icons.arrow_back, color: colors.textPrimary),
-                onPressed: () => context.go('/'),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.baseline,
-                      textBaseline: TextBaseline.alphabetic,
-                      children: [
-                        Text(
-                          'Daily Challenge',
-                          style: TextStyle(
-                            color: colors.textPrimary,
-                            fontSize: 26,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          '$puzzleNum/$total',
-                          style: TextStyle(
-                            color: colors.textTertiary,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            fontFeatures: const [FontFeature.tabularFigures()],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      dateStr,
-                      style: TextStyle(
-                        color: colors.textTertiary,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              if (state.streak > 0) StreakBadge(streak: state.streak),
-            ],
-          ),
+        CcScreenHeader(
+          title: 'Daily puzzle',
+          subtitle: '${_formatDate(puzzle.date)} · $puzzleNum of $total',
+          onBack: () => context.go('/'),
+          actions: [if (state.streak > 0) StreakBadge(streak: state.streak)],
         ),
-        // Progress dots
+        const SizedBox(height: 4),
         _ProgressDots(
           total: total,
           current: state.currentPuzzleIndex,
           keeps: state.playerKeeps,
         ),
         const Spacer(),
-        // Instruction
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Text(
-            'You are ${puzzle.isDealer ? 'the dealer' : 'not the dealer'}. '
-            'Choose the best 4 cards to keep.',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: colors.textSecondary,
-              fontSize: 15,
-              height: 1.4,
-            ),
-          ),
+        // The same block the game screen uses for the discard step, asking
+        // the same question.
+        CountBlock(
+          label: puzzle.isDealer ? 'Your crib' : "Opponent's crib",
+          headline: 'Keep four',
+          instruction: '$picked of 4 selected',
+          isMyTurn: picked == 4,
         ),
-        const SizedBox(height: 10),
-        Text(
-          '${state.selectedCards.length} / 4 SELECTED',
-          style: TextStyle(
-            color: canSubmit ? colors.accent : colors.textTertiary,
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            letterSpacing: 0.72,
-            fontFeatures: const [FontFeature.tabularFigures()],
-          ),
-        ),
-        const SizedBox(height: 24),
-        // Cards — 2 rows of 3
+        const SizedBox(height: 28),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: _CardGrid(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: PuzzleHand(
             cards: puzzle.hand,
-            selectedCards: state.selectedCards,
-            onCardTap: (card) {
-              ref.read(dailyPuzzleProvider.notifier).toggleCard(card);
-            },
+            selected: state.selectedCards,
+            onTap: (card) =>
+                ref.read(dailyPuzzleProvider.notifier).toggleCard(card),
           ),
         ),
         const Spacer(),
-        // Submit button
         Padding(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
           child: CcPrimaryButton(
             label: 'Submit',
-            onPressed: canSubmit
+            onPressed: picked == 4
                 ? () => ref.read(dailyPuzzleProvider.notifier).submitKeep()
                 : null,
           ),
         ),
       ],
-    );
-  }
-}
-
-class _CardGrid extends StatelessWidget {
-  final List<PlayingCard> cards;
-  final Set<PlayingCard> selectedCards;
-  final void Function(PlayingCard card) onCardTap;
-
-  const _CardGrid({
-    required this.cards,
-    required this.selectedCards,
-    required this.onCardTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    // 2 rows of 3 cards
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final cardWidth = (constraints.maxWidth - 16) / 3; // 3 cards + gaps
-        final cardHeight = cardWidth / AppConstants.cardAspectRatio;
-        return Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                for (var i = 0; i < 3; i++) ...[
-                  if (i > 0) const SizedBox(width: 8),
-                  CardWidget(
-                    card: cards[i],
-                    selected: selectedCards.contains(cards[i]),
-                    onTap: () => onCardTap(cards[i]),
-                    width: cardWidth,
-                    height: cardHeight,
-                  ),
-                ],
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                for (var i = 3; i < 6; i++) ...[
-                  if (i > 3) const SizedBox(width: 8),
-                  CardWidget(
-                    card: cards[i],
-                    selected: selectedCards.contains(cards[i]),
-                    onTap: () => onCardTap(cards[i]),
-                    width: cardWidth,
-                    height: cardHeight,
-                  ),
-                ],
-              ],
-            ),
-          ],
-        );
-      },
     );
   }
 }

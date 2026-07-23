@@ -519,6 +519,7 @@ class _RoundCardState extends State<_RoundCard> {
                 ? _DiscardPanel(
                     label: 'Your discard · best',
                     option: myAnalysis.playerDiscard,
+                    isDealer: myAnalysis.isDealer,
                     isBest: true,
                   )
                 : IntrinsicHeight(
@@ -529,6 +530,7 @@ class _RoundCardState extends State<_RoundCard> {
                           child: _DiscardPanel(
                             label: 'Your discard',
                             option: myAnalysis.playerDiscard,
+                            isDealer: myAnalysis.isDealer,
                           ),
                         ),
                         const SizedBox(width: 10),
@@ -536,6 +538,7 @@ class _RoundCardState extends State<_RoundCard> {
                           child: _DiscardPanel(
                             label: 'Best discard',
                             option: myAnalysis.optimalDiscard,
+                            isDealer: myAnalysis.isDealer,
                             isBest: true,
                           ),
                         ),
@@ -759,9 +762,14 @@ class _DiscardPanel extends StatelessWidget {
   final DiscardOption option;
   final bool isBest;
 
+  /// The crib only adds to your total when it's yours — the engine subtracts
+  /// it otherwise, so the sign has to say which.
+  final bool isDealer;
+
   const _DiscardPanel({
     required this.label,
     required this.option,
+    required this.isDealer,
     this.isBest = false,
   });
 
@@ -812,7 +820,7 @@ class _DiscardPanel extends StatelessWidget {
           const SizedBox(height: 2),
           Text(
             'hand ${option.expectedHandValue.toStringAsFixed(1)} · '
-            'crib ${crib > 0 ? '+' : ''}${crib.toStringAsFixed(1)}',
+            'crib ${isDealer ? '+' : '−'}${crib.toStringAsFixed(1)}',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
