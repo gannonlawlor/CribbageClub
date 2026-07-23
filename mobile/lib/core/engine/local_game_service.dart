@@ -50,10 +50,7 @@ class LocalGameService {
 
   GameState applyHumanAction(GameAction action) {
     final actionJson = jsonEncode(action.toJson());
-    rust.engineApplyActionJson(
-      engine: _engine!,
-      actionJson: actionJson,
-    );
+    rust.engineApplyActionJson(engine: _engine!, actionJson: actionJson);
     return _processAIActions();
   }
 
@@ -61,10 +58,7 @@ class LocalGameService {
   /// Returns the intermediate state after the action.
   GameState applyActionOnly(GameAction action) {
     final actionJson = jsonEncode(action.toJson());
-    rust.engineApplyActionJson(
-      engine: _engine!,
-      actionJson: actionJson,
-    );
+    rust.engineApplyActionJson(engine: _engine!, actionJson: actionJson);
     final json = rust.engineCurrentStateJson(engine: _engine!);
     return GameState.fromJson(jsonDecode(json) as Map<String, dynamic>);
   }
@@ -72,6 +66,13 @@ class LocalGameService {
   /// Process pending AI actions and return the resulting state.
   GameState processAI() {
     return _processAIActions();
+  }
+
+  /// Apply a single AI action. The caller paces the turn by stepping, so the
+  /// player sees one card land at a time instead of the whole sequence at
+  /// once. Returns the state unchanged when the AI has nothing left to do.
+  GameState processAIStep() {
+    return _processAIActions(maxIterations: 1);
   }
 
   GameState restoreGame({
@@ -99,18 +100,15 @@ class LocalGameService {
   /// DEV ONLY: Set a player's score.
   void devSetScore(String playerId, int score) {
     if (_engine == null) return;
-    rust.engineDevSetScore(
-      engine: _engine!,
-      playerId: playerId,
-      score: score,
-    );
+    rust.engineDevSetScore(engine: _engine!, playerId: playerId, score: score);
   }
 
   /// DEV ONLY: Queue specific hands for next deal.
   void devSetNextHands(Map<String, List<PlayingCard>> hands) {
     if (_engine == null) return;
     final rustHands = hands.map(
-      (playerId, cards) => MapEntry(playerId, cards.map((c) => c.toJson()).toList()),
+      (playerId, cards) =>
+          MapEntry(playerId, cards.map((c) => c.toJson()).toList()),
     );
     rust.engineDevSetNextHandsJson(
       engine: _engine!,
@@ -118,12 +116,12 @@ class LocalGameService {
     );
   }
 
-  GameState _processAIActions() {
+  GameState _processAIActions({int? maxIterations}) {
     final stateJson = rust.engineProcessAiJson(
       engine: _engine!,
       aiPlayerId: _aiPlayerId!,
       difficulty: _difficulty!,
-      maxIterations: _maxAIIterations,
+      maxIterations: maxIterations ?? _maxAIIterations,
     );
     return GameState.fromJson(jsonDecode(stateJson) as Map<String, dynamic>);
   }

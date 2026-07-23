@@ -7,6 +7,7 @@ import '../../../core/models/game_action.dart';
 import '../../../core/models/game_history_event.dart';
 import '../../../core/models/game_state.dart';
 import '../../../core/services/game_feedback_service.dart';
+import '../animation/animation_event.dart';
 import '../animation/game_animation_controller.dart';
 import 'game_providers.dart';
 
@@ -17,6 +18,8 @@ class LocalGameNotifier extends StateNotifier<GameNotifierState> {
   final GameAnimationController animationController;
   final GameFeedbackService _feedbackService;
   final Duration Function() _getAiDelay;
+  final Duration Function() _getScorePause;
+  final Duration Function() _getSetupDelay;
   bool _disposed = false;
 
   LocalGameNotifier({
@@ -26,10 +29,14 @@ class LocalGameNotifier extends StateNotifier<GameNotifierState> {
     required this.animationController,
     required GameFeedbackService feedbackService,
     required Duration Function() getAiDelay,
+    required Duration Function() getScorePause,
+    required Duration Function() getSetupDelay,
   }) : _service = service,
        _playerId = playerId,
        _feedbackService = feedbackService,
        _getAiDelay = getAiDelay,
+       _getScorePause = getScorePause,
+       _getSetupDelay = getSetupDelay,
        super(
          service.currentState != null
              ? GameNotifierState(gameState: service.currentState)
@@ -49,8 +56,54 @@ class LocalGameNotifier extends StateNotifier<GameNotifierState> {
     }
   }
 
-  /// Apply a human action, show the intermediate state, then delay before
-  /// processing AI responses to simulate "thinking".
+  /// True when the update just handed to the animation controller scored —
+  /// the score pill is on screen and needs a moment before anything lands on
+  /// top of it.
+  bool get _lastUpdateScored =>
+      animationController.events.any((e) => e is ScoreChangedEvent);
+
+  /// How long to hold before the engine's next move. Pegging and counting get
+  /// a full beat each — they're the moves you actually read — while dealing,
+  /// discarding and cutting stay brisk.
+  Duration _pauseBeforeAi(GameState current) {
+    switch (current.stage) {
+      case GameStage.pegging:
+      case GameStage.counting:
+        final base = _getAiDelay();
+        return _lastUpdateScored ? base + _getScorePause() : base;
+      case GameStage.dealing:
+      case GameStage.discardingToCrib:
+      case GameStage.cutting:
+      case GameStage.gameOver:
+        return _getSetupDelay();
+    }
+  }
+
+  /// Play the engine's turn one action at a time, pausing between each, so a
+  /// run of pegging plays reads as separate moves rather than arriving all at
+  /// once. Stops as soon as the turn is back with the player.
+  Future<void> _runAiTurn() async {
+    // Enough for a full pegging round plus the counts; the no-progress check
+    // below is what actually ends the loop.
+    for (var step = 0; step < 16; step++) {
+      final current = state.gameState;
+      if (current == null || current.stage == GameStage.gameOver) return;
+      if (current.currentPlayerId?.startsWith('ai_') != true) return;
+
+      await Future.delayed(_pauseBeforeAi(current));
+      if (_disposed) return;
+
+      final next = _service.processAIStep();
+      // The engine had nothing left to apply — stop rather than spin.
+      if (next == current) return;
+
+      state = GameNotifierState(gameState: next);
+      _notifyAnimation(next);
+    }
+  }
+
+  /// Apply a human action, show the result, then let the engine answer at a
+  /// readable pace.
   Future<void> _applyActionWithDelay(GameAction action) async {
     try {
       // Apply the human action and show intermediate state immediately
@@ -58,14 +111,7 @@ class LocalGameNotifier extends StateNotifier<GameNotifierState> {
       state = GameNotifierState(gameState: intermediate);
       _notifyAnimation(intermediate);
 
-      // If it's now the AI's turn, wait then process
-      if (intermediate.currentPlayerId?.startsWith('ai_') == true) {
-        await Future.delayed(_getAiDelay());
-        if (_disposed) return;
-        final finalState = _service.processAI();
-        state = GameNotifierState(gameState: finalState);
-        _notifyAnimation(finalState);
-      }
+      await _runAiTurn();
     } catch (e) {
       if (!_disposed) {
         debugPrint('[LocalGame] Action failed for $gameId: $e');
@@ -89,14 +135,8 @@ class LocalGameNotifier extends StateNotifier<GameNotifierState> {
         state = GameNotifierState(gameState: intermediate);
         _notifyAnimation(intermediate);
 
-        // If AI needs to act (discard + possibly cut), delay then process
-        if (intermediate.currentPlayerId?.startsWith('ai_') == true) {
-          await Future.delayed(_getAiDelay());
-          if (_disposed) return;
-          final finalState = _service.processAI();
-          state = GameNotifierState(gameState: finalState);
-          _notifyAnimation(finalState);
-        }
+        // If AI needs to act (discard + possibly cut), let it play out
+        await _runAiTurn();
       }
     } catch (e) {
       if (!_disposed) {

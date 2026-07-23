@@ -25,6 +25,8 @@ LocalGameNotifier _createNotifier({
       hapticsEnabled: false,
     ),
     getAiDelay: () => Duration.zero,
+    getScorePause: () => Duration.zero,
+    getSetupDelay: () => Duration.zero,
   );
 }
 

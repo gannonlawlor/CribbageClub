@@ -57,6 +57,12 @@ class _ScorePopupOverlayState extends ConsumerState<ScorePopupOverlay>
 
   @override
   void dispose() {
+    // Without this the animation controller keeps calling back into a dead
+    // widget, and the callback reads `ref` — "Cannot use ref after the widget
+    // was disposed" every time a game update lands after you navigate away.
+    ref
+        .read(gameAnimationProvider(widget.gameId))
+        .removeListener(_onAnimationEvent);
     _activePopup?.controller.dispose();
     super.dispose();
   }
@@ -79,11 +85,13 @@ class _ScorePopupOverlayState extends ConsumerState<ScorePopupOverlay>
 
   /// Absorb a new event into the active popup: append component, restart animation.
   void _liveMerge(_CoalescedPopup popup, ScoreChangedEvent event) {
-    popup.components.add(_ScoreComponent(
-      source: event.source,
-      reason: event.reason,
-      points: event.points,
-    ));
+    popup.components.add(
+      _ScoreComponent(
+        source: event.source,
+        reason: event.reason,
+        points: event.points,
+      ),
+    );
 
     // Dispose old controller, create new one with extended duration
     final oldController = popup.controller;
@@ -125,11 +133,13 @@ class _ScorePopupOverlayState extends ConsumerState<ScorePopupOverlay>
     // Consume consecutive same-player events
     while (_queue.isNotEmpty && _queue.first.playerId == first.playerId) {
       final next = _queue.removeAt(0);
-      components.add(_ScoreComponent(
-        source: next.source,
-        reason: next.reason,
-        points: next.points,
-      ));
+      components.add(
+        _ScoreComponent(
+          source: next.source,
+          reason: next.reason,
+          points: next.points,
+        ),
+      );
     }
 
     return _CoalescedPopup(
@@ -143,7 +153,8 @@ class _ScorePopupOverlayState extends ConsumerState<ScorePopupOverlay>
 
   Duration _computeDuration(int componentCount) {
     final extraComponents = (componentCount - 1).clamp(0, 3);
-    final baseDuration = AppConstants.scorePopupDuration +
+    final baseDuration =
+        AppConstants.scorePopupDuration +
         AppConstants.scorePopupExtraDuration * extraComponents;
     final settings = ref.read(settingsProvider);
     return settings.scaleDuration(baseDuration);
@@ -158,10 +169,7 @@ class _ScorePopupOverlayState extends ConsumerState<ScorePopupOverlay>
     final popup = _dequeueCoalesced();
     final duration = _computeDuration(popup.components.length);
 
-    final animController = AnimationController(
-      vsync: this,
-      duration: duration,
-    );
+    final animController = AnimationController(vsync: this, duration: duration);
     popup.controller = animController;
 
     setState(() {
@@ -183,9 +191,11 @@ class _ScorePopupOverlayState extends ConsumerState<ScorePopupOverlay>
     });
     popup.controller.dispose();
 
+    // A real beat between two pills, or a run of pegging scores reads as one
+    // blur rather than separate things that happened.
     final settings = ref.read(settingsProvider);
     final gapDuration = _queue.isNotEmpty
-        ? settings.scaleDuration(const Duration(milliseconds: 200))
+        ? settings.scaleDuration(AppConstants.scorePopupGap)
         : Duration.zero;
 
     if (_queue.isNotEmpty) {
@@ -267,23 +277,22 @@ class _ScorePopupWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.appColors;
 
-    final rise = Tween<Offset>(
-      begin: const Offset(0, 0.2),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(
-        parent: popup.controller,
-        curve: const Interval(0, 0.12, curve: Curves.easeOut),
-      ),
-    );
+    final rise = Tween<Offset>(begin: const Offset(0, 0.2), end: Offset.zero)
+        .animate(
+          CurvedAnimation(
+            parent: popup.controller,
+            curve: const Interval(0, 0.12, curve: Curves.easeOut),
+          ),
+        );
 
-    final fade = TweenSequence<double>([
-      TweenSequenceItem(tween: Tween(begin: 0.0, end: 1.0), weight: 12),
-      TweenSequenceItem(tween: ConstantTween(1.0), weight: 68),
-      TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.0), weight: 20),
-    ]).animate(
-      CurvedAnimation(parent: popup.controller, curve: Curves.easeInOut),
-    );
+    final fade =
+        TweenSequence<double>([
+          TweenSequenceItem(tween: Tween(begin: 0.0, end: 1.0), weight: 12),
+          TweenSequenceItem(tween: ConstantTween(1.0), weight: 68),
+          TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.0), weight: 20),
+        ]).animate(
+          CurvedAnimation(parent: popup.controller, curve: Curves.easeInOut),
+        );
 
     final pill = SlideTransition(
       position: rise,

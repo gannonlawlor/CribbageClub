@@ -3,6 +3,7 @@ import '../../../config/constants.dart';
 import '../../../config/theme/app_colors.dart';
 import '../../../core/models/card.dart';
 import '../../../shared/utils/score_calculator.dart';
+import '../../../shared/widgets/cc_buttons.dart';
 import 'card_widget.dart';
 
 enum _Phase {
@@ -93,32 +94,28 @@ class _CountingOverlayState extends State<CountingOverlay> {
   @override
   Widget build(BuildContext context) {
     final colors = context.appColors;
+    // Panel shell matching the game-over panel (design language §4).
     return Positioned.fill(
       child: Container(
         color: colors.scrim,
         child: Center(
           child: Container(
             margin: const EdgeInsets.all(24),
-            padding: const EdgeInsets.all(20),
-            constraints: const BoxConstraints(maxWidth: 400),
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+            constraints: const BoxConstraints(maxWidth: 360),
             decoration: BoxDecoration(
               color: colors.surfacePrimary,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: colors.divider,
-                width: 1,
-              ),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: colors.borderStrong),
               boxShadow: const [
                 BoxShadow(
-                  color: Colors.black45,
-                  blurRadius: 20,
-                  spreadRadius: 2,
+                  color: Colors.black54,
+                  blurRadius: 40,
+                  offset: Offset(0, 12),
                 ),
               ],
             ),
-            child: SingleChildScrollView(
-              child: _buildPhaseContent(),
-            ),
+            child: SingleChildScrollView(child: _buildPhaseContent()),
           ),
         ),
       ),
@@ -129,7 +126,7 @@ class _CountingOverlayState extends State<CountingOverlay> {
     switch (_phase) {
       case _Phase.handPrompt:
         return _buildPrompt(
-          title: 'Count Your Hand',
+          title: 'Your hand',
           cards: widget.hand,
           cutCard: widget.cutCard,
           onCountForMe: () {
@@ -144,7 +141,7 @@ class _CountingOverlayState extends State<CountingOverlay> {
         );
       case _Phase.handInput:
         return _buildInput(
-          title: 'Your Hand',
+          title: 'Your hand',
           cards: widget.hand,
           cutCard: widget.cutCard,
           onSubmit: () {
@@ -156,19 +153,19 @@ class _CountingOverlayState extends State<CountingOverlay> {
         );
       case _Phase.handResult:
         return _buildResult(
-          title: 'Hand Score',
+          title: 'Your hand',
           cards: widget.hand,
           cutCard: widget.cutCard,
           breakdown: _handBreakdown,
           guess: _handGuess,
           onContinue: _advance,
           buttonLabel: widget.isDealer && widget.crib.isNotEmpty
-              ? 'Count Crib'
+              ? 'Count the crib'
               : 'Done',
         );
       case _Phase.cribPrompt:
         return _buildPrompt(
-          title: 'Count Your Crib',
+          title: 'Your crib',
           cards: widget.crib,
           cutCard: widget.cutCard,
           onCountForMe: () {
@@ -183,7 +180,7 @@ class _CountingOverlayState extends State<CountingOverlay> {
         );
       case _Phase.cribInput:
         return _buildInput(
-          title: 'Your Crib',
+          title: 'Your crib',
           cards: widget.crib,
           cutCard: widget.cutCard,
           onSubmit: () {
@@ -195,7 +192,7 @@ class _CountingOverlayState extends State<CountingOverlay> {
         );
       case _Phase.cribResult:
         return _buildResult(
-          title: 'Crib Score',
+          title: 'Your crib',
           cards: widget.crib,
           cutCard: widget.cutCard,
           breakdown: _cribBreakdown,
@@ -206,6 +203,33 @@ class _CountingOverlayState extends State<CountingOverlay> {
       case _Phase.done:
         return const SizedBox.shrink();
     }
+  }
+
+  /// Caption over title, the way every panel in the app opens.
+  Widget _header(String caption, String title) {
+    final colors = context.appColors;
+    return Column(
+      children: [
+        Text(
+          caption.toUpperCase(),
+          style: TextStyle(
+            color: colors.textTertiary,
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.88,
+          ),
+        ),
+        const SizedBox(height: 3),
+        Text(
+          title,
+          style: TextStyle(
+            color: colors.textPrimary,
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _buildCardRow(List<PlayingCard> cards, PlayingCard cutCard) {
@@ -241,9 +265,7 @@ class _CountingOverlayState extends State<CountingOverlay> {
             // Divider + cut card
             Row(
               children: [
-                Expanded(
-                  child: Container(height: 1, color: colors.divider),
-                ),
+                Expanded(child: Container(height: 1, color: colors.divider)),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 8),
                   child: Text(
@@ -251,9 +273,7 @@ class _CountingOverlayState extends State<CountingOverlay> {
                     style: TextStyle(color: colors.textDisabled, fontSize: 11),
                   ),
                 ),
-                Expanded(
-                  child: Container(height: 1, color: colors.divider),
-                ),
+                Expanded(child: Container(height: 1, color: colors.divider)),
               ],
             ),
             const SizedBox(height: 8),
@@ -277,42 +297,30 @@ class _CountingOverlayState extends State<CountingOverlay> {
     required VoidCallback onCountForMe,
     required VoidCallback onIllCount,
   }) {
-    final colors = context.appColors;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          title,
-          style: TextStyle(
-            color: colors.textPrimary,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+        _header('Count', title),
         const SizedBox(height: 16),
         _buildCardRow(cards, cutCard),
-        const SizedBox(height: 24),
+        const SizedBox(height: 22),
         Row(
           children: [
             Expanded(
-              child: ElevatedButton(
+              child: CcSecondaryButton(
+                label: 'Count it for me',
+                height: 44,
+                fontSize: 13,
                 onPressed: onCountForMe,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: colors.surfaceDim,
-                  foregroundColor: colors.textPrimary,
-                ),
-                child: const Text('Count'),
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 10),
             Expanded(
-              child: ElevatedButton(
+              child: CcPrimaryButton(
+                label: "I'll count",
+                height: 44,
+                fontSize: 14,
                 onPressed: onIllCount,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: colors.accent,
-                  foregroundColor: colors.accentOnSurface,
-                ),
-                child: const Text("I'll count"),
               ),
             ),
           ],
@@ -338,25 +346,40 @@ class _CountingOverlayState extends State<CountingOverlay> {
 
   Widget _buildNumberPad(VoidCallback onSubmit) {
     final colors = context.appColors;
-    Widget numButton(int digit) {
+
+    Widget key({
+      required Widget child,
+      required VoidCallback onTap,
+      Color? fill,
+      bool bevel = false,
+    }) {
+      final radius = BorderRadius.circular(8);
       return Expanded(
         child: Padding(
-          padding: const EdgeInsets.all(2),
-          child: Material(
-            color: colors.surfaceDim,
-            borderRadius: BorderRadius.circular(8),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(8),
-              onTap: () => _onNumberTap(digit),
-              child: Container(
-                height: 44,
-                alignment: Alignment.center,
-                child: Text(
-                  '$digit',
-                  style: TextStyle(
-                    color: colors.textPrimary,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
+          padding: const EdgeInsets.all(3),
+          child: Container(
+            decoration: bevel
+                ? BoxDecoration(
+                    color: colors.accentPressed,
+                    borderRadius: radius,
+                  )
+                : null,
+            child: Padding(
+              padding: EdgeInsets.only(bottom: bevel ? 3 : 0),
+              child: Material(
+                color: fill ?? colors.surfaceDim,
+                borderRadius: radius,
+                child: InkWell(
+                  borderRadius: radius,
+                  onTap: onTap,
+                  child: Container(
+                    height: 46,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      borderRadius: radius,
+                      border: bevel ? null : Border.all(color: colors.border),
+                    ),
+                    child: child,
                   ),
                 ),
               ),
@@ -366,80 +389,52 @@ class _CountingOverlayState extends State<CountingOverlay> {
       );
     }
 
+    Widget digit(int n) => key(
+      onTap: () => _onNumberTap(n),
+      child: Text(
+        '$n',
+        style: TextStyle(
+          color: colors.textPrimary,
+          fontSize: 19,
+          fontWeight: FontWeight.w600,
+          fontFeatures: const [FontFeature.tabularFigures()],
+        ),
+      ),
+    );
+
     return Column(
       children: [
-        // Display
-        Container(
-          width: 80,
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          margin: const EdgeInsets.only(bottom: 10),
-          decoration: BoxDecoration(
-            color: colors.surfaceDim,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: colors.divider),
-          ),
-          child: Text(
-            '$_guessValue',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: colors.textPrimary,
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-            ),
+        // The running guess is the largest number on the panel.
+        Text(
+          '$_guessValue',
+          style: TextStyle(
+            color: colors.textPrimary,
+            fontSize: 40,
+            height: 1.1,
+            fontWeight: FontWeight.w700,
+            fontFeatures: const [FontFeature.tabularFigures()],
           ),
         ),
-        // Number rows
-        Row(children: [numButton(1), numButton(2), numButton(3)]),
-        Row(children: [numButton(4), numButton(5), numButton(6)]),
-        Row(children: [numButton(7), numButton(8), numButton(9)]),
+        const SizedBox(height: 10),
+        Row(children: [digit(1), digit(2), digit(3)]),
+        Row(children: [digit(4), digit(5), digit(6)]),
+        Row(children: [digit(7), digit(8), digit(9)]),
         Row(
           children: [
-            // Backspace
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(2),
-                child: Material(
-                  color: colors.surfaceDim.withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(8),
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(8),
-                    onTap: _onBackspace,
-                    child: Container(
-                      height: 44,
-                      alignment: Alignment.center,
-                      child: Icon(
-                        Icons.backspace_outlined,
-                        color: colors.textSecondary,
-                        size: 22,
-                      ),
-                    ),
-                  ),
-                ),
+            key(
+              onTap: _onBackspace,
+              child: Icon(
+                Icons.backspace_outlined,
+                color: colors.textTertiary,
+                size: 20,
               ),
             ),
-            numButton(0),
-            // Enter
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(2),
-                child: Material(
-                  color: colors.accentSubtle,
-                  borderRadius: BorderRadius.circular(8),
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(8),
-                    onTap: onSubmit,
-                    child: Container(
-                      height: 44,
-                      alignment: Alignment.center,
-                      child: Icon(
-                        Icons.check,
-                        color: colors.accent,
-                        size: 24,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
+            digit(0),
+            key(
+              onTap: onSubmit,
+              fill: colors.accent,
+              bevel: true,
+              child: Icon(Icons.check, color: colors.accentOnSurface, size: 22),
             ),
           ],
         ),
@@ -453,26 +448,13 @@ class _CountingOverlayState extends State<CountingOverlay> {
     required PlayingCard cutCard,
     required VoidCallback onSubmit,
   }) {
-    final colors = context.appColors;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          title,
-          style: TextStyle(
-            color: colors.textPrimary,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 12),
+        _header('How many', title),
+        const SizedBox(height: 14),
         _buildCardRow(cards, cutCard),
-        const SizedBox(height: 12),
-        Text(
-          'How many points?',
-          style: TextStyle(color: colors.textSecondary, fontSize: 14),
-        ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 14),
         _buildNumberPad(onSubmit),
       ],
     );
@@ -488,132 +470,104 @@ class _CountingOverlayState extends State<CountingOverlay> {
     required String buttonLabel,
   }) {
     final colors = context.appColors;
-    final isCorrect = guess == null || guess == breakdown.totalScore;
+    final correct = guess == null || guess == breakdown.totalScore;
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          title,
-          style: TextStyle(
-            color: colors.textPrimary,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 12),
+        _header('Counted', title),
+        const SizedBox(height: 14),
         _buildCardRow(cards, cutCard),
         const SizedBox(height: 16),
-        // Guess feedback
+
+        // The score is the number to read here (design principle §1).
+        Text(
+          '${breakdown.totalScore}',
+          style: TextStyle(
+            color: colors.textPrimary,
+            fontSize: 40,
+            height: 1,
+            fontWeight: FontWeight.w700,
+            fontFeatures: const [FontFeature.tabularFigures()],
+          ),
+        ),
         if (guess != null) ...[
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              color: isCorrect
-                  ? colors.success.withValues(alpha: 0.15)
-                  : colors.warning.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: isCorrect
-                    ? colors.success.withValues(alpha: 0.5)
-                    : colors.warning.withValues(alpha: 0.5),
-              ),
-            ),
-            child: Text(
-              isCorrect
-                  ? 'Correct! $guess points'
-                  : 'You said $guess, actual is ${breakdown.totalScore}',
-              style: TextStyle(
-                color: isCorrect ? colors.success : colors.warning,
-                fontSize: 15,
-                fontWeight: FontWeight.bold,
-              ),
+          const SizedBox(height: 6),
+          Text(
+            correct ? 'You called it' : 'You said $guess',
+            style: TextStyle(
+              color: correct ? colors.success : colors.warning,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              fontFeatures: const [FontFeature.tabularFigures()],
             ),
           ),
-          const SizedBox(height: 12),
         ],
-        // Breakdown list
-        if (breakdown.combinations.isNotEmpty) ...[
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: colors.surfaceDim,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Column(
-              children: [
-                for (final combo in breakdown.combinations)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 2),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            combo.description,
-                            style: TextStyle(
-                              color: colors.textSecondary,
-                              fontSize: 13,
+        const SizedBox(height: 14),
+
+        // What made it up, as a table: reason left, points right, tabular.
+        if (breakdown.combinations.isNotEmpty)
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: colors.border),
+              ),
+              child: Column(
+                children: [
+                  for (var i = 0; i < breakdown.combinations.length; i++) ...[
+                    if (i > 0) Divider(height: 1, color: colors.border),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              breakdown.combinations[i].description,
+                              style: TextStyle(
+                                color: colors.textSecondary,
+                                fontSize: 13,
+                              ),
                             ),
                           ),
-                        ),
-                        Text(
-                          '+${combo.points}',
-                          style: TextStyle(
-                            color: colors.accent,
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
+                          const SizedBox(width: 10),
+                          Text(
+                            '${breakdown.combinations[i].points}',
+                            style: TextStyle(
+                              color: colors.textPrimary,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              fontFeatures: const [
+                                FontFeature.tabularFigures(),
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ),
-                Divider(color: colors.divider, height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        'Total',
-                        style: TextStyle(
-                          color: colors.textPrimary,
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    Text(
-                      '${breakdown.totalScore}',
-                      style: TextStyle(
-                        color: colors.accent,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                        ],
                       ),
                     ),
                   ],
-                ),
-              ],
+                ],
+              ),
             ),
+          )
+        else
+          Text(
+            'Nothing to count',
+            style: TextStyle(color: colors.textTertiary, fontSize: 13),
           ),
-        ] else ...[
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: colors.surfaceDim,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(
-              'No points — 0',
-              style: TextStyle(color: colors.textTertiary, fontSize: 14),
-            ),
-          ),
-        ],
         const SizedBox(height: 16),
-        ElevatedButton(
-          onPressed: onContinue,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: colors.buttonPrimary,
-            foregroundColor: colors.accentOnSurface,
-            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 10),
+        SizedBox(
+          width: double.infinity,
+          child: CcPrimaryButton(
+            label: buttonLabel,
+            height: 48,
+            fontSize: 15,
+            onPressed: onContinue,
           ),
-          child: Text(buttonLabel),
         ),
       ],
     );
