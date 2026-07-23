@@ -9,26 +9,12 @@ import com.jackabee.cribbageclubserver.model.game.GameStage
 import com.jackabee.cribbageclubserver.model.game.GameState
 import com.jackabee.cribbageclubserver.model.game.TimeControl
 import com.jackabee.cribbageclubserver.model.player.Player
+import com.jackabee.cribbageclubserver.testutil.MutableClock
 import org.junit.jupiter.api.Test
-import java.time.Clock
 import java.time.Duration
-import java.time.Instant
-import java.time.ZoneId
-import java.time.ZoneOffset
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
-
-/** A clock the test advances by hand, so timing behaviour is verified without sleeping. */
-private class MutableClock(var instant: Instant = Instant.parse("2026-01-01T00:00:00Z")) : Clock() {
-    override fun getZone(): ZoneId = ZoneOffset.UTC
-    override fun withZone(zone: ZoneId): Clock = this
-    override fun instant(): Instant = instant
-
-    fun advance(duration: Duration) {
-        instant = instant.plus(duration)
-    }
-}
 
 class TurnTimerServiceTest {
 

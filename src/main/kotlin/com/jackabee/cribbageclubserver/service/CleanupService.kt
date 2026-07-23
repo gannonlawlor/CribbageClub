@@ -27,7 +27,7 @@ class CleanupService(
         val gameThreshold = now.minus(gameTimeoutMinutes, ChronoUnit.MINUTES)
         val removedGames = gameService.removeInactiveGames(gameThreshold)
         if (removedGames.isNotEmpty()) {
-            logger.info("Cleaned up {} inactive games: {}", removedGames.size, removedGames)
+            logger.info("Evicted {} finished/idle game engines from memory: {}", removedGames.size, removedGames)
         }
 
         val lobbyThreshold = now.minus(lobbyTimeoutMinutes, ChronoUnit.MINUTES)

@@ -39,7 +39,9 @@ src/main/kotlin/com/jackabee/cribbageclubserver/
 
 ## Key Architecture Decisions
 
-- **Database = source of truth**: `GameEntity.stateJson` stores full `GameState` as JSON. In-memory `ConcurrentHashMap` is a cache; on miss, `loadGame()` reconstructs from DB.
+- **Database = source of truth**: `GameEntity.stateJson` stores full `GameState` as JSON. In-memory `ConcurrentHashMap` is a cache; on miss, `loadGame()` reconstructs from DB. Cleanup only *evicts* cache entries — it never deletes rows (completed games are user history).
+- **Per-game locking**: Every engine touch for a game holds that game's monitor (`withGameLock`). Rust engine handles are raw pointers and not thread-safe, and concurrent actions on one game are routine (both players discard at once), so this prevents native data races and use-after-free on `close()`.
+- **Action authorization**: `action.playerId` must equal the authenticated caller on both REST (`GameController`) and WebSocket (`GameWebSocketController`) — a participant must not act (or forfeit) as their opponent.
 - **Rust via JNA**: `RustEngineAdapter` bridges to native `libcribbage_engine` for game simulation, AI, and analysis. Built by Gradle's `cargoReleaseBuild` task.
 - **Auth**: JWT (jjwt 0.13), 90-day expiry, `JwtAuthenticationFilter` on REST, `StompAuthChannelInterceptor` on WebSocket. Guest accounts supported.
 - **Rate limiting**: Sliding-window `RateLimitFilter` on `/api/auth/*` (10 req/60s).
@@ -82,9 +84,9 @@ src/main/kotlin/com/jackabee/cribbageclubserver/
 
 ## Testing
 
-26 test files covering controllers, services, security, WebSocket, models. Uses JUnit 5, Mockito, H2 for integration tests.
+27 test files covering controllers, services, security, WebSocket, models. Uses JUnit 5, Mockito, H2 for integration tests.
 
-`TurnTimerService` takes an injectable `java.time.Clock` so timer tests advance time instead of sleeping (see `MutableClock` in `TurnTimerServiceTest`).
+`TurnTimerService` takes an injectable `java.time.Clock` so timer tests advance time instead of sleeping (see `testutil/MutableClock`); `GameServiceTest` drives it through an injected `TurnTimerService`.
 
 ## Conventions
 
