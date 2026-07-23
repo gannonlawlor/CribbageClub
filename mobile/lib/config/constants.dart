@@ -47,5 +47,19 @@ class AppConstants {
   static const Duration scorePopupDuration = Duration(milliseconds: 1800);
   static const Duration scorePopupExtraDuration = Duration(milliseconds: 500);
   static const Duration stageTransitionDuration = Duration(milliseconds: 400);
-  static const Duration aiThinkingDelay = Duration(milliseconds: 400);
+
+  /// Beat before the engine's first move, and between each of its moves —
+  /// long enough to read the card that just landed.
+  static const Duration aiThinkingDelay = Duration(milliseconds: 750);
+
+  /// Added on top when the move that just happened scored, so the "+N" pill
+  /// gets read before the next card lands on it.
+  static const Duration aiScorePause = Duration(milliseconds: 650);
+
+  /// The engine's discards and cut aren't moves to read one at a time, so
+  /// setting up a round keeps moving.
+  static const Duration aiSetupDelay = Duration(milliseconds: 260);
+
+  /// Gap between two score pills that queued up behind each other.
+  static const Duration scorePopupGap = Duration(milliseconds: 450);
 }

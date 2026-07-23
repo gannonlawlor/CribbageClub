@@ -164,11 +164,14 @@ class GameNotifier extends StateNotifier<GameNotifierState> {
     state = GameNotifierState(
       gameState: gs,
       connectionStatus: state.connectionStatus,
-      turnStartedAt:
-          msg.turnStartedAt != null ? DateTime.tryParse(msg.turnStartedAt!) : null,
+      turnStartedAt: msg.turnStartedAt != null
+          ? DateTime.tryParse(msg.turnStartedAt!)
+          : null,
       turnTimeLimitMs: msg.turnTimeLimitMs,
       myTimeBankMs: isPlayer1 ? msg.player1TimeBankMs : msg.player2TimeBankMs,
-      opponentTimeBankMs: isPlayer1 ? msg.player2TimeBankMs : msg.player1TimeBankMs,
+      opponentTimeBankMs: isPlayer1
+          ? msg.player2TimeBankMs
+          : msg.player1TimeBankMs,
       isTimed: msg.isTimed,
     );
     _notifyAnimation(gs);
@@ -420,6 +423,14 @@ final localGameNotifierProvider =
         getAiDelay: () {
           final settings = ref.read(settingsProvider);
           return settings.scaleDuration(AppConstants.aiThinkingDelay);
+        },
+        getScorePause: () {
+          final settings = ref.read(settingsProvider);
+          return settings.scaleDuration(AppConstants.aiScorePause);
+        },
+        getSetupDelay: () {
+          final settings = ref.read(settingsProvider);
+          return settings.scaleDuration(AppConstants.aiSetupDelay);
         },
       );
     });
