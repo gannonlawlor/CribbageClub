@@ -8,6 +8,7 @@ import '../../../core/models/head_to_head_response.dart';
 import '../../../core/models/profile_response.dart';
 import '../../../shared/widgets/cc_screen.dart';
 import '../../../shared/widgets/game_history_row.dart';
+import '../../../shared/widgets/cc_swipe_back.dart';
 
 final _profileProvider = FutureProvider.autoDispose
     .family<ProfileResponse, String>((ref, userId) async {
@@ -55,134 +56,137 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final auth = ref.watch(authProvider);
     final isOwnProfile = auth.userId == widget.userId;
 
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.pop(),
+    return CcSwipeBack(
+      onBack: () => context.pop(),
+      child: Scaffold(
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => context.pop(),
+          ),
+          title: const Text('Profile'),
         ),
-        title: const Text('Profile'),
-      ),
-      body: profile.when(
-        data: (p) => Center(
-          child: SingleChildScrollView(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 400),
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  children: [
-                    // Hero: avatar with accent ring
-                    Container(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: colors.accent.withValues(alpha: 0.5),
-                          width: 3,
+        body: profile.when(
+          data: (p) => Center(
+            child: SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 400),
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    children: [
+                      // Hero: avatar with accent ring
+                      Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: colors.accent.withValues(alpha: 0.5),
+                            width: 3,
+                          ),
                         ),
-                      ),
-                      padding: const EdgeInsets.all(3),
-                      child: CircleAvatar(
-                        radius: 56,
-                        backgroundColor: colors.accent.withValues(alpha: 0.2),
-                        child: Text(
-                          _initials(p.displayName ?? p.username),
-                          style: TextStyle(
-                            color: colors.accent,
-                            fontSize: 36,
-                            fontWeight: FontWeight.bold,
+                        padding: const EdgeInsets.all(3),
+                        child: CircleAvatar(
+                          radius: 56,
+                          backgroundColor: colors.accent.withValues(alpha: 0.2),
+                          child: Text(
+                            _initials(p.displayName ?? p.username),
+                            style: TextStyle(
+                              color: colors.accent,
+                              fontSize: 36,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    // Display name
-                    Text(
-                      p.displayName ?? p.username,
-                      style: TextStyle(
-                        color: colors.textPrimary,
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    if (p.displayName != null)
+                      const SizedBox(height: 12),
+                      // Display name
                       Text(
-                        '@${p.username}',
+                        p.displayName ?? p.username,
                         style: TextStyle(
-                          color: colors.textTertiary,
-                          fontSize: 14,
+                          color: colors.textPrimary,
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Member since ${_formatDate(p.createdAt)}',
-                      style: TextStyle(
-                        color: colors.textDisabled,
-                        fontSize: 12,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Action row: friend chip/button + challenge button
-                    if (!isOwnProfile) _buildActionRow(p, ref),
-
-                    const SizedBox(height: 24),
-
-                    // Rating badge
-                    _buildRatingBadge(p),
-
-                    const SizedBox(height: 20),
-
-                    // Highlights row
-                    _buildHighlightsRow(p),
-
-                    const SizedBox(height: 24),
-
-                    // Segmented button
-                    SegmentedButton<int>(
-                      segments: const [
-                        ButtonSegment(value: 0, label: Text('Overall')),
-                        ButtonSegment(value: 1, label: Text('vs Humans')),
-                        ButtonSegment(value: 2, label: Text('vs AI')),
-                      ],
-                      selected: {_selectedSegment},
-                      onSelectionChanged: (s) =>
-                          setState(() => _selectedSegment = s.first),
-                      style: SegmentedButton.styleFrom(
-                        foregroundColor: colors.textSecondary,
-                        selectedForegroundColor: colors.accent,
-                        selectedBackgroundColor: colors.accent.withValues(
-                          alpha: 0.15,
+                      if (p.displayName != null)
+                        Text(
+                          '@${p.username}',
+                          style: TextStyle(
+                            color: colors.textTertiary,
+                            fontSize: 14,
+                          ),
+                        ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Member since ${_formatDate(p.createdAt)}',
+                        style: TextStyle(
+                          color: colors.textDisabled,
+                          fontSize: 12,
                         ),
                       ),
-                    ),
+                      const SizedBox(height: 16),
 
-                    const SizedBox(height: 20),
+                      // Action row: friend chip/button + challenge button
+                      if (!isOwnProfile) _buildActionRow(p, ref),
 
-                    // Stats for selected category
-                    _buildStats(_categoryStats(p)),
+                      const SizedBox(height: 24),
 
-                    const SizedBox(height: 24),
+                      // Rating badge
+                      _buildRatingBadge(p),
 
-                    // Head-to-head (other users only)
-                    if (!isOwnProfile) _buildHeadToHead(),
+                      const SizedBox(height: 20),
 
-                    // Game history (own profile only)
-                    if (isOwnProfile) _buildGameHistory(auth.userId ?? ''),
-                  ],
+                      // Highlights row
+                      _buildHighlightsRow(p),
+
+                      const SizedBox(height: 24),
+
+                      // Segmented button
+                      SegmentedButton<int>(
+                        segments: const [
+                          ButtonSegment(value: 0, label: Text('Overall')),
+                          ButtonSegment(value: 1, label: Text('vs Humans')),
+                          ButtonSegment(value: 2, label: Text('vs AI')),
+                        ],
+                        selected: {_selectedSegment},
+                        onSelectionChanged: (s) =>
+                            setState(() => _selectedSegment = s.first),
+                        style: SegmentedButton.styleFrom(
+                          foregroundColor: colors.textSecondary,
+                          selectedForegroundColor: colors.accent,
+                          selectedBackgroundColor: colors.accent.withValues(
+                            alpha: 0.15,
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      // Stats for selected category
+                      _buildStats(_categoryStats(p)),
+
+                      const SizedBox(height: 24),
+
+                      // Head-to-head (other users only)
+                      if (!isOwnProfile) _buildHeadToHead(),
+
+                      // Game history (own profile only)
+                      if (isOwnProfile) _buildGameHistory(auth.userId ?? ''),
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
-        ),
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(32),
-            child: Text(
-              'Failed to load profile: $error',
-              style: TextStyle(color: colors.error),
-              textAlign: TextAlign.center,
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (error, _) => Center(
+            child: Padding(
+              padding: const EdgeInsets.all(32),
+              child: Text(
+                'Failed to load profile: $error',
+                style: TextStyle(color: colors.error),
+                textAlign: TextAlign.center,
+              ),
             ),
           ),
         ),

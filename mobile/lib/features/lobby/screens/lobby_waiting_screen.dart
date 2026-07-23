@@ -9,6 +9,7 @@ import '../../../core/auth/auth_provider.dart';
 import '../../../core/models/lobby.dart';
 import '../../../shared/widgets/cc_buttons.dart';
 import '../../../shared/widgets/cc_screen.dart';
+import '../../../shared/widgets/cc_swipe_back.dart';
 
 class LobbyWaitingScreen extends ConsumerStatefulWidget {
   final String lobbyId;
@@ -95,31 +96,34 @@ class _LobbyWaitingScreenState extends ConsumerState<LobbyWaitingScreen> {
     final lobby = _lobby;
     final isPrivate = lobby?.inviteCode != null;
 
-    return Scaffold(
-      backgroundColor: colors.scaffoldBg,
-      body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 420),
-            child: Column(
-              children: [
-                CcScreenHeader(
-                  title: isPrivate ? 'Private game' : 'Finding a game',
-                  onBack: _leaveLobby,
-                ),
-                Expanded(
-                  child: _isLoading
-                      ? const Center(child: CircularProgressIndicator())
-                      : _error != null
-                      ? CcMessage(
-                          title: 'This lobby is unavailable',
-                          detail: _error,
-                          action: 'Back to home',
-                          onAction: () => context.go('/'),
-                        )
-                      : _buildLobbyContent(lobby!),
-                ),
-              ],
+    return CcSwipeBack(
+      onBack: _leaveLobby,
+      child: Scaffold(
+        backgroundColor: colors.scaffoldBg,
+        body: SafeArea(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 420),
+              child: Column(
+                children: [
+                  CcScreenHeader(
+                    title: isPrivate ? 'Private game' : 'Finding a game',
+                    onBack: _leaveLobby,
+                  ),
+                  Expanded(
+                    child: _isLoading
+                        ? const Center(child: CircularProgressIndicator())
+                        : _error != null
+                        ? CcMessage(
+                            title: 'This lobby is unavailable',
+                            detail: _error,
+                            action: 'Back to home',
+                            onAction: () => context.go('/'),
+                          )
+                        : _buildLobbyContent(lobby!),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

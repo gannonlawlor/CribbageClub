@@ -14,6 +14,7 @@ import '../../../shared/widgets/cc_dialog.dart';
 import '../../daily_puzzle/widgets/explain_dialog.dart';
 import '../../game/state/game_providers.dart';
 import '../../game/widgets/card_widget.dart';
+import '../../../shared/widgets/cc_swipe_back.dart';
 
 /// Provider: checks local cache → server cache → computes on-device → caches everywhere.
 final analysisProvider = FutureProvider.family.autoDispose<GameAnalysis, String>((
@@ -95,51 +96,54 @@ class AnalysisScreen extends ConsumerWidget {
     final auth = ref.watch(authProvider);
     final playerId = auth.userId ?? '';
 
-    return Scaffold(
-      backgroundColor: colors.scaffoldBg,
-      body: SafeArea(
-        bottom: false,
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 480),
-            child: Column(
-              children: [
-                _Header(
-                  onBack: () => context.go('/'),
-                  onReplay: () => context.go('/replay/$gameId'),
-                ),
-                Expanded(
-                  child: analysis.when(
-                    data: (data) => _AnalysisContent(
-                      analysis: data,
-                      playerId: playerId,
-                      isLocal: isLocalGame(gameId),
-                    ),
-                    loading: () => Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const CircularProgressIndicator(),
-                          const SizedBox(height: 16),
-                          Text(
-                            'Working through your discards',
-                            style: TextStyle(
-                              color: colors.textTertiary,
-                              fontSize: 13,
+    return CcSwipeBack(
+      onBack: () => context.go('/'),
+      child: Scaffold(
+        backgroundColor: colors.scaffoldBg,
+        body: SafeArea(
+          bottom: false,
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 480),
+              child: Column(
+                children: [
+                  _Header(
+                    onBack: () => context.go('/'),
+                    onReplay: () => context.go('/replay/$gameId'),
+                  ),
+                  Expanded(
+                    child: analysis.when(
+                      data: (data) => _AnalysisContent(
+                        analysis: data,
+                        playerId: playerId,
+                        isLocal: isLocalGame(gameId),
+                      ),
+                      loading: () => Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const CircularProgressIndicator(),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Working through your discards',
+                              style: TextStyle(
+                                color: colors.textTertiary,
+                                fontSize: 13,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
+                      ),
+                      error: (error, _) => _Message(
+                        title: 'Analysis unavailable',
+                        detail: '$error',
+                        action: 'Back to home',
+                        onAction: () => context.go('/'),
                       ),
                     ),
-                    error: (error, _) => _Message(
-                      title: 'Analysis unavailable',
-                      detail: '$error',
-                      action: 'Back to home',
-                      onAction: () => context.go('/'),
-                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

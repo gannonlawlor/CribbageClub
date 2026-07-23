@@ -7,6 +7,7 @@ import '../../../core/models/lobby.dart';
 import '../../../shared/utils/responsive.dart';
 import '../../../shared/utils/text_utils.dart';
 import '../../../shared/widgets/loading_overlay.dart';
+import '../../../shared/widgets/cc_swipe_back.dart';
 
 final _publicLobbiesProvider = FutureProvider.autoDispose<List<Lobby>>((
   ref,
@@ -26,144 +27,158 @@ class LobbyBrowserScreen extends ConsumerWidget {
     final lobbies = ref.watch(_publicLobbiesProvider);
     final isJoining = ref.watch(_isJoiningProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Browse Lobbies'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/'),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () => ref.invalidate(_publicLobbiesProvider),
+    return CcSwipeBack(
+      onBack: () => context.go('/'),
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Browse Lobbies'),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => context.go('/'),
           ),
-        ],
-      ),
-      body: LoadingOverlay(
-        isLoading: isJoining,
-        child: Center(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxWidth: Responsive.isTabletLandscape(context) ? 800 : 500,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: () => ref.invalidate(_publicLobbiesProvider),
             ),
-            child: Column(
-              children: [
-                Expanded(
-                  child: lobbies.when(
-                    data: (list) {
-                      if (list.isEmpty) {
-                        return Center(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.meeting_room_outlined,
-                                size: 64,
-                                color: colors.textDisabled,
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                'No open lobbies',
-                                style: TextStyle(
-                                  color: colors.textTertiary,
-                                  fontSize: 18,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                'Create a lobby or try Quick Game to find a match instantly.',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
+          ],
+        ),
+        body: LoadingOverlay(
+          isLoading: isJoining,
+          child: Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: Responsive.isTabletLandscape(context) ? 800 : 500,
+              ),
+              child: Column(
+                children: [
+                  Expanded(
+                    child: lobbies.when(
+                      data: (list) {
+                        if (list.isEmpty) {
+                          return Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.meeting_room_outlined,
+                                  size: 64,
                                   color: colors.textDisabled,
-                                  fontSize: 14,
                                 ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  'No open lobbies',
+                                  style: TextStyle(
+                                    color: colors.textTertiary,
+                                    fontSize: 18,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Create a lobby or try Quick Game to find a match instantly.',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: colors.textDisabled,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
+                        if (Responsive.isTabletLandscape(context)) {
+                          return RefreshIndicator(
+                            onRefresh: () async {
+                              ref.invalidate(_publicLobbiesProvider);
+                              await ref.read(_publicLobbiesProvider.future);
+                            },
+                            child: SingleChildScrollView(
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              padding: const EdgeInsets.all(16),
+                              child: Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: list
+                                    .map(
+                                      (lobby) => SizedBox(
+                                        width:
+                                            (MediaQuery.of(context).size.width -
+                                                48) /
+                                            2,
+                                        child: _LobbyTile(
+                                          lobby: lobby,
+                                          onJoin: () => _joinLobby(
+                                            context,
+                                            ref,
+                                            lobby.id,
+                                          ),
+                                        ),
+                                      ),
+                                    )
+                                    .toList(),
                               ),
-                            ],
-                          ),
-                        );
-                      }
-                      if (Responsive.isTabletLandscape(context)) {
+                            ),
+                          );
+                        }
                         return RefreshIndicator(
                           onRefresh: () async {
                             ref.invalidate(_publicLobbiesProvider);
                             await ref.read(_publicLobbiesProvider.future);
                           },
-                          child: SingleChildScrollView(
-                            physics: const AlwaysScrollableScrollPhysics(),
+                          child: ListView.builder(
                             padding: const EdgeInsets.all(16),
-                            child: Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
-                              children: list.map((lobby) => SizedBox(
-                                width: (MediaQuery.of(context).size.width - 48) / 2,
-                                child: _LobbyTile(
-                                  lobby: lobby,
-                                  onJoin: () => _joinLobby(context, ref, lobby.id),
-                                ),
-                              )).toList(),
-                            ),
+                            itemCount: list.length,
+                            itemBuilder: (context, index) {
+                              final lobby = list[index];
+                              return _LobbyTile(
+                                lobby: lobby,
+                                onJoin: () =>
+                                    _joinLobby(context, ref, lobby.id),
+                              );
+                            },
                           ),
                         );
-                      }
-                      return RefreshIndicator(
-                        onRefresh: () async {
-                          ref.invalidate(_publicLobbiesProvider);
-                          await ref.read(_publicLobbiesProvider.future);
-                        },
-                        child: ListView.builder(
-                          padding: const EdgeInsets.all(16),
-                          itemCount: list.length,
-                          itemBuilder: (context, index) {
-                            final lobby = list[index];
-                            return _LobbyTile(
-                              lobby: lobby,
-                              onJoin: () => _joinLobby(context, ref, lobby.id),
-                            );
-                          },
+                      },
+                      loading: () =>
+                          const Center(child: CircularProgressIndicator()),
+                      error: (e, _) => Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'Failed to load lobbies',
+                              style: TextStyle(color: colors.error),
+                            ),
+                            const SizedBox(height: 8),
+                            OutlinedButton(
+                              onPressed: () =>
+                                  ref.invalidate(_publicLobbiesProvider),
+                              child: const Text('Retry'),
+                            ),
+                          ],
                         ),
-                      );
-                    },
-                    loading: () => const Center(
-                      child: CircularProgressIndicator(),
-                    ),
-                    error: (e, _) => Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            'Failed to load lobbies',
-                            style: TextStyle(color: colors.error),
-                          ),
-                          const SizedBox(height: 8),
-                          OutlinedButton(
-                            onPressed: () =>
-                                ref.invalidate(_publicLobbiesProvider),
-                            child: const Text('Retry'),
-                          ),
-                        ],
                       ),
                     ),
                   ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: SizedBox(
-                    width: double.infinity,
-                    height: 48,
-                    child: ElevatedButton.icon(
-                      onPressed: isJoining
-                          ? null
-                          : () => _createPublicLobby(context, ref),
-                      icon: const Icon(Icons.add),
-                      label: const Text(
-                        'Create Public Lobby',
-                        style: TextStyle(fontSize: 16),
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: ElevatedButton.icon(
+                        onPressed: isJoining
+                            ? null
+                            : () => _createPublicLobby(context, ref),
+                        icon: const Icon(Icons.add),
+                        label: const Text(
+                          'Create Public Lobby',
+                          style: TextStyle(fontSize: 16),
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -233,8 +248,9 @@ class _LobbyTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.appColors;
-    final creatorName =
-        lobby.players.isNotEmpty ? lobby.players.first.name : 'Unknown';
+    final creatorName = lobby.players.isNotEmpty
+        ? lobby.players.first.name
+        : 'Unknown';
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),

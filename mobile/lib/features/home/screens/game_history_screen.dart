@@ -7,6 +7,7 @@ import '../../../core/models/game_state.dart';
 import '../../../core/services/local_game_history_provider.dart';
 import '../../../shared/widgets/cc_screen.dart';
 import '../../../shared/widgets/game_history_row.dart';
+import '../../../shared/widgets/cc_swipe_back.dart';
 
 class GameHistoryScreen extends ConsumerWidget {
   const GameHistoryScreen({super.key});
@@ -49,58 +50,61 @@ class GameHistoryScreen extends ConsumerWidget {
         for (final r in local) GameSummary.fromLocal(r),
     ];
 
-    return Scaffold(
-      backgroundColor: colors.scaffoldBg,
-      body: SafeArea(
-        bottom: false,
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 480),
-            child: Column(
-              children: [
-                CcScreenHeader(
-                  title: 'Game history',
-                  subtitle: loading
-                      ? null
-                      : '$total game${total == 1 ? '' : 's'}',
-                  onBack: () => context.go('/'),
-                ),
-                Expanded(
-                  child: RefreshIndicator(
-                    color: colors.accent,
-                    onRefresh: () => _refresh(ref, auth.isLoggedIn),
-                    child: loading && total == 0
-                        ? const Center(child: CircularProgressIndicator())
-                        : ListView(
-                            padding: const EdgeInsets.fromLTRB(20, 4, 20, 28),
-                            children: [
-                              if (pending.isNotEmpty) ...[
-                                const CcSectionCaption('Waiting to upload'),
-                                GameHistoryList(games: pending),
-                                const SizedBox(height: 20),
-                              ],
-                              const CcSectionCaption('Played'),
-                              GameHistoryList(
-                                games: played,
-                                emptyMessage: auth.isLoggedIn
-                                    ? 'No games yet. Your first rated game sets your rating.'
-                                    : 'No games yet. Play the engine to get started.',
-                              ),
-                              if (serverHistory.hasError) ...[
-                                const SizedBox(height: 12),
-                                Text(
-                                  'Your online games could not be loaded.',
-                                  style: TextStyle(
-                                    color: colors.textTertiary,
-                                    fontSize: 12.5,
-                                  ),
-                                ),
-                              ],
-                            ],
-                          ),
+    return CcSwipeBack(
+      onBack: () => context.go('/'),
+      child: Scaffold(
+        backgroundColor: colors.scaffoldBg,
+        body: SafeArea(
+          bottom: false,
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 480),
+              child: Column(
+                children: [
+                  CcScreenHeader(
+                    title: 'Game history',
+                    subtitle: loading
+                        ? null
+                        : '$total game${total == 1 ? '' : 's'}',
+                    onBack: () => context.go('/'),
                   ),
-                ),
-              ],
+                  Expanded(
+                    child: RefreshIndicator(
+                      color: colors.accent,
+                      onRefresh: () => _refresh(ref, auth.isLoggedIn),
+                      child: loading && total == 0
+                          ? const Center(child: CircularProgressIndicator())
+                          : ListView(
+                              padding: const EdgeInsets.fromLTRB(20, 4, 20, 28),
+                              children: [
+                                if (pending.isNotEmpty) ...[
+                                  const CcSectionCaption('Waiting to upload'),
+                                  GameHistoryList(games: pending),
+                                  const SizedBox(height: 20),
+                                ],
+                                const CcSectionCaption('Played'),
+                                GameHistoryList(
+                                  games: played,
+                                  emptyMessage: auth.isLoggedIn
+                                      ? 'No games yet. Your first rated game sets your rating.'
+                                      : 'No games yet. Play the engine to get started.',
+                                ),
+                                if (serverHistory.hasError) ...[
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    'Your online games could not be loaded.',
+                                    style: TextStyle(
+                                      color: colors.textTertiary,
+                                      fontSize: 12.5,
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
