@@ -4,15 +4,14 @@ import 'package:go_router/go_router.dart';
 import '../../../config/theme/app_colors.dart';
 import '../../../core/auth/auth_provider.dart';
 import '../../../core/models/game_state.dart';
-import '../../../core/models/local_game_record.dart';
 import '../../../shared/widgets/auth_required.dart';
 import '../../../shared/widgets/cc_bottom_nav.dart';
 import '../../../shared/widgets/cc_buttons.dart';
 import '../../../shared/widgets/cc_dialog.dart';
-import '../../../shared/widgets/cc_list.dart';
+import '../../../shared/widgets/cc_screen.dart';
+import '../../../shared/widgets/game_history_row.dart';
 import '../../../shared/widgets/loading_overlay.dart';
 import '../../daily_puzzle/state/puzzle_provider.dart';
-import '../../game/widgets/game_settings_sheet.dart';
 import '../../profile/state/my_profile_provider.dart';
 import '../../../core/services/local_game_history_provider.dart';
 import '../../../core/services/local_game_history_service.dart';
@@ -20,11 +19,30 @@ import '../../game/state/game_providers.dart';
 
 final _isCreatingGameProvider = StateProvider<bool>((ref) => false);
 
+/// The three engine strengths, in the order they're offered.
+class _Bot {
+  final String difficulty;
+  final String label;
+  final String blurb;
+  final IconData icon;
+
+  const _Bot(this.difficulty, this.label, this.blurb, this.icon);
+}
+
+const _bots = [
+  _Bot('basic', 'Easy', 'Basic heuristics', Icons.sentiment_satisfied),
+  _Bot('medium', 'Medium', 'Optimizes its hand', Icons.psychology),
+  _Bot(
+    'hard',
+    'Hard',
+    'Optimizes hand and crib, pegs sharply',
+    Icons.local_fire_department,
+  ),
+];
+
 // Active games provider — fetches from /api/games/me (only when logged in).
 // Kept alive so returning to the Play tab doesn't re-load and shift layout.
-final _activeGamesProvider = FutureProvider<List<GameState>>((
-  ref,
-) async {
+final _activeGamesProvider = FutureProvider<List<GameState>>((ref) async {
   final auth = ref.read(authProvider);
   if (!auth.isLoggedIn) return [];
   final restClient = ref.read(restClientProvider);
@@ -77,62 +95,72 @@ class HomeScreen extends ConsumerWidget {
                             ),
 
                             CcPrimaryButton(
-                              label: 'Play · Rated',
+                              label: 'Play online',
                               onPressed: isCreating
                                   ? null
                                   : () => _quickMatch(context, ref),
                             ),
-                            const SizedBox(height: 10),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: CcSecondaryButton(
-                                    label: 'Play a friend',
-                                    onPressed: isCreating
+                            const SizedBox(height: 18),
+
+                            const _Caption('Play a bot'),
+                            const SizedBox(height: 8),
+                            CcPanel(
+                              rows: [
+                                for (final bot in _bots)
+                                  _PlayRow(
+                                    icon: bot.icon,
+                                    title: bot.label,
+                                    subtitle: bot.blurb,
+                                    onTap: isCreating
                                         ? null
-                                        : () => _showOnlineOptions(context, ref),
+                                        : () => _createLocalAIGame(
+                                            context,
+                                            ref,
+                                            bot.difficulty,
+                                          ),
                                   ),
-                                ),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: CcSecondaryButton(
-                                    label: 'Play the engine',
-                                    onPressed: isCreating
-                                        ? null
-                                        : () =>
-                                            _showDifficultyPicker(context, ref),
-                                  ),
-                                ),
                               ],
                             ),
-                            const SizedBox(height: 14),
-                            const _PuzzleGroup(),
-                            const SizedBox(height: 14),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: CcSecondaryButton(
-                                    label: 'Game history',
-                                    icon: Icons.history,
-                                    height: 40,
-                                    fontSize: 13,
-                                    onPressed: () => context.go('/history'),
-                                  ),
+                            const SizedBox(height: 18),
+
+                            const _Caption('Play a friend'),
+                            const SizedBox(height: 8),
+                            CcPanel(
+                              rows: [
+                                _PlayRow(
+                                  icon: Icons.lock_outline,
+                                  title: 'Private game',
+                                  subtitle: 'Invite with a code',
+                                  onTap: isCreating
+                                      ? null
+                                      : () => _createPrivateGame(context, ref),
                                 ),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: CcSecondaryButton(
-                                    label: 'Game settings',
-                                    icon: Icons.tune,
-                                    height: 40,
-                                    fontSize: 13,
-                                    onPressed: () =>
-                                        showGameSettingsDialog(context),
-                                  ),
+                                _PlayRow(
+                                  icon: Icons.vpn_key_outlined,
+                                  title: 'Join by code',
+                                  subtitle: 'Enter a code you were sent',
+                                  onTap: isCreating
+                                      ? null
+                                      : () =>
+                                            _showJoinByCodeDialog(context, ref),
+                                ),
+                                _PlayRow(
+                                  icon: Icons.list,
+                                  title: 'Browse lobbies',
+                                  subtitle: 'Join a table someone left open',
+                                  onTap: isCreating
+                                      ? null
+                                      : () => _browseLobbies(context, ref),
                                 ),
                               ],
                             ),
                             const SizedBox(height: 18),
+
+                            const _Caption('Puzzles'),
+                            const SizedBox(height: 8),
+                            const _PuzzleGroup(),
+                            const SizedBox(height: 20),
+
                             const _RecentGamesSection(),
                           ],
                         ),
@@ -146,105 +174,6 @@ class HomeScreen extends ConsumerWidget {
         ),
       ),
       bottomNavigationBar: const CcBottomNav(active: CcTab.play),
-    );
-  }
-
-  void _showDifficultyPicker(BuildContext context, WidgetRef ref) {
-    showCcDialog(
-      context: context,
-      builder: (dialogContext) => CcDialog(
-        title: 'Choose difficulty',
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CcOptionRow(
-              icon: Icons.sentiment_satisfied,
-              title: 'Easy',
-              subtitle: 'Basic heuristics',
-              showChevron: false,
-              onTap: () {
-                Navigator.pop(dialogContext);
-                _createLocalAIGame(context, ref, 'basic');
-              },
-            ),
-            const SizedBox(height: 8),
-            CcOptionRow(
-              icon: Icons.psychology,
-              title: 'Medium',
-              subtitle: 'Optimizes hand scoring',
-              showChevron: false,
-              onTap: () {
-                Navigator.pop(dialogContext);
-                _createLocalAIGame(context, ref, 'medium');
-              },
-            ),
-            const SizedBox(height: 8),
-            CcOptionRow(
-              icon: Icons.local_fire_department,
-              title: 'Hard',
-              subtitle: 'Hand + crib optimization, advanced pegging',
-              showChevron: false,
-              onTap: () {
-                Navigator.pop(dialogContext);
-                _createLocalAIGame(context, ref, 'hard');
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showOnlineOptions(BuildContext context, WidgetRef ref) {
-    showCcDialog(
-      context: context,
-      builder: (dialogContext) => CcDialog(
-        title: 'Play online',
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CcOptionRow(
-              icon: Icons.flash_on,
-              title: 'Quick game',
-              subtitle: 'Find a match instantly',
-              onTap: () {
-                Navigator.pop(dialogContext);
-                _quickMatch(context, ref);
-              },
-            ),
-            const SizedBox(height: 8),
-            CcOptionRow(
-              icon: Icons.list,
-              title: 'Browse lobbies',
-              subtitle: 'Join an open lobby',
-              onTap: () {
-                Navigator.pop(dialogContext);
-                _browseLobbies(context, ref);
-              },
-            ),
-            const SizedBox(height: 8),
-            CcOptionRow(
-              icon: Icons.lock,
-              title: 'Create private game',
-              subtitle: 'Invite a friend by code',
-              onTap: () {
-                Navigator.pop(dialogContext);
-                _createPrivateGame(context, ref);
-              },
-            ),
-            const SizedBox(height: 8),
-            CcOptionRow(
-              icon: Icons.vpn_key,
-              title: 'Join by code',
-              subtitle: 'Enter an invite code',
-              onTap: () {
-                Navigator.pop(dialogContext);
-                _showJoinByCodeDialog(context, ref);
-              },
-            ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -370,8 +299,10 @@ class HomeScreen extends ConsumerWidget {
             ),
             filled: true,
             fillColor: colors.surfaceDim,
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 14,
+            ),
             enabledBorder: border(colors.borderStrong),
             focusedBorder: border(colors.selectedBorder, width: 2),
           ),
@@ -596,29 +527,88 @@ class _Caption extends StatelessWidget {
 
 /// Grouped puzzle card (comp 3a): today's puzzle row over the practice row,
 /// one bordered container with a hairline divider.
+/// One tappable entry in the play list: tinted icon, title, one line of
+/// what it is, chevron.
+class _PlayRow extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback? onTap;
+
+  const _PlayRow({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+    final enabled = onTap != null;
+
+    return InkWell(
+      onTap: onTap,
+      child: Opacity(
+        opacity: enabled ? 1 : 0.4,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+          child: Row(
+            children: [
+              Container(
+                width: 34,
+                height: 34,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: colors.accent.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, color: colors.accent, size: 19),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: colors.textPrimary,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: colors.textTertiary,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Icon(Icons.chevron_right, size: 18, color: colors.textDisabled),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _PuzzleGroup extends StatelessWidget {
   const _PuzzleGroup();
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.appColors;
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(10),
-      child: Container(
-        decoration: BoxDecoration(
-          color: colors.surfacePrimary,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: colors.border),
-        ),
-        child: Column(
-          children: [
-            const _DailyPuzzleRow(),
-            Divider(height: 1, color: colors.border),
-            const _PracticePuzzleRow(),
-          ],
-        ),
-      ),
-    );
+    return const CcPanel(rows: [_PracticePuzzleRow(), _DailyPuzzleRow()]);
   }
 }
 
@@ -704,11 +694,7 @@ class _MysteryCard extends StatelessWidget {
         color: colors.cardFace,
         borderRadius: BorderRadius.circular(4),
         boxShadow: const [
-          BoxShadow(
-            color: Colors.black38,
-            blurRadius: 3,
-            offset: Offset(0, 1),
-          ),
+          BoxShadow(color: Colors.black38, blurRadius: 3, offset: Offset(0, 1)),
         ],
       ),
       child: Stack(
@@ -740,50 +726,11 @@ class _PracticePuzzleRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.appColors;
-    return Material(
-      color: colors.surfaceChrome,
-      child: InkWell(
-        onTap: () => context.go('/practice-puzzle'),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Puzzle practice',
-                      style: TextStyle(
-                        color: colors.textPrimary,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 1),
-                    Text(
-                      'Discards · pegging traps · counting drills',
-                      style: TextStyle(
-                        color: colors.textTertiary,
-                        fontSize: 11.5,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Text(
-                'Open',
-                style: TextStyle(
-                  color: colors.accent,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+    return _PlayRow(
+      icon: Icons.extension_outlined,
+      title: 'Puzzle mode',
+      subtitle: 'Discards · pegging traps · counting drills',
+      onTap: () => context.go('/practice-puzzle'),
     );
   }
 }
@@ -794,9 +741,16 @@ class _RecentGamesSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.appColors;
-    final records =
-        ref.watch(localGameHistoryProvider).valueOrNull ?? const [];
-    final recent = records.take(3).toList();
+    final auth = ref.watch(authProvider);
+    final records = ref.watch(localGameHistoryProvider).valueOrNull ?? const [];
+    final serverGames =
+        ref.watch(serverGameHistoryProvider).valueOrNull ?? const [];
+    // On-device records clear once they upload, so the server holds the rest.
+    final recent = [
+      for (final r in records) GameSummary.fromLocal(r),
+      for (final g in serverGames)
+        GameSummary.fromGameState(g, auth.userId ?? ''),
+    ].take(3).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -841,8 +795,7 @@ class _RecentGamesSection extends ConsumerWidget {
               : Column(
                   children: [
                     for (int i = 0; i < recent.length; i++) ...[
-                      if (i > 0)
-                        Divider(height: 1, color: colors.border),
+                      if (i > 0) Divider(height: 1, color: colors.border),
                       _RecentGameRow(record: recent[i]),
                     ],
                   ],
@@ -854,7 +807,7 @@ class _RecentGamesSection extends ConsumerWidget {
 }
 
 class _RecentGameRow extends StatelessWidget {
-  final LocalGameRecord record;
+  final GameSummary record;
 
   const _RecentGameRow({required this.record});
 
@@ -945,8 +898,7 @@ class _ContinueGameSection extends StatelessWidget {
           child: _Caption('In progress'),
         ),
         const SizedBox(height: 8),
-        if (localGame != null)
-          _ActiveGameTile(game: localGame.gameState),
+        if (localGame != null) _ActiveGameTile(game: localGame.gameState),
         ...onlineGames.map((game) => _ActiveGameTile(game: game)),
         const SizedBox(height: 14),
       ],
@@ -986,11 +938,7 @@ class _ActiveGameTile extends ConsumerWidget {
             ),
             child: Row(
               children: [
-                Icon(
-                  Icons.play_arrow_rounded,
-                  color: colors.accent,
-                  size: 22,
-                ),
+                Icon(Icons.play_arrow_rounded, color: colors.accent, size: 22),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Column(
