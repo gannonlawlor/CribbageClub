@@ -6,20 +6,23 @@ import '../../../config/constants.dart';
 import '../../../core/models/card.dart';
 import '../../game/widgets/card_widget.dart';
 
-/// The six dealt cards, laid out as one row the way a hand reads at the table
-/// rather than a grid of oversized tiles. Selection is the in-game affordance:
-/// the card lifts 8px and takes a green ring (design language §4).
+/// The six dealt cards as two rows of three, big enough to read the whole
+/// hand at a glance — a puzzle is a reading problem before it's a tapping
+/// one. Selection is the in-game affordance: the card lifts 8px and takes a
+/// green ring (design language §4).
 class PuzzleHand extends StatelessWidget {
   final List<PlayingCard> cards;
   final Set<PlayingCard> selected;
   final void Function(PlayingCard card) onTap;
 
-  /// The hand never grows past the in-game card size.
-  static const double maxCardWidth = 74;
-  static const double _gap = 6;
+  static const int _perRow = 3;
+  static const double _gap = 10;
 
-  /// Room above the cards for the selected-card lift.
+  /// Room above each row for the selected-card lift.
   static const double _liftRoom = 8;
+
+  /// Cards stop growing here so a tablet doesn't get playing-card posters.
+  static const double maxCardWidth = 128;
 
   const PuzzleHand({
     super.key,
@@ -32,29 +35,54 @@ class PuzzleHand extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final n = cards.length;
-        final available = constraints.maxWidth - _gap * (n - 1);
-        final cardWidth = math.min(maxCardWidth, available / n);
+        final rows = (cards.length / _perRow).ceil();
+
+        // Fit the width, then shrink again if the rows would not fit the
+        // height the screen has left for them.
+        final byWidth = (constraints.maxWidth - _gap * (_perRow - 1)) / _perRow;
+        var cardWidth = math.min(maxCardWidth, byWidth);
+
+        if (constraints.hasBoundedHeight) {
+          final slack = _gap * (rows - 1) + _liftRoom * rows;
+          final byHeight =
+              (constraints.maxHeight - slack) /
+              rows *
+              AppConstants.cardAspectRatio;
+          cardWidth = math.min(cardWidth, byHeight);
+        }
+
         final cardHeight = cardWidth / AppConstants.cardAspectRatio;
 
-        return SizedBox(
-          height: cardHeight + _liftRoom,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              for (int i = 0; i < n; i++) ...[
-                if (i > 0) const SizedBox(width: _gap),
-                CardWidget(
-                  card: cards[i],
-                  selected: selected.contains(cards[i]),
-                  onTap: () => onTap(cards[i]),
-                  width: cardWidth,
-                  height: cardHeight,
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (int row = 0; row < rows; row++) ...[
+              if (row > 0) const SizedBox(height: _gap),
+              SizedBox(
+                height: cardHeight + _liftRoom,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    for (
+                      int i = row * _perRow;
+                      i < math.min((row + 1) * _perRow, cards.length);
+                      i++
+                    ) ...[
+                      if (i > row * _perRow) const SizedBox(width: _gap),
+                      CardWidget(
+                        card: cards[i],
+                        selected: selected.contains(cards[i]),
+                        onTap: () => onTap(cards[i]),
+                        width: cardWidth,
+                        height: cardHeight,
+                      ),
+                    ],
+                  ],
                 ),
-              ],
+              ),
             ],
-          ),
+          ],
         );
       },
     );
