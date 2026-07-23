@@ -13,6 +13,9 @@ dependencies:
 
   cupertino_icons: ^1.0.8
 
+  # Native launch screen (also provides the runtime preserve/remove API)
+  flutter_native_splash: ^2.4.3
+
   # State management
   flutter_riverpod: ^2.6.1
   riverpod_annotation: ^2.6.1
@@ -65,11 +68,34 @@ dev_dependencies:
   # App icon generation
   flutter_launcher_icons: ^0.14.3
 
+  # Native launch screen generation
+  flutter_native_splash: ^2.4.3
+
 flutter_launcher_icons:
   ios: true
   android: true
   image_path: "assets/icon/app_icon.png"
   remove_alpha_ios: true
+
+# Native launch screen (design language surfaces: dark = --surface-0,
+# light = --surface-1 "warm paper"). The peg mark carries its own dark hole
+# so it reads on either. Regenerate with:
+#   dart run flutter_native_splash:create
+flutter_native_splash:
+  # The launch screen is drawn before Flutter boots, so it can only read the
+  # OS appearance — not the app's saved theme. Since the app is dark-primary
+  # and opens dark by default, the splash is dark in both cases so it never
+  # flashes white ahead of a dark app.
+  color: "#262421"
+  color_dark: "#262421"
+  image: assets/branding/splash_mark.png
+  android_12:
+    color: "#262421"
+    color_dark: "#262421"
+    image: assets/branding/splash_mark.png
+  android: true
+  ios: true
+  web: false
 
 flutter:
   uses-material-design: true

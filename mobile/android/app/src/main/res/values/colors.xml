@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Window background between the launch splash and Flutter's first frame.
+         Dark in both OS modes: the launch splash is dark (app is dark-primary),
+         so there is never a white frame ahead of the app. -->
+    <color name="cc_window_background">#262421</color>
+</resources>
