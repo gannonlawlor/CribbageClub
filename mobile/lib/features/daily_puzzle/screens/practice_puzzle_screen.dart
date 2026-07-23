@@ -93,24 +93,33 @@ class _PlayingView extends ConsumerWidget {
               ),
           ],
         ),
-        const Spacer(),
-        PuzzlePrompt(
-          isDealer: puzzle.isDealer,
-          pickDiscards: pickDiscards,
-          picked: picked,
-        ),
-        const SizedBox(height: 28),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: PuzzleHand(
-            cards: puzzle.hand,
-            selected: state.selectedCards,
-            onTap: (card) => ref
-                .read(practicePuzzleProvider.notifier)
-                .toggleCard(card, limit: needed),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                PuzzlePrompt(
+                  isDealer: puzzle.isDealer,
+                  pickDiscards: pickDiscards,
+                  picked: picked,
+                ),
+                const SizedBox(height: 24),
+                // Flexible so the hand gives up height before it overflows a
+                // short screen.
+                Flexible(
+                  child: PuzzleHand(
+                    cards: puzzle.hand,
+                    selected: state.selectedCards,
+                    onTap: (card) => ref
+                        .read(practicePuzzleProvider.notifier)
+                        .toggleCard(card, limit: needed),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
-        const Spacer(),
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
           child: CcPrimaryButton(
