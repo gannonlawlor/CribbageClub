@@ -26,6 +26,7 @@ import '../../../shared/widgets/cc_dialog.dart';
 import '../widgets/count_block.dart';
 import '../widgets/crib_area.dart';
 import '../widgets/cut_card.dart';
+import '../widgets/discard_flight.dart';
 import '../widgets/game_controls.dart';
 import '../widgets/game_icon_button.dart';
 import '../widgets/game_settings_sheet.dart';
@@ -46,6 +47,21 @@ import '../widgets/vertical_cribbage_board.dart';
 
 /// Tracks which local game IDs have already been saved to history (prevents duplicate saves on rebuild).
 final _savedLocalGamesProvider = StateProvider<Set<String>>((ref) => {});
+
+/// Anchors the discard flight measures itself against, plus the counter that
+/// launches it. Kept per game so the keys survive rebuilds.
+class _FlightAnchors {
+  final stack = GlobalKey();
+  final hand = GlobalKey();
+  final crib = GlobalKey();
+}
+
+final _flightAnchorsProvider = Provider.family<_FlightAnchors, String>(
+  (ref, gameId) => _FlightAnchors(),
+);
+
+/// Bumped each time the player throws to the crib.
+final _discardTokenProvider = StateProvider.family<int, String>((ref, _) => 0);
 
 /// Horizontal inset that keeps the table clear of the perimeter track.
 const double _sideInset = 40;
@@ -214,6 +230,8 @@ class GameScreen extends ConsumerWidget {
         ? gs.crib
         : gs.history.whereType<CribCounted>().lastOrNull?.cribCards ?? const [];
     final settings = ref.watch(settingsProvider);
+    final anchors = ref.watch(_flightAnchorsProvider(gameId));
+    final discardToken = ref.watch(_discardTokenProvider(gameId));
     final selectedCards = ref.watch(selectedCardsProvider(gameId));
     final selectedPeggingCard = ref.watch(selectedPeggingCardProvider(gameId));
 
@@ -458,6 +476,7 @@ class GameScreen extends ConsumerWidget {
     };
 
     Widget buildHand({double horizontalPadding = 12}) => Padding(
+      key: anchors.hand,
       padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
       child: HandFan(
         cards: sortedHand,
@@ -669,6 +688,7 @@ class GameScreen extends ConsumerWidget {
           final tableCardW = math.min(56.0, handWidth * 0.175);
 
           return Stack(
+            key: anchors.stack,
             children: [
               Positioned.fill(
                 child: PerimeterBoard(
@@ -712,6 +732,7 @@ class GameScreen extends ConsumerWidget {
                         gameOver: gs.stage == GameStage.gameOver
                             ? _buildGameOver(context, ref, gs, playerId)
                             : null,
+                        cribKey: anchors.crib,
                         onSettings: () => _showSettingsSheet(
                           context,
                           ref,
@@ -766,6 +787,12 @@ class GameScreen extends ConsumerWidget {
               ...buildOverlays(
                 popupTop: contentTop + PlayerBar.height + 10,
                 popupBottom: bottomPad + PlayerBar.height + 12 + handSlot + 10,
+              ),
+              DiscardFlight(
+                stackKey: anchors.stack,
+                handKey: anchors.hand,
+                cribKey: anchors.crib,
+                token: discardToken,
               ),
             ],
           );
@@ -945,6 +972,9 @@ class GameScreen extends ConsumerWidget {
         .toList();
 
     ref.read(selectedCardsProvider(gameId).notifier).state = {};
+    // Send the pair across to the crib. The flight is decorative — the state
+    // change below doesn't wait on it.
+    ref.read(_discardTokenProvider(gameId).notifier).state++;
 
     final n = _readNotifier(ref);
     if (n is GameNotifier) await n.discardCards(cardsToDiscard);
@@ -1164,6 +1194,9 @@ class _Table extends StatelessWidget {
   final int selectedCardCount;
   final double cardWidth;
   final Widget? gameOver;
+
+  /// Where the discard flight lands.
+  final GlobalKey cribKey;
   final VoidCallback onSettings;
   final VoidCallback onHistory;
 
@@ -1178,6 +1211,7 @@ class _Table extends StatelessWidget {
     required this.selectedCardCount,
     required this.cardWidth,
     required this.gameOver,
+    required this.cribKey,
     required this.onSettings,
     required this.onHistory,
   });
@@ -1303,6 +1337,7 @@ class _Table extends StatelessWidget {
             top: isDealer ? null : 18,
             bottom: isDealer ? 18 : null,
             child: StarterCribCluster(
+              cribKey: cribKey,
               starter: gs.cutCard,
               crib: cribCards,
               cribRevealed: cribRevealed,

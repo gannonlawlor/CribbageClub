@@ -14,6 +14,9 @@ class StarterCribCluster extends StatelessWidget {
   final String cribOwner;
   final double cardWidth;
 
+  /// Anchors the discard flight's landing point on the crib stack.
+  final GlobalKey? cribKey;
+
   const StarterCribCluster({
     super.key,
     required this.starter,
@@ -21,6 +24,7 @@ class StarterCribCluster extends StatelessWidget {
     required this.cribRevealed,
     required this.cribOwner,
     required this.cardWidth,
+    this.cribKey,
   });
 
   double get _cardHeight => cardWidth / (2.5 / 3.5);
@@ -56,6 +60,7 @@ class StarterCribCluster extends StatelessWidget {
         ),
         const SizedBox(width: 14),
         _Labelled(
+          key: cribKey,
           label: cribOwner,
           labelWidth: cardWidth + 14,
           child: cribRevealed && crib.isNotEmpty
@@ -79,6 +84,7 @@ class _Labelled extends StatelessWidget {
   final Widget child;
 
   const _Labelled({
+    super.key,
     required this.label,
     required this.labelWidth,
     required this.child,
