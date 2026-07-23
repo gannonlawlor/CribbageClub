@@ -24,6 +24,7 @@ import '../../game/widgets/perimeter_board.dart';
 import '../../game/widgets/player_bar.dart';
 import '../../game/widgets/starter_crib.dart';
 import '../state/replay_snapshot_builder.dart';
+import '../../../shared/widgets/cc_swipe_back.dart';
 
 /// Horizontal inset that keeps the table clear of the perimeter track —
 /// matches the game screen so a replay reads as the same board.
@@ -301,121 +302,134 @@ class _ReplayContent extends ConsumerWidget {
         ? (finalScores[opponentId] ?? snapshot.scores[opponentId] ?? 0)
         : (snapshot.scores[opponentId] ?? 0);
 
-    return Scaffold(
-      backgroundColor: colors.scaffoldBg,
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final mq = MediaQuery.of(context);
-          final width = constraints.maxWidth;
-          final height = constraints.maxHeight;
+    return CcSwipeBack(
+      onBack: () => context.go('/'),
+      // Keep clear of the scrubber, which takes horizontal drags of its own.
+      bottomInset: _transportHeight + MediaQuery.of(context).padding.bottom,
+      child: Scaffold(
+        backgroundColor: colors.scaffoldBg,
+        body: LayoutBuilder(
+          builder: (context, constraints) {
+            final mq = MediaQuery.of(context);
+            final width = constraints.maxWidth;
+            final height = constraints.maxHeight;
 
-          // Track geometry — the content insets below derive from these so
-          // nothing ever lands on a hole.
-          final topTrackY = mq.padding.top + 6;
-          final contentTop = topTrackY + BoardMetrics.topRunHeight + 20;
-          final bottomPad = math.max(mq.padding.bottom, 12.0);
+            // Track geometry — the content insets below derive from these so
+            // nothing ever lands on a hole.
+            final topTrackY = mq.padding.top + 6;
+            final contentTop = topTrackY + BoardMetrics.topRunHeight + 20;
+            final bottomPad = math.max(mq.padding.bottom, 12.0);
 
-          final handWidth = width - _sideInset * 2;
-          final handCardW = math.min(64.0, handWidth * 0.22);
-          final handSlot = handCardW / AppConstants.cardAspectRatio;
-          final oppCardW = math.min(46.0, handWidth * 0.16);
-          final oppSlot = oppCardW / AppConstants.cardAspectRatio;
+            final handWidth = width - _sideInset * 2;
+            final handCardW = math.min(64.0, handWidth * 0.22);
+            final handSlot = handCardW / AppConstants.cardAspectRatio;
+            final oppCardW = math.min(46.0, handWidth * 0.16);
+            final oppSlot = oppCardW / AppConstants.cardAspectRatio;
 
-          final bottomBlock =
-              bottomPad + _transportHeight + PlayerBar.height + 10 + handSlot;
-          final sideBottom = height - bottomBlock - 22;
+            final bottomBlock =
+                bottomPad + _transportHeight + PlayerBar.height + 10 + handSlot;
+            final sideBottom = height - bottomBlock - 22;
 
-          final tableCardW = math.min(52.0, handWidth * 0.165);
+            final tableCardW = math.min(52.0, handWidth * 0.165);
 
-          return Stack(
-            children: [
-              Positioned.fill(
-                child: PerimeterBoard(
-                  topY: topTrackY,
-                  sideTop: contentTop,
-                  sideBottom: sideBottom,
-                  playerScore: myScore,
-                  opponentScore: opponentScore,
+            return Stack(
+              children: [
+                Positioned.fill(
+                  child: PerimeterBoard(
+                    topY: topTrackY,
+                    sideTop: contentTop,
+                    sideBottom: sideBottom,
+                    playerScore: myScore,
+                    opponentScore: opponentScore,
+                  ),
                 ),
-              ),
-              Column(
-                children: [
-                  SizedBox(height: contentTop),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: _sideInset),
-                    child: PlayerBar(
-                      name: opponentName,
-                      score: opponentScore,
-                      isSelf: false,
-                      isDealer: hasDealer && !isDealer,
-                      isActive: snapshot.actingPlayerId == opponentId,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: _sideInset),
-                    child: _ReplayHand(
-                      cards: snapshot.hands[opponentId] ?? const [],
-                      cardWidth: oppCardW,
-                      slotHeight: oppSlot,
-                    ),
-                  ),
-                  Expanded(
-                    child: Padding(
+                Column(
+                  children: [
+                    SizedBox(height: contentTop),
+                    Padding(
                       padding: const EdgeInsets.symmetric(
                         horizontal: _sideInset,
                       ),
-                      child: _ReplayTable(
-                        snapshot: snapshot,
-                        myId: myId,
-                        myScore: myScore,
-                        opponentScore: opponentScore,
-                        opponentName: opponentName,
-                        isDealer: isDealer,
-                        cardWidth: tableCardW,
-                        onClose: () => context.go('/'),
-                        onAnalyze: () => context.go('/analysis/$gameId'),
+                      child: PlayerBar(
+                        name: opponentName,
+                        score: opponentScore,
+                        isSelf: false,
+                        isDealer: hasDealer && !isDealer,
+                        isActive: snapshot.actingPlayerId == opponentId,
                       ),
                     ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: _sideInset),
-                    child: _ReplayHand(
-                      cards: snapshot.hands[myId] ?? const [],
-                      cardWidth: handCardW,
-                      slotHeight: handSlot,
+                    const SizedBox(height: 8),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: _sideInset,
+                      ),
+                      child: _ReplayHand(
+                        cards: snapshot.hands[opponentId] ?? const [],
+                        cardWidth: oppCardW,
+                        slotHeight: oppSlot,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 10),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: _sideInset),
-                    child: PlayerBar(
-                      name: myName,
-                      score: myScore,
-                      isSelf: true,
-                      isDealer: hasDealer && isDealer,
-                      isActive: snapshot.actingPlayerId == myId,
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: _sideInset,
+                        ),
+                        child: _ReplayTable(
+                          snapshot: snapshot,
+                          myId: myId,
+                          myScore: myScore,
+                          opponentScore: opponentScore,
+                          opponentName: opponentName,
+                          isDealer: isDealer,
+                          cardWidth: tableCardW,
+                          onClose: () => context.go('/'),
+                          onAnalyze: () => context.go('/analysis/$gameId'),
+                        ),
+                      ),
                     ),
-                  ),
-                  _TransportBar(
-                    state: replayState,
-                    snapshot: snapshot,
-                    isSelfActing: snapshot.actingPlayerId == myId,
-                    bottomPad: bottomPad,
-                    onSeek: notifier.seekTo,
-                    onStepBack: notifier.stepBack,
-                    onStepForward: notifier.stepForward,
-                    onTogglePlay: notifier.togglePlay,
-                    onCycleSpeed: () {
-                      final idx = _speeds.indexOf(replayState.playbackSpeed);
-                      notifier.setSpeed(_speeds[(idx + 1) % _speeds.length]);
-                    },
-                  ),
-                ],
-              ),
-            ],
-          );
-        },
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: _sideInset,
+                      ),
+                      child: _ReplayHand(
+                        cards: snapshot.hands[myId] ?? const [],
+                        cardWidth: handCardW,
+                        slotHeight: handSlot,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: _sideInset,
+                      ),
+                      child: PlayerBar(
+                        name: myName,
+                        score: myScore,
+                        isSelf: true,
+                        isDealer: hasDealer && isDealer,
+                        isActive: snapshot.actingPlayerId == myId,
+                      ),
+                    ),
+                    _TransportBar(
+                      state: replayState,
+                      snapshot: snapshot,
+                      isSelfActing: snapshot.actingPlayerId == myId,
+                      bottomPad: bottomPad,
+                      onSeek: notifier.seekTo,
+                      onStepBack: notifier.stepBack,
+                      onStepForward: notifier.stepForward,
+                      onTogglePlay: notifier.togglePlay,
+                      onCycleSpeed: () {
+                        final idx = _speeds.indexOf(replayState.playbackSpeed);
+                        notifier.setSpeed(_speeds[(idx + 1) % _speeds.length]);
+                      },
+                    ),
+                  ],
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }

@@ -11,6 +11,7 @@ import '../../../shared/widgets/cc_buttons.dart';
 import '../../../shared/widgets/cc_dialog.dart';
 import '../../../shared/widgets/cc_field.dart';
 import '../../../shared/widgets/cc_screen.dart';
+import '../../../shared/widgets/cc_swipe_back.dart';
 
 // Providers
 final _friendsProvider = FutureProvider.autoDispose<List<FriendInfo>>((
@@ -65,34 +66,40 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
     final notifCount = ref.watch(notificationCountProvider);
     final total = notifCount.whenOrNull(data: (n) => n.total) ?? 0;
 
-    return Scaffold(
-      backgroundColor: colors.scaffoldBg,
-      body: SafeArea(
-        bottom: false,
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 480),
-            child: Column(
-              children: [
-                CcScreenHeader(title: 'Friends', onBack: () => context.go('/')),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
-                  child: CcSegmented(
-                    labels: const ['Club', 'Requests', 'Find'],
-                    badges: [null, total, null],
-                    selected: _tab,
-                    onChanged: (i) => setState(() => _tab = i),
+    return CcSwipeBack(
+      onBack: () => context.go('/'),
+      child: Scaffold(
+        backgroundColor: colors.scaffoldBg,
+        body: SafeArea(
+          bottom: false,
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 480),
+              child: Column(
+                children: [
+                  CcScreenHeader(
+                    title: 'Friends',
+                    onBack: () => context.go('/'),
                   ),
-                ),
-                Expanded(
-                  child: IndexedStack(
-                    index: _tab,
-                    // Keeps the search field and its results alive across
-                    // tab switches.
-                    children: const [_ClubTab(), _RequestsTab(), _FindTab()],
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
+                    child: CcSegmented(
+                      labels: const ['Club', 'Requests', 'Find'],
+                      badges: [null, total, null],
+                      selected: _tab,
+                      onChanged: (i) => setState(() => _tab = i),
+                    ),
                   ),
-                ),
-              ],
+                  Expanded(
+                    child: IndexedStack(
+                      index: _tab,
+                      // Keeps the search field and its results alive across
+                      // tab switches.
+                      children: const [_ClubTab(), _RequestsTab(), _FindTab()],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

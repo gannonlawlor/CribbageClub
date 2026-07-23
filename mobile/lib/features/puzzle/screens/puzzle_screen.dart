@@ -7,6 +7,7 @@ import '../../../core/models/card.dart';
 import '../../../core/models/game_analysis.dart';
 import '../../../core/models/puzzle.dart';
 import '../../game/widgets/card_widget.dart';
+import '../../../shared/widgets/cc_swipe_back.dart';
 
 final _dailyPuzzleProvider = FutureProvider.autoDispose<PuzzleResponse>((
   ref,
@@ -35,30 +36,33 @@ class _PuzzleScreenState extends ConsumerState<PuzzleScreen> {
     final colors = context.appColors;
 
     if (!auth.isLoggedIn) {
-      return Scaffold(
-        appBar: AppBar(
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () => context.go('/'),
+      return CcSwipeBack(
+        onBack: () => context.go('/'),
+        child: Scaffold(
+          appBar: AppBar(
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: () => context.go('/'),
+            ),
+            title: const Text('Daily Puzzle'),
           ),
-          title: const Text('Daily Puzzle'),
-        ),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.lock_outline, size: 48, color: colors.textDisabled),
-              const SizedBox(height: 16),
-              Text(
-                'Log in to play the daily puzzle',
-                style: TextStyle(color: colors.textTertiary, fontSize: 16),
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => context.go('/login'),
-                child: const Text('Log In'),
-              ),
-            ],
+          body: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.lock_outline, size: 48, color: colors.textDisabled),
+                const SizedBox(height: 16),
+                Text(
+                  'Log in to play the daily puzzle',
+                  style: TextStyle(color: colors.textTertiary, fontSize: 16),
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () => context.go('/login'),
+                  child: const Text('Log In'),
+                ),
+              ],
+            ),
           ),
         ),
       );
@@ -265,18 +269,14 @@ class _PuzzleResult extends StatelessWidget {
             children: [
               Icon(
                 result.isOptimal ? Icons.check_circle : Icons.info_outline,
-                color: result.isOptimal
-                    ? colors.evOptimal
-                    : colors.evGood,
+                color: result.isOptimal ? colors.evOptimal : colors.evGood,
                 size: 28,
               ),
               const SizedBox(width: 8),
               Text(
                 result.isOptimal ? 'Optimal!' : 'Not quite...',
                 style: TextStyle(
-                  color: result.isOptimal
-                      ? colors.evOptimal
-                      : colors.evGood,
+                  color: result.isOptimal ? colors.evOptimal : colors.evGood,
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                 ),
@@ -383,10 +383,7 @@ class _PuzzleResult extends StatelessWidget {
                       ),
                       child: Text(
                         'You',
-                        style: TextStyle(
-                          color: colors.highlight,
-                          fontSize: 10,
-                        ),
+                        style: TextStyle(color: colors.highlight, fontSize: 10),
                       ),
                     ),
                   if (isOpt)
@@ -402,10 +399,7 @@ class _PuzzleResult extends StatelessWidget {
                       ),
                       child: Text(
                         'Best',
-                        style: TextStyle(
-                          color: colors.evOptimal,
-                          fontSize: 10,
-                        ),
+                        style: TextStyle(color: colors.evOptimal, fontSize: 10),
                       ),
                     ),
                 ],

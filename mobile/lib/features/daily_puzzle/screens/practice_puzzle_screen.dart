@@ -14,6 +14,7 @@ import '../widgets/explain_dialog.dart';
 import '../widgets/keep_rank_tile.dart';
 import '../widgets/puzzle_hand.dart';
 import '../widgets/puzzle_prompt.dart';
+import '../../../shared/widgets/cc_swipe_back.dart';
 
 class PracticePuzzleScreen extends ConsumerStatefulWidget {
   const PracticePuzzleScreen({super.key});
@@ -41,21 +42,24 @@ class _PracticePuzzleScreenState extends ConsumerState<PracticePuzzleScreen> {
     final state = ref.watch(practicePuzzleProvider);
     final puzzle = state.puzzle;
 
-    return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(gradient: colors.gameGradient),
-        child: SafeArea(
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 500),
-              child: puzzle == null
-                  ? const Center(child: CircularProgressIndicator())
-                  : AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 400),
-                      child: state.phase == PuzzlePhase.playing
-                          ? _PlayingView(key: const ValueKey('playing'))
-                          : _RevealedView(key: const ValueKey('revealed')),
-                    ),
+    return CcSwipeBack(
+      onBack: () => context.go('/'),
+      child: Scaffold(
+        body: Container(
+          decoration: BoxDecoration(gradient: colors.gameGradient),
+          child: SafeArea(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 500),
+                child: puzzle == null
+                    ? const Center(child: CircularProgressIndicator())
+                    : AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 400),
+                        child: state.phase == PuzzlePhase.playing
+                            ? _PlayingView(key: const ValueKey('playing'))
+                            : _RevealedView(key: const ValueKey('revealed')),
+                      ),
+              ),
             ),
           ),
         ),

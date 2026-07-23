@@ -13,6 +13,7 @@ import '../widgets/puzzle_summary.dart';
 import '../widgets/puzzle_hand.dart';
 import '../widgets/puzzle_prompt.dart';
 import '../widgets/streak_badge.dart';
+import '../../../shared/widgets/cc_swipe_back.dart';
 
 const _months = [
   'Jan',
@@ -53,34 +54,39 @@ class _DailyPuzzleScreenState extends ConsumerState<DailyPuzzleScreen> {
     final state = ref.watch(dailyPuzzleProvider);
     final puzzleSet = state.puzzleSet;
 
-    return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(gradient: colors.gameGradient),
-        child: SafeArea(
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 500),
-              child: puzzleSet == null
-                  ? const Center(child: CircularProgressIndicator())
-                  : AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 400),
-                      child: switch (state.phase) {
-                        PuzzlePhase.playing => _PlayingView(
-                          key: ValueKey('playing_${state.currentPuzzleIndex}'),
-                        ),
-                        PuzzlePhase.revealed ||
-                        PuzzlePhase.summary => PuzzleSummary(
-                          key: const ValueKey('summary'),
-                          puzzleSet: puzzleSet,
-                          playerScores: state.playerScores,
-                          playerRanks: state.playerRanks,
-                          allResults: state.allResults,
-                          playerKeeps: state.playerKeeps,
-                          streak: state.streak,
-                          onBackToHome: () => context.go('/'),
-                        ),
-                      },
-                    ),
+    return CcSwipeBack(
+      onBack: () => context.go('/'),
+      child: Scaffold(
+        body: Container(
+          decoration: BoxDecoration(gradient: colors.gameGradient),
+          child: SafeArea(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 500),
+                child: puzzleSet == null
+                    ? const Center(child: CircularProgressIndicator())
+                    : AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 400),
+                        child: switch (state.phase) {
+                          PuzzlePhase.playing => _PlayingView(
+                            key: ValueKey(
+                              'playing_${state.currentPuzzleIndex}',
+                            ),
+                          ),
+                          PuzzlePhase.revealed ||
+                          PuzzlePhase.summary => PuzzleSummary(
+                            key: const ValueKey('summary'),
+                            puzzleSet: puzzleSet,
+                            playerScores: state.playerScores,
+                            playerRanks: state.playerRanks,
+                            allResults: state.allResults,
+                            playerKeeps: state.playerKeeps,
+                            streak: state.streak,
+                            onBackToHome: () => context.go('/'),
+                          ),
+                        },
+                      ),
+              ),
             ),
           ),
         ),

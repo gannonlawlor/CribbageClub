@@ -5,6 +5,7 @@ import '../../../config/theme/app_colors.dart';
 import '../../../core/auth/auth_provider.dart';
 import '../../../core/models/leaderboard_entry.dart';
 import '../../../shared/widgets/cc_screen.dart';
+import '../../../shared/widgets/cc_swipe_back.dart';
 
 final _leaderboardProvider = FutureProvider.autoDispose<List<LeaderboardEntry>>(
   (ref) async {
@@ -83,21 +84,24 @@ class LeaderboardScreen extends ConsumerWidget {
       );
     }
 
-    return Scaffold(
-      backgroundColor: colors.scaffoldBg,
-      body: SafeArea(
-        bottom: false,
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 480),
-            child: Column(
-              children: [
-                CcScreenHeader(
-                  title: 'Leaderboard',
-                  onBack: () => context.go('/'),
-                ),
-                Expanded(child: body),
-              ],
+    return CcSwipeBack(
+      onBack: () => context.go('/'),
+      child: Scaffold(
+        backgroundColor: colors.scaffoldBg,
+        body: SafeArea(
+          bottom: false,
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 480),
+              child: Column(
+                children: [
+                  CcScreenHeader(
+                    title: 'Leaderboard',
+                    onBack: () => context.go('/'),
+                  ),
+                  Expanded(child: body),
+                ],
+              ),
             ),
           ),
         ),
