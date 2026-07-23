@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../config/theme/app_colors.dart';
 
-/// Pressed-bevel edge under the primary CTA. Theme-invariant like the fill
-/// (design language §4: button fills don't change between themes).
-const _green600 = Color(0xFF5D9948);
-
 /// Primary CTA — green fill with a 4px darker bottom bevel (design language
 /// "Play CTA"). Disabled state drops to 40% opacity with no bevel.
 class CcPrimaryButton extends StatelessWidget {
@@ -34,7 +30,10 @@ class CcPrimaryButton extends StatelessWidget {
       opacity: enabled ? 1.0 : 0.4,
       child: Container(
         height: height,
-        decoration: BoxDecoration(color: _green600, borderRadius: radius),
+        decoration: BoxDecoration(
+          color: colors.accentPressed,
+          borderRadius: radius,
+        ),
         child: Padding(
           padding: EdgeInsets.only(bottom: bevel),
           child: Material(
@@ -51,7 +50,11 @@ class CcPrimaryButton extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     if (icon != null) ...[
-                      Icon(icon, size: fontSize + 2, color: colors.accentOnSurface),
+                      Icon(
+                        icon,
+                        size: fontSize + 2,
+                        color: colors.accentOnSurface,
+                      ),
                       const SizedBox(width: 8),
                     ],
                     Flexible(

@@ -1,6 +1,9 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../config/theme/app_colors.dart';
 import '../../../core/auth/auth_provider.dart';
 import '../../../core/models/game_state.dart';
@@ -8,7 +11,7 @@ import '../../../shared/widgets/auth_required.dart';
 import '../../../shared/widgets/cc_bottom_nav.dart';
 import '../../../shared/widgets/cc_buttons.dart';
 import '../../../shared/widgets/cc_dialog.dart';
-import '../../../shared/widgets/cc_screen.dart';
+import '../../../shared/widgets/cc_list.dart';
 import '../../../shared/widgets/game_history_row.dart';
 import '../../../shared/widgets/loading_overlay.dart';
 import '../../daily_puzzle/state/puzzle_provider.dart';
@@ -16,29 +19,43 @@ import '../../profile/state/my_profile_provider.dart';
 import '../../../core/services/local_game_history_provider.dart';
 import '../../../core/services/local_game_history_service.dart';
 import '../../game/state/game_providers.dart';
+import '../../game/widgets/card_widget.dart';
 
 final _isCreatingGameProvider = StateProvider<bool>((ref) => false);
 
-/// The three engine strengths, in the order they're offered.
-class _Bot {
-  final String difficulty;
-  final String label;
-  final String blurb;
-  final IconData icon;
-
-  const _Bot(this.difficulty, this.label, this.blurb, this.icon);
-}
-
-const _bots = [
-  _Bot('basic', 'Easy', 'Basic heuristics', Icons.sentiment_satisfied),
-  _Bot('medium', 'Medium', 'Optimizes its hand', Icons.psychology),
-  _Bot(
-    'hard',
-    'Hard',
-    'Optimizes hand and crib, pegs sharply',
-    Icons.local_fire_department,
-  ),
+/// Engine strengths, in the order the segmented control offers them.
+const _difficulties = [
+  ('basic', 'Easy'),
+  ('medium', 'Medium'),
+  ('hard', 'Hard'),
 ];
+
+/// The strength you last played, so the segment you usually pick is already
+/// lit and starting that game again is one tap.
+final _botDifficultyProvider =
+    StateNotifierProvider<_BotDifficultyNotifier, String>(
+      (ref) => _BotDifficultyNotifier(),
+    );
+
+class _BotDifficultyNotifier extends StateNotifier<String> {
+  static const _key = 'bot_difficulty';
+
+  _BotDifficultyNotifier() : super('medium') {
+    _load();
+  }
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    final stored = prefs.getString(_key);
+    if (stored != null && mounted) state = stored;
+  }
+
+  Future<void> set(String value) async {
+    state = value;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_key, value);
+  }
+}
 
 // Active games provider — fetches from /api/games/me (only when logged in).
 // Kept alive so returning to the Play tab doesn't re-load and shift layout.
@@ -76,18 +93,15 @@ class HomeScreen extends ConsumerWidget {
                         padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
+                          spacing: 12,
                           children: [
-                            // Guest upgrade banner
-                            if (auth.isLoggedIn && auth.isGuest) ...[
-                              _GuestBanner(),
-                              const SizedBox(height: 14),
-                            ],
+                            if (auth.isLoggedIn && auth.isGuest) _GuestBanner(),
 
-                            // Active games (online + local in-progress)
+                            // In-progress games resume straight from the top.
                             AnimatedSize(
                               duration: const Duration(milliseconds: 200),
                               alignment: Alignment.topCenter,
-                              child: _ContinueGameSection(
+                              child: _ResumeSection(
                                 activeGames: activeGames,
                                 activeLocalGame: activeLocalGame,
                                 isLoggedIn: auth.isLoggedIn,
@@ -95,71 +109,42 @@ class HomeScreen extends ConsumerWidget {
                             ),
 
                             CcPrimaryButton(
-                              label: 'Play online',
+                              label: 'Play Online',
+                              icon: Icons.play_arrow,
+                              height: 60,
                               onPressed: isCreating
                                   ? null
                                   : () => _quickMatch(context, ref),
                             ),
-                            const SizedBox(height: 18),
 
-                            const _Caption('Play a bot'),
-                            const SizedBox(height: 8),
-                            CcPanel(
-                              rows: [
-                                for (final bot in _bots)
-                                  _PlayRow(
-                                    icon: bot.icon,
-                                    title: bot.label,
-                                    subtitle: bot.blurb,
-                                    onTap: isCreating
-                                        ? null
-                                        : () => _createLocalAIGame(
-                                            context,
-                                            ref,
-                                            bot.difficulty,
-                                          ),
-                                  ),
+                            _BotCard(
+                              onPlay: isCreating
+                                  ? null
+                                  : (difficulty) {
+                                      ref
+                                          .read(_botDifficultyProvider.notifier)
+                                          .set(difficulty);
+                                      _createLocalAIGame(
+                                        context,
+                                        ref,
+                                        difficulty,
+                                      );
+                                    },
+                            ),
+
+                            _FriendCard(
+                              onTap: isCreating
+                                  ? null
+                                  : () => _showFriendOptions(context, ref),
+                            ),
+
+                            Row(
+                              spacing: 10,
+                              children: const [
+                                Expanded(child: _DailyPuzzleCard()),
+                                Expanded(child: _PuzzleModeCard()),
                               ],
                             ),
-                            const SizedBox(height: 18),
-
-                            const _Caption('Play a friend'),
-                            const SizedBox(height: 8),
-                            CcPanel(
-                              rows: [
-                                _PlayRow(
-                                  icon: Icons.lock_outline,
-                                  title: 'Private game',
-                                  subtitle: 'Invite with a code',
-                                  onTap: isCreating
-                                      ? null
-                                      : () => _createPrivateGame(context, ref),
-                                ),
-                                _PlayRow(
-                                  icon: Icons.vpn_key_outlined,
-                                  title: 'Join by code',
-                                  subtitle: 'Enter a code you were sent',
-                                  onTap: isCreating
-                                      ? null
-                                      : () =>
-                                            _showJoinByCodeDialog(context, ref),
-                                ),
-                                _PlayRow(
-                                  icon: Icons.list,
-                                  title: 'Browse lobbies',
-                                  subtitle: 'Join a table someone left open',
-                                  onTap: isCreating
-                                      ? null
-                                      : () => _browseLobbies(context, ref),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 18),
-
-                            const _Caption('Puzzles'),
-                            const SizedBox(height: 8),
-                            const _PuzzleGroup(),
-                            const SizedBox(height: 20),
 
                             const _RecentGamesSection(),
                           ],
@@ -174,6 +159,59 @@ class HomeScreen extends ConsumerWidget {
         ),
       ),
       bottomNavigationBar: const CcBottomNav(active: CcTab.play),
+    );
+  }
+
+  void _showFriendOptions(BuildContext context, WidgetRef ref) {
+    showCcDialog(
+      context: context,
+      builder: (dialogContext) => CcDialog(
+        title: 'Play a friend',
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CcOptionRow(
+              icon: Icons.lock_outline,
+              title: 'Private game',
+              subtitle: 'Invite with a code',
+              onTap: () {
+                Navigator.pop(dialogContext);
+                _createPrivateGame(context, ref);
+              },
+            ),
+            const SizedBox(height: 8),
+            CcOptionRow(
+              icon: Icons.vpn_key_outlined,
+              title: 'Join by code',
+              subtitle: 'Enter a code you were sent',
+              onTap: () {
+                Navigator.pop(dialogContext);
+                _showJoinByCodeDialog(context, ref);
+              },
+            ),
+            const SizedBox(height: 8),
+            CcOptionRow(
+              icon: Icons.people_outline,
+              title: 'Challenge a club member',
+              subtitle: 'Pick someone from your friends',
+              onTap: () {
+                Navigator.pop(dialogContext);
+                context.go('/friends');
+              },
+            ),
+            const SizedBox(height: 8),
+            CcOptionRow(
+              icon: Icons.list,
+              title: 'Browse lobbies',
+              subtitle: 'Join a table someone left open',
+              onTap: () {
+                Navigator.pop(dialogContext);
+                _browseLobbies(context, ref);
+              },
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -354,7 +392,7 @@ class HomeScreen extends ConsumerWidget {
   }
 }
 
-/// App header: logo mark, wordmark, rating/identity chip (comp 3a).
+/// App header: peg mark, wordmark, rating pill.
 class _Header extends ConsumerWidget {
   final AuthState auth;
 
@@ -390,24 +428,7 @@ class _Header extends ConsumerWidget {
       padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
       child: Row(
         children: [
-          Container(
-            width: 28,
-            height: 28,
-            decoration: BoxDecoration(
-              color: colors.accent,
-              borderRadius: BorderRadius.circular(7),
-            ),
-            child: Center(
-              child: Text(
-                'CC',
-                style: TextStyle(
-                  color: colors.accentOnSurface,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ),
-          ),
+          const _PegMark(),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
@@ -422,6 +443,67 @@ class _Header extends ConsumerWidget {
             ),
           ),
           chip,
+        ],
+      ),
+    );
+  }
+}
+
+/// The app mark: a green peg standing in its hole.
+class _PegMark extends StatelessWidget {
+  const _PegMark();
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+    return Container(
+      width: 28,
+      height: 28,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [colors.boardPrimary, colors.boardSecondary],
+        ),
+        borderRadius: BorderRadius.circular(7),
+        border: Border.all(color: colors.borderStrong),
+      ),
+      alignment: Alignment.center,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(
+              color: colors.accent,
+              shape: BoxShape.circle,
+            ),
+          ),
+          Transform.translate(
+            offset: const Offset(0, -1),
+            child: Container(
+              width: 4,
+              height: 8,
+              decoration: BoxDecoration(
+                color: colors.accent,
+                borderRadius: const BorderRadius.vertical(
+                  bottom: Radius.circular(2),
+                ),
+              ),
+            ),
+          ),
+          Transform.translate(
+            offset: const Offset(0, -2.5),
+            child: Container(
+              width: 11,
+              height: 3,
+              decoration: BoxDecoration(
+                color: colors.boardHole,
+                borderRadius: BorderRadius.circular(1.5),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -447,7 +529,7 @@ class _HeaderChip extends StatelessWidget {
       borderRadius: BorderRadius.circular(999),
       child: Container(
         constraints: const BoxConstraints(maxWidth: 140),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
         decoration: BoxDecoration(
           color: colors.surfaceChrome,
           borderRadius: BorderRadius.circular(999),
@@ -459,8 +541,9 @@ class _HeaderChip extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
             color: labelColor,
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            fontFeatures: const [FontFeature.tabularFigures()],
           ),
         ),
       ),
@@ -504,7 +587,7 @@ class _GuestBanner extends ConsumerWidget {
   }
 }
 
-/// Caption label — 12/600, +0.06em, uppercase (design language "caption").
+/// Caption label — 11/600 uppercase (design language "caption").
 class _Caption extends StatelessWidget {
   final String text;
 
@@ -519,101 +602,261 @@ class _Caption extends StatelessWidget {
         color: colors.textTertiary,
         fontSize: 11,
         fontWeight: FontWeight.w600,
-        letterSpacing: 0.7,
+        letterSpacing: 0.66,
       ),
     );
   }
 }
 
-/// Grouped puzzle card (comp 3a): today's puzzle row over the practice row,
-/// one bordered container with a hairline divider.
-/// One tappable entry in the play list: tinted icon, title, one line of
-/// what it is, chevron.
-class _PlayRow extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
+/// Card shell shared by the bot, friend and puzzle blocks: surface-2 panel,
+/// hairline border, r10.
+class _Card extends StatelessWidget {
+  final Widget child;
+  final EdgeInsets padding;
   final VoidCallback? onTap;
+  final Color? color;
 
-  const _PlayRow({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
+  const _Card({
+    required this.child,
+    this.padding = const EdgeInsets.fromLTRB(14, 12, 14, 12),
+    this.onTap,
+    this.color,
   });
 
   @override
   Widget build(BuildContext context) {
     final colors = context.appColors;
-    final enabled = onTap != null;
-
-    return InkWell(
-      onTap: onTap,
-      child: Opacity(
-        opacity: enabled ? 1 : 0.4,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-          child: Row(
-            children: [
-              Container(
-                width: 34,
-                height: 34,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: colors.accent.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(icon, color: colors.accent, size: 19),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: colors.textPrimary,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      subtitle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: colors.textTertiary,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              Icon(Icons.chevron_right, size: 18, color: colors.textDisabled),
-            ],
+    final radius = BorderRadius.circular(10);
+    return Material(
+      color: color ?? colors.surfacePrimary,
+      borderRadius: radius,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: radius,
+        child: Container(
+          padding: padding,
+          decoration: BoxDecoration(
+            borderRadius: radius,
+            border: Border.all(color: colors.border),
           ),
+          child: child,
         ),
       ),
     );
   }
 }
 
-class _PuzzleGroup extends StatelessWidget {
-  const _PuzzleGroup();
+/// 40px rounded tile that holds the small drawn marks on the play cards.
+class _IconTile extends StatelessWidget {
+  final Widget child;
+
+  const _IconTile({required this.child});
 
   @override
   Widget build(BuildContext context) {
-    return const CcPanel(rows: [_PracticePuzzleRow(), _DailyPuzzleRow()]);
+    final colors = context.appColors;
+    return Container(
+      width: 40,
+      height: 40,
+      decoration: BoxDecoration(
+        color: colors.surfaceDim,
+        borderRadius: BorderRadius.circular(9),
+      ),
+      alignment: Alignment.center,
+      child: child,
+    );
   }
 }
 
-class _DailyPuzzleRow extends ConsumerWidget {
-  const _DailyPuzzleRow();
+class _BotCard extends ConsumerWidget {
+  final void Function(String difficulty)? onPlay;
+
+  const _BotCard({required this.onPlay});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.appColors;
+    final selected = ref.watch(_botDifficultyProvider);
+
+    return _Card(
+      child: Row(
+        children: [
+          _IconTile(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  spacing: 6,
+                  children: [
+                    for (int i = 0; i < 2; i++)
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: colors.selectedBorder,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Container(
+                  width: 14,
+                  height: 3,
+                  decoration: BoxDecoration(
+                    color: colors.textTertiary,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          // The segmented control keeps its width; the label gives way first
+          // on a narrow screen.
+          Expanded(
+            child: Text(
+              'Play a Bot',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: colors.textPrimary,
+                fontSize: 14.5,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Opacity(
+            opacity: onPlay == null ? 0.4 : 1,
+            child: Container(
+              padding: const EdgeInsets.all(3),
+              decoration: BoxDecoration(
+                color: colors.surfaceChrome,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                spacing: 2,
+                children: [
+                  for (final (value, label) in _difficulties)
+                    GestureDetector(
+                      onTap: onPlay == null ? null : () => onPlay!(value),
+                      behavior: HitTestBehavior.opaque,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 11,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: selected == value
+                              ? colors.accent
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          label,
+                          style: TextStyle(
+                            color: selected == value
+                                ? colors.accentOnSurface
+                                : colors.textTertiary,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FriendCard extends StatelessWidget {
+  final VoidCallback? onTap;
+
+  const _FriendCard({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+    return _Card(
+      onTap: onTap,
+      child: Row(
+        children: [
+          _IconTile(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              spacing: 5,
+              children: [
+                _Peg(head: colors.pegPlayer, stem: colors.accentPressed),
+                _Peg(head: colors.pegOpponent, stem: colors.textTertiary),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'Play a Friend',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: colors.textPrimary,
+                fontSize: 14.5,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Icon(Icons.chevron_right, size: 18, color: colors.textDisabled),
+        ],
+      ),
+    );
+  }
+}
+
+/// A single peg: round head over a tapered stem.
+class _Peg extends StatelessWidget {
+  final Color head;
+  final Color stem;
+
+  const _Peg({required this.head, required this.stem});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 9,
+          height: 9,
+          decoration: BoxDecoration(color: head, shape: BoxShape.circle),
+        ),
+        Transform.translate(
+          offset: const Offset(0, -1),
+          child: Container(
+            width: 4.5,
+            height: 9,
+            decoration: BoxDecoration(
+              color: stem,
+              borderRadius: const BorderRadius.vertical(
+                bottom: Radius.circular(2),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _DailyPuzzleCard extends ConsumerWidget {
+  const _DailyPuzzleCard();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -623,97 +866,157 @@ class _DailyPuzzleRow extends ConsumerWidget {
     final completedCount = status.valueOrNull?.completedCount ?? 0;
     final streak = status.valueOrNull?.streak ?? 0;
 
-    final subtitle = [
-      if (completedToday)
-        'Solved today'
-      else if (completedCount > 0)
-        '$completedCount/5 solved'
-      else
-        '5 puzzles',
-      if (streak > 0) 'streak $streak day${streak == 1 ? '' : 's'}',
-    ].join(' · ');
+    final (label, labelColor) = streak > 0
+        ? ('streak $streak', colors.streak)
+        : completedToday
+        ? ('solved today', colors.textTertiary)
+        : ('$completedCount of 5', colors.textTertiary);
 
-    return InkWell(
+    return _Card(
+      padding: const EdgeInsets.all(14),
       onTap: () => context.go('/daily-puzzle'),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        child: Row(
-          children: [
-            _MysteryCard(),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _PuzzleCards(),
+          const SizedBox(height: 10),
+          Text(
+            'Daily Puzzle',
+            style: TextStyle(
+              color: colors.textPrimary,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: labelColor,
+              fontSize: 11.5,
+              fontWeight: FontWeight.w600,
+              fontFeatures: const [FontFeature.tabularFigures()],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The daily puzzle mark: a face-down card tucked behind a "?" card.
+class _PuzzleCards extends StatelessWidget {
+  const _PuzzleCards();
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+    return SizedBox(
+      width: 44,
+      height: 58,
+      child: Stack(
+        children: [
+          Positioned(
+            left: 8,
+            top: 0,
+            child: Transform.rotate(
+              angle: 5 * math.pi / 180,
+              // The real card back, so the mark carries the same slate and
+              // 45° hairlines as the deck in play.
+              child: const CardWidget(
+                faceUp: false,
+                enabled: false,
+                width: 38,
+                height: 52,
+              ),
+            ),
+          ),
+          Positioned(
+            left: 0,
+            top: 3,
+            child: Container(
+              width: 38,
+              height: 52,
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: colors.cardFace,
+                borderRadius: BorderRadius.circular(5),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x66000000),
+                    blurRadius: 5,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Stack(
                 children: [
                   Text(
-                    "Today's puzzle: pick the discard",
+                    '?',
                     style: TextStyle(
-                      color: colors.textPrimary,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
+                      color: colors.suitRed,
+                      fontSize: 15,
+                      height: 1,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      color: colors.textTertiary,
-                      fontSize: 12,
-                      fontFeatures: const [FontFeature.tabularFigures()],
+                  Align(
+                    alignment: Alignment.bottomRight,
+                    child: Text(
+                      '♥',
+                      style: TextStyle(
+                        color: colors.suitRed,
+                        fontSize: 14,
+                        height: 1,
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(width: 8),
-            Text(
-              completedToday ? 'Done' : 'Solve',
-              style: TextStyle(
-                color: completedToday ? colors.textTertiary : colors.accent,
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 }
 
-/// Small face-down "?" card used on the daily puzzle card.
-class _MysteryCard extends StatelessWidget {
+class _PuzzleModeCard extends StatelessWidget {
+  const _PuzzleModeCard();
+
   @override
   Widget build(BuildContext context) {
     final colors = context.appColors;
-    return Container(
-      width: 40,
-      height: 54,
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: colors.cardFace,
-        borderRadius: BorderRadius.circular(4),
-        boxShadow: const [
-          BoxShadow(color: Colors.black38, blurRadius: 3, offset: Offset(0, 1)),
-        ],
-      ),
-      child: Stack(
+    return _Card(
+      padding: const EdgeInsets.all(14),
+      onTap: () => context.go('/practice-puzzle'),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            '?',
-            style: TextStyle(
-              color: colors.suitRed,
-              fontSize: 13,
-              height: 1,
-              fontWeight: FontWeight.w700,
+          SizedBox(
+            width: 44,
+            height: 58,
+            child: Center(
+              child: _PuzzlePiece(background: colors.surfacePrimary),
             ),
           ),
-          Align(
-            alignment: Alignment.bottomRight,
-            child: Text(
-              '♥',
-              style: TextStyle(color: colors.suitRed, fontSize: 15, height: 1),
+          const SizedBox(height: 10),
+          Text(
+            'Puzzle Mode',
+            style: TextStyle(
+              color: colors.textPrimary,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
             ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            'drills & traps',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(color: colors.textTertiary, fontSize: 11.5),
           ),
         ],
       ),
@@ -721,16 +1024,53 @@ class _MysteryCard extends StatelessWidget {
   }
 }
 
-class _PracticePuzzleRow extends StatelessWidget {
-  const _PracticePuzzleRow();
+/// Jigsaw piece drawn from a rounded square with two knobs and one notch.
+class _PuzzlePiece extends StatelessWidget {
+  final Color background;
+
+  const _PuzzlePiece({required this.background});
 
   @override
   Widget build(BuildContext context) {
-    return _PlayRow(
-      icon: Icons.extension_outlined,
-      title: 'Puzzle mode',
-      subtitle: 'Discards · pegging traps · counting drills',
-      onTap: () => context.go('/practice-puzzle'),
+    final colors = context.appColors;
+    return SizedBox(
+      width: 40,
+      height: 40,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Positioned(
+            left: 4,
+            top: 10,
+            child: Container(
+              width: 26,
+              height: 26,
+              decoration: BoxDecoration(
+                color: colors.accent,
+                borderRadius: BorderRadius.circular(5),
+              ),
+            ),
+          ),
+          Positioned(left: 12, top: 3, child: _Knob(color: colors.accent)),
+          Positioned(left: 25, top: 18, child: _Knob(color: colors.accent)),
+          Positioned(left: -1, top: 18, child: _Knob(color: background)),
+        ],
+      ),
+    );
+  }
+}
+
+class _Knob extends StatelessWidget {
+  final Color color;
+
+  const _Knob({required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 11,
+      height: 11,
+      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
     );
   }
 }
@@ -756,8 +1096,10 @@ class _RecentGamesSection extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 2),
+          padding: const EdgeInsets.fromLTRB(2, 2, 2, 8),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
             children: [
               const _Caption('Recent games'),
               const Spacer(),
@@ -775,7 +1117,6 @@ class _RecentGamesSection extends ConsumerWidget {
             ],
           ),
         ),
-        const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(8),
@@ -868,12 +1209,12 @@ class _RecentGameRow extends StatelessWidget {
   }
 }
 
-class _ContinueGameSection extends StatelessWidget {
+class _ResumeSection extends StatelessWidget {
   final AsyncValue<List<GameState>> activeGames;
   final AsyncValue<ActiveLocalGame?> activeLocalGame;
   final bool isLoggedIn;
 
-  const _ContinueGameSection({
+  const _ResumeSection({
     required this.activeGames,
     required this.activeLocalGame,
     required this.isLoggedIn,
@@ -892,83 +1233,138 @@ class _ContinueGameSection extends StatelessWidget {
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
+      spacing: 10,
       children: [
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 2),
-          child: _Caption('In progress'),
-        ),
-        const SizedBox(height: 8),
-        if (localGame != null) _ActiveGameTile(game: localGame.gameState),
-        ...onlineGames.map((game) => _ActiveGameTile(game: game)),
-        const SizedBox(height: 14),
+        if (localGame != null) _ResumeCard(game: localGame.gameState),
+        ...onlineGames.map((game) => _ResumeCard(game: game)),
       ],
     );
   }
 }
 
-class _ActiveGameTile extends ConsumerWidget {
+/// The resume card (comp 3a): a two-lane peg snapshot of where the game
+/// stands, who you're playing, and a green Resume.
+class _ResumeCard extends ConsumerWidget {
   final GameState game;
 
-  const _ActiveGameTile({required this.game});
+  const _ResumeCard({required this.game});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.appColors;
     final auth = ref.watch(authProvider);
     final playerId = auth.userId ?? '';
-    final playerIndex = game.players.indexWhere((p) => p.id == playerId);
-    final player = playerIndex >= 0
-        ? game.players[playerIndex]
-        : game.players[0];
-    final opponent = game.players[playerIndex >= 0 ? 1 - playerIndex : 1];
+    final index = game.players.indexWhere((p) => p.id == playerId);
+    final player = index >= 0 ? game.players[index] : game.players[0];
+    final opponent = game.players[index >= 0 ? 1 - index : 1];
+    final isMyTurn = game.currentPlayerId == player.id;
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Material(
-        color: colors.surfacePrimary,
-        borderRadius: BorderRadius.circular(8),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(8),
-          onTap: () => context.go('/game/${game.gameId}'),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: colors.border),
-            ),
-            child: Row(
+    return _Card(
+      color: colors.boardPrimary,
+      onTap: () => context.go('/game/${game.gameId}'),
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+      child: Row(
+        children: [
+          _MiniTrack(playerScore: player.score, opponentScore: opponent.score),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.play_arrow_rounded, color: colors.accent, size: 22),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'vs ${opponent.name}',
-                        style: TextStyle(
-                          color: colors.textPrimary,
-                          fontSize: 13.5,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      Text(
-                        '${game.stage.displayName} · ${player.score}–${opponent.score}',
-                        style: TextStyle(
-                          color: colors.textTertiary,
-                          fontSize: 12,
-                          fontFeatures: const [FontFeature.tabularFigures()],
-                        ),
-                      ),
-                    ],
+                Text(
+                  'vs ${opponent.name}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: colors.textPrimary,
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-                Icon(Icons.chevron_right, color: colors.textDisabled),
+                Text(
+                  '${player.score}–${opponent.score} · '
+                  '${isMyTurn ? 'your play' : 'their play'}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: colors.textTertiary,
+                    fontSize: 12,
+                    fontFeatures: const [FontFeature.tabularFigures()],
+                  ),
+                ),
               ],
             ),
           ),
-        ),
+          const SizedBox(width: 12),
+          CcPrimaryButton(
+            label: 'Resume',
+            height: 36,
+            fontSize: 13,
+            onPressed: () => context.go('/game/${game.gameId}'),
+          ),
+        ],
       ),
+    );
+  }
+}
+
+/// Two five-hole lanes with each player's peg sitting where their score is —
+/// the board, small enough to read in a list row.
+class _MiniTrack extends StatelessWidget {
+  final int playerScore;
+  final int opponentScore;
+
+  static const _holes = 5;
+
+  const _MiniTrack({required this.playerScore, required this.opponentScore});
+
+  int _position(int score) =>
+      ((score / 121) * _holes).floor().clamp(0, _holes - 1);
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+
+    Widget lane(int pegAt, Color pegColor) => Row(
+      mainAxisSize: MainAxisSize.min,
+      spacing: 3,
+      children: [
+        for (int i = 0; i < _holes; i++)
+          if (i == pegAt)
+            Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(
+                color: pegColor,
+                shape: BoxShape.circle,
+              ),
+            )
+          else
+            Container(
+              width: 6,
+              height: 6,
+              decoration: BoxDecoration(
+                color: colors.boardHole,
+                shape: BoxShape.circle,
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0xB3000000),
+                    blurRadius: 1,
+                    offset: Offset(0, 1),
+                  ),
+                ],
+              ),
+            ),
+      ],
+    );
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      spacing: 4,
+      children: [
+        lane(_position(playerScore), colors.pegPlayer),
+        lane(_position(opponentScore), colors.pegOpponent),
+      ],
     );
   }
 }
