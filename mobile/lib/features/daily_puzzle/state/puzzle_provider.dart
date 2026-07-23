@@ -130,22 +130,27 @@ class DailyPuzzleNotifier extends StateNotifier<DailyPuzzleState> {
     // Re-run analysis for any puzzles that have keeps but no results
     for (var i = 0; i < n; i++) {
       if (keeps[i] != null && allResults[i] == null) {
-        _runAnalysisInBackground(
-          puzzleSet.puzzles[i],
-          keeps[i]!,
-          i,
-          today,
-        );
+        _runAnalysisInBackground(puzzleSet.puzzles[i], keeps[i]!, i, today);
       }
     }
   }
 
-  void toggleCard(PlayingCard card) {
+  /// Drops the current picks — used when the puzzle switches between asking
+  /// for the keep and asking for the throw, so a half-made choice under the
+  /// old question can't be submitted under the new one.
+  void clearSelection() {
+    if (state.selectedCards.isEmpty) return;
+    state = state.copyWith(selectedCards: {});
+  }
+
+  /// [limit] is how many cards the puzzle is asking for — four when picking
+  /// the keep, two when picking the throw.
+  void toggleCard(PlayingCard card, {int limit = 4}) {
     if (state.phase != PuzzlePhase.playing) return;
     final selected = Set<PlayingCard>.from(state.selectedCards);
     if (selected.contains(card)) {
       selected.remove(card);
-    } else if (selected.length < 4) {
+    } else if (selected.length < limit) {
       selected.add(card);
     }
     state = state.copyWith(selectedCards: selected);
@@ -154,11 +159,16 @@ class DailyPuzzleNotifier extends StateNotifier<DailyPuzzleState> {
   /// Submits the current keep selection.
   /// Saves the keep immediately and advances to the next puzzle.
   /// Analysis runs in the background and updates state when complete.
-  Future<void> submitKeep() async {
+  /// [pickedDiscards] flips what the taps meant: the keep is then the four
+  /// cards the player left alone.
+  Future<void> submitKeep({bool pickedDiscards = false}) async {
     final puzzle = state.currentPuzzle;
-    if (state.selectedCards.length != 4 || puzzle == null) return;
+    final needed = pickedDiscards ? 2 : 4;
+    if (state.selectedCards.length != needed || puzzle == null) return;
 
-    final keep = state.selectedCards.toList();
+    final keep = pickedDiscards
+        ? puzzle.hand.where((c) => !state.selectedCards.contains(c)).toList()
+        : state.selectedCards.toList();
     final idx = state.currentPuzzleIndex;
     final date = puzzle.date;
 
@@ -264,10 +274,16 @@ final dailyPuzzleProvider =
 /// Lightweight status provider for the home screen Daily Challenge button.
 /// autoDispose ensures it re-fetches each time the home screen is shown.
 final dailyPuzzleStatusProvider =
-    FutureProvider.autoDispose<({bool completedToday, int streak, int completedCount})>((ref) async {
+    FutureProvider.autoDispose<
+      ({bool completedToday, int streak, int completedCount})
+    >((ref) async {
       final persistence = ref.read(puzzlePersistenceProvider);
       final completedCount = await persistence.getCompletedCount();
       final streak = await persistence.getStreak();
       final completedToday = completedCount >= PuzzleGenerator.puzzlesPerDay;
-      return (completedToday: completedToday, streak: streak, completedCount: completedCount);
+      return (
+        completedToday: completedToday,
+        streak: streak,
+        completedCount: completedCount,
+      );
     });

@@ -6,11 +6,12 @@ import '../../../config/theme/app_colors.dart';
 import '../../../core/models/card.dart';
 import '../../../shared/widgets/cc_buttons.dart';
 import '../../../shared/widgets/cc_screen.dart';
-import '../../game/widgets/count_block.dart';
+import '../../../core/services/settings_provider.dart';
 import '../services/puzzle_generator.dart';
 import '../state/puzzle_provider.dart';
 import '../widgets/puzzle_summary.dart';
 import '../widgets/puzzle_hand.dart';
+import '../widgets/puzzle_prompt.dart';
 import '../widgets/streak_badge.dart';
 
 const _months = [
@@ -131,7 +132,13 @@ class _PlayingView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(dailyPuzzleProvider);
     final puzzle = state.currentPuzzle!;
+    final pickDiscards = ref.watch(settingsProvider).puzzlePickDiscards;
     final picked = state.selectedCards.length;
+    final needed = pickDiscards ? 2 : 4;
+
+    ref.listen(settingsProvider.select((s) => s.puzzlePickDiscards), (_, _) {
+      ref.read(dailyPuzzleProvider.notifier).clearSelection();
+    });
     final puzzleNum = state.currentPuzzleIndex + 1;
     final total = PuzzleGenerator.puzzlesPerDay;
 
@@ -150,13 +157,10 @@ class _PlayingView extends ConsumerWidget {
           keeps: state.playerKeeps,
         ),
         const Spacer(),
-        // The same block the game screen uses for the discard step, asking
-        // the same question.
-        CountBlock(
-          label: puzzle.isDealer ? 'Your crib' : "Opponent's crib",
-          headline: 'Keep four',
-          instruction: '$picked of 4 selected',
-          isMyTurn: picked == 4,
+        PuzzlePrompt(
+          isDealer: puzzle.isDealer,
+          pickDiscards: pickDiscards,
+          picked: picked,
         ),
         const SizedBox(height: 28),
         Padding(
@@ -164,8 +168,9 @@ class _PlayingView extends ConsumerWidget {
           child: PuzzleHand(
             cards: puzzle.hand,
             selected: state.selectedCards,
-            onTap: (card) =>
-                ref.read(dailyPuzzleProvider.notifier).toggleCard(card),
+            onTap: (card) => ref
+                .read(dailyPuzzleProvider.notifier)
+                .toggleCard(card, limit: needed),
           ),
         ),
         const Spacer(),
@@ -173,8 +178,10 @@ class _PlayingView extends ConsumerWidget {
           padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
           child: CcPrimaryButton(
             label: 'Submit',
-            onPressed: picked == 4
-                ? () => ref.read(dailyPuzzleProvider.notifier).submitKeep()
+            onPressed: picked == needed
+                ? () => ref
+                      .read(dailyPuzzleProvider.notifier)
+                      .submitKeep(pickedDiscards: pickDiscards)
                 : null,
           ),
         ),

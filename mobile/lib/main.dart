@@ -4,7 +4,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart' show ExternalLibrary;
+import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart'
+    show ExternalLibrary;
 import 'app.dart';
 import 'config/theme/theme_provider.dart';
 import 'core/auth/auth_provider.dart';
@@ -43,22 +44,23 @@ Future<void> main() async {
     'system' => AppThemeMode.system,
     _ => AppThemeMode.classicLight,
   };
-  setInitialSettings(SettingsState(
-    soundEnabled: saved.soundEnabled,
-    hapticsEnabled: saved.hapticsEnabled,
-    themeMode: initialTheme,
-    autoDeal: saved.autoDeal,
-    autoCut: saved.autoCut,
-    autoGo: saved.autoGo,
-    autoPlayAll: saved.autoPlayAll,
-    autoPlayPegging: saved.autoPlayPegging,
-    animationSpeed: saved.animationSpeed,
-  ));
+  setInitialSettings(
+    SettingsState(
+      soundEnabled: saved.soundEnabled,
+      hapticsEnabled: saved.hapticsEnabled,
+      themeMode: initialTheme,
+      autoDeal: saved.autoDeal,
+      autoCut: saved.autoCut,
+      autoGo: saved.autoGo,
+      autoPlayAll: saved.autoPlayAll,
+      autoPlayPegging: saved.autoPlayPegging,
+      animationSpeed: saved.animationSpeed,
+      puzzlePickDiscards: saved.puzzlePickDiscards,
+    ),
+  );
 
   final container = ProviderContainer(
-    overrides: [
-      themeProvider.overrideWith((_) => initialTheme),
-    ],
+    overrides: [themeProvider.overrideWith((_) => initialTheme)],
   );
 
   // If already logged in from a previous session, upload any remaining local games

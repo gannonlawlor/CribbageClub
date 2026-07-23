@@ -13,6 +13,10 @@ class SettingsState {
   final bool autoPlayPegging;
   final double animationSpeed;
 
+  /// Puzzles ask for the two cards you'd throw instead of the four you'd
+  /// keep — same question, the way some players think about it.
+  final bool puzzlePickDiscards;
+
   const SettingsState({
     this.soundEnabled = true,
     this.hapticsEnabled = true,
@@ -23,6 +27,7 @@ class SettingsState {
     this.autoPlayAll = false,
     this.autoPlayPegging = true,
     this.animationSpeed = 1.0,
+    this.puzzlePickDiscards = false,
   });
 
   SettingsState copyWith({
@@ -35,6 +40,7 @@ class SettingsState {
     bool? autoPlayAll,
     bool? autoPlayPegging,
     double? animationSpeed,
+    bool? puzzlePickDiscards,
   }) {
     return SettingsState(
       soundEnabled: soundEnabled ?? this.soundEnabled,
@@ -46,6 +52,7 @@ class SettingsState {
       autoPlayAll: autoPlayAll ?? this.autoPlayAll,
       autoPlayPegging: autoPlayPegging ?? this.autoPlayPegging,
       animationSpeed: animationSpeed ?? this.animationSpeed,
+      puzzlePickDiscards: puzzlePickDiscards ?? this.puzzlePickDiscards,
     );
   }
 
@@ -63,9 +70,9 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
     required SettingsService service,
     required StateController<AppThemeMode> themeController,
     SettingsState initial = const SettingsState(),
-  })  : _service = service,
-        _themeController = themeController,
-        super(initial);
+  }) : _service = service,
+       _themeController = themeController,
+       super(initial);
 
   Future<void> setSoundEnabled(bool enabled) async {
     state = state.copyWith(soundEnabled: enabled);
@@ -117,20 +124,28 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
     state = state.copyWith(animationSpeed: speed);
     await _service.setAnimationSpeed(speed);
   }
+
+  Future<void> setPuzzlePickDiscards(bool enabled) async {
+    state = state.copyWith(puzzlePickDiscards: enabled);
+    await _service.setPuzzlePickDiscards(enabled);
+  }
 }
 
-final settingsServiceProvider = Provider<SettingsService>((_) => SettingsService());
+final settingsServiceProvider = Provider<SettingsService>(
+  (_) => SettingsService(),
+);
 
-final settingsProvider =
-    StateNotifierProvider<SettingsNotifier, SettingsState>((ref) {
-  final service = ref.read(settingsServiceProvider);
-  final themeController = ref.read(themeProvider.notifier);
-  return SettingsNotifier(
-    service: service,
-    themeController: themeController,
-    initial: _initialSettings ?? const SettingsState(),
-  );
-});
+final settingsProvider = StateNotifierProvider<SettingsNotifier, SettingsState>(
+  (ref) {
+    final service = ref.read(settingsServiceProvider);
+    final themeController = ref.read(themeProvider.notifier);
+    return SettingsNotifier(
+      service: service,
+      themeController: themeController,
+      initial: _initialSettings ?? const SettingsState(),
+    );
+  },
+);
 
 /// Initial settings data loaded at startup (before providers are available).
 SettingsState? _initialSettings;

@@ -87,6 +87,23 @@ class SettingsScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 18),
 
+                const _SectionCaption('Puzzles'),
+                _Group(
+                  children: [
+                    _ToggleRow(
+                      label: 'Pick the discard',
+                      // Same question either way — this is which half of it
+                      // the puzzle asks you for.
+                      description: settings.puzzlePickDiscards
+                          ? 'Choose the two cards you would throw'
+                          : 'Choose the four cards you would keep',
+                      value: settings.puzzlePickDiscards,
+                      onChanged: (v) => notifier.setPuzzlePickDiscards(v),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 18),
+
                 const _SectionCaption('Appearance'),
                 _Group(
                   children: [
@@ -251,11 +268,15 @@ class _ValueRow extends StatelessWidget {
 
 class _ToggleRow extends StatelessWidget {
   final String label;
+
+  /// One line under the label saying what the switch currently means.
+  final String? description;
   final bool value;
   final ValueChanged<bool> onChanged;
 
   const _ToggleRow({
     required this.label,
+    this.description,
     required this.value,
     required this.onChanged,
   });
@@ -267,15 +288,34 @@ class _ToggleRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
       child: Row(
         children: [
-          Text(
-            label,
-            style: TextStyle(
-              color: colors.textPrimary,
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: colors.textPrimary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                if (description != null) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    description!,
+                    style: TextStyle(
+                      color: colors.textTertiary,
+                      fontSize: 12,
+                      height: 1.25,
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
-          const Spacer(),
+          const SizedBox(width: 8),
           Switch.adaptive(
             value: value,
             activeTrackColor: colors.accent,
@@ -316,8 +356,10 @@ class _ThemeSegmented extends StatelessWidget {
             GestureDetector(
               onTap: () => onChanged(value),
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 5,
+                ),
                 decoration: BoxDecoration(
                   color: mode == value ? colors.accent : Colors.transparent,
                   borderRadius: BorderRadius.circular(6),

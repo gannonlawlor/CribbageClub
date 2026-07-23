@@ -11,6 +11,7 @@ import '../../../shared/widgets/cc_dialog.dart';
 import '../services/puzzle_generator.dart';
 import 'explain_dialog.dart';
 import 'keep_rank_tile.dart';
+import 'puzzle_prompt.dart';
 import 'streak_badge.dart';
 
 const _months = [
@@ -445,17 +446,10 @@ class _PuzzleRow extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(12, 8, 12, 2),
-                      child: Text(
-                        puzzle.isDealer
-                            ? 'DEALER · CRIB IS YOURS'
-                            : 'NON-DEALER · CRIB IS OPPONENT\'S',
-                        style: TextStyle(
-                          color: colors.textTertiary,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.6,
-                        ),
+                      padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: CribBadge(isDealer: puzzle.isDealer),
                       ),
                     ),
                     for (final option in results!)
