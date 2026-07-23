@@ -111,17 +111,21 @@ class AppColors extends ThemeExtension<AppColors> {
 
   /// Chrome surface (--surface-0): headers, player bars, nav.
   Color get surfaceChrome => gameGradientTop;
+
+  /// `--green-600` — pressed edge and bottom bevel. Theme-invariant like the
+  /// fill it sits under (design language §9).
+  Color get accentPressed => const Color(0xFF5D9948);
   Color get accentSubtle => accent.withValues(alpha: 0.2);
   Color get accentBorder => accent.withValues(alpha: 0.5);
   Color get scrim => Colors.black54;
   Color get divider => textDisabled.withValues(alpha: 0.3);
 
   LinearGradient get gameGradient => LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [gameGradientTop, gameGradientMid, gameGradientBottom],
-        stops: const [0.0, 0.5, 1.0],
-      );
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [gameGradientTop, gameGradientMid, gameGradientBottom],
+    stops: const [0.0, 0.5, 1.0],
+  );
 
   // ── Theme variants ────────────────────────────────────────
 
@@ -140,12 +144,16 @@ class AppColors extends ThemeExtension<AppColors> {
     cardBackDetail: Color(0x12FFFFFF), // white @ 7% (45° hairline stripes)
     suitRed: Color(0xFFC0392B), // --card-red
     suitBlack: Color(0xFF1A1A1A), // --card-black
-    selectedBorder: Color(0xFF81B64C), // --green-500 (ring needs contrast on paper)
+    selectedBorder: Color(
+      0xFF81B64C,
+    ), // --green-500 (ring needs contrast on paper)
     boardPrimary: Color(0xFFECE7DF), // --board
     boardSecondary: Color(0x12000000), // --board-track: black @ 7%
     boardHole: Color(0xFFD8D2C8), // --board-hole
     pegPlayer: Color(0xFF81B64C), // --player-self
-    pegOpponent: Color(0xFFA49C90), // --player-opp (ivory would vanish on paper)
+    pegOpponent: Color(
+      0xFFA49C90,
+    ), // --player-opp (ivory would vanish on paper)
     textPrimary: Color(0xFF2A2622), // --text-1
     textSecondary: Color(0xFF57524B), // --text-2
     textTertiary: Color(0xFF767066), // --text-3
@@ -298,14 +306,20 @@ class AppColors extends ThemeExtension<AppColors> {
       scaffoldBg: Color.lerp(scaffoldBg, other.scaffoldBg, t)!,
       gameGradientTop: Color.lerp(gameGradientTop, other.gameGradientTop, t)!,
       gameGradientMid: Color.lerp(gameGradientMid, other.gameGradientMid, t)!,
-      gameGradientBottom:
-          Color.lerp(gameGradientBottom, other.gameGradientBottom, t)!,
+      gameGradientBottom: Color.lerp(
+        gameGradientBottom,
+        other.gameGradientBottom,
+        t,
+      )!,
       surfacePrimary: Color.lerp(surfacePrimary, other.surfacePrimary, t)!,
       surfaceDim: Color.lerp(surfaceDim, other.surfaceDim, t)!,
       cardFace: Color.lerp(cardFace, other.cardFace, t)!,
       cardBackPrimary: Color.lerp(cardBackPrimary, other.cardBackPrimary, t)!,
-      cardBackSecondary:
-          Color.lerp(cardBackSecondary, other.cardBackSecondary, t)!,
+      cardBackSecondary: Color.lerp(
+        cardBackSecondary,
+        other.cardBackSecondary,
+        t,
+      )!,
       cardBackDetail: Color.lerp(cardBackDetail, other.cardBackDetail, t)!,
       suitRed: Color.lerp(suitRed, other.suitRed, t)!,
       suitBlack: Color.lerp(suitBlack, other.suitBlack, t)!,
