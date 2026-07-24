@@ -34,6 +34,11 @@ class HandFan extends ConsumerStatefulWidget {
   /// The non-dealer is dealt to first; the dealer's cards arrive on the
   /// off-beat.
   final bool receiveFirst;
+
+  /// Whether cards appearing in an empty hand should deal in. Off for the
+  /// count, where the hand you already played is just being shown again —
+  /// re-dealing it reads as a fresh hand.
+  final bool animateDeal;
   final void Function(int index)? onCardTap;
 
   const HandFan({
@@ -43,6 +48,7 @@ class HandFan extends ConsumerStatefulWidget {
     this.dimmedIndices = const {},
     this.enabled = true,
     this.receiveFirst = true,
+    this.animateDeal = true,
     this.onCardTap,
   });
 
@@ -61,7 +67,7 @@ class _HandFanState extends ConsumerState<HandFan> {
   void initState() {
     super.initState();
     _seenEmpty = true;
-    if (widget.cards.isNotEmpty) {
+    if (widget.cards.isNotEmpty && widget.animateDeal) {
       // Cards already present on first build (e.g. first hand of new game).
       // Schedule animation for next frame so layout is ready.
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -76,7 +82,10 @@ class _HandFanState extends ConsumerState<HandFan> {
     if (oldWidget.cards.isNotEmpty && widget.cards.isEmpty) {
       _seenEmpty = true;
     }
-    if (_seenEmpty && oldWidget.cards.isEmpty && widget.cards.isNotEmpty) {
+    if (_seenEmpty &&
+        oldWidget.cards.isEmpty &&
+        widget.cards.isNotEmpty &&
+        widget.animateDeal) {
       _startDealAnimation();
     }
   }
