@@ -15,8 +15,20 @@ class ScorePopupOverlay extends ConsumerStatefulWidget {
   final String playerId;
   final String opponentName;
 
-  /// Where the pill sits vertically, as a stack alignment y (-1 top, 0 middle,
-  /// 1 bottom). Both players' pills land here — the identity colour says who.
+  /// Distance from the top of the stack to the underside of the opponent's
+  /// bar — their bubble hangs from there. Null falls back to [alignmentY].
+  final double? opponentTop;
+
+  /// Distance from the bottom of the stack to the top of the player's bar —
+  /// their bubble sits on there. Null falls back to [alignmentY].
+  final double? playerBottom;
+
+  /// Inset from the right edge, so the bubble lines up with the score it
+  /// belongs to rather than the middle of the bar.
+  final double rightInset;
+
+  /// Fallback position when the caller doesn't know where the bars are (the
+  /// tablet layout), as a stack alignment y (-1 top, 0 middle, 1 bottom).
   final double alignmentY;
 
   const ScorePopupOverlay({
@@ -24,6 +36,9 @@ class ScorePopupOverlay extends ConsumerStatefulWidget {
     required this.gameId,
     required this.playerId,
     required this.opponentName,
+    this.opponentTop,
+    this.playerBottom,
+    this.rightInset = 12,
     this.alignmentY = 0,
   });
 
@@ -227,9 +242,12 @@ class _ScorePopupOverlayState extends ConsumerState<ScorePopupOverlay>
 
     return Stack(
       children: [
-        _ScorePopupWidget(
+        _ScoreBubble(
           key: ValueKey(popup.id),
           popup: popup,
+          opponentTop: widget.opponentTop,
+          playerBottom: widget.playerBottom,
+          rightInset: widget.rightInset,
           alignmentY: widget.alignmentY,
         ),
       ],
@@ -273,29 +291,47 @@ class _CoalescedPopup {
   );
 }
 
-/// Score popup (design language §4): a pill filled with the scorer's identity
-/// colour, dark text, anchored clear of the count. Rises 6px, holds, fades.
-class _ScorePopupWidget extends StatelessWidget {
+/// Score bubble (design language §4): the points land beside the score they
+/// changed — hanging under the opponent's bar, sitting on top of yours — with
+/// a tail pointing at that bar. The number leads; the reason sits small
+/// underneath it.
+class _ScoreBubble extends StatelessWidget {
   final _CoalescedPopup popup;
+  final double? opponentTop;
+  final double? playerBottom;
+  final double rightInset;
   final double alignmentY;
 
-  const _ScorePopupWidget({
+  /// How far in from the bubble's right edge the tail sits. With the bubble's
+  /// right edge flush to the bar's, this puts the tail over the score, which
+  /// sits 12pt inside the bar and runs 26pt wide at two digits.
+  static const double _tailInset = 17;
+
+  const _ScoreBubble({
     super.key,
     required this.popup,
+    required this.opponentTop,
+    required this.playerBottom,
+    required this.rightInset,
     required this.alignmentY,
   });
 
   @override
   Widget build(BuildContext context) {
     final colors = context.appColors;
+    final anchor = popup.isPlayer ? playerBottom : opponentTop;
 
-    final rise = Tween<Offset>(begin: const Offset(0, 0.2), end: Offset.zero)
-        .animate(
-          CurvedAnimation(
-            parent: popup.controller,
-            curve: const Interval(0, 0.12, curve: Curves.easeOut),
-          ),
-        );
+    // Each bubble grows out of its own bar: yours pushes up off it, the
+    // opponent's drops down from theirs.
+    final from = popup.isPlayer
+        ? const Offset(0, 0.45)
+        : const Offset(0, -0.45);
+    final slide = Tween<Offset>(begin: from, end: Offset.zero).animate(
+      CurvedAnimation(
+        parent: popup.controller,
+        curve: const Interval(0, 0.2, curve: Curves.easeOutBack),
+      ),
+    );
 
     final fade =
         TweenSequence<double>([
@@ -306,69 +342,94 @@ class _ScorePopupWidget extends StatelessWidget {
           CurvedAnimation(parent: popup.controller, curve: Curves.easeInOut),
         );
 
-    final pill = SlideTransition(
-      position: rise,
-      child: FadeTransition(opacity: fade, child: _buildPill(colors)),
+    final bubble = SlideTransition(
+      position: slide,
+      child: FadeTransition(opacity: fade, child: _buildBubble(colors)),
     );
 
-    return Positioned.fill(
-      child: Align(alignment: Alignment(0, alignmentY), child: pill),
+    // No anchor (tablet layout) — fall back to a free-floating position.
+    if (anchor == null) {
+      return Positioned.fill(
+        child: Align(alignment: Alignment(0, alignmentY), child: bubble),
+      );
+    }
+
+    return Positioned(
+      right: rightInset,
+      top: popup.isPlayer ? null : anchor,
+      bottom: popup.isPlayer ? anchor : null,
+      child: bubble,
     );
   }
 
-  Widget _buildPill(AppColors colors) {
+  Widget _buildBubble(AppColors colors) {
     final fill = popup.isPlayer ? colors.pegPlayer : colors.pegOpponent;
     const onFill = Color(0xFF16240C);
     const onFillOpp = Color(0xFF26221E);
     final textColor = popup.isPlayer ? onFill : onFillOpp;
     final detail = _detailText();
+    // The opponent's bubble hangs below their bar, so its tail points up.
+    final tailUp = !popup.isPlayer;
+
+    final body = Container(
+      constraints: const BoxConstraints(minWidth: 64, maxWidth: 200),
+      padding: const EdgeInsets.fromLTRB(14, 8, 14, 9),
+      decoration: BoxDecoration(
+        color: fill,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x66000000),
+            blurRadius: 14,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            '+${popup.totalPoints}',
+            style: TextStyle(
+              color: textColor,
+              fontSize: 26,
+              height: 1,
+              fontWeight: FontWeight.w700,
+              fontFeatures: const [FontFeature.tabularFigures()],
+            ),
+          ),
+          if (detail != null) ...[
+            const SizedBox(height: 3),
+            Text(
+              detail,
+              maxLines: 2,
+              textAlign: TextAlign.center,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: textColor.withValues(alpha: 0.72),
+                fontSize: 10.5,
+                height: 1.2,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+
+    final tail = Padding(
+      padding: const EdgeInsets.only(right: _tailInset),
+      child: CustomPaint(
+        size: const Size(16, 7),
+        painter: _BubbleTail(color: fill, pointsUp: tailUp),
+      ),
+    );
 
     return IgnorePointer(
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 12),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-        decoration: BoxDecoration(
-          color: fill,
-          borderRadius: BorderRadius.circular(999),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x59000000),
-              blurRadius: 10,
-              offset: Offset(0, 3),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              '+${popup.totalPoints}',
-              style: TextStyle(
-                color: textColor,
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                height: 1.2,
-                fontFeatures: const [FontFeature.tabularFigures()],
-              ),
-            ),
-            if (detail != null) ...[
-              const SizedBox(width: 6),
-              Flexible(
-                child: Text(
-                  detail,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: textColor.withValues(alpha: 0.75),
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    height: 1.2,
-                  ),
-                ),
-              ),
-            ],
-          ],
-        ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: tailUp ? [tail, body] : [body, tail],
       ),
     );
   }
@@ -402,4 +463,32 @@ class _ScorePopupWidget extends StatelessWidget {
       ScoreSource.go => null,
     };
   }
+}
+
+/// The little pointer that ties a bubble to the score bar it came from.
+class _BubbleTail extends CustomPainter {
+  final Color color;
+  final bool pointsUp;
+
+  const _BubbleTail({required this.color, required this.pointsUp});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final path = Path();
+    if (pointsUp) {
+      path.moveTo(size.width / 2, 0);
+      path.lineTo(size.width, size.height);
+      path.lineTo(0, size.height);
+    } else {
+      path.moveTo(0, 0);
+      path.lineTo(size.width, 0);
+      path.lineTo(size.width / 2, size.height);
+    }
+    path.close();
+    canvas.drawPath(path, Paint()..color = color);
+  }
+
+  @override
+  bool shouldRepaint(_BubbleTail old) =>
+      old.color != color || old.pointsUp != pointsUp;
 }

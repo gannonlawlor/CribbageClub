@@ -620,13 +620,17 @@ class GameScreen extends ConsumerWidget {
       child: buildHand(),
     );
 
-    List<Widget> buildOverlays() => [
-      // Score toasts sit in the band just under the opponent bar — high
-      // enough to clear the pegging count and the starter/crib cluster below.
+    List<Widget> buildOverlays({double? bubbleTop, double? bubbleBottom}) => [
+      // The points land on the score they changed: hanging under the
+      // opponent's bar, sitting on top of yours.
       ScorePopupOverlay(
         gameId: gameId,
         playerId: playerId,
         opponentName: opponent.name,
+        opponentTop: bubbleTop,
+        playerBottom: bubbleBottom,
+        // Flush with the bars, so the tail lands over the score they carry.
+        rightInset: _sideInset,
         alignmentY: -0.62,
       ),
       if (showCountingPanel)
@@ -937,7 +941,12 @@ class GameScreen extends ConsumerWidget {
                   cardWidth: tableCardW * 0.85,
                 ),
               ),
-              ...buildOverlays(),
+              // Anchored to the two score bars: just below the opponent's,
+              // just above the player's.
+              ...buildOverlays(
+                bubbleTop: contentTop + PlayerBar.height + 8,
+                bubbleBottom: bottomPad + PlayerBar.height + 8,
+              ),
               DiscardFlight(
                 stackKey: anchors.stack,
                 handKey: anchors.hand,
