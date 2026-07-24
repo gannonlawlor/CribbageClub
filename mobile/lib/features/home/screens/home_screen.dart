@@ -118,18 +118,15 @@ class HomeScreen extends ConsumerWidget {
                             ),
 
                             _BotCard(
+                              // The chip taps persist the level themselves;
+                              // Play just starts a game at whatever's picked.
                               onPlay: isCreating
                                   ? null
-                                  : (difficulty) {
-                                      ref
-                                          .read(_botDifficultyProvider.notifier)
-                                          .set(difficulty);
-                                      _createLocalAIGame(
-                                        context,
-                                        ref,
-                                        difficulty,
-                                      );
-                                    },
+                                  : (difficulty) => _createLocalAIGame(
+                                      context,
+                                      ref,
+                                      difficulty,
+                                    ),
                             ),
 
                             _FriendCard(
@@ -732,50 +729,109 @@ class _BotCard extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 12),
-          // The three difficulties sit under the header; each tap starts a
-          // game at that level.
-          Opacity(
-            opacity: onPlay == null ? 0.4 : 1,
-            child: Container(
-              padding: const EdgeInsets.all(3),
-              decoration: BoxDecoration(
-                color: colors.surfaceChrome,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: [
-                  for (final (value, label) in _difficulties)
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: onPlay == null ? null : () => onPlay!(value),
-                        behavior: HitTestBehavior.opaque,
-                        child: Container(
-                          alignment: Alignment.center,
-                          padding: const EdgeInsets.symmetric(vertical: 9),
-                          decoration: BoxDecoration(
-                            color: selected == value
-                                ? colors.accent
-                                : Colors.transparent,
-                            borderRadius: BorderRadius.circular(6),
+          // Pick the level, then start the game. Tapping a difficulty only
+          // moves the outline — launching is Play's job, so a stray tap
+          // while browsing can't drop you into a game.
+          Row(
+            children: [
+              for (final (value, label) in _difficulties)
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.only(right: 6),
+                    child: _DifficultyChip(
+                      label: label,
+                      selected: selected == value,
+                      onTap: () =>
+                          ref.read(_botDifficultyProvider.notifier).set(value),
+                    ),
+                  ),
+                ),
+              const SizedBox(width: 2),
+              // Deliberately lighter than the Play Online CTA above it —
+              // half the width, no bevel — so the two never read as a pair.
+              Opacity(
+                opacity: onPlay == null ? 0.4 : 1,
+                child: Material(
+                  color: colors.accent,
+                  borderRadius: BorderRadius.circular(8),
+                  child: InkWell(
+                    onTap: onPlay == null ? null : () => onPlay!(selected),
+                    borderRadius: BorderRadius.circular(8),
+                    child: SizedBox(
+                      width: 86,
+                      height: 40,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.play_arrow,
+                            size: 16,
+                            color: colors.accentOnSurface,
                           ),
-                          child: Text(
-                            label,
+                          const SizedBox(width: 4),
+                          Text(
+                            'Play',
                             style: TextStyle(
-                              color: selected == value
-                                  ? colors.accentOnSurface
-                                  : colors.textTertiary,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
+                              color: colors.accentOnSurface,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
-                        ),
+                        ],
                       ),
                     ),
-                ],
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// One difficulty option: an outlined rectangle that takes the accent border
+/// when it's the chosen level. No fill — the filled thing in this card is the
+/// Play button, and only one thing should read as the action.
+class _DifficultyChip extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _DifficultyChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 140),
+        height: 40,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: selected ? colors.accent : colors.border,
+            width: selected ? 1.5 : 1,
+          ),
+        ),
+        child: Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            color: selected ? colors.accent : colors.textTertiary,
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ),
     );
   }

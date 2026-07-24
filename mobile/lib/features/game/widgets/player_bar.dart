@@ -70,7 +70,12 @@ class PlayerBar extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 10),
-                    Flexible(
+                    // Expanded, not Flexible+Spacer: those split the free
+                    // space between them, which left the score floating in
+                    // from the right whenever the name was short enough not
+                    // to fill its half. The score is an anchor — it belongs
+                    // at the same place on every bar.
+                    Expanded(
                       child: Text(
                         name,
                         maxLines: 1,
@@ -117,7 +122,6 @@ class PlayerBar extends StatelessWidget {
                         ),
                       ),
                     ],
-                    const Spacer(),
                     const SizedBox(width: 8),
                     Container(
                       width: 8,
