@@ -23,6 +23,11 @@ class CountingOverlay extends StatefulWidget {
   final bool isDealer;
   final VoidCallback onComplete;
 
+  /// Skip straight to the number pad. The count-it-for-me / I'll-count choice
+  /// now lives on the game screen, so by the time this panel opens the player
+  /// has already said they want to count it themselves.
+  final bool startAtInput;
+
   const CountingOverlay({
     super.key,
     required this.hand,
@@ -30,6 +35,7 @@ class CountingOverlay extends StatefulWidget {
     required this.crib,
     required this.isDealer,
     required this.onComplete,
+    this.startAtInput = false,
   });
 
   @override
@@ -37,7 +43,9 @@ class CountingOverlay extends StatefulWidget {
 }
 
 class _CountingOverlayState extends State<CountingOverlay> {
-  _Phase _phase = _Phase.handPrompt;
+  late _Phase _phase = widget.startAtInput
+      ? _Phase.handInput
+      : _Phase.handPrompt;
   int _guessValue = 0;
   int? _handGuess;
   int? _cribGuess;

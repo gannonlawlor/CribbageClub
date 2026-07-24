@@ -23,6 +23,7 @@ import '../../../config/constants.dart';
 import '../../../shared/utils/responsive.dart';
 import '../../../shared/widgets/cc_buttons.dart';
 import '../../../shared/widgets/cc_dialog.dart';
+import '../widgets/card_widget.dart';
 import '../widgets/count_block.dart';
 import '../widgets/crib_area.dart';
 import '../widgets/cut_card.dart';
@@ -69,6 +70,13 @@ final _discardTokenProvider = StateProvider.family<int, String>((ref, _) => 0);
 /// presentation only — the engine decided the dealer at creation — so one
 /// showing per game is all it gets.
 final _cutForDealDoneProvider = StateProvider.family<bool, String>(
+  (ref, _) => false,
+);
+
+/// True while the player is calling the count themselves. The choice between
+/// counting and being counted for now lives on the game screen, so the panel
+/// only opens once they've asked for it.
+final _manualCountProvider = StateProvider.family<bool, String>(
   (ref, _) => false,
 );
 
@@ -243,6 +251,19 @@ class GameScreen extends ConsumerWidget {
     final discardToken = ref.watch(_discardTokenProvider(gameId));
     final selectedCards = ref.watch(selectedCardsProvider(gameId));
     final selectedPeggingCard = ref.watch(selectedPeggingCardProvider(gameId));
+
+    // Counting happens on the table now: pegging empties `player.hand`, so the
+    // four cards being counted come from the engine's counting snapshot.
+    final isCounting = gs.stage == GameStage.counting;
+    final countingHand = gs.handsForCounting[playerId] ?? const <PlayingCard>[];
+    final manualCount = ref.watch(_manualCountProvider(gameId));
+    final showCountingPanel = isCounting && isMyTurn && manualCount;
+
+    void applyCount() {
+      final n = _readNotifier(ref);
+      if (n is GameNotifier) n.countHand();
+      if (n is LocalGameNotifier) n.countHand();
+    }
 
     // The opening cut-for-deal: shown once, before the first hand appears.
     // Timed games skip the ceremony — it would burn the discard clock.
@@ -484,7 +505,7 @@ class GameScreen extends ConsumerWidget {
       isMyTurn: isMyTurn,
       selectedCardCount: selectedCards.length,
       isDiscarding: gameNotifier.isDiscarding,
-      showCountingOverlay: gs.stage == GameStage.counting && isMyTurn,
+      showCountingOverlay: showCountingPanel,
       autoDeal: settings.autoDeal,
       autoCut: settings.autoCut,
       autoGo: settings.autoGo,
@@ -497,10 +518,9 @@ class GameScreen extends ConsumerWidget {
         if (n is GameNotifier) n.cutDeck();
         if (n is LocalGameNotifier) n.cutDeck();
       },
-      onCount: () {
-        final n = _readNotifier(ref);
-        if (n is GameNotifier) n.countHand();
-        if (n is LocalGameNotifier) n.countHand();
+      onCount: applyCount,
+      onManualCount: () {
+        ref.read(_manualCountProvider(gameId).notifier).state = true;
       },
       onDeal: () {
         final n = _readNotifier(ref);
@@ -521,7 +541,9 @@ class GameScreen extends ConsumerWidget {
       },
     );
 
-    final sortedHand = CardUtils.sorted(player.hand);
+    final sortedHand = CardUtils.sorted(
+      isCounting && countingHand.isNotEmpty ? countingHand : player.hand,
+    );
 
     // Cards that would bust 31 read as unavailable during pegging.
     final dimmedHandCards = <int>{
@@ -548,7 +570,7 @@ class GameScreen extends ConsumerWidget {
             ? {if (selectedPeggingIndex >= 0) selectedPeggingIndex}
             : selectedCards,
         dimmedIndices: dimmedHandCards,
-        enabled: isMyTurn && !gameNotifier.isDiscarding,
+        enabled: isMyTurn && !gameNotifier.isDiscarding && !isCounting,
         receiveFirst: !isDealer,
         onCardTap: (index) =>
             _handleCardTap(context, ref, gs, playerId, index, selectedCards),
@@ -568,16 +590,16 @@ class GameScreen extends ConsumerWidget {
         opponentTop: popupTop,
         playerBottom: popupBottom,
       ),
-      if (gs.stage == GameStage.counting && isMyTurn)
+      if (showCountingPanel)
         CountingOverlay(
-          hand: gs.handsForCounting[playerId] ?? player.hand,
+          hand: countingHand.isNotEmpty ? countingHand : player.hand,
           cutCard: gs.cutCard!,
           crib: isDealer ? gs.crib : [],
           isDealer: isDealer,
+          startAtInput: true,
           onComplete: () {
-            final n = _readNotifier(ref);
-            if (n is GameNotifier) n.countHand();
-            if (n is LocalGameNotifier) n.countHand();
+            ref.read(_manualCountProvider(gameId).notifier).state = false;
+            applyCount();
           },
         ),
       if (kDebugMode && _isLocal)
@@ -804,6 +826,7 @@ class GameScreen extends ConsumerWidget {
                         cribRevealed: cribRevealed,
                         selectedCardCount: selectedCards.length,
                         cardWidth: tableCardW,
+                        handCardWidth: handCardW,
                         roundPlays: roundPlays,
                         spentPileCount: spentPileCount,
                         gameOver: gs.stage == GameStage.gameOver
@@ -1285,6 +1308,10 @@ class _Table extends StatelessWidget {
   final int selectedCardCount;
   final double cardWidth;
 
+  /// Size of a card in the player's hand. The starter is shown at this size
+  /// while counting, so the two read as one hand.
+  final double handCardWidth;
+
   /// Every card played this round, oldest first — spent counts then the live
   /// pile.
   final List<CardPlayed> roundPlays;
@@ -1308,6 +1335,7 @@ class _Table extends StatelessWidget {
     required this.cribRevealed,
     required this.selectedCardCount,
     required this.cardWidth,
+    required this.handCardWidth,
     required this.roundPlays,
     required this.spentPileCount,
     required this.gameOver,
@@ -1364,6 +1392,9 @@ class _Table extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final showCluster = gs.stage != GameStage.dealing && gameOver == null;
+    // While counting, the starter leaves its corner and sits in the middle at
+    // hand size — you count it together with the four in your hand.
+    final countingStarter = gs.stage == GameStage.counting ? gs.cutCard : null;
     final pileCards = [for (final p in roundPlays) p.card];
     final pileOwners = [for (final p in roundPlays) p.playerId == playerId];
     final showPile = pileCards.isNotEmpty && gameOver == null;
@@ -1403,6 +1434,13 @@ class _Table extends StatelessWidget {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               _countBlock(),
+                              if (countingStarter != null) ...[
+                                const SizedBox(height: 16),
+                                _CountingStarter(
+                                  card: countingStarter,
+                                  width: handCardWidth,
+                                ),
+                              ],
                               if (showPile) ...[
                                 const SizedBox(height: 20),
                                 PeggingPile(
@@ -1433,6 +1471,7 @@ class _Table extends StatelessWidget {
               cribRevealed: cribRevealed,
               cribOwner: isDealer ? 'Yours' : "$opponentName's",
               cardWidth: cardWidth,
+              showStarter: countingStarter == null,
             ),
           ),
         // The result panel is the only thing to act on once the game is over,
@@ -1457,6 +1496,41 @@ class _Table extends StatelessWidget {
               ],
             ),
           ),
+      ],
+    );
+  }
+}
+
+/// The starter, centred at hand size for the count.
+class _CountingStarter extends StatelessWidget {
+  final PlayingCard card;
+  final double width;
+
+  const _CountingStarter({required this.card, required this.width});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        CardWidget(
+          card: card,
+          faceUp: true,
+          enabled: false,
+          width: width,
+          height: width / AppConstants.cardAspectRatio,
+        ),
+        const SizedBox(height: 6),
+        Text(
+          'STARTER',
+          style: TextStyle(
+            color: colors.textTertiary,
+            fontSize: 10,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.6,
+          ),
+        ),
       ],
     );
   }

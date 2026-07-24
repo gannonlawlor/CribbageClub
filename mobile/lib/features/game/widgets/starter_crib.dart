@@ -17,6 +17,10 @@ class StarterCribCluster extends StatelessWidget {
   /// Anchors the discard flight's landing point on the crib stack.
   final GlobalKey? cribKey;
 
+  /// False while the starter is shown large in the middle of the table — it
+  /// belongs in one place at a time.
+  final bool showStarter;
+
   const StarterCribCluster({
     super.key,
     required this.starter,
@@ -25,6 +29,7 @@ class StarterCribCluster extends StatelessWidget {
     required this.cribOwner,
     required this.cardWidth,
     this.cribKey,
+    this.showStarter = true,
   });
 
   double get _cardHeight => cardWidth / (2.5 / 3.5);
@@ -40,25 +45,27 @@ class StarterCribCluster extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _Labelled(
-          label: 'Starter',
-          labelWidth: cardWidth + 8,
-          child: starter != null
-              ? FlippableCardWidget(
-                  card: starter,
-                  faceUp: true,
-                  width: cardWidth,
-                  height: _cardHeight,
-                  duration: const Duration(milliseconds: 240),
-                )
-              : CardWidget(
-                  faceUp: false,
-                  enabled: false,
-                  width: cardWidth,
-                  height: _cardHeight,
-                ),
-        ),
-        const SizedBox(width: 14),
+        if (showStarter) ...[
+          _Labelled(
+            label: 'Starter',
+            labelWidth: cardWidth + 8,
+            child: starter != null
+                ? FlippableCardWidget(
+                    card: starter,
+                    faceUp: true,
+                    width: cardWidth,
+                    height: _cardHeight,
+                    duration: const Duration(milliseconds: 240),
+                  )
+                : CardWidget(
+                    faceUp: false,
+                    enabled: false,
+                    width: cardWidth,
+                    height: _cardHeight,
+                  ),
+          ),
+          const SizedBox(width: 14),
+        ],
         _Labelled(
           key: cribKey,
           label: cribOwner,
