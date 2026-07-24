@@ -679,55 +679,61 @@ class _BotCard extends ConsumerWidget {
     final selected = ref.watch(_botDifficultyProvider);
 
     return _Card(
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _IconTile(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
+          // Category header: the icon and label, like the other play cards.
+          Row(
+            children: [
+              _IconTile(
+                child: Column(
                   mainAxisSize: MainAxisSize.min,
-                  spacing: 6,
                   children: [
-                    for (int i = 0; i < 2; i++)
-                      Container(
-                        width: 6,
-                        height: 6,
-                        decoration: BoxDecoration(
-                          color: colors.selectedBorder,
-                          shape: BoxShape.circle,
-                        ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      spacing: 6,
+                      children: [
+                        for (int i = 0; i < 2; i++)
+                          Container(
+                            width: 6,
+                            height: 6,
+                            decoration: BoxDecoration(
+                              color: colors.selectedBorder,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Container(
+                      width: 14,
+                      height: 3,
+                      decoration: BoxDecoration(
+                        color: colors.textTertiary,
+                        borderRadius: BorderRadius.circular(2),
                       ),
+                    ),
                   ],
                 ),
-                const SizedBox(height: 4),
-                Container(
-                  width: 14,
-                  height: 3,
-                  decoration: BoxDecoration(
-                    color: colors.textTertiary,
-                    borderRadius: BorderRadius.circular(2),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Play a Bot',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: colors.textPrimary,
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          // The segmented control keeps its width; the label gives way first
-          // on a narrow screen.
-          Expanded(
-            child: Text(
-              'Play a Bot',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: colors.textPrimary,
-                fontSize: 14.5,
-                fontWeight: FontWeight.w600,
               ),
-            ),
+            ],
           ),
-          const SizedBox(width: 12),
+          const SizedBox(height: 12),
+          // The three difficulties sit under the header; each tap starts a
+          // game at that level.
           Opacity(
             opacity: onPlay == null ? 0.4 : 1,
             child: Container(
@@ -737,32 +743,30 @@ class _BotCard extends ConsumerWidget {
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
-                mainAxisSize: MainAxisSize.min,
-                spacing: 2,
                 children: [
                   for (final (value, label) in _difficulties)
-                    GestureDetector(
-                      onTap: onPlay == null ? null : () => onPlay!(value),
-                      behavior: HitTestBehavior.opaque,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 11,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: selected == value
-                              ? colors.accent
-                              : Colors.transparent,
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          label,
-                          style: TextStyle(
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: onPlay == null ? null : () => onPlay!(value),
+                        behavior: HitTestBehavior.opaque,
+                        child: Container(
+                          alignment: Alignment.center,
+                          padding: const EdgeInsets.symmetric(vertical: 9),
+                          decoration: BoxDecoration(
                             color: selected == value
-                                ? colors.accentOnSurface
-                                : colors.textTertiary,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
+                                ? colors.accent
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            label,
+                            style: TextStyle(
+                              color: selected == value
+                                  ? colors.accentOnSurface
+                                  : colors.textTertiary,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
                       ),
