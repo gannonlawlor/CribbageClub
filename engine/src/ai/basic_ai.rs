@@ -3,7 +3,7 @@ use crate::game_action::GameAction;
 use crate::game_stage::GameStage;
 use crate::game_state::GameState;
 
-use super::ai_player::{is_dealer, AIPlayer};
+use super::ai_player::{crib_pending, is_dealer, AIPlayer};
 use super::ai_utils::{self, combinations};
 
 pub struct BasicAI {
@@ -60,9 +60,17 @@ impl AIPlayer for BasicAI {
                     },
                 })
             }
-            GameStage::Counting => Some(GameAction::CountHand {
-                player_id: self.id.clone(),
-            }),
+            GameStage::Counting => Some(
+                if is_dealer(game_state, &self.id) && crib_pending(game_state) {
+                    GameAction::CountCrib {
+                        player_id: self.id.clone(),
+                    }
+                } else {
+                    GameAction::CountHand {
+                        player_id: self.id.clone(),
+                    }
+                },
+            ),
             _ => None,
         }
     }
@@ -161,7 +169,11 @@ fn choose_dealer_discards(hand: &[Card]) -> Vec<Card> {
             .flatten()
             .copied()
             .collect();
-        let non_pair: Vec<Card> = hand.iter().filter(|c| !pair_cards.contains(c)).copied().collect();
+        let non_pair: Vec<Card> = hand
+            .iter()
+            .filter(|c| !pair_cards.contains(c))
+            .copied()
+            .collect();
         if non_pair.len() >= 2 {
             return non_pair[..2].to_vec();
         }
@@ -170,9 +182,12 @@ fn choose_dealer_discards(hand: &[Card]) -> Vec<Card> {
     // Keep 15-combos
     let fifteen_combos = find_fifteen_combinations(hand);
     if !fifteen_combos.is_empty() {
-        let keep_set: std::collections::HashSet<Card> =
-            fifteen_combos[0].iter().copied().collect();
-        let discards: Vec<Card> = hand.iter().filter(|c| !keep_set.contains(c)).copied().collect();
+        let keep_set: std::collections::HashSet<Card> = fifteen_combos[0].iter().copied().collect();
+        let discards: Vec<Card> = hand
+            .iter()
+            .filter(|c| !keep_set.contains(c))
+            .copied()
+            .collect();
         if discards.len() >= 2 {
             return discards[..2].to_vec();
         }

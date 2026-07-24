@@ -80,6 +80,18 @@ final _manualCountProvider = StateProvider.family<bool, String>(
   (ref, _) => false,
 );
 
+/// True when the dealer has counted their hand this round but not yet their
+/// crib — the window where the crib is theirs to count. Derived from history
+/// so it always agrees with the engine.
+bool _cribCountPending(GameState gs, String dealerId) {
+  for (final e in gs.history.reversed) {
+    if (e is RoundStarted) return false;
+    if (e is CribCounted) return false;
+    if (e is HandCounted && e.playerId == dealerId) return true;
+  }
+  return false;
+}
+
 /// Horizontal inset that keeps the table clear of the perimeter track.
 const double _sideInset = 40;
 
@@ -239,8 +251,10 @@ class GameScreen extends ConsumerWidget {
     final opponent = gs.players[playerIndex >= 0 ? 1 - playerIndex : 1];
     final isMyTurn = gs.currentPlayerId == playerId;
     final isDealer = gs.dealerIndex == playerIndex;
-    final cribRevealed =
-        gs.stage == GameStage.counting || gs.stage == GameStage.gameOver;
+    // The crib is never turned face up on the table — not during the count,
+    // not for either player's crib. It's scored into the history (with its
+    // cards) and otherwise stays a face-down stack under its CRIB label.
+    const cribRevealed = false;
 
     // Get crib cards: prefer current state, fall back to CribCounted history event
     final cribCards = gs.crib.isNotEmpty
@@ -257,12 +271,28 @@ class GameScreen extends ConsumerWidget {
     final isCounting = gs.stage == GameStage.counting;
     final countingHand = gs.handsForCounting[playerId] ?? const <PlayingCard>[];
     final manualCount = ref.watch(_manualCountProvider(gameId));
+
+    // The dealer counts hand then crib as two engine actions; between them the
+    // engine leaves it the dealer's turn with their hand counted and the crib
+    // not, which is exactly what this reads back from the history.
+    final dealerId = gs.players.isNotEmpty
+        ? gs.players[gs.dealerIndex.clamp(0, gs.players.length - 1)].id
+        : '';
+    final cribPending = isCounting && _cribCountPending(gs, dealerId);
+    final countingCrib = cribPending && isMyTurn && isDealer;
     final showCountingPanel = isCounting && isMyTurn && manualCount;
 
+    // Score the step the player is on: the crib once their hand is done,
+    // otherwise the hand.
     void applyCount() {
       final n = _readNotifier(ref);
-      if (n is GameNotifier) n.countHand();
-      if (n is LocalGameNotifier) n.countHand();
+      if (countingCrib) {
+        if (n is GameNotifier) n.countCrib();
+        if (n is LocalGameNotifier) n.countCrib();
+      } else {
+        if (n is GameNotifier) n.countHand();
+        if (n is LocalGameNotifier) n.countHand();
+      }
     }
 
     // The opening cut-for-deal: shown once, before the first hand appears.
@@ -541,8 +571,14 @@ class GameScreen extends ConsumerWidget {
       },
     );
 
+    // During the count the hand slot shows what's being counted: the crib
+    // once it's the dealer's turn for it, otherwise the counting hand.
     final sortedHand = CardUtils.sorted(
-      isCounting && countingHand.isNotEmpty ? countingHand : player.hand,
+      countingCrib
+          ? gs.crib
+          : isCounting && countingHand.isNotEmpty
+          ? countingHand
+          : player.hand,
     );
 
     // Cards that would bust 31 read as unavailable during pegging.
@@ -592,11 +628,12 @@ class GameScreen extends ConsumerWidget {
       ),
       if (showCountingPanel)
         CountingOverlay(
-          hand: countingHand.isNotEmpty ? countingHand : player.hand,
+          cards: countingCrib
+              ? gs.crib
+              : (countingHand.isNotEmpty ? countingHand : player.hand),
           cutCard: gs.cutCard!,
-          crib: isDealer ? gs.crib : [],
-          isDealer: isDealer,
-          startAtInput: true,
+          isCrib: countingCrib,
+          title: countingCrib ? 'Your crib' : 'Your hand',
           onComplete: () {
             ref.read(_manualCountProvider(gameId).notifier).state = false;
             applyCount();
@@ -822,6 +859,7 @@ class GameScreen extends ConsumerWidget {
                         opponentName: opponent.name,
                         isMyTurn: isMyTurn,
                         isDealer: isDealer,
+                        countingCrib: countingCrib,
                         cribCards: cribCards,
                         cribRevealed: cribRevealed,
                         selectedCardCount: selectedCards.length,
@@ -848,7 +886,10 @@ class GameScreen extends ConsumerWidget {
                       ),
                     ),
                   ),
-                  buildControls(),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: _sideInset),
+                    child: buildControls(),
+                  ),
                   const SizedBox(height: 12),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: _sideInset),
@@ -1248,11 +1289,13 @@ class GameScreen extends ConsumerWidget {
 
   String _breakdownText(ScoreBreakdown b) {
     final parts = <String>[];
-    if (b.fifteens > 0) parts.add('${b.fifteens} fifteens');
-    if (b.pairs > 0) parts.add('${b.pairs} pairs');
-    if (b.runs > 0) parts.add('${b.runs} runs');
-    if (b.flushes > 0) parts.add('${b.flushes} flush');
-    if (b.nobs > 0) parts.add('${b.nobs} nobs');
+    // Breakdown fields are points, not counts (a lone pair is 2 in `pairs`),
+    // so phrase them as points.
+    if (b.fifteens > 0) parts.add('${b.fifteens} for 15s');
+    if (b.pairs > 0) parts.add('${b.pairs} for pairs');
+    if (b.runs > 0) parts.add('${b.runs} for runs');
+    if (b.flushes > 0) parts.add('${b.flushes} for the flush');
+    if (b.nobs > 0) parts.add('${b.nobs} for nobs');
     return parts.isEmpty ? '' : ' (${parts.join(', ')})';
   }
 
@@ -1303,6 +1346,11 @@ class _Table extends StatelessWidget {
   final String opponentName;
   final bool isMyTurn;
   final bool isDealer;
+
+  /// True while this player is counting their own crib — the crib has moved
+  /// into the hand slot, so its corner stack steps aside and the instruction
+  /// changes.
+  final bool countingCrib;
   final List<PlayingCard> cribCards;
   final bool cribRevealed;
   final int selectedCardCount;
@@ -1331,6 +1379,7 @@ class _Table extends StatelessWidget {
     required this.opponentName,
     required this.isMyTurn,
     required this.isDealer,
+    required this.countingCrib,
     required this.cribCards,
     required this.cribRevealed,
     required this.selectedCardCount,
@@ -1380,8 +1429,12 @@ class _Table extends StatelessWidget {
       case GameStage.counting:
         return CountBlock(
           label: 'Count',
-          headline: 'Counting hands',
-          instruction: isMyTurn ? 'Count your hand' : '$opponentName counts',
+          headline: countingCrib ? 'Counting the crib' : 'Counting hands',
+          instruction: !isMyTurn
+              ? '$opponentName counts'
+              : countingCrib
+              ? 'Count your crib'
+              : 'Count your hand',
           isMyTurn: isMyTurn,
         );
       case GameStage.gameOver:
@@ -1391,7 +1444,10 @@ class _Table extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final showCluster = gs.stage != GameStage.dealing && gameOver == null;
+    // The corner crib stack steps aside while the crib is being counted in the
+    // hand slot, so it isn't shown in two places at once.
+    final showCluster =
+        gs.stage != GameStage.dealing && gameOver == null && !countingCrib;
     // While counting, the starter leaves its corner and sits in the middle at
     // hand size — you count it together with the four in your hand.
     final countingStarter = gs.stage == GameStage.counting ? gs.cutCard : null;

@@ -4,6 +4,7 @@ use crate::card::Card;
 use crate::error::EngineError;
 use crate::game_action::GameAction;
 use crate::game_engine::GameEngine;
+use crate::game_history::GameHistoryEvent;
 use crate::game_stage::GameStage;
 use crate::game_state::GameState;
 
@@ -35,10 +36,7 @@ pub trait AIPlayer {
 }
 
 /// Create an AI player of the given difficulty.
-pub fn create_ai(
-    player_id: impl Into<String>,
-    difficulty: AIDifficulty,
-) -> Box<dyn AIPlayer> {
+pub fn create_ai(player_id: impl Into<String>, difficulty: AIDifficulty) -> Box<dyn AIPlayer> {
     let id = player_id.into();
     match difficulty {
         AIDifficulty::Basic => Box::new(BasicAI::new(id)),
@@ -76,4 +74,25 @@ pub fn process_ai_actions(
 pub(crate) fn is_dealer(game_state: &GameState, player_id: &str) -> bool {
     let idx = game_state.dealer_index as usize;
     idx < game_state.players.len() && game_state.players[idx].id == player_id
+}
+
+/// Helper: true once the dealer's hand is counted this round but the crib is
+/// not — when CountCrib is the move rather than CountHand.
+pub(crate) fn crib_pending(game_state: &GameState) -> bool {
+    let idx = game_state.dealer_index as usize;
+    if idx >= game_state.players.len() {
+        return false;
+    }
+    let dealer_id = &game_state.players[idx].id;
+    for event in game_state.history.iter().rev() {
+        match event {
+            GameHistoryEvent::RoundStarted { .. } => return false,
+            GameHistoryEvent::CribCounted { .. } => return false,
+            GameHistoryEvent::HandCounted { player_id, .. } if player_id == dealer_id => {
+                return true
+            }
+            _ => {}
+        }
+    }
+    false
 }

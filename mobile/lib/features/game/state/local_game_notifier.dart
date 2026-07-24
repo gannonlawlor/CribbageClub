@@ -165,6 +165,10 @@ class LocalGameNotifier extends StateNotifier<GameNotifierState> {
     _applyActionWithDelay(GameAction.countHand(playerId: _playerId));
   }
 
+  void countCrib() {
+    _applyActionWithDelay(GameAction.countCrib(playerId: _playerId));
+  }
+
   /// Advance past the dealing stage (used when auto-deal is OFF).
   void deal() {
     try {

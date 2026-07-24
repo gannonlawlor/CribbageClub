@@ -311,6 +311,23 @@ class GameNotifier extends StateNotifier<GameNotifierState> {
     }
   }
 
+  Future<void> countCrib() async {
+    _actionInFlight = true;
+    state = state.copyWith(error: null);
+    try {
+      final response = await _restClient.applyAction(
+        gameId,
+        GameAction.countCrib(playerId: _playerId),
+      );
+      _applyResponse(response);
+    } catch (e) {
+      debugPrint('[Game] Count crib failed for $gameId: $e');
+      state = state.copyWith(error: 'Count crib failed: $e');
+    } finally {
+      _actionInFlight = false;
+    }
+  }
+
   Future<void> resign() async {
     _actionInFlight = true;
     state = state.copyWith(error: null);

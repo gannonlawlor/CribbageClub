@@ -62,6 +62,15 @@ _$CountHandImpl _$$CountHandImplFromJson(Map<String, dynamic> json) =>
 Map<String, dynamic> _$$CountHandImplToJson(_$CountHandImpl instance) =>
     <String, dynamic>{'playerId': instance.playerId, 'type': instance.$type};
 
+_$CountCribImpl _$$CountCribImplFromJson(Map<String, dynamic> json) =>
+    _$CountCribImpl(
+      playerId: json['playerId'] as String,
+      $type: json['type'] as String?,
+    );
+
+Map<String, dynamic> _$$CountCribImplToJson(_$CountCribImpl instance) =>
+    <String, dynamic>{'playerId': instance.playerId, 'type': instance.$type};
+
 _$ForfeitActionImpl _$$ForfeitActionImplFromJson(Map<String, dynamic> json) =>
     _$ForfeitActionImpl(
       playerId: json['playerId'] as String,

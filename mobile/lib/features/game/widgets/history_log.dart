@@ -47,11 +47,14 @@ class HistoryLog extends StatelessWidget {
 
   String _breakdownSummary(ScoreBreakdown b) {
     final parts = <String>[];
-    if (b.fifteens > 0) parts.add('${b.fifteens} fifteens');
-    if (b.pairs > 0) parts.add('${b.pairs} pairs');
-    if (b.runs > 0) parts.add('${b.runs} runs');
-    if (b.flushes > 0) parts.add('${b.flushes} flush');
-    if (b.nobs > 0) parts.add('${b.nobs} nobs');
+    // These fields are point contributions, not counts — a single pair puts
+    // 2 in `pairs`, a run of three puts 3 in `runs` — so phrase them as
+    // points rather than "2 pairs, 3 runs".
+    if (b.fifteens > 0) parts.add('${b.fifteens} for 15s');
+    if (b.pairs > 0) parts.add('${b.pairs} for pairs');
+    if (b.runs > 0) parts.add('${b.runs} for runs');
+    if (b.flushes > 0) parts.add('${b.flushes} for the flush');
+    if (b.nobs > 0) parts.add('${b.nobs} for nobs');
     return parts.isEmpty ? '' : ' (${parts.join(', ')})';
   }
 
