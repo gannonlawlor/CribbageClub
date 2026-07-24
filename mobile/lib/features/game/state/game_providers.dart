@@ -449,5 +449,9 @@ final localGameNotifierProvider =
           final settings = ref.read(settingsProvider);
           return settings.scaleDuration(AppConstants.aiSetupDelay);
         },
+        getPeggingEndPause: () {
+          final settings = ref.read(settingsProvider);
+          return settings.scaleDuration(AppConstants.peggingEndPause);
+        },
       );
     });

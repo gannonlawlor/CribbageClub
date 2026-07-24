@@ -33,16 +33,18 @@ class CountBlock extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          label.toUpperCase(),
-          style: TextStyle(
-            color: colors.textTertiary,
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-            letterSpacing: 0.88,
+        if (label.isNotEmpty) ...[
+          Text(
+            label.toUpperCase(),
+            style: TextStyle(
+              color: colors.textTertiary,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.88,
+            ),
           ),
-        ),
-        const SizedBox(height: 2),
+          const SizedBox(height: 2),
+        ],
         SizedBox(
           height: 52,
           child: Center(
@@ -73,20 +75,22 @@ class CountBlock extends StatelessWidget {
                   ),
           ),
         ),
-        const SizedBox(height: 6),
-        AnimatedSwitcher(
-          duration: const Duration(milliseconds: 160),
-          child: Text(
-            instruction,
-            key: ValueKey('$instruction$isMyTurn'),
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: isMyTurn ? colors.accent : colors.textTertiary,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
+        if (instruction.isNotEmpty) ...[
+          const SizedBox(height: 6),
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 160),
+            child: Text(
+              instruction,
+              key: ValueKey('$instruction$isMyTurn'),
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: isMyTurn ? colors.accent : colors.textTertiary,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
-        ),
+        ],
       ],
     );
   }

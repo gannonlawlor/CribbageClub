@@ -60,6 +60,10 @@ class AppConstants {
   /// setting up a round keeps moving.
   static const Duration aiSetupDelay = Duration(milliseconds: 260);
 
+  /// Held on the final pegging play before the count takes over, so the last
+  /// card and count register before the pile clears.
+  static const Duration peggingEndPause = Duration(milliseconds: 500);
+
   /// Gap between two score pills that queued up behind each other.
   static const Duration scorePopupGap = Duration(milliseconds: 450);
 }

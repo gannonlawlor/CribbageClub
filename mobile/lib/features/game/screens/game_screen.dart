@@ -620,13 +620,14 @@ class GameScreen extends ConsumerWidget {
       child: buildHand(),
     );
 
-    List<Widget> buildOverlays({double? popupTop, double? popupBottom}) => [
+    List<Widget> buildOverlays() => [
+      // Score toasts land in the upper-middle of the table — empty in every
+      // phase, and clear of the pegging count that sits dead-centre.
       ScorePopupOverlay(
         gameId: gameId,
         playerId: playerId,
         opponentName: opponent.name,
-        opponentTop: popupTop,
-        playerBottom: popupBottom,
+        alignmentY: -0.35,
       ),
       if (showCountingPanel)
         CountingOverlay(
@@ -936,12 +937,7 @@ class GameScreen extends ConsumerWidget {
                   cardWidth: tableCardW * 0.85,
                 ),
               ),
-              // Popups land in the free bands under the opponent bar and
-              // above the hand, never over the count.
-              ...buildOverlays(
-                popupTop: contentTop + PlayerBar.height + 10,
-                popupBottom: bottomPad + PlayerBar.height + 12 + handSlot + 10,
-              ),
+              ...buildOverlays(),
               DiscardFlight(
                 stackKey: anchors.stack,
                 handKey: anchors.hand,
@@ -1395,52 +1391,33 @@ class _Table extends StatelessWidget {
     required this.onHistory,
   });
 
-  CountBlock _countBlock() {
+  /// The middle stays quiet: the action button, the crib cluster, the cards on
+  /// the table and the active player bar already say the stage, whose turn it
+  /// is, and how many cards are picked. The only things it carries are the
+  /// pegging count — the one live number — and a one-word cue for the crib
+  /// step, where the crib cards stand in for your hand with nothing else to
+  /// name them.
+  Widget _countBlock() {
     switch (gs.stage) {
-      case GameStage.dealing:
-        return CountBlock(
-          label: 'Deal',
-          headline: 'Dealing',
-          instruction: isDealer ? 'Your deal' : "$opponentName's deal",
-        );
-      case GameStage.discardingToCrib:
-        return CountBlock(
-          label: 'Discard',
-          headline: isDealer
-              ? 'Two to your crib'
-              : "Two to $opponentName's crib",
-          instruction: isMyTurn
-              ? '$selectedCardCount of 2 selected'
-              : 'Waiting for $opponentName',
-          isMyTurn: isMyTurn,
-        );
-      case GameStage.cutting:
-        return CountBlock(
-          label: 'Cut',
-          headline: 'Cut the deck',
-          instruction: isMyTurn ? 'Your cut' : "$opponentName's cut",
-          isMyTurn: isMyTurn,
-        );
       case GameStage.pegging:
         return CountBlock(
           label: 'Count',
           count: gs.peggingCount,
-          instruction: isMyTurn ? 'Your play' : "$opponentName's play",
-          isMyTurn: isMyTurn,
+          instruction: '',
         );
       case GameStage.counting:
-        return CountBlock(
-          label: 'Count',
-          headline: countingCrib ? 'Counting the crib' : 'Counting hands',
-          instruction: !isMyTurn
-              ? '$opponentName counts'
-              : countingCrib
-              ? 'Count your crib'
-              : 'Count your hand',
-          isMyTurn: isMyTurn,
-        );
+        return countingCrib
+            ? const CountBlock(
+                label: '',
+                headline: 'Your crib',
+                instruction: '',
+              )
+            : const SizedBox.shrink();
+      case GameStage.dealing:
+      case GameStage.discardingToCrib:
+      case GameStage.cutting:
       case GameStage.gameOver:
-        return const CountBlock(label: 'Result', headline: '', instruction: '');
+        return const SizedBox.shrink();
     }
   }
 

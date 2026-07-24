@@ -15,20 +15,16 @@ class ScorePopupOverlay extends ConsumerStatefulWidget {
   final String playerId;
   final String opponentName;
 
-  /// Distance from the top of the stack for opponent popups. When null the
-  /// popup sits at a fraction of the height instead (tablet layout).
-  final double? opponentTop;
-
-  /// Distance from the bottom of the stack for the local player's popups.
-  final double? playerBottom;
+  /// Where the pill sits vertically, as a stack alignment y (-1 top, 0 middle,
+  /// 1 bottom). Both players' pills land here — the identity colour says who.
+  final double alignmentY;
 
   const ScorePopupOverlay({
     super.key,
     required this.gameId,
     required this.playerId,
     required this.opponentName,
-    this.opponentTop,
-    this.playerBottom,
+    this.alignmentY = 0,
   });
 
   @override
@@ -220,8 +216,7 @@ class _ScorePopupOverlayState extends ConsumerState<ScorePopupOverlay>
         _ScorePopupWidget(
           key: ValueKey(popup.id),
           popup: popup,
-          top: popup.isPlayer ? null : widget.opponentTop,
-          bottom: popup.isPlayer ? widget.playerBottom : null,
+          alignmentY: widget.alignmentY,
         ),
       ],
     );
@@ -263,14 +258,12 @@ class _CoalescedPopup {
 /// colour, dark text, anchored clear of the count. Rises 6px, holds, fades.
 class _ScorePopupWidget extends StatelessWidget {
   final _CoalescedPopup popup;
-  final double? top;
-  final double? bottom;
+  final double alignmentY;
 
   const _ScorePopupWidget({
     super.key,
     required this.popup,
-    this.top,
-    this.bottom,
+    required this.alignmentY,
   });
 
   @override
@@ -299,23 +292,8 @@ class _ScorePopupWidget extends StatelessWidget {
       child: FadeTransition(opacity: fade, child: _buildPill(colors)),
     );
 
-    // Explicit anchor when the caller knows where the free bands are;
-    // otherwise fall back to a fraction of the available height.
-    if (top != null || bottom != null) {
-      return Positioned(
-        left: 0,
-        right: 0,
-        top: top,
-        bottom: bottom,
-        child: Align(alignment: Alignment.center, child: pill),
-      );
-    }
-
     return Positioned.fill(
-      child: Align(
-        alignment: Alignment(0, popup.isPlayer ? 0.55 : -0.55),
-        child: pill,
-      ),
+      child: Align(alignment: Alignment(0, alignmentY), child: pill),
     );
   }
 
