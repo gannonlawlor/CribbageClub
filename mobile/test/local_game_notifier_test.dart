@@ -113,7 +113,11 @@ void main() {
         playerId: 'player1',
       );
 
-      final hand = notifier.debugState.gameState!.players[0].hand;
+      // Seat order is randomized (first dealer coin flip) — find the human
+      // by id, since the AI may sit first and have discarded already.
+      final hand = notifier.debugState.gameState!.players
+          .firstWhere((p) => p.id == 'player1')
+          .hand;
       expect(hand.length, 6);
 
       // Discard 2 cards

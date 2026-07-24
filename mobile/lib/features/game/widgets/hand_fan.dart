@@ -17,12 +17,23 @@ class HandFan extends ConsumerStatefulWidget {
   /// Lift room reserved above the cards for the selected-card raise.
   static const double liftRoom = 8;
 
+  /// Half a deal beat: the player's cards land every two of these, with the
+  /// opponent's cards filling the off-beats so the deal alternates.
+  static const Duration dealHalfBeat = Duration(milliseconds: 150);
+
+  /// How far above the hand a dealt card starts — it drops in from the table.
+  static const double dealEntryLift = 130;
+
   final List<PlayingCard> cards;
   final Set<int> selectedIndices;
 
   /// Cards that can't legally be played right now — rendered at 45% opacity.
   final Set<int> dimmedIndices;
   final bool enabled;
+
+  /// The non-dealer is dealt to first; the dealer's cards arrive on the
+  /// off-beat.
+  final bool receiveFirst;
   final void Function(int index)? onCardTap;
 
   const HandFan({
@@ -31,6 +42,7 @@ class HandFan extends ConsumerStatefulWidget {
     this.selectedIndices = const {},
     this.dimmedIndices = const {},
     this.enabled = true,
+    this.receiveFirst = true,
     this.onCardTap,
   });
 
@@ -43,7 +55,7 @@ class _HandFanState extends ConsumerState<HandFan> {
   int _revealedCount = 0;
   bool _faceUp = false;
   bool _isAnimating = false;
-  Timer? _staggerTimer;
+  final List<Timer> _dealTimers = [];
 
   @override
   void initState() {
@@ -70,11 +82,20 @@ class _HandFanState extends ConsumerState<HandFan> {
   }
 
   void _startDealAnimation() {
-    _staggerTimer?.cancel();
+    for (final t in _dealTimers) {
+      t.cancel();
+    }
+    _dealTimers.clear();
     final settings = ref.read(settingsProvider);
-    final staggerMs = settings.scaleDuration(const Duration(milliseconds: 120)).inMilliseconds;
-    final flipDelayMs = settings.scaleDuration(const Duration(milliseconds: 100)).inMilliseconds;
-    final flipStaggerMs = settings.scaleDuration(const Duration(milliseconds: 80)).inMilliseconds;
+    final halfBeatMs = settings
+        .scaleDuration(HandFan.dealHalfBeat)
+        .inMilliseconds;
+    final flipDelayMs = settings
+        .scaleDuration(const Duration(milliseconds: 100))
+        .inMilliseconds;
+    final flipStaggerMs = settings
+        .scaleDuration(const Duration(milliseconds: 80))
+        .inMilliseconds;
 
     setState(() {
       _isAnimating = true;
@@ -83,33 +104,39 @@ class _HandFanState extends ConsumerState<HandFan> {
       _seenEmpty = false;
     });
 
+    // Cards arrive one at a time on every other half-beat; the opponent's
+    // cards are dealt on the beats in between, so the deal alternates the way
+    // a real one does. The dealer's own cards start on the off-beat.
     final totalCards = widget.cards.length;
-    _staggerTimer = Timer.periodic(Duration(milliseconds: staggerMs), (timer) {
-      if (!mounted) {
-        timer.cancel();
-        return;
-      }
-      setState(() => _revealedCount++);
-      if (_revealedCount >= totalCards) {
-        timer.cancel();
-        // After all cards positioned, flip them face-up
-        Future.delayed(Duration(milliseconds: flipDelayMs + 300), () {
+    final phaseMs = widget.receiveFirst ? 0 : halfBeatMs;
+    for (int i = 0; i < totalCards; i++) {
+      _dealTimers.add(
+        Timer(Duration(milliseconds: phaseMs + i * 2 * halfBeatMs), () {
           if (!mounted) return;
-          setState(() => _faceUp = true);
-          // After flip completes, end animation
-          final totalFlipMs = flipStaggerMs * (totalCards - 1) + 400;
-          Future.delayed(Duration(milliseconds: totalFlipMs), () {
-            if (!mounted) return;
-            setState(() => _isAnimating = false);
-          });
-        });
-      }
-    });
+          setState(() => _revealedCount = i + 1);
+          if (i == totalCards - 1) {
+            // After all cards positioned, flip them face-up
+            Future.delayed(Duration(milliseconds: flipDelayMs + 300), () {
+              if (!mounted) return;
+              setState(() => _faceUp = true);
+              // After flip completes, end animation
+              final totalFlipMs = flipStaggerMs * (totalCards - 1) + 400;
+              Future.delayed(Duration(milliseconds: totalFlipMs), () {
+                if (!mounted) return;
+                setState(() => _isAnimating = false);
+              });
+            });
+          }
+        }),
+      );
+    }
   }
 
   @override
   void dispose() {
-    _staggerTimer?.cancel();
+    for (final t in _dealTimers) {
+      t.cancel();
+    }
     super.dispose();
   }
 
@@ -134,8 +161,8 @@ class _HandFanState extends ConsumerState<HandFan> {
         // only once six cards no longer fit.
         final step = n > 1
             ? math
-                .min(cardW + 10, (available - cardW) / (n - 1))
-                .clamp(cardW * 0.45, cardW + 10)
+                  .min(cardW + 10, (available - cardW) / (n - 1))
+                  .clamp(cardW * 0.45, cardW + 10)
             : 0.0;
         final stackWidth = cardW + (n - 1) * step;
         final startX = (available - stackWidth) / 2;
@@ -145,7 +172,9 @@ class _HandFanState extends ConsumerState<HandFan> {
         final overlapping = n > 1 && step < cardW;
 
         if (_isAnimating) {
-          final flipStagger = settings.scaleDuration(const Duration(milliseconds: 80));
+          final flipStagger = settings.scaleDuration(
+            const Duration(milliseconds: 80),
+          );
           return SizedBox(
             height: slotH,
             child: Stack(
@@ -156,7 +185,9 @@ class _HandFanState extends ConsumerState<HandFan> {
                     duration: const Duration(milliseconds: 300),
                     curve: Curves.easeOutCubic,
                     left: i < _revealedCount ? startX + i * step : centerX,
-                    bottom: 0,
+                    // Undealt cards wait above the hand, up on the table, and
+                    // drop into their slot when their turn comes.
+                    bottom: i < _revealedCount ? 0 : HandFan.dealEntryLift,
                     child: AnimatedOpacity(
                       duration: const Duration(milliseconds: 150),
                       opacity: i < _revealedCount ? 1.0 : 0.0,
@@ -193,7 +224,9 @@ class _HandFanState extends ConsumerState<HandFan> {
                     dimmed: widget.dimmedIndices.contains(i),
                     indexOnly: overlapping && i < n - 1,
                     enabled: widget.enabled,
-                    onTap: widget.onCardTap != null ? () => widget.onCardTap!(i) : null,
+                    onTap: widget.onCardTap != null
+                        ? () => widget.onCardTap!(i)
+                        : null,
                     width: cardW,
                     height: cardH,
                   ),
@@ -209,7 +242,15 @@ class _HandFanState extends ConsumerState<HandFan> {
 class OpponentHand extends StatefulWidget {
   final int cardCount;
 
-  const OpponentHand({super.key, required this.cardCount});
+  /// Mirrors [HandFan.receiveFirst]: the non-dealer's cards land on the
+  /// on-beats, the dealer's on the off-beats.
+  final bool receiveFirst;
+
+  const OpponentHand({
+    super.key,
+    required this.cardCount,
+    this.receiveFirst = false,
+  });
 
   @override
   State<OpponentHand> createState() => _OpponentHandState();
@@ -219,7 +260,7 @@ class _OpponentHandState extends State<OpponentHand> {
   bool _seenEmpty = false;
   int _revealedCount = 0;
   bool _isAnimating = false;
-  Timer? _staggerTimer;
+  final List<Timer> _dealTimers = [];
 
   @override
   void initState() {
@@ -244,10 +285,15 @@ class _OpponentHandState extends State<OpponentHand> {
   }
 
   void _startDealAnimation() {
-    _staggerTimer?.cancel();
+    for (final t in _dealTimers) {
+      t.cancel();
+    }
+    _dealTimers.clear();
     // Use initial settings since this isn't a ConsumerWidget
     final settings = getInitialSettings() ?? const SettingsState();
-    final staggerMs = settings.scaleDuration(const Duration(milliseconds: 120)).inMilliseconds;
+    final halfBeatMs = settings
+        .scaleDuration(HandFan.dealHalfBeat)
+        .inMilliseconds;
 
     setState(() {
       _isAnimating = true;
@@ -255,27 +301,31 @@ class _OpponentHandState extends State<OpponentHand> {
       _seenEmpty = false;
     });
 
+    // Interleaved with the player's cards: one arrives every other half-beat.
     final totalCards = widget.cardCount;
-    _staggerTimer = Timer.periodic(Duration(milliseconds: staggerMs), (timer) {
-      if (!mounted) {
-        timer.cancel();
-        return;
-      }
-      setState(() => _revealedCount++);
-      if (_revealedCount >= totalCards) {
-        timer.cancel();
-        // Short delay after last card slides in, then end animation
-        Future.delayed(const Duration(milliseconds: 350), () {
+    final phaseMs = widget.receiveFirst ? 0 : halfBeatMs;
+    for (int i = 0; i < totalCards; i++) {
+      _dealTimers.add(
+        Timer(Duration(milliseconds: phaseMs + i * 2 * halfBeatMs), () {
           if (!mounted) return;
-          setState(() => _isAnimating = false);
-        });
-      }
-    });
+          setState(() => _revealedCount = i + 1);
+          if (i == totalCards - 1) {
+            // Short delay after last card slides in, then end animation
+            Future.delayed(const Duration(milliseconds: 350), () {
+              if (!mounted) return;
+              setState(() => _isAnimating = false);
+            });
+          }
+        }),
+      );
+    }
   }
 
   @override
   void dispose() {
-    _staggerTimer?.cancel();
+    for (final t in _dealTimers) {
+      t.cancel();
+    }
     super.dispose();
   }
 
@@ -304,12 +354,18 @@ class _OpponentHandState extends State<OpponentHand> {
                   AnimatedPositioned(
                     duration: const Duration(milliseconds: 300),
                     curve: Curves.easeOutCubic,
-                    left: i < _revealedCount ? startX + i * dims.opponentCardVisible : centerX,
+                    left: i < _revealedCount
+                        ? startX + i * dims.opponentCardVisible
+                        : centerX,
                     top: 0,
                     child: AnimatedOpacity(
                       duration: const Duration(milliseconds: 150),
                       opacity: i < _revealedCount ? 1.0 : 0.0,
-                      child: CardWidget(faceUp: false, width: cardW, height: cardH),
+                      child: CardWidget(
+                        faceUp: false,
+                        width: cardW,
+                        height: cardH,
+                      ),
                     ),
                   ),
               ],

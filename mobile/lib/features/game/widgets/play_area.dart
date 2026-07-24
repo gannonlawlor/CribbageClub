@@ -3,14 +3,20 @@ import '../../../config/theme/app_colors.dart';
 import '../../../core/models/card.dart';
 import '../../../shared/utils/card_dimensions.dart';
 import 'card_widget.dart';
+import 'pegging_pile.dart' show spentGreyMatrix;
 
 class PlayArea extends StatelessWidget {
   final List<PlayingCard> playedCards;
+
+  /// Cards from counts already closed this round (31 or a go) — kept on the
+  /// table as a tight, faded stack beside the live count.
+  final List<PlayingCard> previousCards;
   final int peggingCount;
 
   const PlayArea({
     super.key,
     required this.playedCards,
+    this.previousCards = const [],
     required this.peggingCount,
   });
 
@@ -27,7 +33,7 @@ class PlayArea extends StatelessWidget {
               final cardW = dims.playCardWidth;
               final cardH = dims.playCardHeight;
 
-              if (playedCards.isEmpty) {
+              if (playedCards.isEmpty && previousCards.isEmpty) {
                 return SizedBox(
                   height: cardH,
                   child: Center(
@@ -42,7 +48,14 @@ class PlayArea extends StatelessWidget {
                 );
               }
 
-              final stackWidth = dims.playStackWidth(playedCards.length);
+              final prevVisible = cardW * 0.24;
+              final prevWidth = previousCards.isEmpty
+                  ? 0.0
+                  : cardW +
+                        (previousCards.length - 1) * prevVisible +
+                        cardW * 0.3;
+              final stackWidth =
+                  prevWidth + dims.playStackWidth(playedCards.length);
               final startX = (constraints.maxWidth - stackWidth) / 2;
 
               return SizedBox(
@@ -50,9 +63,24 @@ class PlayArea extends StatelessWidget {
                 child: Stack(
                   clipBehavior: Clip.none,
                   children: [
+                    for (int i = 0; i < previousCards.length; i++)
+                      Positioned(
+                        left: startX + i * prevVisible,
+                        top: 0,
+                        child: ColorFiltered(
+                          colorFilter: ColorFilter.matrix(spentGreyMatrix(1)),
+                          child: CardWidget(
+                            card: previousCards[i],
+                            faceUp: true,
+                            enabled: false,
+                            width: cardW,
+                            height: cardH,
+                          ),
+                        ),
+                      ),
                     for (int i = 0; i < playedCards.length; i++)
                       Positioned(
-                        left: startX + i * dims.playCardVisible,
+                        left: startX + prevWidth + i * dims.playCardVisible,
                         top: 0,
                         child: CardWidget(
                           card: playedCards[i],

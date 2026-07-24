@@ -51,40 +51,61 @@ void main() {
 
       expect(state.gameId, startsWith('local_'));
       expect(state.players.length, 2);
-      expect(state.players[0].id, 'player1');
-      expect(state.players[0].name, 'Player');
-      expect(state.players[1].id, startsWith('ai_'));
+      // Seat order is randomized so the first dealer is a coin flip; find
+      // each player by id rather than position.
+      final human = state.players.firstWhere((p) => p.id == 'player1');
+      final ai = state.players.firstWhere((p) => p.id.startsWith('ai_'));
+      expect(human.name, 'Player');
+      expect(ai.id, startsWith('ai_'));
       expect(state.stage, GameStage.discardingToCrib);
       expect(state.currentPlayerId, isNotNull);
       // Human player has 6 cards to start
-      expect(state.players[0].hand.length, 6);
+      expect(human.hand.length, 6);
     });
 
-    test('createGame with different difficulties sets correct AI name', () async {
-      final easyService = LocalGameService();
-      await easyService.createGame(
-        humanPlayerId: 'p',
-        humanPlayerName: 'P',
-        difficulty: 'basic',
-      );
-      expect(easyService.currentState!.players[1].name, 'AI (Easy)');
+    test(
+      'createGame with different difficulties sets correct AI name',
+      () async {
+        final easyService = LocalGameService();
+        await easyService.createGame(
+          humanPlayerId: 'p',
+          humanPlayerName: 'P',
+          difficulty: 'basic',
+        );
+        expect(
+          easyService.currentState!.players
+              .firstWhere((p) => p.id.startsWith('ai_'))
+              .name,
+          'AI (Easy)',
+        );
 
-      final mediumService = LocalGameService();
-      await mediumService.createGame(
-        humanPlayerId: 'p',
-        humanPlayerName: 'P',
-        difficulty: 'medium',
-      );
-      expect(mediumService.currentState!.players[1].name, 'AI (Medium)');
+        final mediumService = LocalGameService();
+        await mediumService.createGame(
+          humanPlayerId: 'p',
+          humanPlayerName: 'P',
+          difficulty: 'medium',
+        );
+        expect(
+          mediumService.currentState!.players
+              .firstWhere((p) => p.id.startsWith('ai_'))
+              .name,
+          'AI (Medium)',
+        );
 
-      final hardService = LocalGameService();
-      await hardService.createGame(
-        humanPlayerId: 'p',
-        humanPlayerName: 'P',
-        difficulty: 'hard',
-      );
-      expect(hardService.currentState!.players[1].name, 'AI (Hard)');
-    });
+        final hardService = LocalGameService();
+        await hardService.createGame(
+          humanPlayerId: 'p',
+          humanPlayerName: 'P',
+          difficulty: 'hard',
+        );
+        expect(
+          hardService.currentState!.players
+              .firstWhere((p) => p.id.startsWith('ai_'))
+              .name,
+          'AI (Hard)',
+        );
+      },
+    );
 
     test('currentState matches last created game', () async {
       final state = await service.createGame(
@@ -106,15 +127,16 @@ void main() {
         difficulty: 'basic',
       );
 
-      // Discard first card from hand
-      final card = state.players[0].hand[0];
+      // Discard first card from the human's hand
+      final card = state.players.firstWhere((p) => p.id == 'player1').hand[0];
       final newState = await service.applyHumanAction(
         GameAction.discardToCrib(playerId: 'player1', card: card),
       );
 
       // After discarding one card, hand should have 5
-      expect(newState.players[0].hand.length, 5);
-      expect(newState.players[0].hand.contains(card), isFalse);
+      final human = newState.players.firstWhere((p) => p.id == 'player1');
+      expect(human.hand.length, 5);
+      expect(human.hand.contains(card), isFalse);
     });
   });
 }

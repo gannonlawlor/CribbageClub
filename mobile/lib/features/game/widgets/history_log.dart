@@ -1,8 +1,32 @@
 import 'package:flutter/material.dart';
+import '../../../config/constants.dart';
 import '../../../config/theme/app_colors.dart';
+import '../../../core/models/card.dart';
 import '../../../core/models/game_history_event.dart';
 import '../../../core/models/score_breakdown.dart';
 import '../../../shared/utils/forfeit_text.dart';
+import 'card_widget.dart';
+
+/// One line of the log: an actor (null = neutral separator), the predicate
+/// text, and optionally a card shown inline — the starter is worth seeing
+/// rather than reading.
+class _Entry {
+  final String? actorId;
+  final String text;
+  final bool emphasize;
+
+  /// Rendered as a small card face between [text] and [textAfter].
+  final PlayingCard? card;
+  final String textAfter;
+
+  const _Entry({
+    this.actorId,
+    required this.text,
+    this.emphasize = false,
+    this.card,
+    this.textAfter = '',
+  });
+}
 
 /// Chronological game log. Each entry is attributed with the design language's
 /// player identity colours — `--player-self` (green) for you, `--player-opp`
@@ -10,6 +34,9 @@ import '../../../shared/utils/forfeit_text.dart';
 /// label, and a subtle wash on your own rows. Events with no actor (round
 /// start, deal, pegging end) render as centred separators.
 class HistoryLog extends StatelessWidget {
+  /// Small enough for a log row, large enough that the index still reads.
+  static const double _logCardWidth = 34;
+
   final List<GameHistoryEvent> events;
   final String? playerId;
 
@@ -27,28 +54,20 @@ class HistoryLog extends StatelessWidget {
 
   /// Splits an event into its actor (null = neutral) and the predicate text
   /// that follows the actor label.
-  ({String? actorId, String text, bool emphasize}) _entry(
-    GameHistoryEvent event,
-    String? viewerId,
-  ) {
+  _Entry _entry(GameHistoryEvent event, String? viewerId) {
     return switch (event) {
-      RoundStarted(:final roundNumber) => (
-        actorId: null,
-        text: 'Round $roundNumber',
-        emphasize: false,
-      ),
-      CardsDealt() => (actorId: null, text: 'Cards dealt', emphasize: false),
+      RoundStarted(:final roundNumber) => _Entry(text: 'Round $roundNumber'),
+      CardsDealt() => const _Entry(text: 'Cards dealt'),
       DeckCut(
         :final cuttingPlayerId,
         :final cutCard,
         :final dealerScoredNobs,
       ) =>
-        (
+        _Entry(
           actorId: cuttingPlayerId,
-          text:
-              'cut ${cutCard.rank.display}${cutCard.suit.symbol}'
-              '${dealerScoredNobs ? ' · nobs +2' : ''}',
-          emphasize: false,
+          text: 'cut',
+          card: cutCard,
+          textAfter: dealerScoredNobs ? '· nobs +2' : '',
         ),
       CardPlayed(
         :final playerId,
@@ -56,49 +75,41 @@ class HistoryLog extends StatelessWidget {
         :final newCount,
         :final pointsScored,
       ) =>
-        (
+        _Entry(
           actorId: playerId,
           text:
               'played ${card.rank.display}${card.suit.symbol}'
               ' · count $newCount${pointsScored > 0 ? ' · +$pointsScored' : ''}',
-          emphasize: false,
         ),
-      GoAnnounced(:final playerId, :final pointsScored) => (
+      GoAnnounced(:final playerId, :final pointsScored) => _Entry(
         actorId: playerId,
         text: 'said Go${pointsScored > 0 ? ' · +$pointsScored' : ''}',
-        emphasize: false,
       ),
-      PeggingEnded() => (
-        actorId: null,
-        text: 'Pegging ended',
-        emphasize: false,
-      ),
+      PeggingEnded() => const _Entry(text: 'Pegging ended'),
       HandCounted(:final playerId, :final totalPoints, :final scoreBreakdown) =>
-        (
+        _Entry(
           actorId: playerId,
           text: 'counted $totalPoints${_breakdownSummary(scoreBreakdown)}',
-          emphasize: false,
         ),
       CribCounted(
         :final dealerPlayerId,
         :final totalPoints,
         :final scoreBreakdown,
       ) =>
-        (
+        _Entry(
           actorId: dealerPlayerId,
           text:
               'counted $totalPoints in crib'
               '${_breakdownSummary(scoreBreakdown)}',
-          emphasize: false,
         ),
-      GameEnded(:final winnerPlayerId, :final finalScore) => (
+      GameEnded(:final winnerPlayerId, :final finalScore) => _Entry(
         actorId: winnerPlayerId,
         text:
             '${winnerPlayerId == viewerId ? 'win' : 'wins'}'
             ' with $finalScore',
         emphasize: true,
       ),
-      GameForfeited(:final forfeitingPlayerId, :final reason) => (
+      GameForfeited(:final forfeitingPlayerId, :final reason) => _Entry(
         actorId: forfeitingPlayerId,
         text: forfeitVerb(reason),
         emphasize: true,
@@ -165,32 +176,60 @@ class HistoryLog extends StatelessWidget {
                       Expanded(
                         child: Padding(
                           padding: const EdgeInsets.fromLTRB(9, 6, 10, 6),
-                          child: Text.rich(
-                            TextSpan(
-                              children: [
+                          child: Builder(
+                            builder: (context) {
+                              final bodyStyle = TextStyle(
+                                color: entry.emphasize
+                                    ? colors.textPrimary
+                                    : colors.textSecondary,
+                                fontSize: 13,
+                                fontWeight: entry.emphasize
+                                    ? FontWeight.w600
+                                    : FontWeight.w400,
+                              );
+                              return Text.rich(
                                 TextSpan(
-                                  text: isYou ? 'You ' : 'Opponent ',
-                                  style: TextStyle(
-                                    color: identity,
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w700,
-                                  ),
+                                  children: [
+                                    TextSpan(
+                                      text: isYou ? 'You ' : 'Opponent ',
+                                      style: TextStyle(
+                                        color: identity,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    TextSpan(
+                                      text: entry.text,
+                                      style: bodyStyle,
+                                    ),
+                                    if (entry.card != null)
+                                      WidgetSpan(
+                                        alignment: PlaceholderAlignment.middle,
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 6,
+                                          ),
+                                          child: CardWidget(
+                                            card: entry.card,
+                                            faceUp: true,
+                                            enabled: false,
+                                            width: _logCardWidth,
+                                            height:
+                                                _logCardWidth /
+                                                AppConstants.cardAspectRatio,
+                                          ),
+                                        ),
+                                      ),
+                                    if (entry.textAfter.isNotEmpty)
+                                      TextSpan(
+                                        text: entry.textAfter,
+                                        style: bodyStyle,
+                                      ),
+                                  ],
                                 ),
-                                TextSpan(
-                                  text: entry.text,
-                                  style: TextStyle(
-                                    color: entry.emphasize
-                                        ? colors.textPrimary
-                                        : colors.textSecondary,
-                                    fontSize: 13,
-                                    fontWeight: entry.emphasize
-                                        ? FontWeight.w600
-                                        : FontWeight.w400,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            style: const TextStyle(height: 1.3),
+                                style: const TextStyle(height: 1.3),
+                              );
+                            },
                           ),
                         ),
                       ),
