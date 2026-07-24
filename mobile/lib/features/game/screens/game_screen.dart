@@ -608,6 +608,8 @@ class GameScreen extends ConsumerWidget {
         dimmedIndices: dimmedHandCards,
         enabled: isMyTurn && !gameNotifier.isDiscarding && !isCounting,
         receiveFirst: !isDealer,
+        // The counting hand is the one just played — show it, don't re-deal it.
+        animateDeal: !isCounting,
         onCardTap: (index) =>
             _handleCardTap(context, ref, gs, playerId, index, selectedCards),
       ),
