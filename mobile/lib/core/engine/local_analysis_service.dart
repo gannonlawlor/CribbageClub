@@ -42,9 +42,7 @@ class LocalAnalysisService {
     return rounds;
   }
 
-  static RoundAnalysis? _analyzeRound(
-    List<GameHistoryEvent> events,
-  ) {
+  static RoundAnalysis? _analyzeRound(List<GameHistoryEvent> events) {
     final roundStarted = events.whereType<RoundStarted>().firstOrNull;
     final cardsDealt = events.whereType<CardsDealt>().firstOrNull;
     final deckCut = events.whereType<DeckCut>().firstOrNull;
@@ -70,6 +68,7 @@ class LocalAnalysisService {
         dealtHands: cardsDealt.dealtHands,
         handsCounted: handsCounted,
         cribCounted: cribCounted,
+        events: events,
       );
       if (analysis != null) analyses.add(analysis);
     }
@@ -88,6 +87,7 @@ class LocalAnalysisService {
     required Map<String, List<PlayingCard>> dealtHands,
     required List<HandCounted> handsCounted,
     required CribCounted? cribCounted,
+    required List<GameHistoryEvent> events,
   }) {
     final dealtHand = dealtHands[playerId];
     if (dealtHand == null || dealtHand.length != 6) return null;
@@ -100,6 +100,19 @@ class LocalAnalysisService {
 
     final discarded = dealtHand.where((c) => !keptHand.contains(c)).toList();
     if (discarded.length != 2) return null;
+
+    // Everything this player pegged this round: card plays, go points, and the
+    // dealer's his-heels on the cut, so hand + pegging + crib add to the round.
+    var peggingScore = 0;
+    for (final e in events) {
+      if (e is CardPlayed && e.playerId == playerId) {
+        peggingScore += e.pointsScored;
+      } else if (e is GoAnnounced && e.playerId == playerId) {
+        peggingScore += e.pointsScored;
+      } else if (e is DeckCut && e.dealerScoredNobs && isDealer) {
+        peggingScore += 2;
+      }
+    }
 
     // Use Rust engine for discard analysis
     final handJson = jsonEncode(dealtHand.map((c) => c.toJson()).toList());
@@ -130,6 +143,7 @@ class LocalAnalysisService {
       discarded: discarded,
       actualHandScore: handCounted!.totalPoints,
       actualCribScore: isDealer ? cribCounted?.totalPoints : null,
+      actualPeggingScore: peggingScore,
       optimalDiscard: optimalOption,
       playerDiscard: playerOption,
       evDifference:

@@ -28,6 +28,7 @@ class PlayerRoundAnalysis with _$PlayerRoundAnalysis {
     required List<PlayingCard> discarded,
     required int actualHandScore,
     int? actualCribScore,
+    @Default(0) int actualPeggingScore,
     required DiscardOption optimalDiscard,
     required DiscardOption playerDiscard,
     required double evDifference,
