@@ -63,11 +63,7 @@ class GameControls extends StatelessWidget {
       case GameStage.dealing:
         if (!autoDeal) {
           return [
-            _ActionButton(
-              label: 'Deal',
-              onPressed: onDeal,
-              icon: Icons.style,
-            ),
+            _ActionButton(label: 'Deal', onPressed: onDeal, icon: Icons.style),
           ];
         }
         return [];
@@ -97,18 +93,16 @@ class GameControls extends StatelessWidget {
       case GameStage.pegging:
         if (!canPlayCard && !autoGo) {
           return [
-            _ActionButton(
-              label: 'Go',
-              onPressed: onGo,
-              icon: Icons.front_hand,
-            ),
+            _ActionButton(label: 'Go', onPressed: onGo, icon: Icons.front_hand),
           ];
         }
-        if (!autoPlayPegging && hasSelectedCard) {
+        // Manual pegging: the button waits, disabled, until a card is
+        // selected — appearing out of nowhere invites a mis-tap.
+        if (!autoPlayPegging && canPlayCard) {
           return [
             _ActionButton(
-              label: 'Play Card',
-              onPressed: onPlayCard,
+              label: hasSelectedCard ? 'Play Card' : 'Select a card',
+              onPressed: hasSelectedCard ? onPlayCard : null,
               icon: Icons.play_arrow,
             ),
           ];

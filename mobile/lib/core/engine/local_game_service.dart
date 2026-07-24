@@ -34,12 +34,15 @@ class LocalGameService {
       _ => 'easy',
     };
 
+    // The engine always makes player 1 the first dealer, so a random seat
+    // order is what makes the opening cut-for-deal a real coin flip.
+    final humanDealsFirst = Random().nextBool();
     _engine = rust.engineNew(
       gameId: gameId,
-      player1Id: humanPlayerId,
-      player1Name: humanPlayerName,
-      player2Id: aiPlayerId,
-      player2Name: aiName,
+      player1Id: humanDealsFirst ? humanPlayerId : aiPlayerId,
+      player1Name: humanDealsFirst ? humanPlayerName : aiName,
+      player2Id: humanDealsFirst ? aiPlayerId : humanPlayerId,
+      player2Name: humanDealsFirst ? aiName : humanPlayerName,
       seed: null,
     );
     _aiPlayerId = aiPlayerId;

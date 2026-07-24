@@ -26,7 +26,9 @@ import '../../../shared/widgets/cc_dialog.dart';
 import '../widgets/count_block.dart';
 import '../widgets/crib_area.dart';
 import '../widgets/cut_card.dart';
+import '../widgets/cut_for_deal_overlay.dart';
 import '../widgets/discard_flight.dart';
+import '../widgets/opponent_deal_flight.dart';
 import '../widgets/game_controls.dart';
 import '../widgets/game_icon_button.dart';
 import '../widgets/game_settings_sheet.dart';
@@ -62,6 +64,13 @@ final _flightAnchorsProvider = Provider.family<_FlightAnchors, String>(
 
 /// Bumped each time the player throws to the crib.
 final _discardTokenProvider = StateProvider.family<int, String>((ref, _) => 0);
+
+/// Whether this game's opening cut-for-deal has been shown. The ceremony is
+/// presentation only — the engine decided the dealer at creation — so one
+/// showing per game is all it gets.
+final _cutForDealDoneProvider = StateProvider.family<bool, String>(
+  (ref, _) => false,
+);
 
 /// Horizontal inset that keeps the table clear of the perimeter track.
 const double _sideInset = 40;
@@ -235,6 +244,46 @@ class GameScreen extends ConsumerWidget {
     final selectedCards = ref.watch(selectedCardsProvider(gameId));
     final selectedPeggingCard = ref.watch(selectedPeggingCardProvider(gameId));
 
+    // The opening cut-for-deal: shown once, before the first hand appears.
+    // Timed games skip the ceremony — it would burn the discard clock.
+    final cutForDealDone = ref.watch(_cutForDealDoneProvider(gameId));
+    final isFirstRound = !gs.history.any(
+      (e) => e is RoundStarted && e.roundNumber > 1,
+    );
+    final showCutForDeal =
+        !cutForDealDone &&
+        !gameNotifier.isTimed &&
+        isFirstRound &&
+        (gs.stage == GameStage.dealing ||
+            gs.stage == GameStage.discardingToCrib) &&
+        player.hand.length == 6;
+
+    // A pegging selection only survives while it's still playable: the stage
+    // moves on, the card gets played, or the count outgrows it — it clears.
+    if (selectedPeggingCard != null &&
+        (gs.stage != GameStage.pegging ||
+            !player.hand.contains(selectedPeggingCard) ||
+            selectedPeggingCard.rank.peggingValue + gs.peggingCount > 31)) {
+      Future.microtask(() {
+        ref.read(selectedPeggingCardProvider(gameId).notifier).state = null;
+      });
+    }
+
+    // Every card played since the last deal, oldest first. The engine clears
+    // its pile at 31 or a go; the difference between this list and the live
+    // pile is the spent cards we keep on the table, faded.
+    final roundPlays = <CardPlayed>[];
+    if (gs.stage == GameStage.pegging) {
+      for (final event in gs.history.reversed) {
+        if (event is CardsDealt) break;
+        if (event is CardPlayed) roundPlays.insert(0, event);
+      }
+    }
+    final spentPileCount = math.max(
+      0,
+      roundPlays.length - gs.playedCards.length,
+    );
+
     // Auto-go when player can't play during pegging
     if (settings.autoGo &&
         gs.stage == GameStage.pegging &&
@@ -376,9 +425,12 @@ class GameScreen extends ConsumerWidget {
     Widget buildOpponentHand() => Padding(
       padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 12),
       child: OpponentHand(
-        cardCount: opponent.hand.isEmpty
+        cardCount: showCutForDeal
+            ? 0
+            : opponent.hand.isEmpty
             ? _estimateOpponentCards(gs, opponent.id)
             : opponent.hand.length,
+        receiveFirst: isDealer,
       ),
     );
 
@@ -414,6 +466,9 @@ class GameScreen extends ConsumerWidget {
                 maintainState: true,
                 child: PlayArea(
                   playedCards: gs.playedCards,
+                  previousCards: [
+                    for (int i = 0; i < spentPileCount; i++) roundPlays[i].card,
+                  ],
                   peggingCount: gs.peggingCount,
                 ),
               ),
@@ -475,14 +530,26 @@ class GameScreen extends ConsumerWidget {
           if (sortedHand[i].rank.peggingValue + gs.peggingCount > 31) i,
     };
 
+    // With manual pegging the tapped card raises like a discard pick, so the
+    // Play button always has a visible subject.
+    final selectedPeggingIndex =
+        gs.stage == GameStage.pegging && selectedPeggingCard != null
+        ? sortedHand.indexOf(selectedPeggingCard)
+        : -1;
+
     Widget buildHand({double horizontalPadding = 12}) => Padding(
       key: anchors.hand,
       padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
       child: HandFan(
-        cards: sortedHand,
-        selectedIndices: selectedCards,
+        // The hand stays off the table until the opening cut settles; its
+        // arrival is what kicks off the deal animation.
+        cards: showCutForDeal ? const [] : sortedHand,
+        selectedIndices: gs.stage == GameStage.pegging
+            ? {if (selectedPeggingIndex >= 0) selectedPeggingIndex}
+            : selectedCards,
         dimmedIndices: dimmedHandCards,
         enabled: isMyTurn && !gameNotifier.isDiscarding,
+        receiveFirst: !isDealer,
         onCardTap: (index) =>
             _handleCardTap(context, ref, gs, playerId, index, selectedCards),
       ),
@@ -515,6 +582,14 @@ class GameScreen extends ConsumerWidget {
         ),
       if (kDebugMode && _isLocal)
         DevOverlay(gameId: gameId, playerId: playerId),
+      if (showCutForDeal)
+        CutForDealOverlay(
+          playerDeals: isDealer,
+          opponentName: opponent.name,
+          onComplete: () {
+            ref.read(_cutForDealDoneProvider(gameId).notifier).state = true;
+          },
+        ),
     ];
 
     if (isTabletLandscape) {
@@ -729,6 +804,8 @@ class GameScreen extends ConsumerWidget {
                         cribRevealed: cribRevealed,
                         selectedCardCount: selectedCards.length,
                         cardWidth: tableCardW,
+                        roundPlays: roundPlays,
+                        spentPileCount: spentPileCount,
                         gameOver: gs.stage == GameStage.gameOver
                             ? _buildGameOver(context, ref, gs, playerId)
                             : null,
@@ -782,6 +859,17 @@ class GameScreen extends ConsumerWidget {
                     },
                   ),
                 ),
+              // The opponent's half of the deal: card backs fly from the
+              // table up to their bar, interleaved with the player's cards.
+              Positioned.fill(
+                child: OpponentDealFlight(
+                  handCount: showCutForDeal ? 0 : player.hand.length,
+                  receiveFirst: isDealer,
+                  from: Offset(width / 2, height * 0.45),
+                  to: Offset(width / 2, contentTop + PlayerBar.height / 2),
+                  cardWidth: tableCardW * 0.85,
+                ),
+              ),
               // Popups land in the free bands under the opponent bar and
               // above the hand, never over the count.
               ...buildOverlays(
@@ -880,8 +968,11 @@ class GameScreen extends ConsumerWidget {
           if (n is GameNotifier) n.playCard(card);
           if (n is LocalGameNotifier) n.playCard(card);
         } else {
-          // Manual: tap selects card, "Play Card" button confirms
-          ref.read(selectedPeggingCardProvider(gameId).notifier).state = card;
+          // Manual: tap selects card, "Play Card" button confirms; tapping
+          // the selected card again puts it back down.
+          final current = ref.read(selectedPeggingCardProvider(gameId));
+          ref.read(selectedPeggingCardProvider(gameId).notifier).state =
+              current == card ? null : card;
         }
       }
     }
@@ -1193,6 +1284,13 @@ class _Table extends StatelessWidget {
   final bool cribRevealed;
   final int selectedCardCount;
   final double cardWidth;
+
+  /// Every card played this round, oldest first — spent counts then the live
+  /// pile.
+  final List<CardPlayed> roundPlays;
+
+  /// How many of [roundPlays] belong to counts already closed by a 31 or go.
+  final int spentPileCount;
   final Widget? gameOver;
 
   /// Where the discard flight lands.
@@ -1210,24 +1308,13 @@ class _Table extends StatelessWidget {
     required this.cribRevealed,
     required this.selectedCardCount,
     required this.cardWidth,
+    required this.roundPlays,
+    required this.spentPileCount,
     required this.gameOver,
     required this.cribKey,
     required this.onSettings,
     required this.onHistory,
   });
-
-  /// Who played each card currently on the pile, oldest first.
-  List<bool> get _pileOwners {
-    final played = gs.history.whereType<CardPlayed>().toList();
-    final n = gs.playedCards.length;
-    final tail = played.length >= n
-        ? played.sublist(played.length - n)
-        : played;
-    return [
-      for (int i = 0; i < n; i++)
-        i < tail.length ? tail[i].playerId == playerId : false,
-    ];
-  }
 
   CountBlock _countBlock() {
     switch (gs.stage) {
@@ -1277,7 +1364,9 @@ class _Table extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final showCluster = gs.stage != GameStage.dealing && gameOver == null;
-    final showPile = gs.playedCards.isNotEmpty && gameOver == null;
+    final pileCards = [for (final p in roundPlays) p.card];
+    final pileOwners = [for (final p in roundPlays) p.playerId == playerId];
+    final showPile = pileCards.isNotEmpty && gameOver == null;
     return Stack(
       clipBehavior: Clip.none,
       children: [
@@ -1317,8 +1406,9 @@ class _Table extends StatelessWidget {
                               if (showPile) ...[
                                 const SizedBox(height: 20),
                                 PeggingPile(
-                                  cards: gs.playedCards,
-                                  playedByMe: _pileOwners,
+                                  cards: pileCards,
+                                  playedByMe: pileOwners,
+                                  previousCount: spentPileCount,
                                   cardWidth: cardWidth,
                                 ),
                               ],
