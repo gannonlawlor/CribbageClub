@@ -11,6 +11,9 @@ class GameControls extends StatelessWidget {
   final VoidCallback? onDiscard;
   final VoidCallback? onCut;
   final VoidCallback? onCount;
+
+  /// Opens the counting panel so the player can call the score themselves.
+  final VoidCallback? onManualCount;
   final VoidCallback? onDeal;
   final VoidCallback? onGo;
   final VoidCallback? onPlayCard;
@@ -31,6 +34,7 @@ class GameControls extends StatelessWidget {
     this.onDiscard,
     this.onCut,
     this.onCount,
+    this.onManualCount,
     this.onDeal,
     this.onGo,
     this.onPlayCard,
@@ -109,12 +113,32 @@ class GameControls extends StatelessWidget {
         }
         return [];
       case GameStage.counting:
+        // The panel takes over once the player chooses to count it themselves.
         if (showCountingOverlay) return [];
         return [
-          _ActionButton(
-            label: 'Count Hand',
-            onPressed: onCount,
-            icon: Icons.calculate,
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(left: 12, right: 5),
+              child: CcSecondaryButton(
+                label: 'Count it for me',
+                icon: Icons.bolt,
+                height: 42,
+                fontSize: 13,
+                onPressed: onCount,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(left: 5, right: 12),
+              child: CcPrimaryButton(
+                label: "I'll count",
+                icon: Icons.calculate,
+                height: 42,
+                fontSize: 14,
+                onPressed: onManualCount,
+              ),
+            ),
           ),
         ];
       case GameStage.gameOver:
