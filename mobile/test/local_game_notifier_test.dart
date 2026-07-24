@@ -27,6 +27,7 @@ LocalGameNotifier _createNotifier({
     getAiDelay: () => Duration.zero,
     getScorePause: () => Duration.zero,
     getSetupDelay: () => Duration.zero,
+    getPeggingEndPause: () => Duration.zero,
   );
 }
 

@@ -25,6 +25,16 @@ class DetailedScoreBreakdown {
   });
 }
 
+/// Plain-language name for a scoring group, for lines like "2 for a pair".
+String scoringReason(ScoringCombination c) => switch (c.type) {
+  'fifteen' => 'a fifteen',
+  'pair' => 'a pair',
+  'run' => 'a run',
+  'flush' => 'the flush',
+  'nobs' => 'his nobs',
+  _ => c.type,
+};
+
 DetailedScoreBreakdown calculateDetailedBreakdown(
   List<PlayingCard> hand,
   PlayingCard cutCard, {
@@ -63,12 +73,14 @@ List<ScoringCombination> _findFifteens(List<PlayingCard> allCards) {
       }
     }
     if (sum == 15) {
-      results.add(ScoringCombination(
-        cards: subset,
-        type: 'fifteen',
-        points: 2,
-        description: '${_cardsLabel(subset)} = 15',
-      ));
+      results.add(
+        ScoringCombination(
+          cards: subset,
+          type: 'fifteen',
+          points: 2,
+          description: '${_cardsLabel(subset)} = 15',
+        ),
+      );
     }
   }
   return results;
@@ -80,12 +92,15 @@ List<ScoringCombination> _findPairs(List<PlayingCard> allCards) {
   for (int i = 0; i < allCards.length; i++) {
     for (int j = i + 1; j < allCards.length; j++) {
       if (allCards[i].rank == allCards[j].rank) {
-        results.add(ScoringCombination(
-          cards: [allCards[i], allCards[j]],
-          type: 'pair',
-          points: 2,
-          description: '${_cardLabel(allCards[i])} + ${_cardLabel(allCards[j])} = Pair',
-        ));
+        results.add(
+          ScoringCombination(
+            cards: [allCards[i], allCards[j]],
+            type: 'pair',
+            points: 2,
+            description:
+                '${_cardLabel(allCards[i])} + ${_cardLabel(allCards[j])} = Pair',
+          ),
+        );
       }
     }
   }
@@ -162,12 +177,14 @@ void _addRunCombinations(
       if (combos.isNotEmpty) {
         found = true;
         for (final combo in combos) {
-          results.add(ScoringCombination(
-            cards: combo,
-            type: 'run',
-            points: len,
-            description: '${_cardsLabel(combo)} = Run of $len',
-          ));
+          results.add(
+            ScoringCombination(
+              cards: combo,
+              type: 'run',
+              points: len,
+              description: '${_cardsLabel(combo)} = Run of $len',
+            ),
+          );
         }
       }
     }
@@ -239,12 +256,14 @@ List<ScoringCombination> _checkNobs(
   final results = <ScoringCombination>[];
   for (final card in hand) {
     if (card.rank == Rank.jack && card.suit == cutCard.suit) {
-      results.add(ScoringCombination(
-        cards: [card],
-        type: 'nobs',
-        points: 1,
-        description: '${_cardLabel(card)} = His Nobs',
-      ));
+      results.add(
+        ScoringCombination(
+          cards: [card],
+          type: 'nobs',
+          points: 1,
+          description: '${_cardLabel(card)} = His Nobs',
+        ),
+      );
     }
   }
   return results;

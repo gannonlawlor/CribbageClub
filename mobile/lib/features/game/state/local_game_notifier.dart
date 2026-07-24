@@ -20,6 +20,7 @@ class LocalGameNotifier extends StateNotifier<GameNotifierState> {
   final Duration Function() _getAiDelay;
   final Duration Function() _getScorePause;
   final Duration Function() _getSetupDelay;
+  final Duration Function() _getPeggingEndPause;
   bool _disposed = false;
 
   LocalGameNotifier({
@@ -31,12 +32,14 @@ class LocalGameNotifier extends StateNotifier<GameNotifierState> {
     required Duration Function() getAiDelay,
     required Duration Function() getScorePause,
     required Duration Function() getSetupDelay,
+    required Duration Function() getPeggingEndPause,
   }) : _service = service,
        _playerId = playerId,
        _feedbackService = feedbackService,
        _getAiDelay = getAiDelay,
        _getScorePause = getScorePause,
        _getSetupDelay = getSetupDelay,
+       _getPeggingEndPause = getPeggingEndPause,
        super(
          service.currentState != null
              ? GameNotifierState(gameState: service.currentState)
@@ -97,19 +100,67 @@ class LocalGameNotifier extends StateNotifier<GameNotifierState> {
       // The engine had nothing left to apply — stop rather than spin.
       if (next == current) return;
 
-      state = GameNotifierState(gameState: next);
-      _notifyAnimation(next);
+      await _publish(current, next);
     }
+  }
+
+  /// Publish [next]. When a play just ended pegging, the engine has already
+  /// cleared the pile and moved to counting in one step — so hold the final
+  /// pegging moment (the last card, the closing count) for a beat first, or it
+  /// vanishes the instant it lands.
+  Future<void> _publish(GameState? before, GameState next) async {
+    if (!_disposed &&
+        before?.stage == GameStage.pegging &&
+        next.stage == GameStage.counting) {
+      final view = _finalPeggingView(next);
+      if (view != null) {
+        state = GameNotifierState(gameState: view);
+        _notifyAnimation(view);
+        await Future.delayed(_getPeggingEndPause());
+        if (_disposed) return;
+      }
+    }
+    state = GameNotifierState(gameState: next);
+    _notifyAnimation(next);
+  }
+
+  /// Rebuild the pegging table as it stood on the last card: the closing
+  /// count's cards on the pile and the count they reached, taken from the
+  /// history the counting state still carries. No current player, so nothing
+  /// prompts for input during the hold.
+  GameState? _finalPeggingView(GameState counting) {
+    final plays = <CardPlayed>[];
+    for (final e in counting.history.reversed) {
+      if (e is CardsDealt) break;
+      if (e is CardPlayed) plays.insert(0, e);
+    }
+    if (plays.isEmpty) return null;
+
+    // The closing count's cards: the trailing plays whose running count only
+    // rose — a drop marks where the previous count (a 31 or a go) closed.
+    final group = <PlayingCard>[];
+    int? laterCount;
+    for (final p in plays.reversed) {
+      if (laterCount != null && p.newCount >= laterCount) break;
+      group.insert(0, p.card);
+      laterCount = p.newCount;
+    }
+    return counting.copyWith(
+      stage: GameStage.pegging,
+      currentPlayerId: '',
+      peggingCount: plays.last.newCount,
+      playedCards: group,
+    );
   }
 
   /// Apply a human action, show the result, then let the engine answer at a
   /// readable pace.
   Future<void> _applyActionWithDelay(GameAction action) async {
     try {
+      final before = state.gameState;
       // Apply the human action and show intermediate state immediately
       final intermediate = _service.applyActionOnly(action);
-      state = GameNotifierState(gameState: intermediate);
-      _notifyAnimation(intermediate);
+      await _publish(before, intermediate);
 
       await _runAiTurn();
     } catch (e) {

@@ -3,8 +3,8 @@ import '../../../config/constants.dart';
 import '../../../config/theme/app_colors.dart';
 import '../../../core/models/card.dart';
 import '../../../core/models/game_history_event.dart';
-import '../../../core/models/score_breakdown.dart';
 import '../../../shared/utils/forfeit_text.dart';
+import '../../../shared/utils/score_calculator.dart';
 import 'card_widget.dart';
 
 /// One line of the log: an actor (null = neutral separator), the predicate
@@ -38,24 +38,26 @@ class HistoryLog extends StatelessWidget {
   static const double _logCardWidth = 34;
 
   /// A hand gets its own line, so it can afford a little more width.
-  static const double _logHandCardWidth = 38;
+  static const double _logHandCardWidth = 34;
+
+  /// The scoring-group rows sit narrower still — a few cards plus a label.
+  static const double _logComboCardWidth = 26;
 
   final List<GameHistoryEvent> events;
   final String? playerId;
 
   const HistoryLog({super.key, required this.events, this.playerId});
 
-  String _breakdownSummary(ScoreBreakdown b) {
-    final parts = <String>[];
-    // These fields are point contributions, not counts — a single pair puts
-    // 2 in `pairs`, a run of three puts 3 in `runs` — so phrase them as
-    // points rather than "2 pairs, 3 runs".
-    if (b.fifteens > 0) parts.add('${b.fifteens} for 15s');
-    if (b.pairs > 0) parts.add('${b.pairs} for pairs');
-    if (b.runs > 0) parts.add('${b.runs} for runs');
-    if (b.flushes > 0) parts.add('${b.flushes} for the flush');
-    if (b.nobs > 0) parts.add('${b.nobs} for nobs');
-    return parts.isEmpty ? '' : ' (${parts.join(', ')})';
+  /// The starter for the round [eventIndex] falls in — a hand or crib count
+  /// needs it to work out which cards formed each score. There's exactly one
+  /// DeckCut per round, always before the count, so the nearest earlier one is
+  /// this round's.
+  PlayingCard? _cutFor(int eventIndex) {
+    for (int i = eventIndex; i >= 0; i--) {
+      final e = events[i];
+      if (e is DeckCut) return e.cutCard;
+    }
+    return null;
   }
 
   /// The cards an entry turned over. A single card sits inside the sentence;
@@ -114,30 +116,16 @@ class HistoryLog extends StatelessWidget {
         text: 'said Go${pointsScored > 0 ? ' · +$pointsScored' : ''}',
       ),
       PeggingEnded() => const _Entry(text: 'Pegging ended'),
-      HandCounted(
-        :final playerId,
-        :final hand,
-        :final totalPoints,
-        :final scoreBreakdown,
-      ) =>
-        _Entry(
-          actorId: playerId,
-          text: 'counted $totalPoints',
-          cards: hand,
-          textAfter: _breakdownSummary(scoreBreakdown).trimLeft(),
-        ),
-      CribCounted(
-        :final dealerPlayerId,
-        :final cribCards,
-        :final totalPoints,
-        :final scoreBreakdown,
-      ) =>
-        _Entry(
-          actorId: dealerPlayerId,
-          text: 'counted $totalPoints in crib',
-          cards: cribCards,
-          textAfter: _breakdownSummary(scoreBreakdown).trimLeft(),
-        ),
+      // Hand/crib counts render as their own score block (see itemBuilder);
+      // these cases keep the switch exhaustive and are otherwise unused.
+      HandCounted(:final playerId, :final totalPoints) => _Entry(
+        actorId: playerId,
+        text: 'counted $totalPoints',
+      ),
+      CribCounted(:final dealerPlayerId, :final totalPoints) => _Entry(
+        actorId: dealerPlayerId,
+        text: 'counted $totalPoints in crib',
+      ),
       GameEnded(:final winnerPlayerId, :final finalScore) => _Entry(
         actorId: winnerPlayerId,
         text:
@@ -173,7 +161,34 @@ class HistoryLog extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
         itemCount: events.length,
         itemBuilder: (context, index) {
-          final event = events[events.length - 1 - index];
+          final eventIndex = events.length - 1 - index;
+          final event = events[eventIndex];
+
+          // Hand and crib counts get a full breakdown: the whole hand, then a
+          // line per scoring group showing just the cards that made it.
+          if (event is HandCounted) {
+            return _scoreBlock(
+              context,
+              actorId: event.playerId,
+              title: 'Hand score',
+              total: event.totalPoints,
+              cards: event.hand,
+              cutCard: _cutFor(eventIndex),
+              isCrib: false,
+            );
+          }
+          if (event is CribCounted) {
+            return _scoreBlock(
+              context,
+              actorId: event.dealerPlayerId,
+              title: 'Crib score',
+              total: event.totalPoints,
+              cards: event.cribCards,
+              cutCard: _cutFor(eventIndex),
+              isCrib: true,
+            );
+          }
+
           final entry = _entry(event, playerId);
 
           if (entry.actorId == null) {
@@ -289,6 +304,143 @@ class HistoryLog extends StatelessWidget {
             ),
           );
         },
+      ),
+    );
+  }
+
+  /// A counted hand or crib: the identity edge, a "You · Hand score · 5"
+  /// header, the whole hand and starter, then a line for each scoring group
+  /// showing only the cards that earned it.
+  Widget _scoreBlock(
+    BuildContext context, {
+    required String actorId,
+    required String title,
+    required int total,
+    required List<PlayingCard> cards,
+    required PlayingCard? cutCard,
+    required bool isCrib,
+  }) {
+    final colors = context.appColors;
+    final isYou = actorId == playerId;
+    final identity = isYou ? colors.pegPlayer : colors.pegOpponent;
+    final combos = cutCard == null
+        ? const <ScoringCombination>[]
+        : calculateDetailedBreakdown(
+            cards,
+            cutCard,
+            isCrib: isCrib,
+          ).combinations;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(6),
+        child: Container(
+          color: isYou
+              ? colors.pegPlayer.withValues(alpha: 0.08)
+              : Colors.transparent,
+          child: IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Container(width: 3, color: identity),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(9, 7, 10, 8),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text.rich(
+                          TextSpan(
+                            children: [
+                              TextSpan(
+                                text: isYou ? 'You' : 'Opponent',
+                                style: TextStyle(
+                                  color: identity,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              TextSpan(
+                                text: ' · $title · ',
+                                style: TextStyle(
+                                  color: colors.textSecondary,
+                                  fontSize: 13,
+                                ),
+                              ),
+                              TextSpan(
+                                text: '$total',
+                                style: TextStyle(
+                                  color: colors.textPrimary,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  fontFeatures: const [
+                                    FontFeature.tabularFigures(),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 7),
+                        // The whole hand, then the starter set a little apart.
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _cardRow(cards, _logHandCardWidth),
+                            if (cutCard != null) ...[
+                              const SizedBox(width: 6),
+                              Container(
+                                width: 1,
+                                height:
+                                    _logHandCardWidth /
+                                    AppConstants.cardAspectRatio *
+                                    0.8,
+                                color: colors.border,
+                              ),
+                              const SizedBox(width: 6),
+                              _cardRow([cutCard], _logHandCardWidth),
+                            ],
+                          ],
+                        ),
+                        if (combos.isEmpty) ...[
+                          const SizedBox(height: 6),
+                          Text(
+                            cutCard == null ? '' : 'Nothing to count',
+                            style: TextStyle(
+                              color: colors.textTertiary,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ] else
+                          for (final c in combos)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 6),
+                              child: Row(
+                                children: [
+                                  _cardRow(c.cards, _logComboCardWidth),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      '${c.points} for ${scoringReason(c)}',
+                                      style: TextStyle(
+                                        color: colors.textSecondary,
+                                        fontSize: 12.5,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
