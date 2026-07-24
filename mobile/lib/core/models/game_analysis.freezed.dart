@@ -294,6 +294,7 @@ mixin _$PlayerRoundAnalysis {
   List<PlayingCard> get discarded => throw _privateConstructorUsedError;
   int get actualHandScore => throw _privateConstructorUsedError;
   int? get actualCribScore => throw _privateConstructorUsedError;
+  int get actualPeggingScore => throw _privateConstructorUsedError;
   DiscardOption get optimalDiscard => throw _privateConstructorUsedError;
   DiscardOption get playerDiscard => throw _privateConstructorUsedError;
   double get evDifference => throw _privateConstructorUsedError;
@@ -324,6 +325,7 @@ abstract class $PlayerRoundAnalysisCopyWith<$Res> {
     List<PlayingCard> discarded,
     int actualHandScore,
     int? actualCribScore,
+    int actualPeggingScore,
     DiscardOption optimalDiscard,
     DiscardOption playerDiscard,
     double evDifference,
@@ -356,6 +358,7 @@ class _$PlayerRoundAnalysisCopyWithImpl<$Res, $Val extends PlayerRoundAnalysis>
     Object? discarded = null,
     Object? actualHandScore = null,
     Object? actualCribScore = freezed,
+    Object? actualPeggingScore = null,
     Object? optimalDiscard = null,
     Object? playerDiscard = null,
     Object? evDifference = null,
@@ -391,6 +394,10 @@ class _$PlayerRoundAnalysisCopyWithImpl<$Res, $Val extends PlayerRoundAnalysis>
                 ? _value.actualCribScore
                 : actualCribScore // ignore: cast_nullable_to_non_nullable
                       as int?,
+            actualPeggingScore: null == actualPeggingScore
+                ? _value.actualPeggingScore
+                : actualPeggingScore // ignore: cast_nullable_to_non_nullable
+                      as int,
             optimalDiscard: null == optimalDiscard
                 ? _value.optimalDiscard
                 : optimalDiscard // ignore: cast_nullable_to_non_nullable
@@ -450,6 +457,7 @@ abstract class _$$PlayerRoundAnalysisImplCopyWith<$Res>
     List<PlayingCard> discarded,
     int actualHandScore,
     int? actualCribScore,
+    int actualPeggingScore,
     DiscardOption optimalDiscard,
     DiscardOption playerDiscard,
     double evDifference,
@@ -483,6 +491,7 @@ class __$$PlayerRoundAnalysisImplCopyWithImpl<$Res>
     Object? discarded = null,
     Object? actualHandScore = null,
     Object? actualCribScore = freezed,
+    Object? actualPeggingScore = null,
     Object? optimalDiscard = null,
     Object? playerDiscard = null,
     Object? evDifference = null,
@@ -518,6 +527,10 @@ class __$$PlayerRoundAnalysisImplCopyWithImpl<$Res>
             ? _value.actualCribScore
             : actualCribScore // ignore: cast_nullable_to_non_nullable
                   as int?,
+        actualPeggingScore: null == actualPeggingScore
+            ? _value.actualPeggingScore
+            : actualPeggingScore // ignore: cast_nullable_to_non_nullable
+                  as int,
         optimalDiscard: null == optimalDiscard
             ? _value.optimalDiscard
             : optimalDiscard // ignore: cast_nullable_to_non_nullable
@@ -550,6 +563,7 @@ class _$PlayerRoundAnalysisImpl implements _PlayerRoundAnalysis {
     required final List<PlayingCard> discarded,
     required this.actualHandScore,
     this.actualCribScore,
+    this.actualPeggingScore = 0,
     required this.optimalDiscard,
     required this.playerDiscard,
     required this.evDifference,
@@ -595,6 +609,9 @@ class _$PlayerRoundAnalysisImpl implements _PlayerRoundAnalysis {
   @override
   final int? actualCribScore;
   @override
+  @JsonKey()
+  final int actualPeggingScore;
+  @override
   final DiscardOption optimalDiscard;
   @override
   final DiscardOption playerDiscard;
@@ -612,7 +629,7 @@ class _$PlayerRoundAnalysisImpl implements _PlayerRoundAnalysis {
 
   @override
   String toString() {
-    return 'PlayerRoundAnalysis(playerId: $playerId, isDealer: $isDealer, dealtHand: $dealtHand, keptHand: $keptHand, discarded: $discarded, actualHandScore: $actualHandScore, actualCribScore: $actualCribScore, optimalDiscard: $optimalDiscard, playerDiscard: $playerDiscard, evDifference: $evDifference, allOptions: $allOptions)';
+    return 'PlayerRoundAnalysis(playerId: $playerId, isDealer: $isDealer, dealtHand: $dealtHand, keptHand: $keptHand, discarded: $discarded, actualHandScore: $actualHandScore, actualCribScore: $actualCribScore, actualPeggingScore: $actualPeggingScore, optimalDiscard: $optimalDiscard, playerDiscard: $playerDiscard, evDifference: $evDifference, allOptions: $allOptions)';
   }
 
   @override
@@ -637,6 +654,8 @@ class _$PlayerRoundAnalysisImpl implements _PlayerRoundAnalysis {
                 other.actualHandScore == actualHandScore) &&
             (identical(other.actualCribScore, actualCribScore) ||
                 other.actualCribScore == actualCribScore) &&
+            (identical(other.actualPeggingScore, actualPeggingScore) ||
+                other.actualPeggingScore == actualPeggingScore) &&
             (identical(other.optimalDiscard, optimalDiscard) ||
                 other.optimalDiscard == optimalDiscard) &&
             (identical(other.playerDiscard, playerDiscard) ||
@@ -660,6 +679,7 @@ class _$PlayerRoundAnalysisImpl implements _PlayerRoundAnalysis {
     const DeepCollectionEquality().hash(_discarded),
     actualHandScore,
     actualCribScore,
+    actualPeggingScore,
     optimalDiscard,
     playerDiscard,
     evDifference,
@@ -692,6 +712,7 @@ abstract class _PlayerRoundAnalysis implements PlayerRoundAnalysis {
     required final List<PlayingCard> discarded,
     required final int actualHandScore,
     final int? actualCribScore,
+    final int actualPeggingScore,
     required final DiscardOption optimalDiscard,
     required final DiscardOption playerDiscard,
     required final double evDifference,
@@ -715,6 +736,8 @@ abstract class _PlayerRoundAnalysis implements PlayerRoundAnalysis {
   int get actualHandScore;
   @override
   int? get actualCribScore;
+  @override
+  int get actualPeggingScore;
   @override
   DiscardOption get optimalDiscard;
   @override

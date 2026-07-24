@@ -621,13 +621,13 @@ class GameScreen extends ConsumerWidget {
     );
 
     List<Widget> buildOverlays() => [
-      // Score toasts land in the upper-middle of the table — empty in every
-      // phase, and clear of the pegging count that sits dead-centre.
+      // Score toasts sit in the band just under the opponent bar — high
+      // enough to clear the pegging count and the starter/crib cluster below.
       ScorePopupOverlay(
         gameId: gameId,
         playerId: playerId,
         opponentName: opponent.name,
-        alignmentY: -0.35,
+        alignmentY: -0.62,
       ),
       if (showCountingPanel)
         CountingOverlay(

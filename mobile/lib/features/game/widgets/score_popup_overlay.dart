@@ -67,9 +67,14 @@ class _ScorePopupOverlayState extends ConsumerState<ScorePopupOverlay>
     final controller = ref.read(gameAnimationProvider(widget.gameId));
     for (final event in controller.events) {
       if (event is ScoreChangedEvent) {
-        // Live-merge: if active popup is for the same player, absorb the event
+        // Live-merge: same player absorbs into the active popup — but a hand
+        // and a crib count are separate scores and each keep their own pill,
+        // so the crib total never rides along on the hand's.
         final active = _activePopup;
-        if (active != null && event.playerId == active.playerId) {
+        if (active != null &&
+            event.playerId == active.playerId &&
+            !_isCount(event.source) &&
+            !active.hasCount) {
           _liveMerge(active, event);
           continue;
         }
@@ -115,7 +120,13 @@ class _ScorePopupOverlayState extends ConsumerState<ScorePopupOverlay>
     _showNext();
   }
 
-  /// Pop the first event and consume all consecutive same-player events.
+  /// A hand or crib count stands on its own; pegging scores in a burst
+  /// coalesce.
+  static bool _isCount(ScoreSource? source) =>
+      source == ScoreSource.hand || source == ScoreSource.crib;
+
+  /// Pop the first event and consume consecutive same-player events — unless
+  /// this one is a count, which always gets its own pill.
   _CoalescedPopup _dequeueCoalesced() {
     final first = _queue.removeAt(0);
     final components = <_ScoreComponent>[
@@ -126,8 +137,11 @@ class _ScorePopupOverlayState extends ConsumerState<ScorePopupOverlay>
       ),
     ];
 
-    // Consume consecutive same-player events
-    while (_queue.isNotEmpty && _queue.first.playerId == first.playerId) {
+    // Consume consecutive same-player pegging events; a count breaks the run.
+    while (!_isCount(first.source) &&
+        _queue.isNotEmpty &&
+        _queue.first.playerId == first.playerId &&
+        !_isCount(_queue.first.source)) {
       final next = _queue.removeAt(0);
       components.add(
         _ScoreComponent(
@@ -252,6 +266,11 @@ class _CoalescedPopup {
   });
 
   int get totalPoints => components.fold(0, (sum, c) => sum + c.points);
+
+  /// True once this pill holds a hand or crib count — nothing else joins it.
+  bool get hasCount => components.any(
+    (c) => c.source == ScoreSource.hand || c.source == ScoreSource.crib,
+  );
 }
 
 /// Score popup (design language §4): a pill filled with the scorer's identity

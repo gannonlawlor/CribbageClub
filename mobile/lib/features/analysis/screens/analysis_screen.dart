@@ -440,6 +440,15 @@ class _RoundCardState extends State<_RoundCard> {
         .firstOrNull;
     if (myAnalysis == null) return const SizedBox.shrink();
 
+    // The crib belongs to the dealer, so its total lives on the dealer's
+    // analysis — read it from there so it shows whether the crib was mine or
+    // the opponent's.
+    final cribTotal = widget.round.playerAnalyses
+        .where((a) => a.isDealer)
+        .firstOrNull
+        ?.actualCribScore;
+    final cribIsMine = myAnalysis.isDealer;
+
     final evDiff = myAnalysis.evDifference;
     final foundBest = evDiff < 0.01;
     final evColor = evDiff < 0.5
@@ -584,23 +593,16 @@ class _RoundCardState extends State<_RoundCard> {
                     ),
                   ],
                 ),
-                if (myAnalysis.actualHandScore > 0 ||
-                    myAnalysis.actualCribScore != null) ...[
-                  const SizedBox(height: 4),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 23),
-                    child: Text(
-                      _scoredLine(myAnalysis),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: colors.textTertiary,
-                        fontSize: 12,
-                        fontFeatures: const [FontFeature.tabularFigures()],
-                      ),
-                    ),
+                const SizedBox(height: 10),
+                Padding(
+                  padding: const EdgeInsets.only(left: 23),
+                  child: _ScoredRow(
+                    hand: myAnalysis.actualHandScore,
+                    pegging: myAnalysis.actualPeggingScore,
+                    crib: cribTotal,
+                    cribIsMine: cribIsMine,
                   ),
-                ],
+                ),
               ],
             ),
           ),
@@ -640,12 +642,78 @@ class _RoundCardState extends State<_RoundCard> {
       ),
     );
   }
+}
 
-  /// What the hand and crib actually came to once the starter was cut.
-  static String _scoredLine(PlayerRoundAnalysis a) {
-    final parts = <String>['Hand scored ${a.actualHandScore}'];
-    if (a.actualCribScore != null) parts.add('crib ${a.actualCribScore}');
-    return parts.join(' · ');
+/// What the round actually scored for this player, once the cards were played
+/// and counted: the hand, the pegging, and the crib — labelled by whose it
+/// was, since a non-dealer feeds the opponent's crib.
+class _ScoredRow extends StatelessWidget {
+  final int hand;
+  final int pegging;
+  final int? crib;
+  final bool cribIsMine;
+
+  const _ScoredRow({
+    required this.hand,
+    required this.pegging,
+    required this.crib,
+    required this.cribIsMine,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        _ScoredStat(label: 'Hand', value: hand),
+        const SizedBox(width: 18),
+        _ScoredStat(label: 'Pegging', value: pegging),
+        if (crib != null) ...[
+          const SizedBox(width: 18),
+          _ScoredStat(
+            label: cribIsMine ? 'Your crib' : "Opp's crib",
+            value: crib!,
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+/// One labelled score from the round — caption over a tabular number.
+class _ScoredStat extends StatelessWidget {
+  final String label;
+  final int value;
+
+  const _ScoredStat({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label.toUpperCase(),
+          style: TextStyle(
+            color: colors.textTertiary,
+            fontSize: 9.5,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.5,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          '$value',
+          style: TextStyle(
+            color: colors.textPrimary,
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            height: 1,
+            fontFeatures: const [FontFeature.tabularFigures()],
+          ),
+        ),
+      ],
+    );
   }
 }
 

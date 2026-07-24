@@ -44,6 +44,7 @@ _$PlayerRoundAnalysisImpl _$$PlayerRoundAnalysisImplFromJson(
       .toList(),
   actualHandScore: (json['actualHandScore'] as num).toInt(),
   actualCribScore: (json['actualCribScore'] as num?)?.toInt(),
+  actualPeggingScore: (json['actualPeggingScore'] as num?)?.toInt() ?? 0,
   optimalDiscard: DiscardOption.fromJson(
     json['optimalDiscard'] as Map<String, dynamic>,
   ),
@@ -66,6 +67,7 @@ Map<String, dynamic> _$$PlayerRoundAnalysisImplToJson(
   'discarded': instance.discarded,
   'actualHandScore': instance.actualHandScore,
   'actualCribScore': instance.actualCribScore,
+  'actualPeggingScore': instance.actualPeggingScore,
   'optimalDiscard': instance.optimalDiscard,
   'playerDiscard': instance.playerDiscard,
   'evDifference': instance.evDifference,
