@@ -11,6 +11,7 @@ import com.jackabee.cribbageclubserver.model.card.Card
     JsonSubTypes.Type(value = GameAction.CutDeck::class, name = "CutDeck"),
     JsonSubTypes.Type(value = GameAction.Go::class, name = "Go"),
     JsonSubTypes.Type(value = GameAction.CountHand::class, name = "CountHand"),
+    JsonSubTypes.Type(value = GameAction.CountCrib::class, name = "CountCrib"),
     JsonSubTypes.Type(value = GameAction.Forfeit::class, name = "Forfeit")
 )
 sealed class GameAction {
@@ -21,6 +22,7 @@ sealed class GameAction {
     data class CutDeck(override val playerId: String) : GameAction()
     data class Go(override val playerId: String) : GameAction()
     data class CountHand(override val playerId: String) : GameAction()
+    data class CountCrib(override val playerId: String) : GameAction()
     data class Forfeit(override val playerId: String, val reason: ForfeitReason = ForfeitReason.RESIGN) : GameAction()
 }
 

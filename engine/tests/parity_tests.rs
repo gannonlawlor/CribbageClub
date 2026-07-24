@@ -16,10 +16,7 @@ use cribbage_engine::player::Player;
 const FIXTURE_JSON: &str = include_str!("fixtures/game_scenarios.json");
 
 fn two_players() -> Vec<Player> {
-    vec![
-        Player::new("p1", "Player 1"),
-        Player::new("p2", "Player 2"),
-    ]
+    vec![Player::new("p1", "Player 1"), Player::new("p2", "Player 2")]
 }
 
 fn play_pegging(engine: &mut GameEngine) {
@@ -171,9 +168,7 @@ fn parity_seed_42_full_round() {
     // Cut
     let cutter = engine.current_state().current_player_id.clone().unwrap();
     engine
-        .apply_action(GameAction::CutDeck {
-            player_id: cutter,
-        })
+        .apply_action(GameAction::CutDeck { player_id: cutter })
         .unwrap();
 
     // Checkpoint: after_cut
@@ -193,18 +188,28 @@ fn parity_seed_42_full_round() {
         "after_pegging",
     );
 
-    // Counting
-    for _ in 0..3 {
+    // Counting — non-dealer hand, dealer hand, then the dealer's crib.
+    for _ in 0..4 {
         let state = engine.current_state();
         if state.stage != GameStage::Counting {
             break;
         }
         let counter = state.current_player_id.clone().unwrap();
-        engine
-            .apply_action(GameAction::CountHand {
-                player_id: counter,
-            })
-            .unwrap();
+        let dealer_id = &state.players[state.dealer_index as usize].id;
+        let crib_pending = counter == *dealer_id
+            && state.history.iter().rev().any(|e| {
+                matches!(
+                    e,
+                    cribbage_engine::game_history::GameHistoryEvent::HandCounted { player_id, .. }
+                        if player_id == dealer_id
+                )
+            });
+        let action = if crib_pending {
+            GameAction::CountCrib { player_id: counter }
+        } else {
+            GameAction::CountHand { player_id: counter }
+        };
+        engine.apply_action(action).unwrap();
     }
 
     // Checkpoint: after_counting (scores only — new round may reshuffle non-deterministically)

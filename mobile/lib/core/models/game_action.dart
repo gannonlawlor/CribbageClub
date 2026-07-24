@@ -27,6 +27,9 @@ sealed class GameAction with _$GameAction {
   @FreezedUnionValue('CountHand')
   const factory GameAction.countHand({required String playerId}) = CountHand;
 
+  @FreezedUnionValue('CountCrib')
+  const factory GameAction.countCrib({required String playerId}) = CountCrib;
+
   @FreezedUnionValue('Forfeit')
   const factory GameAction.forfeit({
     required String playerId,

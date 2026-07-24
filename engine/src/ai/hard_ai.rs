@@ -6,7 +6,7 @@ use crate::game_stage::GameStage;
 use crate::game_state::GameState;
 use crate::scoring;
 
-use super::ai_player::{is_dealer, AIPlayer};
+use super::ai_player::{crib_pending, is_dealer, AIPlayer};
 use super::ai_utils::combinations;
 
 pub struct HardAI {
@@ -33,8 +33,8 @@ impl AIPlayer for HardAI {
         match game_state.stage {
             GameStage::DiscardingToCrib => {
                 if player.hand.len() > 4 {
-                    let to_discard = self
-                        .choose_cards_to_discard(&player.hand, is_dealer(game_state, &self.id));
+                    let to_discard =
+                        self.choose_cards_to_discard(&player.hand, is_dealer(game_state, &self.id));
                     to_discard.first().map(|&card| GameAction::DiscardToCrib {
                         player_id: self.id.clone(),
                         card,
@@ -62,9 +62,17 @@ impl AIPlayer for HardAI {
                     },
                 })
             }
-            GameStage::Counting => Some(GameAction::CountHand {
-                player_id: self.id.clone(),
-            }),
+            GameStage::Counting => Some(
+                if is_dealer(game_state, &self.id) && crib_pending(game_state) {
+                    GameAction::CountCrib {
+                        player_id: self.id.clone(),
+                    }
+                } else {
+                    GameAction::CountHand {
+                        player_id: self.id.clone(),
+                    }
+                },
+            ),
             _ => None,
         }
     }
@@ -79,7 +87,11 @@ impl AIPlayer for HardAI {
 
         for keep in combinations(hand, 4) {
             let keep_set: std::collections::HashSet<Card> = keep.iter().copied().collect();
-            let discard: Vec<Card> = hand.iter().filter(|c| !keep_set.contains(c)).copied().collect();
+            let discard: Vec<Card> = hand
+                .iter()
+                .filter(|c| !keep_set.contains(c))
+                .copied()
+                .collect();
             let hand_avg = average_hand_score(&keep);
             let crib_avg = average_crib_score(&discard);
 

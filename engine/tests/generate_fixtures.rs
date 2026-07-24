@@ -13,10 +13,7 @@ use cribbage_engine::player::Player;
 use std::fs;
 
 fn two_players() -> Vec<Player> {
-    vec![
-        Player::new("p1", "Player 1"),
-        Player::new("p2", "Player 2"),
-    ]
+    vec![Player::new("p1", "Player 1"), Player::new("p2", "Player 2")]
 }
 
 /// Plays through pegging automatically: current player plays lowest legal card, or says Go.
@@ -67,10 +64,7 @@ fn generate_parity_fixtures() {
 
     // Snapshot: After deal
     let state = engine.current_state();
-    snapshots.insert(
-        "after_deal".into(),
-        serde_json::to_value(&state).unwrap(),
-    );
+    snapshots.insert("after_deal".into(), serde_json::to_value(&state).unwrap());
 
     // Discard: each player discards their first two cards
     let p1_discards: Vec<Card> = state.players[0].hand[..2].to_vec();
@@ -102,9 +96,7 @@ fn generate_parity_fixtures() {
     // Cut
     let cutter = engine.current_state().current_player_id.clone().unwrap();
     engine
-        .apply_action(GameAction::CutDeck {
-            player_id: cutter,
-        })
+        .apply_action(GameAction::CutDeck { player_id: cutter })
         .unwrap();
 
     // Snapshot: After cut (includes nobs scoring if applicable)
@@ -122,18 +114,30 @@ fn generate_parity_fixtures() {
         serde_json::to_value(&engine.current_state()).unwrap(),
     );
 
-    // Counting — non-dealer counts first, then dealer, then crib auto-counted
-    for _ in 0..3 {
+    // Counting — non-dealer hand, dealer hand, then the dealer's crib as its
+    // own action.
+    for _ in 0..4 {
         let state = engine.current_state();
         if state.stage != GameStage::Counting {
             break;
         }
         let counter = state.current_player_id.clone().unwrap();
-        engine
-            .apply_action(GameAction::CountHand {
-                player_id: counter,
-            })
-            .unwrap();
+        // The dealer takes the crib as its own action once their hand is done.
+        let dealer_id = &state.players[state.dealer_index as usize].id;
+        let crib_pending = counter == *dealer_id
+            && state.history.iter().rev().any(|e| {
+                matches!(
+                    e,
+                    cribbage_engine::game_history::GameHistoryEvent::HandCounted { player_id, .. }
+                        if player_id == dealer_id
+                )
+            });
+        let action = if crib_pending {
+            GameAction::CountCrib { player_id: counter }
+        } else {
+            GameAction::CountHand { player_id: counter }
+        };
+        engine.apply_action(action).unwrap();
     }
 
     // Snapshot: After counting — scores finalized for this round.

@@ -4,7 +4,7 @@ use crate::game_stage::GameStage;
 use crate::game_state::GameState;
 use crate::scoring;
 
-use super::ai_player::{is_dealer, AIPlayer};
+use super::ai_player::{crib_pending, is_dealer, AIPlayer};
 use super::ai_utils::{self, combinations};
 
 pub struct MediumAI {
@@ -60,9 +60,17 @@ impl AIPlayer for MediumAI {
                     },
                 })
             }
-            GameStage::Counting => Some(GameAction::CountHand {
-                player_id: self.id.clone(),
-            }),
+            GameStage::Counting => Some(
+                if is_dealer(game_state, &self.id) && crib_pending(game_state) {
+                    GameAction::CountCrib {
+                        player_id: self.id.clone(),
+                    }
+                } else {
+                    GameAction::CountHand {
+                        player_id: self.id.clone(),
+                    }
+                },
+            ),
             _ => None,
         }
     }
@@ -80,7 +88,11 @@ impl AIPlayer for MediumAI {
             if avg > best_score {
                 best_score = avg;
                 let keep_set: std::collections::HashSet<Card> = keep.into_iter().collect();
-                best_discard = hand.iter().filter(|c| !keep_set.contains(c)).copied().collect();
+                best_discard = hand
+                    .iter()
+                    .filter(|c| !keep_set.contains(c))
+                    .copied()
+                    .collect();
             }
         }
 

@@ -6,36 +6,26 @@ import '../../../shared/utils/score_calculator.dart';
 import '../../../shared/widgets/cc_buttons.dart';
 import 'card_widget.dart';
 
-enum _Phase {
-  handPrompt,
-  handInput,
-  handResult,
-  cribPrompt,
-  cribInput,
-  cribResult,
-  done,
-}
-
+/// Manual count: the player calls their own score on the number pad. The
+/// breakdown only appears when they get it wrong — a correct call just closes,
+/// since the engine records the score to the history either way.
+///
+/// Used for both the hand and (for the dealer) the crib — [isCrib] switches
+/// the scoring rules and [title] the wording.
 class CountingOverlay extends StatefulWidget {
-  final List<PlayingCard> hand;
+  final List<PlayingCard> cards;
   final PlayingCard cutCard;
-  final List<PlayingCard> crib;
-  final bool isDealer;
+  final bool isCrib;
+  final String title;
   final VoidCallback onComplete;
-
-  /// Skip straight to the number pad. The count-it-for-me / I'll-count choice
-  /// now lives on the game screen, so by the time this panel opens the player
-  /// has already said they want to count it themselves.
-  final bool startAtInput;
 
   const CountingOverlay({
     super.key,
-    required this.hand,
+    required this.cards,
     required this.cutCard,
-    required this.crib,
-    required this.isDealer,
     required this.onComplete,
-    this.startAtInput = false,
+    this.isCrib = false,
+    this.title = 'Your hand',
   });
 
   @override
@@ -43,60 +33,31 @@ class CountingOverlay extends StatefulWidget {
 }
 
 class _CountingOverlayState extends State<CountingOverlay> {
-  late _Phase _phase = widget.startAtInput
-      ? _Phase.handInput
-      : _Phase.handPrompt;
   int _guessValue = 0;
-  int? _handGuess;
-  int? _cribGuess;
-  late final DetailedScoreBreakdown _handBreakdown;
-  late final DetailedScoreBreakdown _cribBreakdown;
+  int _guess = 0;
+  bool _showResult = false;
+  late final DetailedScoreBreakdown _breakdown;
 
   @override
   void initState() {
     super.initState();
-    _handBreakdown = calculateDetailedBreakdown(widget.hand, widget.cutCard);
-    if (widget.isDealer && widget.crib.isNotEmpty) {
-      _cribBreakdown = calculateDetailedBreakdown(
-        widget.crib,
-        widget.cutCard,
-        isCrib: true,
-      );
-    } else {
-      _cribBreakdown = const DetailedScoreBreakdown(
-        combinations: [],
-        totalScore: 0,
-      );
-    }
+    _breakdown = calculateDetailedBreakdown(
+      widget.cards,
+      widget.cutCard,
+      isCrib: widget.isCrib,
+    );
   }
 
-  void _advance() {
-    setState(() {
-      switch (_phase) {
-        case _Phase.handPrompt:
-        case _Phase.handInput:
-        case _Phase.handResult:
-          if (_phase == _Phase.handResult &&
-              widget.isDealer &&
-              widget.crib.isNotEmpty) {
-            _phase = _Phase.cribPrompt;
-            _guessValue = 0;
-          } else if (_phase == _Phase.handResult) {
-            _phase = _Phase.done;
-          }
-        case _Phase.cribPrompt:
-        case _Phase.cribInput:
-        case _Phase.cribResult:
-          if (_phase == _Phase.cribResult) {
-            _phase = _Phase.done;
-          }
-        case _Phase.done:
-          break;
-      }
-    });
-    if (_phase == _Phase.done) {
+  void _submit() {
+    // A correct call needs no explaining — record it and get out of the way.
+    if (_guessValue == _breakdown.totalScore) {
       widget.onComplete();
+      return;
     }
+    setState(() {
+      _guess = _guessValue;
+      _showResult = true;
+    });
   }
 
   @override
@@ -123,94 +84,13 @@ class _CountingOverlayState extends State<CountingOverlay> {
                 ),
               ],
             ),
-            child: SingleChildScrollView(child: _buildPhaseContent()),
+            child: SingleChildScrollView(
+              child: _showResult ? _buildResult() : _buildInput(),
+            ),
           ),
         ),
       ),
     );
-  }
-
-  Widget _buildPhaseContent() {
-    switch (_phase) {
-      case _Phase.handPrompt:
-        return _buildPrompt(
-          title: 'Your hand',
-          cards: widget.hand,
-          cutCard: widget.cutCard,
-          onCountForMe: () {
-            setState(() => _phase = _Phase.handResult);
-          },
-          onIllCount: () {
-            setState(() {
-              _phase = _Phase.handInput;
-              _guessValue = 0;
-            });
-          },
-        );
-      case _Phase.handInput:
-        return _buildInput(
-          title: 'Your hand',
-          cards: widget.hand,
-          cutCard: widget.cutCard,
-          onSubmit: () {
-            setState(() {
-              _handGuess = _guessValue;
-              _phase = _Phase.handResult;
-            });
-          },
-        );
-      case _Phase.handResult:
-        return _buildResult(
-          title: 'Your hand',
-          cards: widget.hand,
-          cutCard: widget.cutCard,
-          breakdown: _handBreakdown,
-          guess: _handGuess,
-          onContinue: _advance,
-          buttonLabel: widget.isDealer && widget.crib.isNotEmpty
-              ? 'Count the crib'
-              : 'Done',
-        );
-      case _Phase.cribPrompt:
-        return _buildPrompt(
-          title: 'Your crib',
-          cards: widget.crib,
-          cutCard: widget.cutCard,
-          onCountForMe: () {
-            setState(() => _phase = _Phase.cribResult);
-          },
-          onIllCount: () {
-            setState(() {
-              _phase = _Phase.cribInput;
-              _guessValue = 0;
-            });
-          },
-        );
-      case _Phase.cribInput:
-        return _buildInput(
-          title: 'Your crib',
-          cards: widget.crib,
-          cutCard: widget.cutCard,
-          onSubmit: () {
-            setState(() {
-              _cribGuess = _guessValue;
-              _phase = _Phase.cribResult;
-            });
-          },
-        );
-      case _Phase.cribResult:
-        return _buildResult(
-          title: 'Your crib',
-          cards: widget.crib,
-          cutCard: widget.cutCard,
-          breakdown: _cribBreakdown,
-          guess: _cribGuess,
-          onContinue: _advance,
-          buttonLabel: 'Done',
-        );
-      case _Phase.done:
-        return const SizedBox.shrink();
-    }
   }
 
   /// Caption over title, the way every panel in the app opens.
@@ -295,45 +175,6 @@ class _CountingOverlayState extends State<CountingOverlay> {
           ],
         );
       },
-    );
-  }
-
-  Widget _buildPrompt({
-    required String title,
-    required List<PlayingCard> cards,
-    required PlayingCard cutCard,
-    required VoidCallback onCountForMe,
-    required VoidCallback onIllCount,
-  }) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        _header('Count', title),
-        const SizedBox(height: 16),
-        _buildCardRow(cards, cutCard),
-        const SizedBox(height: 22),
-        Row(
-          children: [
-            Expanded(
-              child: CcSecondaryButton(
-                label: 'Count it for me',
-                height: 44,
-                fontSize: 13,
-                onPressed: onCountForMe,
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: CcPrimaryButton(
-                label: "I'll count",
-                height: 44,
-                fontSize: 14,
-                onPressed: onIllCount,
-              ),
-            ),
-          ],
-        ),
-      ],
     );
   }
 
@@ -450,47 +291,33 @@ class _CountingOverlayState extends State<CountingOverlay> {
     );
   }
 
-  Widget _buildInput({
-    required String title,
-    required List<PlayingCard> cards,
-    required PlayingCard cutCard,
-    required VoidCallback onSubmit,
-  }) {
+  Widget _buildInput() {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        _header('How many', title),
+        _header('How many', widget.title),
         const SizedBox(height: 14),
-        _buildCardRow(cards, cutCard),
+        _buildCardRow(widget.cards, widget.cutCard),
         const SizedBox(height: 14),
-        _buildNumberPad(onSubmit),
+        _buildNumberPad(_submit),
       ],
     );
   }
 
-  Widget _buildResult({
-    required String title,
-    required List<PlayingCard> cards,
-    required PlayingCard cutCard,
-    required DetailedScoreBreakdown breakdown,
-    required int? guess,
-    required VoidCallback onContinue,
-    required String buttonLabel,
-  }) {
+  Widget _buildResult() {
     final colors = context.appColors;
-    final correct = guess == null || guess == breakdown.totalScore;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        _header('Counted', title),
+        _header('Counted', widget.title),
         const SizedBox(height: 14),
-        _buildCardRow(cards, cutCard),
+        _buildCardRow(widget.cards, widget.cutCard),
         const SizedBox(height: 16),
 
         // The score is the number to read here (design principle §1).
         Text(
-          '${breakdown.totalScore}',
+          '${_breakdown.totalScore}',
           style: TextStyle(
             color: colors.textPrimary,
             fontSize: 40,
@@ -499,22 +326,21 @@ class _CountingOverlayState extends State<CountingOverlay> {
             fontFeatures: const [FontFeature.tabularFigures()],
           ),
         ),
-        if (guess != null) ...[
-          const SizedBox(height: 6),
-          Text(
-            correct ? 'You called it' : 'You said $guess',
-            style: TextStyle(
-              color: correct ? colors.success : colors.warning,
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              fontFeatures: const [FontFeature.tabularFigures()],
-            ),
+        const SizedBox(height: 6),
+        Text(
+          'You said $_guess',
+          style: TextStyle(
+            color: colors.warning,
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            fontFeatures: const [FontFeature.tabularFigures()],
           ),
-        ],
+        ),
         const SizedBox(height: 14),
 
-        // What made it up, as a table: reason left, points right, tabular.
-        if (breakdown.combinations.isNotEmpty)
+        // What made it up, shown as the cards themselves rather than spelled
+        // out — each row is a scoring group and the points it earns.
+        if (_breakdown.combinations.isNotEmpty)
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: Container(
@@ -524,39 +350,9 @@ class _CountingOverlayState extends State<CountingOverlay> {
               ),
               child: Column(
                 children: [
-                  for (var i = 0; i < breakdown.combinations.length; i++) ...[
+                  for (var i = 0; i < _breakdown.combinations.length; i++) ...[
                     if (i > 0) Divider(height: 1, color: colors.border),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              breakdown.combinations[i].description,
-                              style: TextStyle(
-                                color: colors.textSecondary,
-                                fontSize: 13,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Text(
-                            '${breakdown.combinations[i].points}',
-                            style: TextStyle(
-                              color: colors.textPrimary,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              fontFeatures: const [
-                                FontFeature.tabularFigures(),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                    _comboRow(_breakdown.combinations[i]),
                   ],
                 ],
               ),
@@ -571,13 +367,53 @@ class _CountingOverlayState extends State<CountingOverlay> {
         SizedBox(
           width: double.infinity,
           child: CcPrimaryButton(
-            label: buttonLabel,
+            label: 'Done',
             height: 48,
             fontSize: 15,
-            onPressed: onContinue,
+            onPressed: widget.onComplete,
           ),
         ),
       ],
+    );
+  }
+
+  /// One scoring group: its cards on the left, the points it earns on the
+  /// right.
+  Widget _comboRow(ScoringCombination c) {
+    final colors = context.appColors;
+    const cardW = 30.0;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: Wrap(
+              spacing: 4,
+              runSpacing: 4,
+              children: [
+                for (final card in c.cards)
+                  CardWidget(
+                    card: card,
+                    faceUp: true,
+                    enabled: false,
+                    width: cardW,
+                    height: cardW / AppConstants.cardAspectRatio,
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          Text(
+            '+${c.points}',
+            style: TextStyle(
+              color: colors.textPrimary,
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              fontFeatures: const [FontFeature.tabularFigures()],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

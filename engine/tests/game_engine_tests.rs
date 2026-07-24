@@ -14,10 +14,7 @@ fn c(rank: Rank, suit: Suit) -> Card {
 }
 
 fn two_players() -> Vec<Player> {
-    vec![
-        Player::new("p1", "Player 1"),
-        Player::new("p2", "Player 2"),
-    ]
+    vec![Player::new("p1", "Player 1"), Player::new("p2", "Player 2")]
 }
 
 // ── Construction ──────────────────────────────────────────────────────
@@ -37,7 +34,10 @@ fn test_new_game_deals_cards() {
 #[test]
 fn test_new_game_requires_two_players() {
     let result = GameEngine::new("game1", vec![Player::new("p1", "P1")], None);
-    assert!(matches!(result, Err(EngineError::InvalidPlayerCount { count: 1 })));
+    assert!(matches!(
+        result,
+        Err(EngineError::InvalidPlayerCount { count: 1 })
+    ));
 }
 
 #[test]
@@ -153,9 +153,7 @@ fn test_discard_and_cut_transitions() {
     // Non-dealer (p2 since dealerIndex=0) cuts
     let cutter = state.current_player_id.unwrap();
     engine
-        .apply_action(GameAction::CutDeck {
-            player_id: cutter,
-        })
+        .apply_action(GameAction::CutDeck { player_id: cutter })
         .unwrap();
 
     let state = engine.current_state();
@@ -197,9 +195,7 @@ fn test_full_round_trip() {
     let state = engine.current_state();
     let cutter = state.current_player_id.clone().unwrap();
     engine
-        .apply_action(GameAction::CutDeck {
-            player_id: cutter,
-        })
+        .apply_action(GameAction::CutDeck { player_id: cutter })
         .unwrap();
 
     // Phase 3: Pegging — play all cards
@@ -253,14 +249,22 @@ fn test_full_round_trip() {
         .unwrap();
 
     let state = engine.current_state();
-    // Either dealer counts next, or it already started new round
+    // Dealer counts their hand next, then their crib as a separate action.
     if state.stage == GameStage::Counting {
-        let second_counter = state.current_player_id.clone().unwrap();
+        let dealer = state.current_player_id.clone().unwrap();
         engine
             .apply_action(GameAction::CountHand {
-                player_id: second_counter,
+                player_id: dealer.clone(),
             })
             .unwrap();
+        // The dealer's hand is counted but the crib is still theirs to take,
+        // unless the hand alone won the game.
+        let state = engine.current_state();
+        if state.stage == GameStage::Counting {
+            engine
+                .apply_action(GameAction::CountCrib { player_id: dealer })
+                .unwrap();
+        }
     }
 
     // After both count + crib count, should start new round

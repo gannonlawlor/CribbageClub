@@ -6,27 +6,17 @@ use crate::card::Card;
 #[serde(tag = "type")]
 pub enum GameAction {
     #[serde(rename_all = "camelCase")]
-    DiscardToCrib {
-        player_id: String,
-        card: Card,
-    },
+    DiscardToCrib { player_id: String, card: Card },
     #[serde(rename_all = "camelCase")]
-    PlayCard {
-        player_id: String,
-        card: Card,
-    },
+    PlayCard { player_id: String, card: Card },
     #[serde(rename_all = "camelCase")]
-    CutDeck {
-        player_id: String,
-    },
+    CutDeck { player_id: String },
     #[serde(rename_all = "camelCase")]
-    Go {
-        player_id: String,
-    },
+    Go { player_id: String },
     #[serde(rename_all = "camelCase")]
-    CountHand {
-        player_id: String,
-    },
+    CountHand { player_id: String },
+    #[serde(rename_all = "camelCase")]
+    CountCrib { player_id: String },
 }
 
 impl GameAction {
@@ -37,6 +27,7 @@ impl GameAction {
             GameAction::CutDeck { player_id } => player_id,
             GameAction::Go { player_id } => player_id,
             GameAction::CountHand { player_id } => player_id,
+            GameAction::CountCrib { player_id } => player_id,
         }
     }
 }

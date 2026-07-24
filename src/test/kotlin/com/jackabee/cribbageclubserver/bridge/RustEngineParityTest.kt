@@ -8,6 +8,7 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import com.jackabee.cribbageclubserver.model.action.GameAction
 import com.jackabee.cribbageclubserver.model.card.Card
 import com.jackabee.cribbageclubserver.model.card.Rank
+import com.jackabee.cribbageclubserver.model.game.GameHistoryEvent
 import com.jackabee.cribbageclubserver.model.game.GameStage
 import com.jackabee.cribbageclubserver.model.game.GameState
 import org.junit.jupiter.api.BeforeAll
@@ -144,12 +145,22 @@ class RustEngineParityTest {
             val expectedPegging = parseSnapshotState(snapshots, "after_pegging")
             assertStateMatches(afterPegging, expectedPegging, "after_pegging")
 
-            // Counting
-            for (iteration in 0 until 3) {
+            // Counting — non-dealer hand, dealer hand, then the dealer's crib.
+            for (iteration in 0 until 4) {
                 val state = adapter.getState(eng)
                 if (state.stage != GameStage.COUNTING) break
                 val counter = state.currentPlayerId!!
-                adapter.applyAction(eng, GameAction.CountHand(counter))
+                val dealerId = state.players[state.dealerIndex].id
+                val cribPending = counter == dealerId &&
+                    state.history.any {
+                        it is GameHistoryEvent.HandCounted && it.playerId == dealerId
+                    }
+                val action = if (cribPending) {
+                    GameAction.CountCrib(counter)
+                } else {
+                    GameAction.CountHand(counter)
+                }
+                adapter.applyAction(eng, action)
             }
 
             // Checkpoint: after_counting (scores only)

@@ -104,6 +104,9 @@ impl GameEngine {
             GameAction::CountHand { player_id } => {
                 self.count_hand(&player_id)?;
             }
+            GameAction::CountCrib { player_id } => {
+                self.count_crib_action(&player_id)?;
+            }
         }
         Ok(self.current_state())
     }
@@ -169,13 +172,11 @@ impl GameEngine {
         let player_index = self.player_index(player_id)?;
         let player = &self.state.players[player_index];
 
-        let card_pos = player
-            .hand
-            .iter()
-            .position(|c| *c == card)
-            .ok_or_else(|| EngineError::CardNotInHand {
+        let card_pos = player.hand.iter().position(|c| *c == card).ok_or_else(|| {
+            EngineError::CardNotInHand {
                 card: format!("{}", card),
-            })?;
+            }
+        })?;
 
         self.state.players[player_index].hand.remove(card_pos);
         self.state.crib.push(card);
@@ -184,8 +185,7 @@ impl GameEngine {
         if self.state.players[player_index].hand.len() == KEEP_CARDS {
             let other_index = (player_index + 1) % self.state.players.len();
             if self.state.players[other_index].hand.len() > KEEP_CARDS {
-                self.state.current_player_id =
-                    Some(self.state.players[other_index].id.clone());
+                self.state.current_player_id = Some(self.state.players[other_index].id.clone());
             }
         }
 
@@ -199,8 +199,7 @@ impl GameEngine {
     fn transition_to_cutting(&mut self) {
         let non_dealer_index = self.non_dealer_index();
         self.state.stage = GameStage::Cutting;
-        self.state.current_player_id =
-            Some(self.state.players[non_dealer_index].id.clone());
+        self.state.current_player_id = Some(self.state.players[non_dealer_index].id.clone());
     }
 
     // ── Cut ───────────────────────────────────────────────────────────────
@@ -262,13 +261,11 @@ impl GameEngine {
         let player_index = self.player_index(player_id)?;
         let player = &self.state.players[player_index];
 
-        let card_pos = player
-            .hand
-            .iter()
-            .position(|c| *c == card)
-            .ok_or_else(|| EngineError::CardNotInHand {
+        let card_pos = player.hand.iter().position(|c| *c == card).ok_or_else(|| {
+            EngineError::CardNotInHand {
                 card: format!("{}", card),
-            })?;
+            }
+        })?;
 
         let new_count = self.state.pegging_count + card.pegging_value() as i32;
         if new_count > 31 {
@@ -287,13 +284,13 @@ impl GameEngine {
         self.state.players[player_index].score += score_earned;
 
         // Build scoring reason
-        let scoring_reason = build_scoring_reason(&self.state.played_cards, new_count, score_earned);
+        let scoring_reason =
+            build_scoring_reason(&self.state.played_cards, new_count, score_earned);
 
         // Move to next player
         let next_player_index = (player_index + 1) % self.state.players.len();
         self.state.pegging_count = new_count;
-        self.state.current_player_id =
-            Some(self.state.players[next_player_index].id.clone());
+        self.state.current_player_id = Some(self.state.players[next_player_index].id.clone());
         self.state.last_play_was_go = false;
 
         self.add_event(GameHistoryEvent::CardPlayed {
@@ -367,8 +364,7 @@ impl GameEngine {
     fn transition_to_hand_counting(&mut self) {
         let non_dealer_index = self.non_dealer_index();
         self.state.stage = GameStage::Counting;
-        self.state.current_player_id =
-            Some(self.state.players[non_dealer_index].id.clone());
+        self.state.current_player_id = Some(self.state.players[non_dealer_index].id.clone());
         self.state.pegging_count = 0;
         self.state.played_cards.clear();
     }
@@ -383,6 +379,15 @@ impl GameEngine {
             });
         }
         self.require_current_player(player_id)?;
+
+        // The dealer's crib is its own action; once their hand is counted the
+        // only counting left for them is CountCrib.
+        if self.crib_pending() {
+            return Err(EngineError::WrongStage {
+                expected: "CountCrib".into(),
+                actual: "CountHand".into(),
+            });
+        }
 
         let player_index = self.player_index(player_id)?;
         let hand_to_count = self
@@ -420,16 +425,51 @@ impl GameEngine {
         }
 
         if player_index == self.dealer_index() {
-            // Dealer counted, now count crib
-            self.count_crib()?;
+            // Dealer's hand is counted; the crib is a separate action and it
+            // stays the dealer's turn to take it.
         } else {
             // Non-dealer counted, now dealer counts
             let dealer_idx = self.dealer_index();
-            self.state.current_player_id =
-                Some(self.state.players[dealer_idx].id.clone());
+            self.state.current_player_id = Some(self.state.players[dealer_idx].id.clone());
         }
 
         Ok(())
+    }
+
+    /// True once the dealer has counted their hand this round but the crib
+    /// hasn't been counted yet — the window where CountCrib is the valid move.
+    fn crib_pending(&self) -> bool {
+        let dealer_id = &self.state.players[self.dealer_index()].id;
+        for event in self.history.iter().rev() {
+            match event {
+                GameHistoryEvent::RoundStarted { .. } => return false,
+                GameHistoryEvent::CribCounted { .. } => return false,
+                GameHistoryEvent::HandCounted { player_id, .. } if player_id == dealer_id => {
+                    return true
+                }
+                _ => {}
+            }
+        }
+        false
+    }
+
+    /// Score the crib. Only the dealer, once their hand is counted, may take
+    /// it — the non-dealer never has a crib to count.
+    fn count_crib_action(&mut self, player_id: &str) -> Result<(), EngineError> {
+        if self.state.stage != GameStage::Counting {
+            return Err(EngineError::WrongStage {
+                expected: "Counting".into(),
+                actual: format!("{:?}", self.state.stage),
+            });
+        }
+        self.require_current_player(player_id)?;
+        if self.player_index(player_id)? != self.dealer_index() || !self.crib_pending() {
+            return Err(EngineError::WrongStage {
+                expected: "CountHand".into(),
+                actual: "CountCrib".into(),
+            });
+        }
+        self.count_crib()
     }
 
     fn count_crib(&mut self) -> Result<(), EngineError> {
@@ -468,8 +508,7 @@ impl GameEngine {
         self.deck.reset();
         self.current_round += 1;
 
-        let new_dealer_index =
-            (self.state.dealer_index + 1) % self.state.players.len() as i32;
+        let new_dealer_index = (self.state.dealer_index + 1) % self.state.players.len() as i32;
         self.state.dealer_index = new_dealer_index;
         self.state.crib.clear();
         self.state.cut_card = None;
@@ -519,11 +558,7 @@ impl GameEngine {
     fn require_current_player(&self, player_id: &str) -> Result<(), EngineError> {
         if self.state.current_player_id.as_deref() != Some(player_id) {
             return Err(EngineError::NotPlayersTurn {
-                expected: self
-                    .state
-                    .current_player_id
-                    .clone()
-                    .unwrap_or_default(),
+                expected: self.state.current_player_id.clone().unwrap_or_default(),
                 actual: player_id.to_string(),
             });
         }
@@ -570,7 +605,8 @@ fn calculate_pegging_score(played_cards: &[Card], count: i32) -> i32 {
 
     // Check for runs (longest first)
     for run_length in (3..=7).rev() {
-        if played_cards.len() >= run_length && is_run(&played_cards[played_cards.len() - run_length..])
+        if played_cards.len() >= run_length
+            && is_run(&played_cards[played_cards.len() - run_length..])
         {
             score += run_length as i32;
             break;
@@ -589,7 +625,11 @@ fn is_run(cards: &[Card]) -> bool {
     ranks.windows(2).all(|w| w[1] == w[0] + 1)
 }
 
-fn build_scoring_reason(played_cards: &[Card], new_count: i32, score_earned: i32) -> Option<String> {
+fn build_scoring_reason(
+    played_cards: &[Card],
+    new_count: i32,
+    score_earned: i32,
+) -> Option<String> {
     if new_count == 31 {
         return Some("Thirty-one".to_string());
     }

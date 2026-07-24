@@ -118,9 +118,9 @@ class GameControls extends StatelessWidget {
         return [
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.only(left: 12, right: 5),
+              padding: const EdgeInsets.only(right: 5),
               child: CcSecondaryButton(
-                label: 'Count it for me',
+                label: 'Auto count',
                 icon: Icons.bolt,
                 height: 42,
                 fontSize: 13,
@@ -130,12 +130,12 @@ class GameControls extends StatelessWidget {
           ),
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.only(left: 5, right: 12),
+              padding: const EdgeInsets.only(left: 5),
               child: CcPrimaryButton(
                 label: "I'll count",
                 icon: Icons.calculate,
                 height: 42,
-                fontSize: 14,
+                fontSize: 13,
                 onPressed: onManualCount,
               ),
             ),

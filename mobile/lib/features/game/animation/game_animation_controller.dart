@@ -148,11 +148,13 @@ class GameAnimationController extends ChangeNotifier {
 
   String _formatBreakdown(dynamic breakdown) {
     final parts = <String>[];
-    if (breakdown.fifteens > 0) parts.add('${breakdown.fifteens} fifteens');
-    if (breakdown.pairs > 0) parts.add('${breakdown.pairs} pairs');
-    if (breakdown.runs > 0) parts.add('${breakdown.runs} runs');
-    if (breakdown.flushes > 0) parts.add('${breakdown.flushes} flush');
-    if (breakdown.nobs > 0) parts.add('${breakdown.nobs} nobs');
+    // Breakdown fields are points, not counts (a lone pair is 2 in `pairs`),
+    // so phrase them as points.
+    if (breakdown.fifteens > 0) parts.add('${breakdown.fifteens} for 15s');
+    if (breakdown.pairs > 0) parts.add('${breakdown.pairs} for pairs');
+    if (breakdown.runs > 0) parts.add('${breakdown.runs} for runs');
+    if (breakdown.flushes > 0) parts.add('${breakdown.flushes} for the flush');
+    if (breakdown.nobs > 0) parts.add('${breakdown.nobs} for nobs');
     return parts.isEmpty ? '' : parts.join(', ');
   }
 

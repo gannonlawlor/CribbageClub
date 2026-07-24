@@ -27,6 +27,8 @@ GameAction _$GameActionFromJson(Map<String, dynamic> json) {
       return Go.fromJson(json);
     case 'CountHand':
       return CountHand.fromJson(json);
+    case 'CountCrib':
+      return CountCrib.fromJson(json);
     case 'Forfeit':
       return ForfeitAction.fromJson(json);
 
@@ -50,6 +52,7 @@ mixin _$GameAction {
     required TResult Function(String playerId) cutDeck,
     required TResult Function(String playerId) go,
     required TResult Function(String playerId) countHand,
+    required TResult Function(String playerId) countCrib,
     required TResult Function(String playerId, String reason) forfeit,
   }) => throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -59,6 +62,7 @@ mixin _$GameAction {
     TResult? Function(String playerId)? cutDeck,
     TResult? Function(String playerId)? go,
     TResult? Function(String playerId)? countHand,
+    TResult? Function(String playerId)? countCrib,
     TResult? Function(String playerId, String reason)? forfeit,
   }) => throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -68,6 +72,7 @@ mixin _$GameAction {
     TResult Function(String playerId)? cutDeck,
     TResult Function(String playerId)? go,
     TResult Function(String playerId)? countHand,
+    TResult Function(String playerId)? countCrib,
     TResult Function(String playerId, String reason)? forfeit,
     required TResult orElse(),
   }) => throw _privateConstructorUsedError;
@@ -78,6 +83,7 @@ mixin _$GameAction {
     required TResult Function(CutDeck value) cutDeck,
     required TResult Function(Go value) go,
     required TResult Function(CountHand value) countHand,
+    required TResult Function(CountCrib value) countCrib,
     required TResult Function(ForfeitAction value) forfeit,
   }) => throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -87,6 +93,7 @@ mixin _$GameAction {
     TResult? Function(CutDeck value)? cutDeck,
     TResult? Function(Go value)? go,
     TResult? Function(CountHand value)? countHand,
+    TResult? Function(CountCrib value)? countCrib,
     TResult? Function(ForfeitAction value)? forfeit,
   }) => throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -96,6 +103,7 @@ mixin _$GameAction {
     TResult Function(CutDeck value)? cutDeck,
     TResult Function(Go value)? go,
     TResult Function(CountHand value)? countHand,
+    TResult Function(CountCrib value)? countCrib,
     TResult Function(ForfeitAction value)? forfeit,
     required TResult orElse(),
   }) => throw _privateConstructorUsedError;
@@ -255,6 +263,7 @@ class _$DiscardToCribImpl implements DiscardToCrib {
     required TResult Function(String playerId) cutDeck,
     required TResult Function(String playerId) go,
     required TResult Function(String playerId) countHand,
+    required TResult Function(String playerId) countCrib,
     required TResult Function(String playerId, String reason) forfeit,
   }) {
     return discardToCrib(playerId, card);
@@ -268,6 +277,7 @@ class _$DiscardToCribImpl implements DiscardToCrib {
     TResult? Function(String playerId)? cutDeck,
     TResult? Function(String playerId)? go,
     TResult? Function(String playerId)? countHand,
+    TResult? Function(String playerId)? countCrib,
     TResult? Function(String playerId, String reason)? forfeit,
   }) {
     return discardToCrib?.call(playerId, card);
@@ -281,6 +291,7 @@ class _$DiscardToCribImpl implements DiscardToCrib {
     TResult Function(String playerId)? cutDeck,
     TResult Function(String playerId)? go,
     TResult Function(String playerId)? countHand,
+    TResult Function(String playerId)? countCrib,
     TResult Function(String playerId, String reason)? forfeit,
     required TResult orElse(),
   }) {
@@ -298,6 +309,7 @@ class _$DiscardToCribImpl implements DiscardToCrib {
     required TResult Function(CutDeck value) cutDeck,
     required TResult Function(Go value) go,
     required TResult Function(CountHand value) countHand,
+    required TResult Function(CountCrib value) countCrib,
     required TResult Function(ForfeitAction value) forfeit,
   }) {
     return discardToCrib(this);
@@ -311,6 +323,7 @@ class _$DiscardToCribImpl implements DiscardToCrib {
     TResult? Function(CutDeck value)? cutDeck,
     TResult? Function(Go value)? go,
     TResult? Function(CountHand value)? countHand,
+    TResult? Function(CountCrib value)? countCrib,
     TResult? Function(ForfeitAction value)? forfeit,
   }) {
     return discardToCrib?.call(this);
@@ -324,6 +337,7 @@ class _$DiscardToCribImpl implements DiscardToCrib {
     TResult Function(CutDeck value)? cutDeck,
     TResult Function(Go value)? go,
     TResult Function(CountHand value)? countHand,
+    TResult Function(CountCrib value)? countCrib,
     TResult Function(ForfeitAction value)? forfeit,
     required TResult orElse(),
   }) {
@@ -468,6 +482,7 @@ class _$PlayCardImpl implements PlayCard {
     required TResult Function(String playerId) cutDeck,
     required TResult Function(String playerId) go,
     required TResult Function(String playerId) countHand,
+    required TResult Function(String playerId) countCrib,
     required TResult Function(String playerId, String reason) forfeit,
   }) {
     return playCard(playerId, card);
@@ -481,6 +496,7 @@ class _$PlayCardImpl implements PlayCard {
     TResult? Function(String playerId)? cutDeck,
     TResult? Function(String playerId)? go,
     TResult? Function(String playerId)? countHand,
+    TResult? Function(String playerId)? countCrib,
     TResult? Function(String playerId, String reason)? forfeit,
   }) {
     return playCard?.call(playerId, card);
@@ -494,6 +510,7 @@ class _$PlayCardImpl implements PlayCard {
     TResult Function(String playerId)? cutDeck,
     TResult Function(String playerId)? go,
     TResult Function(String playerId)? countHand,
+    TResult Function(String playerId)? countCrib,
     TResult Function(String playerId, String reason)? forfeit,
     required TResult orElse(),
   }) {
@@ -511,6 +528,7 @@ class _$PlayCardImpl implements PlayCard {
     required TResult Function(CutDeck value) cutDeck,
     required TResult Function(Go value) go,
     required TResult Function(CountHand value) countHand,
+    required TResult Function(CountCrib value) countCrib,
     required TResult Function(ForfeitAction value) forfeit,
   }) {
     return playCard(this);
@@ -524,6 +542,7 @@ class _$PlayCardImpl implements PlayCard {
     TResult? Function(CutDeck value)? cutDeck,
     TResult? Function(Go value)? go,
     TResult? Function(CountHand value)? countHand,
+    TResult? Function(CountCrib value)? countCrib,
     TResult? Function(ForfeitAction value)? forfeit,
   }) {
     return playCard?.call(this);
@@ -537,6 +556,7 @@ class _$PlayCardImpl implements PlayCard {
     TResult Function(CutDeck value)? cutDeck,
     TResult Function(Go value)? go,
     TResult Function(CountHand value)? countHand,
+    TResult Function(CountCrib value)? countCrib,
     TResult Function(ForfeitAction value)? forfeit,
     required TResult orElse(),
   }) {
@@ -659,6 +679,7 @@ class _$CutDeckImpl implements CutDeck {
     required TResult Function(String playerId) cutDeck,
     required TResult Function(String playerId) go,
     required TResult Function(String playerId) countHand,
+    required TResult Function(String playerId) countCrib,
     required TResult Function(String playerId, String reason) forfeit,
   }) {
     return cutDeck(playerId);
@@ -672,6 +693,7 @@ class _$CutDeckImpl implements CutDeck {
     TResult? Function(String playerId)? cutDeck,
     TResult? Function(String playerId)? go,
     TResult? Function(String playerId)? countHand,
+    TResult? Function(String playerId)? countCrib,
     TResult? Function(String playerId, String reason)? forfeit,
   }) {
     return cutDeck?.call(playerId);
@@ -685,6 +707,7 @@ class _$CutDeckImpl implements CutDeck {
     TResult Function(String playerId)? cutDeck,
     TResult Function(String playerId)? go,
     TResult Function(String playerId)? countHand,
+    TResult Function(String playerId)? countCrib,
     TResult Function(String playerId, String reason)? forfeit,
     required TResult orElse(),
   }) {
@@ -702,6 +725,7 @@ class _$CutDeckImpl implements CutDeck {
     required TResult Function(CutDeck value) cutDeck,
     required TResult Function(Go value) go,
     required TResult Function(CountHand value) countHand,
+    required TResult Function(CountCrib value) countCrib,
     required TResult Function(ForfeitAction value) forfeit,
   }) {
     return cutDeck(this);
@@ -715,6 +739,7 @@ class _$CutDeckImpl implements CutDeck {
     TResult? Function(CutDeck value)? cutDeck,
     TResult? Function(Go value)? go,
     TResult? Function(CountHand value)? countHand,
+    TResult? Function(CountCrib value)? countCrib,
     TResult? Function(ForfeitAction value)? forfeit,
   }) {
     return cutDeck?.call(this);
@@ -728,6 +753,7 @@ class _$CutDeckImpl implements CutDeck {
     TResult Function(CutDeck value)? cutDeck,
     TResult Function(Go value)? go,
     TResult Function(CountHand value)? countHand,
+    TResult Function(CountCrib value)? countCrib,
     TResult Function(ForfeitAction value)? forfeit,
     required TResult orElse(),
   }) {
@@ -840,6 +866,7 @@ class _$GoImpl implements Go {
     required TResult Function(String playerId) cutDeck,
     required TResult Function(String playerId) go,
     required TResult Function(String playerId) countHand,
+    required TResult Function(String playerId) countCrib,
     required TResult Function(String playerId, String reason) forfeit,
   }) {
     return go(playerId);
@@ -853,6 +880,7 @@ class _$GoImpl implements Go {
     TResult? Function(String playerId)? cutDeck,
     TResult? Function(String playerId)? go,
     TResult? Function(String playerId)? countHand,
+    TResult? Function(String playerId)? countCrib,
     TResult? Function(String playerId, String reason)? forfeit,
   }) {
     return go?.call(playerId);
@@ -866,6 +894,7 @@ class _$GoImpl implements Go {
     TResult Function(String playerId)? cutDeck,
     TResult Function(String playerId)? go,
     TResult Function(String playerId)? countHand,
+    TResult Function(String playerId)? countCrib,
     TResult Function(String playerId, String reason)? forfeit,
     required TResult orElse(),
   }) {
@@ -883,6 +912,7 @@ class _$GoImpl implements Go {
     required TResult Function(CutDeck value) cutDeck,
     required TResult Function(Go value) go,
     required TResult Function(CountHand value) countHand,
+    required TResult Function(CountCrib value) countCrib,
     required TResult Function(ForfeitAction value) forfeit,
   }) {
     return go(this);
@@ -896,6 +926,7 @@ class _$GoImpl implements Go {
     TResult? Function(CutDeck value)? cutDeck,
     TResult? Function(Go value)? go,
     TResult? Function(CountHand value)? countHand,
+    TResult? Function(CountCrib value)? countCrib,
     TResult? Function(ForfeitAction value)? forfeit,
   }) {
     return go?.call(this);
@@ -909,6 +940,7 @@ class _$GoImpl implements Go {
     TResult Function(CutDeck value)? cutDeck,
     TResult Function(Go value)? go,
     TResult Function(CountHand value)? countHand,
+    TResult Function(CountCrib value)? countCrib,
     TResult Function(ForfeitAction value)? forfeit,
     required TResult orElse(),
   }) {
@@ -1026,6 +1058,7 @@ class _$CountHandImpl implements CountHand {
     required TResult Function(String playerId) cutDeck,
     required TResult Function(String playerId) go,
     required TResult Function(String playerId) countHand,
+    required TResult Function(String playerId) countCrib,
     required TResult Function(String playerId, String reason) forfeit,
   }) {
     return countHand(playerId);
@@ -1039,6 +1072,7 @@ class _$CountHandImpl implements CountHand {
     TResult? Function(String playerId)? cutDeck,
     TResult? Function(String playerId)? go,
     TResult? Function(String playerId)? countHand,
+    TResult? Function(String playerId)? countCrib,
     TResult? Function(String playerId, String reason)? forfeit,
   }) {
     return countHand?.call(playerId);
@@ -1052,6 +1086,7 @@ class _$CountHandImpl implements CountHand {
     TResult Function(String playerId)? cutDeck,
     TResult Function(String playerId)? go,
     TResult Function(String playerId)? countHand,
+    TResult Function(String playerId)? countCrib,
     TResult Function(String playerId, String reason)? forfeit,
     required TResult orElse(),
   }) {
@@ -1069,6 +1104,7 @@ class _$CountHandImpl implements CountHand {
     required TResult Function(CutDeck value) cutDeck,
     required TResult Function(Go value) go,
     required TResult Function(CountHand value) countHand,
+    required TResult Function(CountCrib value) countCrib,
     required TResult Function(ForfeitAction value) forfeit,
   }) {
     return countHand(this);
@@ -1082,6 +1118,7 @@ class _$CountHandImpl implements CountHand {
     TResult? Function(CutDeck value)? cutDeck,
     TResult? Function(Go value)? go,
     TResult? Function(CountHand value)? countHand,
+    TResult? Function(CountCrib value)? countCrib,
     TResult? Function(ForfeitAction value)? forfeit,
   }) {
     return countHand?.call(this);
@@ -1095,6 +1132,7 @@ class _$CountHandImpl implements CountHand {
     TResult Function(CutDeck value)? cutDeck,
     TResult Function(Go value)? go,
     TResult Function(CountHand value)? countHand,
+    TResult Function(CountCrib value)? countCrib,
     TResult Function(ForfeitAction value)? forfeit,
     required TResult orElse(),
   }) {
@@ -1124,6 +1162,199 @@ abstract class CountHand implements GameAction {
   @override
   @JsonKey(includeFromJson: false, includeToJson: false)
   _$$CountHandImplCopyWith<_$CountHandImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class _$$CountCribImplCopyWith<$Res>
+    implements $GameActionCopyWith<$Res> {
+  factory _$$CountCribImplCopyWith(
+    _$CountCribImpl value,
+    $Res Function(_$CountCribImpl) then,
+  ) = __$$CountCribImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({String playerId});
+}
+
+/// @nodoc
+class __$$CountCribImplCopyWithImpl<$Res>
+    extends _$GameActionCopyWithImpl<$Res, _$CountCribImpl>
+    implements _$$CountCribImplCopyWith<$Res> {
+  __$$CountCribImplCopyWithImpl(
+    _$CountCribImpl _value,
+    $Res Function(_$CountCribImpl) _then,
+  ) : super(_value, _then);
+
+  /// Create a copy of GameAction
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({Object? playerId = null}) {
+    return _then(
+      _$CountCribImpl(
+        playerId: null == playerId
+            ? _value.playerId
+            : playerId // ignore: cast_nullable_to_non_nullable
+                  as String,
+      ),
+    );
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$CountCribImpl implements CountCrib {
+  const _$CountCribImpl({required this.playerId, final String? $type})
+    : $type = $type ?? 'CountCrib';
+
+  factory _$CountCribImpl.fromJson(Map<String, dynamic> json) =>
+      _$$CountCribImplFromJson(json);
+
+  @override
+  final String playerId;
+
+  @JsonKey(name: 'type')
+  final String $type;
+
+  @override
+  String toString() {
+    return 'GameAction.countCrib(playerId: $playerId)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$CountCribImpl &&
+            (identical(other.playerId, playerId) ||
+                other.playerId == playerId));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode => Object.hash(runtimeType, playerId);
+
+  /// Create a copy of GameAction
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$CountCribImplCopyWith<_$CountCribImpl> get copyWith =>
+      __$$CountCribImplCopyWithImpl<_$CountCribImpl>(this, _$identity);
+
+  @override
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function(String playerId, PlayingCard card) discardToCrib,
+    required TResult Function(String playerId, PlayingCard card) playCard,
+    required TResult Function(String playerId) cutDeck,
+    required TResult Function(String playerId) go,
+    required TResult Function(String playerId) countHand,
+    required TResult Function(String playerId) countCrib,
+    required TResult Function(String playerId, String reason) forfeit,
+  }) {
+    return countCrib(playerId);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function(String playerId, PlayingCard card)? discardToCrib,
+    TResult? Function(String playerId, PlayingCard card)? playCard,
+    TResult? Function(String playerId)? cutDeck,
+    TResult? Function(String playerId)? go,
+    TResult? Function(String playerId)? countHand,
+    TResult? Function(String playerId)? countCrib,
+    TResult? Function(String playerId, String reason)? forfeit,
+  }) {
+    return countCrib?.call(playerId);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function(String playerId, PlayingCard card)? discardToCrib,
+    TResult Function(String playerId, PlayingCard card)? playCard,
+    TResult Function(String playerId)? cutDeck,
+    TResult Function(String playerId)? go,
+    TResult Function(String playerId)? countHand,
+    TResult Function(String playerId)? countCrib,
+    TResult Function(String playerId, String reason)? forfeit,
+    required TResult orElse(),
+  }) {
+    if (countCrib != null) {
+      return countCrib(playerId);
+    }
+    return orElse();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(DiscardToCrib value) discardToCrib,
+    required TResult Function(PlayCard value) playCard,
+    required TResult Function(CutDeck value) cutDeck,
+    required TResult Function(Go value) go,
+    required TResult Function(CountHand value) countHand,
+    required TResult Function(CountCrib value) countCrib,
+    required TResult Function(ForfeitAction value) forfeit,
+  }) {
+    return countCrib(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(DiscardToCrib value)? discardToCrib,
+    TResult? Function(PlayCard value)? playCard,
+    TResult? Function(CutDeck value)? cutDeck,
+    TResult? Function(Go value)? go,
+    TResult? Function(CountHand value)? countHand,
+    TResult? Function(CountCrib value)? countCrib,
+    TResult? Function(ForfeitAction value)? forfeit,
+  }) {
+    return countCrib?.call(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(DiscardToCrib value)? discardToCrib,
+    TResult Function(PlayCard value)? playCard,
+    TResult Function(CutDeck value)? cutDeck,
+    TResult Function(Go value)? go,
+    TResult Function(CountHand value)? countHand,
+    TResult Function(CountCrib value)? countCrib,
+    TResult Function(ForfeitAction value)? forfeit,
+    required TResult orElse(),
+  }) {
+    if (countCrib != null) {
+      return countCrib(this);
+    }
+    return orElse();
+  }
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$CountCribImplToJson(this);
+  }
+}
+
+abstract class CountCrib implements GameAction {
+  const factory CountCrib({required final String playerId}) = _$CountCribImpl;
+
+  factory CountCrib.fromJson(Map<String, dynamic> json) =
+      _$CountCribImpl.fromJson;
+
+  @override
+  String get playerId;
+
+  /// Create a copy of GameAction
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$CountCribImplCopyWith<_$CountCribImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
@@ -1224,6 +1455,7 @@ class _$ForfeitActionImpl implements ForfeitAction {
     required TResult Function(String playerId) cutDeck,
     required TResult Function(String playerId) go,
     required TResult Function(String playerId) countHand,
+    required TResult Function(String playerId) countCrib,
     required TResult Function(String playerId, String reason) forfeit,
   }) {
     return forfeit(playerId, reason);
@@ -1237,6 +1469,7 @@ class _$ForfeitActionImpl implements ForfeitAction {
     TResult? Function(String playerId)? cutDeck,
     TResult? Function(String playerId)? go,
     TResult? Function(String playerId)? countHand,
+    TResult? Function(String playerId)? countCrib,
     TResult? Function(String playerId, String reason)? forfeit,
   }) {
     return forfeit?.call(playerId, reason);
@@ -1250,6 +1483,7 @@ class _$ForfeitActionImpl implements ForfeitAction {
     TResult Function(String playerId)? cutDeck,
     TResult Function(String playerId)? go,
     TResult Function(String playerId)? countHand,
+    TResult Function(String playerId)? countCrib,
     TResult Function(String playerId, String reason)? forfeit,
     required TResult orElse(),
   }) {
@@ -1267,6 +1501,7 @@ class _$ForfeitActionImpl implements ForfeitAction {
     required TResult Function(CutDeck value) cutDeck,
     required TResult Function(Go value) go,
     required TResult Function(CountHand value) countHand,
+    required TResult Function(CountCrib value) countCrib,
     required TResult Function(ForfeitAction value) forfeit,
   }) {
     return forfeit(this);
@@ -1280,6 +1515,7 @@ class _$ForfeitActionImpl implements ForfeitAction {
     TResult? Function(CutDeck value)? cutDeck,
     TResult? Function(Go value)? go,
     TResult? Function(CountHand value)? countHand,
+    TResult? Function(CountCrib value)? countCrib,
     TResult? Function(ForfeitAction value)? forfeit,
   }) {
     return forfeit?.call(this);
@@ -1293,6 +1529,7 @@ class _$ForfeitActionImpl implements ForfeitAction {
     TResult Function(CutDeck value)? cutDeck,
     TResult Function(Go value)? go,
     TResult Function(CountHand value)? countHand,
+    TResult Function(CountCrib value)? countCrib,
     TResult Function(ForfeitAction value)? forfeit,
     required TResult orElse(),
   }) {
