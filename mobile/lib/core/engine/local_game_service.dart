@@ -24,9 +24,9 @@ class LocalGameService {
     final aiPlayerId = 'ai_${Random().nextInt(9000) + 1000}';
 
     final aiName = switch (difficulty) {
-      'medium' => 'AI (Medium)',
-      'hard' => 'AI (Hard)',
-      _ => 'AI (Easy)',
+      'medium' => 'Bot · Medium',
+      'hard' => 'Bot · Hard',
+      _ => 'Bot · Easy',
     };
     final rustDifficulty = switch (difficulty) {
       'medium' => 'medium',

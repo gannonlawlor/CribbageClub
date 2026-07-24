@@ -76,7 +76,7 @@ void main() {
           easyService.currentState!.players
               .firstWhere((p) => p.id.startsWith('ai_'))
               .name,
-          'AI (Easy)',
+          'Bot · Easy',
         );
 
         final mediumService = LocalGameService();
@@ -89,7 +89,7 @@ void main() {
           mediumService.currentState!.players
               .firstWhere((p) => p.id.startsWith('ai_'))
               .name,
-          'AI (Medium)',
+          'Bot · Medium',
         );
 
         final hardService = LocalGameService();
@@ -102,7 +102,7 @@ void main() {
           hardService.currentState!.players
               .firstWhere((p) => p.id.startsWith('ai_'))
               .name,
-          'AI (Hard)',
+          'Bot · Hard',
         );
       },
     );
