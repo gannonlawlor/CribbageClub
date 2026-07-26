@@ -1523,8 +1523,11 @@ class _Table extends StatelessWidget {
         if (gameOver == null)
           Positioned(
             right: 6,
-            top: 18,
+            top: 0,
+            bottom: 0,
             child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 GameIconButton(
                   icon: Icons.tune,
