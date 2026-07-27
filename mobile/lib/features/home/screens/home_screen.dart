@@ -108,11 +108,8 @@ class HomeScreen extends ConsumerWidget {
                               ),
                             ),
 
-                            CcPrimaryButton(
-                              label: 'Play Online',
-                              icon: Icons.play_arrow,
-                              height: 60,
-                              onPressed: isCreating
+                            _OnlineCard(
+                              onPlay: isCreating
                                   ? null
                                   : () => _quickMatch(context, ref),
                             ),
@@ -665,6 +662,118 @@ class _IconTile extends StatelessWidget {
   }
 }
 
+class _OnlineCard extends StatelessWidget {
+  final VoidCallback? onPlay;
+
+  const _OnlineCard({required this.onPlay});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+    return _Card(
+      onTap: onPlay,
+      child: Row(
+        children: [
+          _IconTile(
+            child: SizedBox(
+              width: 18,
+              height: 18,
+              // A drawn globe: equator and meridian inside the ring, with the
+              // ring painted last so it caps their ends cleanly.
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Container(width: 18, height: 1.5, color: colors.textTertiary),
+                  Container(
+                    width: 9,
+                    height: 18,
+                    decoration: BoxDecoration(
+                      borderRadius: const BorderRadius.all(
+                        Radius.elliptical(4.5, 9),
+                      ),
+                      border: Border.all(
+                        color: colors.textTertiary,
+                        width: 1.5,
+                      ),
+                    ),
+                  ),
+                  Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: colors.selectedBorder,
+                        width: 1.5,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'Play Online',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: colors.textPrimary,
+                fontSize: 14.5,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          _PlayButton(onTap: onPlay),
+        ],
+      ),
+    );
+  }
+}
+
+/// The compact filled Play action shared by the online and bot cards, so the
+/// two rows read as the same weight of thing.
+class _PlayButton extends StatelessWidget {
+  final VoidCallback? onTap;
+
+  const _PlayButton({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+    return Opacity(
+      opacity: onTap == null ? 0.4 : 1,
+      child: Material(
+        color: colors.accent,
+        borderRadius: BorderRadius.circular(8),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(8),
+          child: SizedBox(
+            width: 86,
+            height: 40,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.play_arrow, size: 16, color: colors.accentOnSurface),
+                const SizedBox(width: 4),
+                Text(
+                  'Play',
+                  style: TextStyle(
+                    color: colors.accentOnSurface,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _BotCard extends ConsumerWidget {
   final void Function(String difficulty)? onPlay;
 
@@ -747,41 +856,8 @@ class _BotCard extends ConsumerWidget {
                   ),
                 ),
               const SizedBox(width: 2),
-              // Deliberately lighter than the Play Online CTA above it —
-              // half the width, no bevel — so the two never read as a pair.
-              Opacity(
-                opacity: onPlay == null ? 0.4 : 1,
-                child: Material(
-                  color: colors.accent,
-                  borderRadius: BorderRadius.circular(8),
-                  child: InkWell(
-                    onTap: onPlay == null ? null : () => onPlay!(selected),
-                    borderRadius: BorderRadius.circular(8),
-                    child: SizedBox(
-                      width: 86,
-                      height: 40,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.play_arrow,
-                            size: 16,
-                            color: colors.accentOnSurface,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Play',
-                            style: TextStyle(
-                              color: colors.accentOnSurface,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
+              _PlayButton(
+                onTap: onPlay == null ? null : () => onPlay!(selected),
               ),
             ],
           ),
