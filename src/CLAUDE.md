@@ -14,6 +14,23 @@ Spring Boot 3.4.13 server with Kotlin 1.9.25, JDK 21, PostgreSQL, and a Rust gam
 
 Requires: JDK 21, Rust toolchain (cargo), PostgreSQL running on localhost:5432.
 
+## Deploying to Staging
+
+The backend Docker image is **built remotely by GitHub Actions** — never build
+it locally for staging. Pushing backend changes to `master` triggers the CI
+`image` job, which pushes `ghcr.io/gannonlawlor/cribbage:master` to GHCR. Once
+CI is green, updating the staging server is only a pull + restart on titan:
+
+```bash
+ssh titan "cd /opt/cribbage-staging \
+  && docker compose -f docker-compose.staging.yml pull app \
+  && docker compose -f docker-compose.staging.yml up -d app"
+```
+
+Flyway applies new migrations on boot. Verify via
+`https://cribbage-staging.tail0b042f.ts.net/actuator/health` and
+`docker logs cribbage-staging-app`.
+
 ## Project Structure
 
 ```
