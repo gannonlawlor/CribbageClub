@@ -32,7 +32,7 @@ RUN yum install -y shadow-utils && yum clean all && \
     groupadd -r appgroup && useradd -r -g appgroup appuser
 
 COPY --from=build /app/build/libs/*.jar app.jar
-COPY --from=build /app/engine/target/release/libcribbage_engine.so /app/lib/
+COPY --from=build /app/engine/target/server/release/libcribbage_engine.so /app/lib/
 
 RUN chown -R appuser:appgroup /app
 USER appuser
