@@ -7,8 +7,6 @@ import org.springframework.stereotype.Repository
 
 @Repository
 interface GameRepository : JpaRepository<GameEntity, String> {
-    fun findByStageNot(stage: String): List<GameEntity>
-    fun findByPlayer1IdOrPlayer2Id(player1Id: String, player2Id: String): List<GameEntity>
     fun findByWinnerIdIsNull(): List<GameEntity>
 
     @Query("SELECT g FROM GameEntity g WHERE (g.player1Id = :playerId OR g.player2Id = :playerId) AND g.winnerId IS NULL")

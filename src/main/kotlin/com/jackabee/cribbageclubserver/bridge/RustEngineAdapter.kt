@@ -75,22 +75,6 @@ class RustEngineAdapter(
         return parseState(resultJson)
     }
 
-    // ── Standalone analysis ─────────────────────────────────────────
-
-    /** Calculate hand score using the Rust engine. */
-    fun calculateHandScore(hand: List<Card>, cutCard: Card, isCrib: Boolean): Int {
-        val handJson = objectMapper.writeValueAsString(hand)
-        val cutJson = objectMapper.writeValueAsString(cutCard)
-        val result = lib.cribbage_calculate_hand_score(handJson, cutJson, isCrib)
-        if (result < 0) {
-            val errPtr = lib.cribbage_last_error()
-            val msg = if (errPtr != null) {
-                try { errPtr.getString(0) } finally { lib.cribbage_string_free(errPtr) }
-            } else "Unknown scoring error"
-            throw RustEngineException(msg)
-        }
-        return result
-    }
 
     /** Analyze all discard options using the Rust engine. */
     fun analyzeDiscards(hand: List<Card>, isDealer: Boolean): List<DiscardOption> {
