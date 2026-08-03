@@ -6,17 +6,6 @@ part of 'websocket_messages.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_$GameActionMessageImpl _$$GameActionMessageImplFromJson(
-  Map<String, dynamic> json,
-) => _$GameActionMessageImpl(
-  gameId: json['gameId'] as String,
-  action: GameAction.fromJson(json['action'] as Map<String, dynamic>),
-);
-
-Map<String, dynamic> _$$GameActionMessageImplToJson(
-  _$GameActionMessageImpl instance,
-) => <String, dynamic>{'gameId': instance.gameId, 'action': instance.action};
-
 _$GameStateUpdateMessageImpl _$$GameStateUpdateMessageImplFromJson(
   Map<String, dynamic> json,
 ) => _$GameStateUpdateMessageImpl(
@@ -58,11 +47,3 @@ Map<String, dynamic> _$$GameErrorMessageImplToJson(
   'error': instance.error,
   'timestamp': instance.timestamp,
 };
-
-_$JoinGameMessageImpl _$$JoinGameMessageImplFromJson(
-  Map<String, dynamic> json,
-) => _$JoinGameMessageImpl(gameId: json['gameId'] as String);
-
-Map<String, dynamic> _$$JoinGameMessageImplToJson(
-  _$JoinGameMessageImpl instance,
-) => <String, dynamic>{'gameId': instance.gameId};

@@ -9,19 +9,9 @@ class SettingsService {
     return _prefs!;
   }
 
-  Future<bool> getSoundEnabled() async {
-    final prefs = await _preferences;
-    return prefs.getBool(AppConstants.soundEnabledKey) ?? true;
-  }
-
   Future<void> setSoundEnabled(bool enabled) async {
     final prefs = await _preferences;
     await prefs.setBool(AppConstants.soundEnabledKey, enabled);
-  }
-
-  Future<bool> getHapticsEnabled() async {
-    final prefs = await _preferences;
-    return prefs.getBool(AppConstants.hapticsEnabledKey) ?? true;
   }
 
   Future<void> setHapticsEnabled(bool enabled) async {
@@ -29,19 +19,9 @@ class SettingsService {
     await prefs.setBool(AppConstants.hapticsEnabledKey, enabled);
   }
 
-  Future<String> getThemeMode() async {
-    final prefs = await _preferences;
-    return prefs.getString(AppConstants.themeModeKey) ?? 'dark';
-  }
-
   Future<void> setThemeMode(String mode) async {
     final prefs = await _preferences;
     await prefs.setString(AppConstants.themeModeKey, mode);
-  }
-
-  Future<bool> getPuzzlePickDiscards() async {
-    final prefs = await _preferences;
-    return prefs.getBool(AppConstants.puzzlePickDiscardsKey) ?? false;
   }
 
   Future<void> setPuzzlePickDiscards(bool enabled) async {
@@ -49,19 +29,9 @@ class SettingsService {
     await prefs.setBool(AppConstants.puzzlePickDiscardsKey, enabled);
   }
 
-  Future<bool> getAutoDeal() async {
-    final prefs = await _preferences;
-    return prefs.getBool(AppConstants.autoDealKey) ?? true;
-  }
-
   Future<void> setAutoDeal(bool enabled) async {
     final prefs = await _preferences;
     await prefs.setBool(AppConstants.autoDealKey, enabled);
-  }
-
-  Future<bool> getAutoCut() async {
-    final prefs = await _preferences;
-    return prefs.getBool(AppConstants.autoCutKey) ?? true;
   }
 
   Future<void> setAutoCut(bool enabled) async {
@@ -69,19 +39,9 @@ class SettingsService {
     await prefs.setBool(AppConstants.autoCutKey, enabled);
   }
 
-  Future<bool> getAutoGo() async {
-    final prefs = await _preferences;
-    return prefs.getBool(AppConstants.autoGoKey) ?? true;
-  }
-
   Future<void> setAutoGo(bool enabled) async {
     final prefs = await _preferences;
     await prefs.setBool(AppConstants.autoGoKey, enabled);
-  }
-
-  Future<bool> getAutoPlayAll() async {
-    final prefs = await _preferences;
-    return prefs.getBool(AppConstants.autoPlayAllKey) ?? false;
   }
 
   Future<void> setAutoPlayAll(bool enabled) async {
@@ -89,29 +49,14 @@ class SettingsService {
     await prefs.setBool(AppConstants.autoPlayAllKey, enabled);
   }
 
-  Future<bool> getAutoPlayPegging() async {
-    final prefs = await _preferences;
-    return prefs.getBool(AppConstants.autoPlayPeggingKey) ?? true;
-  }
-
   Future<void> setAutoPlayPegging(bool enabled) async {
     final prefs = await _preferences;
     await prefs.setBool(AppConstants.autoPlayPeggingKey, enabled);
   }
 
-  Future<String?> getOpponentHandDisplay() async {
-    final prefs = await _preferences;
-    return prefs.getString(AppConstants.opponentHandDisplayKey);
-  }
-
   Future<void> setOpponentHandDisplay(String key) async {
     final prefs = await _preferences;
     await prefs.setString(AppConstants.opponentHandDisplayKey, key);
-  }
-
-  Future<double> getAnimationSpeed() async {
-    final prefs = await _preferences;
-    return prefs.getDouble(AppConstants.animationSpeedKey) ?? 1.0;
   }
 
   Future<void> setAnimationSpeed(double speed) async {
