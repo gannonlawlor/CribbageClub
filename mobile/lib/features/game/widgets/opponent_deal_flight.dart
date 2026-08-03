@@ -8,14 +8,18 @@ import '../../../core/services/settings_provider.dart';
 import 'card_widget.dart';
 import 'hand_fan.dart';
 
-/// The opponent's half of the deal in the portrait layout, where they have no
-/// hand on screen: card backs fly one at a time from the table up to their
-/// player bar, on the beats between the player's own cards.
+/// The opponent's half of the deal in the portrait layout: card backs fly one
+/// at a time from the table up to their hand, on the beats between the
+/// player's own cards, each fading out as the card it delivers appears there.
 ///
 /// Triggered the same way [HandFan]'s deal is — by the player's hand going
 /// from empty to a fresh six — so the two halves of the deal always run off
 /// the same clock.
 class OpponentDealFlight extends ConsumerStatefulWidget {
+  /// How long a single card takes to cross the table. The opponent's hand
+  /// holds each card back by this much so the two never draw the same card.
+  static const Duration flightDuration = Duration(milliseconds: 340);
+
   /// The player's hand size; the 0 → 6 transition is the deal signal.
   final int handCount;
 
@@ -126,7 +130,7 @@ class _OpponentDealFlightState extends ConsumerState<OpponentDealFlight> {
             TweenAnimationBuilder<double>(
               key: ValueKey('deal_flight_$i'),
               tween: Tween(begin: 0, end: 1),
-              duration: const Duration(milliseconds: 340),
+              duration: OpponentDealFlight.flightDuration,
               curve: Curves.easeOutCubic,
               onEnd: () => setState(() => _landed.add(i)),
               builder: (context, t, _) {

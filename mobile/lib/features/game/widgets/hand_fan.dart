@@ -255,10 +255,25 @@ class OpponentHand extends StatefulWidget {
   /// on-beats, the dealer's on the off-beats.
   final bool receiveFirst;
 
+  /// Card width. Defaults to the responsive small-card size; the portrait
+  /// layout passes its own so the row mirrors the player's hand.
+  final double? cardWidth;
+
+  /// Lay the cards out the way [HandFan] does — 10pt gaps that tighten into an
+  /// overlap only when the hand won't fit — instead of a tight fixed stack.
+  final bool fanned;
+
+  /// Held before each card is revealed, so a deal flight arriving from the
+  /// table can land first and hand the card over rather than double-drawing it.
+  final Duration dealDelay;
+
   const OpponentHand({
     super.key,
     required this.cardCount,
     this.receiveFirst = false,
+    this.cardWidth,
+    this.fanned = false,
+    this.dealDelay = Duration.zero,
   });
 
   @override
@@ -312,7 +327,9 @@ class _OpponentHandState extends State<OpponentHand> {
 
     // Interleaved with the player's cards: one arrives every other half-beat.
     final totalCards = widget.cardCount;
-    final phaseMs = widget.receiveFirst ? 0 : halfBeatMs;
+    final phaseMs =
+        (widget.receiveFirst ? 0 : halfBeatMs) +
+        widget.dealDelay.inMilliseconds;
     for (int i = 0; i < totalCards; i++) {
       _dealTimers.add(
         Timer(Duration(milliseconds: phaseMs + i * 2 * halfBeatMs), () {
@@ -343,14 +360,22 @@ class _OpponentHandState extends State<OpponentHand> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final dims = CardDimensions(constraints.maxWidth);
-        final cardW = dims.smallCardWidth;
-        final cardH = dims.smallCardHeight;
+        final cardW = widget.cardWidth ?? dims.smallCardWidth;
+        final cardH = cardW / AppConstants.cardAspectRatio;
+        final n = widget.cardCount;
+        // Fanned: the same rule the player's hand follows, so the two hands
+        // read as a matched pair across the table.
+        final visible = widget.fanned && n > 1
+            ? math
+                  .min(cardW + 10, (constraints.maxWidth - cardW) / (n - 1))
+                  .clamp(cardW * 0.45, cardW + 10)
+            : cardW * (1 - dims.opponentOverlap);
 
-        if (widget.cardCount <= 0) {
+        if (n <= 0) {
           return SizedBox(height: cardH);
         }
 
-        final stackWidth = dims.opponentStackWidth(widget.cardCount);
+        final stackWidth = cardW + (n - 1) * visible;
         final startX = (constraints.maxWidth - stackWidth) / 2;
         final centerX = (constraints.maxWidth - cardW) / 2;
 
@@ -363,9 +388,7 @@ class _OpponentHandState extends State<OpponentHand> {
                   AnimatedPositioned(
                     duration: const Duration(milliseconds: 300),
                     curve: Curves.easeOutCubic,
-                    left: i < _revealedCount
-                        ? startX + i * dims.opponentCardVisible
-                        : centerX,
+                    left: i < _revealedCount ? startX + i * visible : centerX,
                     top: 0,
                     child: AnimatedOpacity(
                       duration: const Duration(milliseconds: 150),
@@ -391,7 +414,7 @@ class _OpponentHandState extends State<OpponentHand> {
                 AnimatedPositioned(
                   duration: const Duration(milliseconds: 250),
                   curve: Curves.easeOutCubic,
-                  left: startX + i * dims.opponentCardVisible,
+                  left: startX + i * visible,
                   top: 0,
                   child: CardWidget(faceUp: false, width: cardW, height: cardH),
                 ),

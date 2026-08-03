@@ -33,6 +33,7 @@ class AppConstants {
   static const String autoPlayPeggingKey = 'auto_play_pegging';
   static const String animationSpeedKey = 'animation_speed';
   static const String puzzlePickDiscardsKey = 'puzzle_pick_discards';
+  static const String opponentHandDisplayKey = 'opponent_hand_display';
 
   // Card dimensions
   static const double cardAspectRatio = 2.5 / 3.5;

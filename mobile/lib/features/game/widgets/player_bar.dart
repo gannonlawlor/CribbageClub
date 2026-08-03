@@ -18,6 +18,10 @@ class PlayerBar extends StatelessWidget {
   final bool isActive;
   final int? rating;
 
+  /// Cards still in hand, shown as a chip beside the name. Null on your own
+  /// bar — your hand is right there to look at.
+  final int? handCount;
+
   const PlayerBar({
     super.key,
     required this.name,
@@ -26,6 +30,7 @@ class PlayerBar extends StatelessWidget {
     this.isDealer = false,
     this.isActive = false,
     this.rating,
+    this.handCount,
   });
 
   @override
@@ -122,6 +127,10 @@ class PlayerBar extends StatelessWidget {
                         ),
                       ),
                     ],
+                    if (handCount != null) ...[
+                      const SizedBox(width: 7),
+                      _HandCountChip(count: handCount!),
+                    ],
                     const SizedBox(width: 8),
                     Container(
                       width: 8,
@@ -144,6 +153,54 @@ class PlayerBar extends StatelessWidget {
                     ),
                   ],
                 ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Cards left in hand: a card back with the number on it, sized and surfaced
+/// like the DEALER chip it sits beside.
+class _HandCountChip extends StatelessWidget {
+  final int count;
+
+  const _HandCountChip({required this.count});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+    return AnimatedOpacity(
+      duration: const Duration(milliseconds: 200),
+      opacity: count > 0 ? 1 : 0,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(4, 2, 6, 2),
+        decoration: BoxDecoration(
+          color: colors.surfaceDim,
+          borderRadius: BorderRadius.circular(4),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 9,
+              height: 13,
+              decoration: BoxDecoration(
+                color: colors.cardBackPrimary,
+                borderRadius: BorderRadius.circular(2),
+                border: Border.all(color: colors.cardFace, width: 0.8),
+              ),
+            ),
+            const SizedBox(width: 5),
+            Text(
+              '$count',
+              style: TextStyle(
+                color: colors.textSecondary,
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                fontFeatures: const [FontFeature.tabularFigures()],
               ),
             ),
           ],

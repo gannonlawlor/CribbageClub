@@ -2,6 +2,24 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../config/theme/theme_provider.dart';
 import 'settings_service.dart';
 
+/// How much of the opponent's hand the table shows. Either way you can tell
+/// how many cards they have left — this is only how it's drawn.
+enum OpponentHandDisplay {
+  /// A fan of card backs mirroring your own hand.
+  cards,
+
+  /// A single card back with the number of cards on it.
+  count;
+
+  String get storageKey => name;
+
+  static OpponentHandDisplay fromStorage(String? key) =>
+      OpponentHandDisplay.values.firstWhere(
+        (v) => v.name == key,
+        orElse: () => OpponentHandDisplay.cards,
+      );
+}
+
 class SettingsState {
   final bool soundEnabled;
   final bool hapticsEnabled;
@@ -17,6 +35,9 @@ class SettingsState {
   /// keep — same question, the way some players think about it.
   final bool puzzlePickDiscards;
 
+  /// Whether the opponent's hand is drawn as cards or as a count.
+  final OpponentHandDisplay opponentHandDisplay;
+
   const SettingsState({
     this.soundEnabled = true,
     this.hapticsEnabled = true,
@@ -28,6 +49,7 @@ class SettingsState {
     this.autoPlayPegging = true,
     this.animationSpeed = 1.0,
     this.puzzlePickDiscards = false,
+    this.opponentHandDisplay = OpponentHandDisplay.cards,
   });
 
   SettingsState copyWith({
@@ -41,6 +63,7 @@ class SettingsState {
     bool? autoPlayPegging,
     double? animationSpeed,
     bool? puzzlePickDiscards,
+    OpponentHandDisplay? opponentHandDisplay,
   }) {
     return SettingsState(
       soundEnabled: soundEnabled ?? this.soundEnabled,
@@ -53,6 +76,7 @@ class SettingsState {
       autoPlayPegging: autoPlayPegging ?? this.autoPlayPegging,
       animationSpeed: animationSpeed ?? this.animationSpeed,
       puzzlePickDiscards: puzzlePickDiscards ?? this.puzzlePickDiscards,
+      opponentHandDisplay: opponentHandDisplay ?? this.opponentHandDisplay,
     );
   }
 
@@ -128,6 +152,11 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
   Future<void> setPuzzlePickDiscards(bool enabled) async {
     state = state.copyWith(puzzlePickDiscards: enabled);
     await _service.setPuzzlePickDiscards(enabled);
+  }
+
+  Future<void> setOpponentHandDisplay(OpponentHandDisplay display) async {
+    state = state.copyWith(opponentHandDisplay: display);
+    await _service.setOpponentHandDisplay(display.storageKey);
   }
 }
 
