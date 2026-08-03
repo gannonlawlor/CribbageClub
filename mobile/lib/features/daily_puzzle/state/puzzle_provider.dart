@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/auth/auth_provider.dart';
 import '../../../core/models/card.dart';
+import '../../../core/services/achievement_service.dart';
 import '../models/daily_puzzle.dart';
 import '../services/puzzle_generator.dart';
 import '../services/puzzle_persistence.dart';
@@ -84,7 +86,15 @@ class DailyPuzzleState {
 class DailyPuzzleNotifier extends StateNotifier<DailyPuzzleState> {
   final PuzzlePersistence _persistence;
 
-  DailyPuzzleNotifier(this._persistence) : super(const DailyPuzzleState());
+  /// Called once per freshly solved puzzle with whether the keep was
+  /// optimal (rank 1) — the achievement report. Null when nobody listens.
+  final void Function(bool optimal)? _onSolved;
+
+  DailyPuzzleNotifier(
+    this._persistence, {
+    void Function(bool optimal)? onSolved,
+  }) : _onSolved = onSolved,
+       super(const DailyPuzzleState());
 
   Future<void> loadPuzzle() async {
     final now = DateTime.now();
@@ -196,15 +206,18 @@ class DailyPuzzleNotifier extends StateNotifier<DailyPuzzleState> {
     }
 
     // Run analysis in background (after UI has advanced)
-    _runAnalysisInBackground(puzzle, keep, idx, date);
+    _runAnalysisInBackground(puzzle, keep, idx, date, report: true);
   }
 
+  /// [report] marks a fresh solve; the restore path re-runs interrupted
+  /// analysis without re-reporting it for achievements.
   void _runAnalysisInBackground(
     DailyPuzzle puzzle,
     List<PlayingCard> keep,
     int idx,
-    DateTime date,
-  ) {
+    DateTime date, {
+    bool report = false,
+  }) {
     Future(() async {
       final results = PuzzleGenerator.evaluateAllKeeps(
         puzzle.hand,
@@ -223,6 +236,8 @@ class DailyPuzzleNotifier extends StateNotifier<DailyPuzzleState> {
           break;
         }
       }
+
+      if (report) _onSolved?.call(playerRank == 1);
 
       // Persist analysis results
       await _persistence.savePuzzleResult(
@@ -268,7 +283,20 @@ final puzzlePersistenceProvider = Provider<PuzzlePersistence>((ref) {
 final dailyPuzzleProvider =
     StateNotifierProvider<DailyPuzzleNotifier, DailyPuzzleState>((ref) {
       final persistence = ref.read(puzzlePersistenceProvider);
-      return DailyPuzzleNotifier(persistence);
+      return DailyPuzzleNotifier(
+        persistence,
+        onSolved: (optimal) async {
+          // The puzzle runs on-device; the server only hears about solves
+          // for achievement credit. Best-effort.
+          if (!ref.read(authProvider).isLoggedIn) return;
+          try {
+            await ref.read(restClientProvider).reportPuzzleSolved(optimal);
+            await ref.read(achievementSyncServiceProvider).sync();
+          } catch (_) {
+            // Next sync catches up.
+          }
+        },
+      );
     });
 
 /// Lightweight status provider for the home screen Daily Challenge button.
