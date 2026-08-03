@@ -9,6 +9,7 @@ import java.time.Instant
  */
 @Entity
 @Table(name = "lobbies")
+@Suppress("LongParameterList") // Constructor mirrors the table's columns.
 class LobbyEntity(
     @Id
     val id: String,
@@ -49,6 +50,10 @@ class LobbyEntity(
     /** Time control games started from this lobby will be played under. */
     @Column(name = "time_control", nullable = false)
     val timeControl: String = "RAPID",
+
+    /** True only for lobbies created by quick-match — the only lobbies bots may fill. */
+    @Column(name = "is_quick_match", nullable = false)
+    val isQuickMatch: Boolean = false,
 
     @Version
     var version: Long = 0

@@ -71,6 +71,9 @@ class FriendService(
             ?: throw IllegalArgumentException("User not found: $addresseeUsername")
         require(addressee.id != requesterId) { "Cannot send friend request to yourself" }
         require(!addressee.isGuest) { "Cannot send friend request to a guest user" }
+        // Bots are search-excluded, but the exact-username path lands here directly.
+        // With friendship closed, challenges are closed too (they require friendship).
+        require(!addressee.isBot) { "User not found: $addresseeUsername" }
 
         val existing = friendshipRepository.findBetween(requesterId, addressee.id!!)
         require(existing == null) { "A friendship or request already exists with this user" }

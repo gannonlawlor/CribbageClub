@@ -11,6 +11,7 @@ import java.time.Instant
  */
 @Entity
 @Table(name = "games")
+@Suppress("LongParameterList") // Constructor mirrors the table's columns.
 class GameEntity(
     @Id
     val id: String,
@@ -82,6 +83,18 @@ class GameEntity(
 
     @Column(nullable = true)
     var forfeitReason: String? = null,
+
+    /**
+     * Bot fallback matchmaking: which player is a pool bot, and its engine
+     * difficulty. Kept separate from aiPlayerId/aiDifficulty — those trigger the
+     * synchronous instant-move AI path, while bot games move on a delayed driver
+     * and are treated as human games everywhere else (isAIGame stays false).
+     */
+    @Column(name = "bot_player_id", nullable = true)
+    var botPlayerId: String? = null,
+
+    @Column(name = "bot_difficulty", nullable = true)
+    var botDifficulty: String? = null,
 
     @Version
     var version: Long = 0

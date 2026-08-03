@@ -42,12 +42,14 @@ class LobbyService(
      * @param isPrivate Whether the lobby is private (invite-only)
      * @return The created lobby
      */
+    @Suppress("LongParameterList")
     fun createLobby(
         name: String,
         creatorId: String,
         creatorName: String,
         isPrivate: Boolean = false,
-        timeControl: TimeControl? = null
+        timeControl: TimeControl? = null,
+        isQuickMatch: Boolean = false
     ): Lobby {
         val lobbyId = generateLobbyId()
         val creator = LobbyPlayer(creatorId, creatorName)
@@ -58,7 +60,8 @@ class LobbyService(
             players = listOf(creator),
             isPrivate = isPrivate,
             inviteCode = inviteCode,
-            timeControl = timeControl ?: turnTimerService.defaultTimeControl()
+            timeControl = timeControl ?: turnTimerService.defaultTimeControl(),
+            isQuickMatch = isQuickMatch
         )
 
         saveLobbyEntity(lobby)
@@ -134,7 +137,10 @@ class LobbyService(
             return joinLobbyById(match.id, userId, username)
         }
 
-        val lobby = createLobby("Quick Game", userId, username, isPrivate = false, timeControl = wanted)
+        val lobby = createLobby(
+            "Quick Game", userId, username,
+            isPrivate = false, timeControl = wanted, isQuickMatch = true
+        )
         logger.info("Quick-match: user {} created new {} lobby {}", username, wanted, lobby.id)
         return JoinByCodeResult(lobby = lobby)
     }
@@ -385,7 +391,8 @@ class LobbyService(
                 createdAt = lobby.createdAt,
                 updatedAt = Instant.now(),
                 playersJson = objectMapper.writeValueAsString(lobby.players),
-                timeControl = lobby.timeControl.name
+                timeControl = lobby.timeControl.name,
+                isQuickMatch = lobby.isQuickMatch
             )
             lobbyRepository.save(entity)
         }
@@ -404,7 +411,8 @@ class LobbyService(
             isPrivate = entity.isPrivate,
             inviteCode = entity.inviteCode,
             challengedUserId = entity.challengedUserId,
-            timeControl = TimeControl.parse(entity.timeControl)
+            timeControl = TimeControl.parse(entity.timeControl),
+            isQuickMatch = entity.isQuickMatch
         )
     }
 

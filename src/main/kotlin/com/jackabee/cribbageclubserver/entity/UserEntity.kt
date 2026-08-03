@@ -6,6 +6,7 @@ import java.time.Instant
 
 @Entity
 @Table(name = "users")
+@Suppress("LongParameterList") // Constructor mirrors the table's columns.
 class UserEntity(
     @Id
     @JvmField
@@ -30,7 +31,15 @@ class UserEntity(
     var lastLoginAt: Instant = Instant.now(),
 
     @Column(nullable = true)
-    var avatarIndex: Int? = null
+    var avatarIndex: Int? = null,
+
+    /** Server-only: bot pool members for fallback matchmaking. Never exposed in DTOs. */
+    @Column(nullable = false)
+    var isBot: Boolean = false,
+
+    /** Fixed engine difficulty for bot personas (basic/medium/hard); null for humans. */
+    @Column(nullable = true)
+    var botDifficulty: String? = null
 ) : Persistable<String> {
 
     @Transient

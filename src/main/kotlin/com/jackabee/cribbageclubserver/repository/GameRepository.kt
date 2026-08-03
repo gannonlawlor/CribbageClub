@@ -34,4 +34,7 @@ interface GameRepository : JpaRepository<GameEntity, String> {
         AND g.timeControl <> 'UNLIMITED'
     """)
     fun findActiveTimedGames(): List<GameEntity>
+
+    @Query("SELECT g FROM GameEntity g WHERE g.winnerId IS NULL AND g.botPlayerId IS NOT NULL")
+    fun findActiveBotGames(): List<GameEntity>
 }

@@ -26,6 +26,7 @@ src/main/kotlin/com/jackabee/cribbageclubserver/
 ├── service/          # GameService, LobbyService, UserService, AnalysisService,
 │                     # PlayerStatsService, FriendService, PuzzleService, CleanupService,
 │                     # TurnTimerService, TimeoutCheckService, ForfeitService,
+│                     # BotMatchmakingService, BotMoveService,
 │                     # DeviceTokenService, PushNotificationService, JwtService
 ├── entity/           # JPA entities: User, Game, Lobby, PlayerStats, Puzzle, GameAnalysis,
 │                     # Friendship, PuzzleSolve, DeviceToken
@@ -46,9 +47,10 @@ src/main/kotlin/com/jackabee/cribbageclubserver/
 - **Rate limiting**: Sliding-window `RateLimitFilter` on `/api/auth/*` (10 req/60s).
 - **GameStateFilter**: Hides opponent hands, deck, and crib per player. Applied in all controllers before returning state.
 - **Optimistic locking**: `@Version` on all mutable entities.
-- **Flyway**: 12 migrations (V1–V12). `ddl-auto=validate` in production.
+- **Flyway**: 13 migrations (V1–V13). `ddl-auto=validate` in production.
 - **Turn timers & forfeit**: Named time controls (BLITZ/RAPID/CASUAL/UNLIMITED) chosen per lobby and frozen onto the game at creation (V11), so config changes never alter a live game. `TurnTimerService` runs a **per-player** clock — `DISCARDING_TO_CRIB` lets both players act concurrently, so a single shared clock charged the wrong player. `TimeoutCheckService` sweeps every 5s; `ForfeitService` handles timeouts and resignations and publishes `GameEndedEvent` so `GameService` drops its cached engine handle.
 - **Push notifications**: FCM HTTP v1 via `PushNotificationService`; `FcmConfig` holds credentials (no-op when unconfigured). Sent only when `WebSocketSessionRegistry.isUserOnline()` is false. Events: friend request, challenge received, game found. Device tokens registered via `/api/device-tokens`.
+- **Bot fallback matchmaking**: after `cribbage.bots.wait-seconds` (default 60s) with no human match, `BotMatchmakingService` joins a human-looking pool bot (16 seeded users with `is_bot`, UUID ids, real `player_stats`) into the quick-match lobby via the normal `joinLobbyById` path. `BotMoveService` then plays the bot with jittered per-stage delays (capped at half the turn limit in timed games) by calling `GameService.advanceBotGame` — one engine step per call. Bot games keep `isAIGame = false` so timers, Glicko-2 rating, and the timeout sweep treat the bot like a human; the hard invariant is that a bot id must never land in `CachedGame.aiPlayerId`, which is the legacy synchronous instant-move path. Bots are excluded from the leaderboard, friend search, and friend requests, but their profiles stay public.
 
 ## Database Schema (Flyway Migrations)
 
@@ -66,6 +68,7 @@ src/main/kotlin/com/jackabee/cribbageclubserver/
 | V10 | device_tokens | Push notification device tokens |
 | V11 | (alters games, lobbies) | Configurable time controls (preset + frozen turn limit) |
 | V12 | player_achievements, achievement_progress | Achievements (unlocks + fresh-start counters) |
+| V13 | (alters users, games, lobbies) | Bot fallback matchmaking (is_bot flag, bot game columns, quick-match discriminator, 16 seeded bot personas) |
 
 ## Serialization
 
