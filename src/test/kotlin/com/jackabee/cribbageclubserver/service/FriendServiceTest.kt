@@ -192,6 +192,17 @@ class FriendServiceTest {
     }
 
     @Test
+    fun `sendFriendRequest fails for bot user`() {
+        // Bots are excluded from search, but the exact-username path lands here.
+        val bot = makeUser("bot1", "mollyq").apply { isBot = true }
+        whenever(userRepository.findByUsername("mollyq")).thenReturn(bot)
+
+        assertThrows<IllegalArgumentException> {
+            friendService.sendFriendRequest("userA", "mollyq")
+        }
+    }
+
+    @Test
     fun `acceptFriendRequest updates to ACCEPTED and sends notification`() {
         val entity = makeFriendship(id = "fr1", requesterId = "userA", addresseeId = "userB", status = "PENDING")
         val accepter = makeUser("userB", "bob", "Bob")

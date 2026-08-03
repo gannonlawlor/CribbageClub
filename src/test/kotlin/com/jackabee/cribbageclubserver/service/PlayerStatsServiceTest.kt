@@ -113,7 +113,7 @@ class PlayerStatsServiceTest {
             PlayerStatsEntity(playerId = "p1", gamesWon = 10),
             PlayerStatsEntity(playerId = "p2", gamesWon = 8)
         )
-        whenever(repository.findTop10ExcludingPrefixes("ai_%", "guest_%")).thenReturn(leaders)
+        whenever(repository.findTop10ExcludingPrefixesAndBots("ai_%", "guest_%")).thenReturn(leaders)
 
         val result = service.getLeaderboard()
         assertEquals(2, result.size)

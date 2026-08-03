@@ -15,7 +15,9 @@ data class Lobby(
     val inviteCode: String? = null,
     val challengedUserId: String? = null,
     /** Time control the game started from this lobby will use. */
-    val timeControl: TimeControl = TimeControl.RAPID
+    val timeControl: TimeControl = TimeControl.RAPID,
+    /** True only for lobbies created by quick-match — the only lobbies bots may fill. */
+    val isQuickMatch: Boolean = false
 ) {
     val isReady: Boolean get() = players.size == maxPlayers
     val hasSpace: Boolean get() = players.size < maxPlayers

@@ -16,21 +16,38 @@ import com.jackabee.cribbageclubserver.model.game.GameStage
 import com.jackabee.cribbageclubserver.model.game.TimeControl
 import com.jackabee.cribbageclubserver.model.player.Player
 import com.jackabee.cribbageclubserver.repository.GameRepository
+import com.jackabee.cribbageclubserver.repository.UserRepository
 import com.jackabee.cribbageclubserver.websocket.GameWebSocketService
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.transaction.event.TransactionPhase
 import org.springframework.transaction.event.TransactionalEventListener
 import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.random.Random
 
-/** Tracks a cached Rust engine handle together with AI metadata. */
+/**
+ * Tracks a cached Rust engine handle together with AI metadata.
+ *
+ * [aiPlayerId] and [botPlayerId] are mutually exclusive. aiPlayerId marks the
+ * legacy synchronous AI path: [GameService.applyHumanAction] drives that player
+ * to completion instantly. botPlayerId marks a fallback-matchmaking bot, moved
+ * one delayed step at a time by [BotMoveService] — it must never be set as
+ * aiPlayerId or the bot answers every move in the same request.
+ */
 private data class CachedGame(
     val engine: RustEngine,
     val aiPlayerId: String? = null,
     val aiDifficulty: String? = null,
+    val botPlayerId: String? = null,
+    val botDifficulty: String? = null,
+)
+
+/** Outcome of one [GameService.advanceBotGame] step. */
+data class BotStepResult(
+    val botStillPending: Boolean,
 )
 
 /**
@@ -41,6 +58,7 @@ private data class CachedGame(
  * are reconstructed from the persisted GameState.
  */
 @org.springframework.stereotype.Service
+@Suppress("LongParameterList") // Optional collaborators, individually stubbed in tests.
 class GameService(
     @Autowired(required = false) private val webSocketService: GameWebSocketService? = null,
     @Autowired(required = false) private val gameRepository: GameRepository? = null,
@@ -50,8 +68,15 @@ class GameService(
     @Autowired(required = false) private val turnTimerService: TurnTimerService? = null,
     @Autowired(required = false) private val forfeitService: ForfeitService? = null,
     @Autowired(required = false) private val achievementService: AchievementService? = null,
+    @Autowired(required = false) private val userRepository: UserRepository? = null,
+    @Autowired(required = false) private val eventPublisher: ApplicationEventPublisher? = null,
 ) {
     private val logger = LoggerFactory.getLogger(GameService::class.java)
+
+    companion object {
+        /** Cards a player keeps after discarding to the crib. */
+        private const val KEEP_CARDS = 4
+    }
 
     // In-memory cache of active Rust engine handles (rebuilt from DB on cache miss)
     private val games = ConcurrentHashMap<String, CachedGame>()
@@ -81,7 +106,20 @@ class GameService(
             players[0].id, players[0].name,
             players[1].id, players[1].name,
         )
-        games[gameId] = CachedGame(engine)
+
+        // Fallback-matchmaking bots are ordinary users with is_bot set, so a game
+        // started from a lobby self-discovers its bot here. The bot goes in the
+        // dedicated bot fields — never aiPlayerId, which would make applyHumanAction
+        // answer for it instantly — and isAIGame stays false so timers, rating,
+        // and the timeout sweep all treat the bot like a human.
+        val botUser = userRepository?.let { repo ->
+            players.mapNotNull { p -> repo.findById(p.id).orElse(null) }.firstOrNull { it.isBot }
+        }
+        games[gameId] = CachedGame(
+            engine,
+            botPlayerId = botUser?.id,
+            botDifficulty = botUser?.let { it.botDifficulty ?: "basic" },
+        )
 
         val resolved = timeControl
             ?: turnTimerService?.defaultTimeControl()
@@ -90,7 +128,9 @@ class GameService(
         // Persist to database
         val entity = saveGameEntity(
             gameId, players[0], players[1], initialState,
-            isAIGame = false, timeControl = resolved
+            isAIGame = false, timeControl = resolved,
+            botPlayerId = botUser?.id,
+            botDifficulty = botUser?.let { it.botDifficulty ?: "basic" },
         )
 
         // Start turn timer for online games
@@ -103,6 +143,11 @@ class GameService(
         val timing = entity?.let { turnTimerService?.getTimingFields(gameId, it) }
         webSocketService?.broadcastGameStateUpdate(gameId, initialState, timing)
         logger.info("Created game {} between {} and {}", gameId, players[0].name, players[1].name)
+
+        // The bot may already owe its opening discards.
+        if (botUser != null) {
+            eventPublisher?.publishEvent(BotActionPendingEvent(gameId))
+        }
 
         return initialState
     }
@@ -223,8 +268,95 @@ class GameService(
             val timing = entity?.let { turnTimerService?.getTimingFields(gameId, it) }
             webSocketService?.broadcastGameStateUpdate(gameId, finalState, timing)
 
+            // A human just moved in a bot game — the bot may now owe a reply.
+            if (cached.botPlayerId != null && finalState.stage != GameStage.GAME_OVER) {
+                eventPublisher?.publishEvent(BotActionPendingEvent(gameId))
+            }
+
             finalState
         }
+    }
+
+    /**
+     * Applies exactly one bot action to a fallback-matchmaking bot game.
+     *
+     * Called by [BotMoveService] after a "thinking" delay. Single-step on purpose:
+     * a discard phase is two separately delayed steps, so the bot's moves land as
+     * distinct updates the way a human's would. Returns null when there is nothing
+     * to do (game gone/over, not a bot game, or the bot owes no action right now);
+     * otherwise [BotStepResult.botStillPending] tells the caller to schedule the
+     * next delayed step (e.g. the second discard, or a counting run).
+     */
+    fun advanceBotGame(gameId: String): BotStepResult? = withGameLock(gameId) {
+        val adapter = requireAdapter()
+        val cached = games[gameId] ?: loadGame(gameId) ?: return@withGameLock null
+        val botId = cached.botPlayerId ?: return@withGameLock null
+
+        val entity = gameRepository?.findById(gameId)?.orElse(null)
+        // A timeout forfeit may have ended the game while the move was scheduled.
+        if (entity?.winnerId != null) return@withGameLock null
+
+        val state = adapter.getState(cached.engine)
+        if (state.stage == GameStage.GAME_OVER || !botOwesAction(state, botId)) {
+            return@withGameLock null
+        }
+
+        val finalState = adapter.processAI(
+            cached.engine,
+            botId,
+            cached.botDifficulty ?: "basic",
+            maxIterations = 1,
+        )
+
+        // The engine declined to act (its own turn-gating disagreed with ours).
+        // Report nothing pending rather than persist an unchanged state — a
+        // "still pending" result here would loop the scheduler forever.
+        if (finalState == state) {
+            return@withGameLock null
+        }
+
+        // Same tail as applyHumanAction: charge the bot's clock, persist, evict on
+        // game over, broadcast with timing.
+        if (entity != null) {
+            turnTimerService?.onActionReceived(gameId, botId, entity)
+            applyStateToEntity(entity, finalState)
+
+            if (finalState.stage == GameStage.GAME_OVER) {
+                entity.turnStartedAt = null
+                turnTimerService?.clearGame(gameId)
+            } else {
+                turnTimerService?.onTurnStart(gameId, entity, finalState)
+            }
+
+            gameRepository?.save(entity)
+        }
+
+        if (finalState.stage == GameStage.GAME_OVER) {
+            evictCachedEngine(gameId)
+        }
+
+        val timing = entity?.let { turnTimerService?.getTimingFields(gameId, it) }
+        webSocketService?.broadcastGameStateUpdate(gameId, finalState, timing)
+
+        BotStepResult(
+            botStillPending = finalState.stage != GameStage.GAME_OVER &&
+                botOwesAction(finalState, botId)
+        )
+    }
+
+    /**
+     * Whether the bot owes an action in [state]. Mirrors the engine's own AI
+     * gating (ai_player.rs `get_next_action`): the AI only ever acts as the
+     * nominal current player — including during DISCARDING_TO_CRIB, where the
+     * engine *accepts* either player's discard but only *initiates* the current
+     * player's. The extra hand-size check matches the engine's discard guard.
+     */
+    private fun botOwesAction(state: GameState, botId: String): Boolean = when (state.stage) {
+        GameStage.GAME_OVER -> false
+        GameStage.DISCARDING_TO_CRIB ->
+            state.currentPlayerId == botId &&
+                (state.players.firstOrNull { it.id == botId }?.hand?.size ?: 0) > KEEP_CARDS
+        else -> state.currentPlayerId == botId
     }
 
     /**
@@ -602,6 +734,8 @@ class GameService(
             engine = engine,
             aiPlayerId = if (entity.isAIGame) entity.aiPlayerId else null,
             aiDifficulty = if (entity.isAIGame) (entity.aiDifficulty ?: "basic") else null,
+            botPlayerId = entity.botPlayerId,
+            botDifficulty = entity.botPlayerId?.let { entity.botDifficulty ?: "basic" },
         )
         games[gameId] = cached
 
@@ -633,6 +767,7 @@ class GameService(
     private fun requireAdapter(): RustEngineAdapter =
         rustEngineAdapter ?: throw IllegalStateException("RustEngineAdapter is not available")
 
+    @Suppress("LongParameterList") // One parameter per persisted game attribute.
     private fun saveGameEntity(
         gameId: String,
         player1: Player,
@@ -641,10 +776,13 @@ class GameService(
         isAIGame: Boolean,
         aiPlayerId: String? = null,
         aiDifficulty: String? = null,
-        timeControl: TimeControl = TimeControl.RAPID
+        timeControl: TimeControl = TimeControl.RAPID,
+        botPlayerId: String? = null,
+        botDifficulty: String? = null
     ): GameEntity? {
-        val mapper = objectMapper ?: return null
-        val repo = gameRepository ?: return null
+        val mapper = objectMapper
+        val repo = gameRepository
+        if (mapper == null || repo == null) return null
 
         val entity = GameEntity(
             id = gameId,
@@ -659,7 +797,9 @@ class GameService(
             isAIGame = isAIGame,
             aiPlayerId = aiPlayerId,
             aiDifficulty = aiDifficulty,
-            stateJson = mapper.writeValueAsString(state)
+            stateJson = mapper.writeValueAsString(state),
+            botPlayerId = botPlayerId,
+            botDifficulty = botDifficulty
         )
 
         // Freeze the resolved time limits onto the game before its first save.
