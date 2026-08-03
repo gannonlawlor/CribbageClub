@@ -44,13 +44,6 @@ export function connectWebSocket(): void {
   }
 }
 
-export function disconnectWebSocket(): void {
-  if (client?.active) {
-    client.deactivate()
-  }
-  client = null
-  subscriptions.clear()
-}
 
 export function subscribe(destination: string, handler: MessageHandler): () => void {
   subscriptions.set(destination, handler)

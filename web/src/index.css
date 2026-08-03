@@ -55,13 +55,8 @@
   --surface: var(--surface-2);
   --surface-hover: var(--surface-3);
   --accent: var(--green-500);
-  --accent-hover: var(--green-400);
-  --accent-dark: var(--green-600);
   --gold-light: #f0c14b;
   --card-white: var(--card-face);
-  --felt-green: var(--surface-2);
-  --felt-green-light: var(--surface-3);
-  --felt-green-dark: var(--surface-1);
 }
 
 [data-theme="light"] {

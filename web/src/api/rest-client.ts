@@ -1,40 +1,18 @@
 import { http } from './http-client'
 import type {
-  AuthResponse,
   GameState,
   GameResponse,
 
   GameAction,
   GameAnalysis,
-  PlayingCard,
   Lobby,
   FriendInfo,
   FriendRequestInfo,
   UserSearchResult,
   NotificationCount,
-  PuzzleResponse,
-  PuzzleSolveResponse,
   ProfileResponse,
   LeaderboardEntry,
 } from '@/models'
-
-// ── Auth ──────────────────────────────────────────────────────────────
-
-export function loginAsGuest() {
-  return http.post<AuthResponse>('/api/auth/guest')
-}
-
-export function login(username: string, password: string) {
-  return http.post<AuthResponse>('/api/auth/login', { username, password })
-}
-
-export function register(username: string, password: string, displayName?: string) {
-  return http.post<AuthResponse>('/api/auth/register', { username, password, displayName })
-}
-
-export function upgradeGuest(username: string, password: string, displayName?: string) {
-  return http.post<AuthResponse>('/api/auth/upgrade', { username, password, displayName })
-}
 
 // ── Games ─────────────────────────────────────────────────────────────
 
@@ -66,21 +44,11 @@ export function deleteGame(gameId: string) {
   return http.delete<void>(`/api/games/${gameId}`)
 }
 
-export function importLocalGames(games: { localGameId: string; stateJson: string; completedAt?: string }[]) {
-  return http.post<{ imported: { localGameId: string; serverGameId: string }[]; duplicates: string[]; errors: string[] }>(
-    '/api/games/import',
-    { games },
-  )
-}
 
 // ── Analysis ──────────────────────────────────────────────────────────
 
 export function getGameAnalysis(gameId: string) {
   return http.get<GameAnalysis>(`/api/games/${gameId}/analysis`)
-}
-
-export function saveGameAnalysis(gameId: string, analysis: GameAnalysis) {
-  return http.post<void>(`/api/games/${gameId}/analysis`, analysis)
 }
 
 // ── Leaderboard / Stats ──────────────────────────────────────────────
@@ -202,12 +170,3 @@ export function getProfile(userId: string) {
   return http.get<ProfileResponse>(`/api/profiles/${userId}`)
 }
 
-// ── Puzzles ───────────────────────────────────────────────────────────
-
-export function getDailyPuzzle() {
-  return http.get<PuzzleResponse>('/api/puzzles/daily')
-}
-
-export function solvePuzzle(puzzleId: string, chosenDiscard: PlayingCard[]) {
-  return http.post<PuzzleSolveResponse>(`/api/puzzles/${puzzleId}/solve`, { chosenDiscard })
-}

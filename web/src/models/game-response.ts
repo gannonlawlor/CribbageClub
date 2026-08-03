@@ -20,8 +20,3 @@ export interface GameStateUpdateMessage {
   timestamp?: number
 }
 
-export interface GameErrorMessage {
-  gameId: string
-  error: string
-  timestamp?: number
-}

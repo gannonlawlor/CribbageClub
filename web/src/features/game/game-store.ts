@@ -28,7 +28,6 @@ export interface GameStore {
   countHand: () => Promise<void>
   resign: () => Promise<void>
   toggleCardSelection: (index: number) => void
-  clearSelection: () => void
   clearError: () => void
   reset: () => void
 
@@ -250,7 +249,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({ selectedCardIndices: next })
   },
 
-  clearSelection: () => set({ selectedCardIndices: new Set() }),
 
   clearError: () => set({ error: null }),
 
