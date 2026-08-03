@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [master]
+    branches: [main]
   pull_request:
-    branches: [master]
+    branches: [main]
 
 permissions:
   contents: read
@@ -155,7 +155,7 @@ jobs:
     name: Build + Push Image (GHCR)
     runs-on: ubuntu-latest
     needs: [changes, backend]
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' && needs.changes.outputs.backend == 'true' }}
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.changes.outputs.backend == 'true' }}
     permissions:
       contents: read
       packages: write
@@ -183,6 +183,6 @@ jobs:
           push: true
           tags: |
             ghcr.io/gannonlawlor/cribbage:sha-${{ steps.sha.outputs.short }}
-            ghcr.io/gannonlawlor/cribbage:master
+            ghcr.io/gannonlawlor/cribbage:main
           cache-from: type=gha
           cache-to: type=gha,mode=max

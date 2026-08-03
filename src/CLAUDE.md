@@ -17,8 +17,8 @@ Requires: JDK 21, Rust toolchain (cargo), PostgreSQL running on localhost:5432.
 ## Deploying to Staging
 
 The backend Docker image is **built remotely by GitHub Actions** — never build
-it locally for staging. Pushing backend changes to `master` triggers the CI
-`image` job, which pushes `ghcr.io/gannonlawlor/cribbage:master` to GHCR. Once
+it locally for staging. Pushing backend changes to `main` triggers the CI
+`image` job, which pushes `ghcr.io/gannonlawlor/cribbage:main` to GHCR. Once
 CI is green, updating the staging server is only a pull + restart on titan:
 
 ```bash

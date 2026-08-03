@@ -169,9 +169,9 @@ The live instance runs on the titan host under `/opt/cribbage-staging` and pulls
 its image from GHCR.
 
 **The backend image is built remotely by GitHub Actions — never build it
-locally for staging.** Every push to `master` that touches backend files runs
+locally for staging.** Every push to `main` that touches backend files runs
 the CI `image` job, which builds and pushes
-`ghcr.io/gannonlawlor/cribbage:master` (plus a `sha-<short>` tag). Updating
+`ghcr.io/gannonlawlor/cribbage:main` (plus a `sha-<short>` tag). Updating
 staging is just a pull + restart on titan once CI is green:
 
 ```bash
@@ -185,13 +185,13 @@ Flyway applies any new migrations on boot; verify with
 
 ## CI
 
-GitHub Actions runs on push/PR to `master`:
+GitHub Actions runs on push/PR to `main`:
 
 - **Backend** — `./gradlew build` + Detekt linting (with PostgreSQL service)
 - **Mobile** — `flutter analyze` + `flutter test`
 - **Web** — `npm run build` + `npm test`
-- **Image** — on `master` pushes with backend changes, builds and pushes the
-  backend Docker image to GHCR (`ghcr.io/gannonlawlor/cribbage:master`), ready
+- **Image** — on `main` pushes with backend changes, builds and pushes the
+  backend Docker image to GHCR (`ghcr.io/gannonlawlor/cribbage:main`), ready
   for the staging host to pull — no local docker build or manual image deploy
   needed
 

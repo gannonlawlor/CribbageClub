@@ -26,16 +26,16 @@ All four must hold. Check them before touching the script.
 
 1. **Run from the main worktree.** The script commits and pushes from
    `mobile/..`, so running it inside `.claude/worktrees/<name>` would commit the
-   version bump to the feature branch instead of `master`. Always:
+   version bump to the feature branch instead of `main`. Always:
    `cd /Users/gannon/Development/CribbageClub`.
 
-2. **On `master`, clean, and in sync.** `git status -sb` shows
-   `## master...origin/master` with no divergence and nothing modified. The
-   script aborts on a dirty `mobile/` tree anyway, but a *diverged* master will
+2. **On `main`, clean, and in sync.** `git status -sb` shows
+   `## main...origin/main` with no divergence and nothing modified. The
+   script aborts on a dirty `mobile/` tree anyway, but a *diverged* main will
    push more than the user expects.
 
-3. **The work being released is actually on master.** If the user just asked to
-   ship a branch, `/ship` it first. Releasing from a master that doesn't contain
+3. **The work being released is actually on main.** If the user just asked to
+   ship a branch, `/ship` it first. Releasing from a main that doesn't contain
    the change produces a TestFlight build without it — silently.
 
 4. **The mobile app builds and analyzes clean:**

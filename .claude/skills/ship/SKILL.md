@@ -1,6 +1,6 @@
 ---
 name: ship
-description: Commit and push changes with a well-crafted commit message. Use when the user says "ship", "ship it", "commit", "push", "commit and push", or "merge and push". Analyzes the diff, runs the right per-subproject checks, writes a commit message in this repo's style, commits, and pushes — merging a worktree branch into master first when that's where the work is.
+description: Commit and push changes with a well-crafted commit message. Use when the user says "ship", "ship it", "commit", "push", "commit and push", or "merge and push". Analyzes the diff, runs the right per-subproject checks, writes a commit message in this repo's style, commits, and pushes — merging a worktree branch into main first when that's where the work is.
 ---
 
 Commit the current work with a clear message, verify it compiles, and push.
@@ -8,7 +8,7 @@ Commit the current work with a clear message, verify it compiles, and push.
 Cribbage Club is a monorepo with four sub-projects that build independently
 (`src/` backend, `mobile/` Flutter, `web/` React, `engine/` Rust), so which
 checks run depends entirely on what changed. And work usually happens on a
-`claude/*` branch in a worktree, so "push" often means "merge to master, then
+`claude/*` branch in a worktree, so "push" often means "merge to main, then
 push."
 
 ## Step 1 — Assess state
@@ -115,34 +115,34 @@ Never `--amend` a commit that has been pushed.
 
 ## Step 5 — Push
 
-**The main branch is `master`.** `master` is checked out in the main worktree at
+**The main branch is `main`.** `main` is checked out in the main worktree at
 `/Users/gannon/Development/CribbageClub`; feature work lives in
 `.claude/worktrees/<name>` on a `claude/*` branch. Git will not let you check
-out `master` in a second worktree, so run master-side git with `-C` or from the
+out `main` in a second worktree, so run main-side git with `-C` or from the
 main worktree directory.
 
-**On `master` already:** `git push origin master`.
+**On `main` already:** `git push origin main`.
 
-**On a `claude/*` branch** — the usual case. Confirm the user wants it on master
+**On a `claude/*` branch** — the usual case. Confirm the user wants it on main
 (they normally do; "ship it" implies it). Then:
 
 ```bash
 git fetch origin
 git -C /Users/gannon/Development/CribbageClub status --short   # must be clean
 git -C /Users/gannon/Development/CribbageClub merge --ff-only claude/<branch>
-git -C /Users/gannon/Development/CribbageClub push origin master
+git -C /Users/gannon/Development/CribbageClub push origin main
 ```
 
-If `--ff-only` is refused, master has moved. Drop the flag and merge properly:
+If `--ff-only` is refused, main has moved. Drop the flag and merge properly:
 
 ```bash
 git -C /Users/gannon/Development/CribbageClub merge --no-ff claude/<branch>
 ```
 
 **Resolving conflicts here needs judgment, not a default.** Both sides are real
-work. Read what landed on master first (`git show <sha> --stat`) — a conflict
+work. Read what landed on main first (`git show <sha> --stat`) — a conflict
 usually means someone refactored the same file, and the right resolution is
-master's newer structure with your change re-applied on top of it, not one side
+main's newer structure with your change re-applied on top of it, not one side
 taken wholesale. Then re-run the Step 3 checks on the merged tree and build
 before committing the merge. Say in the merge commit body which side won and
 why. If you can't resolve it confidently, stop and show the user the conflict.
@@ -150,7 +150,7 @@ why. If you can't resolve it confidently, stop and show the user the conflict.
 ## Step 6 — Confirm
 
 Report the commit hash, the branch state (`git status -sb` should show
-`## master...origin/master` with no divergence), and one line on what shipped.
+`## main...origin/main` with no divergence), and one line on what shipped.
 
 If the change was mobile-facing and the user will want it on their phone, offer
 `/release` — it does not run automatically.
