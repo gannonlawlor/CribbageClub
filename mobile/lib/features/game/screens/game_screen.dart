@@ -1447,17 +1447,11 @@ class _Table extends StatelessWidget {
   /// The middle stays quiet: the action button, the crib cluster, the cards on
   /// the table and the active player bar already say the stage, whose turn it
   /// is, and how many cards are picked. The only things it carries are the
-  /// pegging count — the one live number — and a one-word cue for the crib
-  /// step, where the crib cards stand in for your hand with nothing else to
-  /// name them.
+  /// pegging count — kept small at the pile's side — and a one-word cue for
+  /// the crib step, where the crib cards stand in for your hand with nothing
+  /// else to name them.
   Widget _countBlock() {
     switch (gs.stage) {
-      case GameStage.pegging:
-        return CountBlock(
-          label: 'Count',
-          count: gs.peggingCount,
-          instruction: '',
-        );
       case GameStage.counting:
         return countingCrib
             ? const CountBlock(
@@ -1466,6 +1460,7 @@ class _Table extends StatelessWidget {
                 instruction: '',
               )
             : const SizedBox.shrink();
+      case GameStage.pegging:
       case GameStage.dealing:
       case GameStage.discardingToCrib:
       case GameStage.cutting:
@@ -1486,6 +1481,7 @@ class _Table extends StatelessWidget {
     final pileCards = [for (final p in roundPlays) p.card];
     final pileOwners = [for (final p in roundPlays) p.playerId == playerId];
     final showPile = pileCards.isNotEmpty && gameOver == null;
+    final pegging = gs.stage == GameStage.pegging && gameOver == null;
     return Stack(
       clipBehavior: Clip.none,
       children: [
@@ -1529,15 +1525,31 @@ class _Table extends StatelessWidget {
                                   width: handCardWidth,
                                 ),
                               ],
-                              if (showPile) ...[
-                                const SizedBox(height: 20),
-                                PeggingPile(
-                                  cards: pileCards,
-                                  playedByMe: pileOwners,
-                                  previousCount: spentPileCount,
-                                  cardWidth: cardWidth,
+                              if (showPile || pegging)
+                                // The count keeps the pile company rather
+                                // than headlining the table: label over a
+                                // small number, on the pile's left.
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    if (pegging)
+                                      CountBlock(
+                                        label: 'Count',
+                                        count: gs.peggingCount,
+                                        instruction: '',
+                                        compact: true,
+                                      ),
+                                    if (pegging && showPile)
+                                      const SizedBox(width: 16),
+                                    if (showPile)
+                                      PeggingPile(
+                                        cards: pileCards,
+                                        playedByMe: pileOwners,
+                                        previousCount: spentPileCount,
+                                        cardWidth: cardWidth,
+                                      ),
+                                  ],
                                 ),
-                              ],
                             ],
                           ),
                         ),
