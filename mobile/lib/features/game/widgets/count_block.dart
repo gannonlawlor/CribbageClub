@@ -17,6 +17,9 @@ class CountBlock extends StatelessWidget {
   /// Instruction turns green when the move is the local player's.
   final bool isMyTurn;
 
+  /// Sized to sit beside the pegging pile instead of headlining the table.
+  final bool compact;
+
   const CountBlock({
     super.key,
     required this.label,
@@ -24,6 +27,7 @@ class CountBlock extends StatelessWidget {
     this.count,
     this.headline,
     this.isMyTurn = false,
+    this.compact = false,
   });
 
   @override
@@ -38,15 +42,15 @@ class CountBlock extends StatelessWidget {
             label.toUpperCase(),
             style: TextStyle(
               color: colors.textTertiary,
-              fontSize: 11,
+              fontSize: compact ? 9.5 : 11,
               fontWeight: FontWeight.w600,
-              letterSpacing: 0.88,
+              letterSpacing: compact ? 0.76 : 0.88,
             ),
           ),
           const SizedBox(height: 2),
         ],
         SizedBox(
-          height: 52,
+          height: compact ? 28 : 52,
           child: Center(
             child: count != null
                 ? AnimatedSwitcher(
@@ -56,7 +60,7 @@ class CountBlock extends StatelessWidget {
                       key: ValueKey(count),
                       style: TextStyle(
                         color: colors.textPrimary,
-                        fontSize: 52,
+                        fontSize: compact ? 28 : 52,
                         height: 1,
                         fontWeight: FontWeight.w700,
                         fontFeatures: const [FontFeature.tabularFigures()],
