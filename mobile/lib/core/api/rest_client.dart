@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart';
 import '../../config/constants.dart';
 import '../auth/auth_service.dart';
 import '../models/auth.dart';
-import '../models/card.dart';
 import '../models/friend.dart';
 import '../models/game_action.dart';
 import '../models/game_analysis.dart';
@@ -13,7 +12,6 @@ import '../models/import_games.dart';
 import '../models/join_by_code_result.dart';
 import '../models/leaderboard_entry.dart';
 import '../models/lobby.dart';
-import '../models/puzzle.dart';
 import '../models/head_to_head_response.dart';
 import '../models/achievement.dart';
 import '../models/profile_response.dart';
@@ -426,24 +424,8 @@ class RestClient {
 
   // Puzzles
 
-  Future<PuzzleResponse> getDailyPuzzle() async {
-    final response = await _dio.get('/api/puzzles/daily');
-    return PuzzleResponse.fromJson(response.data as Map<String, dynamic>);
-  }
-
   /// Reports an on-device daily puzzle solve for achievement credit.
   Future<void> reportPuzzleSolved(bool optimal) async {
     await _dio.post('/api/puzzles/daily/report', data: {'optimal': optimal});
-  }
-
-  Future<PuzzleSolveResponse> solvePuzzle(
-    String puzzleId,
-    List<PlayingCard> chosenDiscard,
-  ) async {
-    final response = await _dio.post(
-      '/api/puzzles/$puzzleId/solve',
-      data: {'chosenDiscard': chosenDiscard.map((c) => c.toJson()).toList()},
-    );
-    return PuzzleSolveResponse.fromJson(response.data as Map<String, dynamic>);
   }
 }
