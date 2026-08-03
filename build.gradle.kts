@@ -61,7 +61,10 @@ val cargoReleaseBuild by tasks.registering(Exec::class) {
     workingDir = file("engine")
     // Use absolute path to cargo since ~/.cargo/bin may not be in Gradle's PATH
     val cargoPath = File(System.getProperty("user.home"), ".cargo/bin/cargo").absolutePath
-    commandLine(cargoPath, "build", "--release")
+    // The server only calls the ungated c_api; without this flag the default
+    // `frb` feature links the whole flutter_rust_bridge runtime into the
+    // server's dylib for nothing.
+    commandLine(cargoPath, "build", "--release", "--no-default-features")
 }
 
 tasks.named("compileKotlin") {
