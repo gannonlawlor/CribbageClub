@@ -289,6 +289,8 @@ mixin _$PuzzleSolveResponse {
   DiscardOption get yourOption => throw _privateConstructorUsedError;
   DiscardOption get optimalOption => throw _privateConstructorUsedError;
   List<DiscardOption> get allOptions => throw _privateConstructorUsedError;
+  List<AchievementStatus> get unlockedAchievements =>
+      throw _privateConstructorUsedError;
 
   /// Serializes this PuzzleSolveResponse to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -313,6 +315,7 @@ abstract class $PuzzleSolveResponseCopyWith<$Res> {
     DiscardOption yourOption,
     DiscardOption optimalOption,
     List<DiscardOption> allOptions,
+    List<AchievementStatus> unlockedAchievements,
   });
 
   $DiscardOptionCopyWith<$Res> get yourOption;
@@ -339,6 +342,7 @@ class _$PuzzleSolveResponseCopyWithImpl<$Res, $Val extends PuzzleSolveResponse>
     Object? yourOption = null,
     Object? optimalOption = null,
     Object? allOptions = null,
+    Object? unlockedAchievements = null,
   }) {
     return _then(
       _value.copyWith(
@@ -362,6 +366,10 @@ class _$PuzzleSolveResponseCopyWithImpl<$Res, $Val extends PuzzleSolveResponse>
                 ? _value.allOptions
                 : allOptions // ignore: cast_nullable_to_non_nullable
                       as List<DiscardOption>,
+            unlockedAchievements: null == unlockedAchievements
+                ? _value.unlockedAchievements
+                : unlockedAchievements // ignore: cast_nullable_to_non_nullable
+                      as List<AchievementStatus>,
           )
           as $Val,
     );
@@ -403,6 +411,7 @@ abstract class _$$PuzzleSolveResponseImplCopyWith<$Res>
     DiscardOption yourOption,
     DiscardOption optimalOption,
     List<DiscardOption> allOptions,
+    List<AchievementStatus> unlockedAchievements,
   });
 
   @override
@@ -430,6 +439,7 @@ class __$$PuzzleSolveResponseImplCopyWithImpl<$Res>
     Object? yourOption = null,
     Object? optimalOption = null,
     Object? allOptions = null,
+    Object? unlockedAchievements = null,
   }) {
     return _then(
       _$PuzzleSolveResponseImpl(
@@ -453,6 +463,10 @@ class __$$PuzzleSolveResponseImplCopyWithImpl<$Res>
             ? _value._allOptions
             : allOptions // ignore: cast_nullable_to_non_nullable
                   as List<DiscardOption>,
+        unlockedAchievements: null == unlockedAchievements
+            ? _value._unlockedAchievements
+            : unlockedAchievements // ignore: cast_nullable_to_non_nullable
+                  as List<AchievementStatus>,
       ),
     );
   }
@@ -467,7 +481,9 @@ class _$PuzzleSolveResponseImpl implements _PuzzleSolveResponse {
     required this.yourOption,
     required this.optimalOption,
     required final List<DiscardOption> allOptions,
-  }) : _allOptions = allOptions;
+    final List<AchievementStatus> unlockedAchievements = const [],
+  }) : _allOptions = allOptions,
+       _unlockedAchievements = unlockedAchievements;
 
   factory _$PuzzleSolveResponseImpl.fromJson(Map<String, dynamic> json) =>
       _$$PuzzleSolveResponseImplFromJson(json);
@@ -488,9 +504,19 @@ class _$PuzzleSolveResponseImpl implements _PuzzleSolveResponse {
     return EqualUnmodifiableListView(_allOptions);
   }
 
+  final List<AchievementStatus> _unlockedAchievements;
+  @override
+  @JsonKey()
+  List<AchievementStatus> get unlockedAchievements {
+    if (_unlockedAchievements is EqualUnmodifiableListView)
+      return _unlockedAchievements;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_unlockedAchievements);
+  }
+
   @override
   String toString() {
-    return 'PuzzleSolveResponse(isOptimal: $isOptimal, evDifference: $evDifference, yourOption: $yourOption, optimalOption: $optimalOption, allOptions: $allOptions)';
+    return 'PuzzleSolveResponse(isOptimal: $isOptimal, evDifference: $evDifference, yourOption: $yourOption, optimalOption: $optimalOption, allOptions: $allOptions, unlockedAchievements: $unlockedAchievements)';
   }
 
   @override
@@ -509,6 +535,10 @@ class _$PuzzleSolveResponseImpl implements _PuzzleSolveResponse {
             const DeepCollectionEquality().equals(
               other._allOptions,
               _allOptions,
+            ) &&
+            const DeepCollectionEquality().equals(
+              other._unlockedAchievements,
+              _unlockedAchievements,
             ));
   }
 
@@ -521,6 +551,7 @@ class _$PuzzleSolveResponseImpl implements _PuzzleSolveResponse {
     yourOption,
     optimalOption,
     const DeepCollectionEquality().hash(_allOptions),
+    const DeepCollectionEquality().hash(_unlockedAchievements),
   );
 
   /// Create a copy of PuzzleSolveResponse
@@ -547,6 +578,7 @@ abstract class _PuzzleSolveResponse implements PuzzleSolveResponse {
     required final DiscardOption yourOption,
     required final DiscardOption optimalOption,
     required final List<DiscardOption> allOptions,
+    final List<AchievementStatus> unlockedAchievements,
   }) = _$PuzzleSolveResponseImpl;
 
   factory _PuzzleSolveResponse.fromJson(Map<String, dynamic> json) =
@@ -562,6 +594,8 @@ abstract class _PuzzleSolveResponse implements PuzzleSolveResponse {
   DiscardOption get optimalOption;
   @override
   List<DiscardOption> get allOptions;
+  @override
+  List<AchievementStatus> get unlockedAchievements;
 
   /// Create a copy of PuzzleSolveResponse
   /// with the given fields replaced by the non-null parameter values.

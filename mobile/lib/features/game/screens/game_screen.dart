@@ -12,6 +12,7 @@ import '../../../core/models/card.dart';
 import '../../../core/models/game_history_event.dart';
 import '../../../core/models/game_state.dart';
 import '../../../core/models/score_breakdown.dart';
+import '../../../core/services/achievement_service.dart';
 import '../../../core/services/local_game_history_provider.dart';
 import '../../profile/state/my_profile_provider.dart';
 import '../../../shared/utils/card_utils.dart';
@@ -193,8 +194,28 @@ class GameScreen extends ConsumerWidget {
             ref.invalidate(localGameHistoryProvider);
             // The server records the result on import, so the profile's
             // rating and record are stale the moment this lands.
-            if (uploaded) ref.invalidate(myProfileProvider);
+            if (uploaded) {
+              ref.invalidate(myProfileProvider);
+              // The import may have unlocked achievements server-side.
+              await ref.read(achievementSyncServiceProvider).sync();
+            }
           }
+        });
+      }
+    }
+
+    // Online games: the server evaluates achievements at game over; one sync
+    // when this game first shows as finished picks the new unlocks up. The
+    // saved-set guard keeps it to once per game.
+    if (!_isLocal && gs.stage == GameStage.gameOver && auth.isLoggedIn) {
+      final savedIds = ref.read(_savedLocalGamesProvider);
+      if (!savedIds.contains(gs.gameId)) {
+        Future.microtask(() {
+          ref.read(_savedLocalGamesProvider.notifier).state = {
+            ...ref.read(_savedLocalGamesProvider),
+            gs.gameId,
+          };
+          ref.read(achievementSyncServiceProvider).sync();
         });
       }
     }

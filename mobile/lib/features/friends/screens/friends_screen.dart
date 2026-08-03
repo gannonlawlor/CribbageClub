@@ -7,6 +7,7 @@ import '../../../core/auth/auth_provider.dart';
 import '../../../core/models/friend.dart';
 import '../../../core/models/lobby.dart';
 import '../../../core/providers/notification_provider.dart';
+import '../../../core/services/achievement_service.dart';
 import '../../../shared/widgets/cc_buttons.dart';
 import '../../../shared/widgets/cc_dialog.dart';
 import '../../../shared/widgets/cc_field.dart';
@@ -521,6 +522,8 @@ class _RequestRow extends ConsumerWidget {
       ref.invalidate(_incomingRequestsProvider);
       ref.invalidate(_friendsProvider);
       ref.invalidate(notificationCountProvider);
+      // Accepting can unlock Making Friends for both parties.
+      ref.read(achievementSyncServiceProvider).sync();
     } catch (e) {
       debugPrint('[Friends] Failed to accept friend request: $e');
       if (context.mounted) {

@@ -1,3 +1,5 @@
+import 'achievement.dart';
+
 class ImportGameRequest {
   final String localGameId;
   final String stateJson;
@@ -33,26 +35,28 @@ class ImportGamesResponse {
   final List<ImportedGameMapping> imported;
   final List<String> duplicates;
   final List<String> errors;
+  final List<AchievementStatus> unlockedAchievements;
 
   ImportGamesResponse({
     required this.imported,
     required this.duplicates,
     required this.errors,
+    this.unlockedAchievements = const [],
   });
 
-  factory ImportGamesResponse.fromJson(Map<String, dynamic> json) =>
-      ImportGamesResponse(
-        imported: (json['imported'] as List<dynamic>)
-            .map(
-              (e) =>
-                  ImportedGameMapping.fromJson(e as Map<String, dynamic>),
-            )
+  factory ImportGamesResponse.fromJson(
+    Map<String, dynamic> json,
+  ) => ImportGamesResponse(
+    imported: (json['imported'] as List<dynamic>)
+        .map((e) => ImportedGameMapping.fromJson(e as Map<String, dynamic>))
+        .toList(),
+    duplicates: (json['duplicates'] as List<dynamic>)
+        .map((e) => e as String)
+        .toList(),
+    errors: (json['errors'] as List<dynamic>).map((e) => e as String).toList(),
+    unlockedAchievements:
+        (json['unlockedAchievements'] as List<dynamic>? ?? const [])
+            .map((e) => AchievementStatus.fromJson(e as Map<String, dynamic>))
             .toList(),
-        duplicates: (json['duplicates'] as List<dynamic>)
-            .map((e) => e as String)
-            .toList(),
-        errors: (json['errors'] as List<dynamic>)
-            .map((e) => e as String)
-            .toList(),
-      );
+  );
 }

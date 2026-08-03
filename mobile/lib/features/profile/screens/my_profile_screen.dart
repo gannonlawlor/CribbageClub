@@ -7,11 +7,13 @@ import '../../../config/theme/app_colors.dart';
 import '../../../core/auth/auth_provider.dart';
 import '../../../core/models/profile_response.dart';
 import '../../../core/providers/notification_provider.dart';
+import '../../../core/services/achievement_service.dart';
 import '../../../core/services/local_game_history_provider.dart';
 import '../../../shared/widgets/cc_bottom_nav.dart';
 import '../../daily_puzzle/state/puzzle_provider.dart';
 import '../../../shared/widgets/game_history_row.dart';
 import '../state/my_profile_provider.dart';
+import '../widgets/achievements_section.dart';
 
 const _months = [
   'January',
@@ -220,6 +222,24 @@ class MyProfileScreen extends ConsumerWidget {
                   onTap: () => context.go('/leaderboard'),
                 ),
                 const SizedBox(height: 18),
+
+                // Achievements (server identity only — needs an account)
+                if (auth.isLoggedIn)
+                  ref
+                          .watch(myAchievementsProvider)
+                          .whenOrNull(
+                            data: (achievements) => achievements == null
+                                ? null
+                                : Column(
+                                    children: [
+                                      AchievementsSection(
+                                        response: achievements,
+                                      ),
+                                      const SizedBox(height: 18),
+                                    ],
+                                  ),
+                          ) ??
+                      const SizedBox.shrink(),
 
                 // History
                 Padding(

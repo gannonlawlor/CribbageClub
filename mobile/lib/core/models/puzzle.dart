@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'achievement.dart';
 import 'card.dart';
 import 'game_analysis.dart';
 
@@ -27,6 +28,7 @@ class PuzzleSolveResponse with _$PuzzleSolveResponse {
     required DiscardOption yourOption,
     required DiscardOption optimalOption,
     required List<DiscardOption> allOptions,
+    @Default([]) List<AchievementStatus> unlockedAchievements,
   }) = _PuzzleSolveResponse;
 
   factory PuzzleSolveResponse.fromJson(Map<String, dynamic> json) =>

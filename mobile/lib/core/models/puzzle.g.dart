@@ -41,6 +41,11 @@ _$PuzzleSolveResponseImpl _$$PuzzleSolveResponseImplFromJson(
   allOptions: (json['allOptions'] as List<dynamic>)
       .map((e) => DiscardOption.fromJson(e as Map<String, dynamic>))
       .toList(),
+  unlockedAchievements:
+      (json['unlockedAchievements'] as List<dynamic>?)
+          ?.map((e) => AchievementStatus.fromJson(e as Map<String, dynamic>))
+          .toList() ??
+      const [],
 );
 
 Map<String, dynamic> _$$PuzzleSolveResponseImplToJson(
@@ -51,4 +56,5 @@ Map<String, dynamic> _$$PuzzleSolveResponseImplToJson(
   'yourOption': instance.yourOption,
   'optimalOption': instance.optimalOption,
   'allOptions': instance.allOptions,
+  'unlockedAchievements': instance.unlockedAchievements,
 };
