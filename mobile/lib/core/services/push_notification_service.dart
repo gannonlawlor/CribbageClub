@@ -4,6 +4,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 import '../api/rest_client.dart';
+import 'firebase_availability.dart';
 
 class PushNotificationService {
   final RestClient _restClient;
@@ -17,6 +18,12 @@ class PushNotificationService {
        _routerGetter = routerGetter;
 
   Future<void> initialize() async {
+    // No Firebase config in this build — every call below would throw.
+    if (!isFirebaseAvailable) {
+      debugPrint('[Push] Firebase unavailable; skipping push setup');
+      return;
+    }
+
     final messaging = FirebaseMessaging.instance;
 
     // Request permission (shows dialog on iOS)

@@ -3,7 +3,28 @@ plugins {
     id("kotlin-android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
-    id("com.google.gms.google-services")
+    // Applied below, but only when a google-services.json is actually present.
+    id("com.google.gms.google-services") apply false
+}
+
+// google-services.json isn't checked in, so a fresh clone has no Firebase
+// config and the plugin would fail the build outright. Apply it only when the
+// config exists; without it the app still builds and runs, just with push
+// notifications disabled (see lib/core/services/firebase_availability.dart).
+val hasGoogleServices =
+    listOf(
+        "google-services.json",
+        "src/dev/google-services.json",
+        "src/alpha/google-services.json",
+    ).any { file(it).exists() }
+
+if (hasGoogleServices) {
+    apply(plugin = "com.google.gms.google-services")
+} else {
+    logger.lifecycle(
+        "google-services.json not found - building without Firebase; " +
+            "push notifications will be disabled.",
+    )
 }
 
 android {
