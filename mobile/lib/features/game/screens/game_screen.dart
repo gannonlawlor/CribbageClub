@@ -495,6 +495,24 @@ class GameScreen extends ConsumerWidget {
           )
         : const SizedBox.shrink();
 
+    // Portrait: each clock hugs its owner's bar (opponent's just below theirs,
+    // yours just above yours) so whose time is running is never ambiguous.
+    Widget buildBarTimer({required bool mine}) => Padding(
+      padding: const EdgeInsets.symmetric(horizontal: _sideInset),
+      child: Align(
+        alignment: Alignment.centerRight,
+        child: TurnTimer(
+          turnStartedAt: gameNotifier.turnStartedAt,
+          turnTimeLimitMs: gameNotifier.turnTimeLimitMs,
+          timeBankMs: mine
+              ? gameNotifier.myTimeBankMs
+              : gameNotifier.opponentTimeBankMs,
+          isActivePlayer: mine ? isMyTurn : !isMyTurn,
+          isTimed: true,
+        ),
+      ),
+    );
+
     Widget buildOpponentHand() => Padding(
       padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 12),
       child: OpponentHand(
@@ -845,7 +863,10 @@ class GameScreen extends ConsumerWidget {
           final handCardW = math.min(HandFan.maxCardWidth, handWidth * 0.28);
           final handSlot =
               handCardW / AppConstants.cardAspectRatio + HandFan.liftRoom;
-          final bottomBlock = bottomPad + PlayerBar.height + 12 + handSlot + 12;
+          // Timed games slot a clock against each player bar (4px gap + chip).
+          final timerBlock = gameNotifier.isTimed ? TurnTimer.height + 4 : 0.0;
+          final bottomBlock =
+              bottomPad + PlayerBar.height + timerBlock + 12 + handSlot + 12;
           final sideBottom = height - bottomBlock - 26;
 
           final tableCardW = math.min(56.0, handWidth * 0.175);
@@ -860,13 +881,13 @@ class GameScreen extends ConsumerWidget {
               settings.opponentHandDisplay == OpponentHandDisplay.cards;
           final oppCardW = math.min(handCardW, height * 0.085);
           final oppCardH = oppCardW / AppConstants.cardAspectRatio;
-          final oppHandTop = contentTop + PlayerBar.height + 6;
+          final oppHandTop = contentTop + PlayerBar.height + timerBlock + 6;
           // Where the opponent's half of the table ends, and where a dealt
           // card is headed — their hand when it's shown, their bar when it
           // isn't.
           final oppBlockBottom = showOppCards
               ? oppHandTop + oppCardH
-              : contentTop + PlayerBar.height;
+              : contentTop + PlayerBar.height + timerBlock;
           final oppLandingY = showOppCards
               ? oppHandTop + oppCardH / 2
               : contentTop + PlayerBar.height / 2;
@@ -904,6 +925,10 @@ class GameScreen extends ConsumerWidget {
                       handCount: showOppCards ? null : oppCardCount,
                     ),
                   ),
+                  if (gameNotifier.isTimed) ...[
+                    const SizedBox(height: 4),
+                    buildBarTimer(mine: false),
+                  ],
                   if (showOppCards) ...[
                     const SizedBox(height: 6),
                     Padding(
@@ -920,7 +945,6 @@ class GameScreen extends ConsumerWidget {
                     ),
                   ],
                   buildConnectionBanners(),
-                  buildTimers(),
                   Expanded(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
@@ -969,6 +993,10 @@ class GameScreen extends ConsumerWidget {
                     child: buildHand(horizontalPadding: 0),
                   ),
                   const SizedBox(height: 12),
+                  if (gameNotifier.isTimed) ...[
+                    buildBarTimer(mine: true),
+                    const SizedBox(height: 4),
+                  ],
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: _sideInset),
                     child: PlayerBar(
@@ -1008,10 +1036,10 @@ class GameScreen extends ConsumerWidget {
                 ),
               ),
               // Anchored to the two score bars: just below the opponent's,
-              // just above the player's.
+              // just above the player's (clear of the clocks in timed games).
               ...buildOverlays(
-                bubbleTop: contentTop + PlayerBar.height + 8,
-                bubbleBottom: bottomPad + PlayerBar.height + 8,
+                bubbleTop: contentTop + PlayerBar.height + timerBlock + 8,
+                bubbleBottom: bottomPad + PlayerBar.height + timerBlock + 8,
               ),
               DiscardFlight(
                 stackKey: anchors.stack,

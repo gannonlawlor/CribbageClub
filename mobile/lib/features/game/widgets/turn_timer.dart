@@ -3,6 +3,10 @@ import 'package:flutter/material.dart';
 import '../../../config/theme/app_colors.dart';
 
 class TurnTimer extends StatefulWidget {
+  /// Fixed chip height — the game screen reserves this when laying out
+  /// the timer rows against the player bars.
+  static const double height = 24;
+
   final DateTime? turnStartedAt;
   final int turnTimeLimitMs;
   final int timeBankMs;
@@ -71,8 +75,9 @@ class _TurnTimerState extends State<TurnTimer> {
       return;
     }
 
-    final elapsed =
-        DateTime.now().difference(widget.turnStartedAt!).inMilliseconds;
+    final elapsed = DateTime.now()
+        .difference(widget.turnStartedAt!)
+        .inMilliseconds;
 
     if (!widget.isActivePlayer) {
       // Not counting down when it's not this player's turn
@@ -124,7 +129,9 @@ class _TurnTimerState extends State<TurnTimer> {
     final label = _inTimeBank ? 'BANK' : '';
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      height: TurnTimer.height,
+      alignment: Alignment.center,
+      padding: const EdgeInsets.symmetric(horizontal: 8),
       decoration: BoxDecoration(
         color: widget.isActivePlayer
             ? color.withValues(alpha: 0.2)
@@ -140,19 +147,16 @@ class _TurnTimerState extends State<TurnTimer> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.timer,
-            size: 14,
-            color: color,
-          ),
+          Icon(Icons.timer, size: 14, color: color),
           const SizedBox(width: 4),
           Text(
             displayTime,
             style: TextStyle(
               color: color,
               fontSize: 13,
-              fontWeight:
-                  widget.isActivePlayer ? FontWeight.bold : FontWeight.normal,
+              fontWeight: widget.isActivePlayer
+                  ? FontWeight.bold
+                  : FontWeight.normal,
               fontFeatures: const [FontFeature.tabularFigures()],
             ),
           ),
