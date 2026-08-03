@@ -1,10 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../api/rest_client.dart';
 import '../auth/auth_provider.dart';
 import '../services/push_notification_service.dart';
 import '../../config/routes.dart';
 
-final pushNotificationServiceProvider = Provider<PushNotificationService>((ref) {
+final pushNotificationServiceProvider = Provider<PushNotificationService>((
+  ref,
+) {
   return PushNotificationService(
     restClient: ref.read(restClientProvider),
     routerGetter: () => ref.read(routerProvider),

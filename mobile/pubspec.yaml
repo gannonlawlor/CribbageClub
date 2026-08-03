@@ -11,14 +11,11 @@ dependencies:
   flutter:
     sdk: flutter
 
-  cupertino_icons: ^1.0.8
-
   # Native launch screen (also provides the runtime preserve/remove API)
   flutter_native_splash: ^2.4.3
 
   # State management
   flutter_riverpod: ^2.6.1
-  riverpod_annotation: ^2.6.1
 
   # Routing
   go_router: ^14.8.1
@@ -28,7 +25,6 @@ dependencies:
 
   # WebSocket (STOMP)
   stomp_dart_client: ^2.0.0
-  web_socket_channel: ^3.0.2
 
   # Models (annotations only)
   freezed_annotation: ^2.4.4
@@ -71,8 +67,6 @@ dev_dependencies:
   # App icon generation
   flutter_launcher_icons: ^0.14.3
 
-  # Native launch screen generation
-  flutter_native_splash: ^2.4.3
 
 flutter_launcher_icons:
   ios: true

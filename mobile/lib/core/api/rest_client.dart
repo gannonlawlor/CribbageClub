@@ -15,7 +15,6 @@ import '../models/lobby.dart';
 import '../models/head_to_head_response.dart';
 import '../models/achievement.dart';
 import '../models/profile_response.dart';
-import '../models/stats_response.dart';
 
 class RestClient {
   final Dio _dio;
@@ -171,18 +170,6 @@ class RestClient {
   Future<GameResponse> resignGame(String gameId) async {
     final response = await _dio.post('/api/games/$gameId/resign');
     return GameResponse.fromJson(response.data as Map<String, dynamic>);
-  }
-
-  Future<List<GameState>> listGames() async {
-    final response = await _dio.get('/api/games');
-    final list = response.data as List<dynamic>;
-    return list
-        .map((json) => GameState.fromJson(json as Map<String, dynamic>))
-        .toList();
-  }
-
-  Future<void> deleteGame(String gameId) async {
-    await _dio.delete('/api/games/$gameId');
   }
 
   Future<List<GameState>> getMyActiveGames() async {
@@ -363,10 +350,6 @@ class RestClient {
     await _dio.post('/api/challenges/$lobbyId/decline');
   }
 
-  Future<void> cancelChallenge(String lobbyId) async {
-    await _dio.post('/api/challenges/$lobbyId/cancel');
-  }
-
   // Analysis
 
   Future<GameAnalysis> getGameAnalysis(String gameId) async {
@@ -400,13 +383,6 @@ class RestClient {
   Future<HeadToHeadResponse> getHeadToHead(String userId) async {
     final response = await _dio.get('/api/profiles/$userId/head-to-head');
     return HeadToHeadResponse.fromJson(response.data as Map<String, dynamic>);
-  }
-
-  // Stats
-
-  Future<StatsResponse> getMyStats() async {
-    final response = await _dio.get('/api/stats/me');
-    return StatsResponse.fromJson(response.data as Map<String, dynamic>);
   }
 
   // Device Tokens

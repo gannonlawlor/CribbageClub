@@ -4,7 +4,6 @@ import 'package:flutter/foundation.dart';
 import 'package:stomp_dart_client/stomp_dart_client.dart';
 import '../../config/constants.dart';
 import '../auth/auth_service.dart';
-import '../models/game_action.dart';
 import '../models/websocket_messages.dart';
 
 enum ConnectionStatus {
@@ -121,7 +120,9 @@ class WebSocketClient {
 
     _setStatus(ConnectionStatus.reconnecting);
     _reconnectAttempts++;
-    debugPrint('[WebSocket] Reconnect attempt $_reconnectAttempts/$_maxReconnectAttempts');
+    debugPrint(
+      '[WebSocket] Reconnect attempt $_reconnectAttempts/$_maxReconnectAttempts',
+    );
 
     // Exponential backoff: 1s, 2s, 4s, 8s, 16s, 30s, 30s...
     final delaySeconds = (1 << (_reconnectAttempts - 1)).clamp(
@@ -178,7 +179,9 @@ class WebSocketClient {
     }
   }
 
-  void subscribeToUserState({required void Function(GameStateUpdateMessage) onStateUpdate}) {
+  void subscribeToUserState({
+    required void Function(GameStateUpdateMessage) onStateUpdate,
+  }) {
     _subscriptions['user-state']?.call(unsubscribeHeaders: {});
 
     void callback(StompFrame frame) {
@@ -223,15 +226,6 @@ class WebSocketClient {
     }
   }
 
-  void sendAction(String gameId, GameAction action) {
-    _stompClient?.send(
-      destination: '/app/game/action',
-      body: jsonEncode(
-        GameActionMessage(gameId: gameId, action: action).toJson(),
-      ),
-    );
-  }
-
   void joinGame(String gameId) {
     _stompClient?.send(
       destination: '/app/game/join',
@@ -256,7 +250,8 @@ class WebSocketClient {
   /// Re-initiate connection if disconnected or failed (e.g. after app resume).
   /// No-ops if already connected or reconnecting.
   void reconnectIfNeeded() {
-    if (isConnected || _status == ConnectionStatus.connecting ||
+    if (isConnected ||
+        _status == ConnectionStatus.connecting ||
         _status == ConnectionStatus.reconnecting) {
       return;
     }
@@ -264,21 +259,6 @@ class WebSocketClient {
     _reconnectAttempts = 0;
     _setStatus(ConnectionStatus.connecting);
     _doConnect(onConnect: _onConnectCallback!, onError: _onErrorCallback!);
-  }
-
-  void disconnect() {
-    _reconnectTimer?.cancel();
-    _reconnectTimer = null;
-    _reconnectAttempts = 0;
-    _setStatus(ConnectionStatus.disconnected);
-
-    for (final unsub in _subscriptions.values) {
-      unsub(unsubscribeHeaders: {});
-    }
-    _subscriptions.clear();
-    _pendingSubscriptions.clear();
-    _stompClient?.deactivate();
-    _stompClient = null;
   }
 }
 

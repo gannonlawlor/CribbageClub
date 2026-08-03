@@ -60,11 +60,6 @@ class LocalGameHistoryService {
     );
   }
 
-  Future<void> clearActiveGame() async {
-    final prefs = await _preferences;
-    await prefs.remove(_activeGameKey);
-  }
-
   Future<void> saveCompletedGame(GameState gameState) async {
     final prefs = await _preferences;
 
@@ -85,8 +80,8 @@ class LocalGameHistoryService {
     final difficulty = opponent.name.contains('Medium')
         ? 'Medium'
         : opponent.name.contains('Hard')
-            ? 'Hard'
-            : 'Easy';
+        ? 'Hard'
+        : 'Easy';
 
     final record = LocalGameRecord(
       gameId: gameState.gameId,
@@ -138,9 +133,7 @@ class LocalGameHistoryService {
     final prefs = await _preferences;
     final stateStr = prefs.getString('$_stateKeyPrefix$gameId');
     if (stateStr == null) return null;
-    return GameState.fromJson(
-      jsonDecode(stateStr) as Map<String, dynamic>,
-    );
+    return GameState.fromJson(jsonDecode(stateStr) as Map<String, dynamic>);
   }
 
   Future<void> deleteGame(String gameId) async {
