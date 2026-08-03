@@ -431,6 +431,11 @@ class RestClient {
     return PuzzleResponse.fromJson(response.data as Map<String, dynamic>);
   }
 
+  /// Reports an on-device daily puzzle solve for achievement credit.
+  Future<void> reportPuzzleSolved(bool optimal) async {
+    await _dio.post('/api/puzzles/daily/report', data: {'optimal': optimal});
+  }
+
   Future<PuzzleSolveResponse> solvePuzzle(
     String puzzleId,
     List<PlayingCard> chosenDiscard,
