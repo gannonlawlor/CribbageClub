@@ -61,6 +61,9 @@ Future<void> main() async {
       autoPlayPegging: saved.autoPlayPegging,
       animationSpeed: saved.animationSpeed,
       puzzlePickDiscards: saved.puzzlePickDiscards,
+      opponentHandDisplay: OpponentHandDisplay.fromStorage(
+        saved.opponentHandDisplay,
+      ),
     ),
   );
 

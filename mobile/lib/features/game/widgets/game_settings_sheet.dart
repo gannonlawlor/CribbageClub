@@ -4,6 +4,7 @@ import '../../../config/theme/app_colors.dart';
 import '../../../core/services/settings_provider.dart';
 import '../../../shared/widgets/cc_dialog.dart';
 import '../../../shared/widgets/cc_list.dart';
+import '../../../shared/widgets/cc_screen.dart';
 
 /// Opens the shared game-settings dialog (auto-play toggles + animation
 /// speed). Reachable in-game, from the Play tab, and from Settings.
@@ -126,6 +127,26 @@ class GameSettingsDialog extends ConsumerWidget {
                     : notifier.setAutoPlayPegging,
               ),
             ],
+          ),
+          const SizedBox(height: 18),
+          const _SectionCaption("Opponent's hand"),
+          const SizedBox(height: 8),
+          CcSegmented(
+            labels: const ['Cards', 'Card count'],
+            selected: settings.opponentHandDisplay.index,
+            onChanged: (i) =>
+                notifier.setOpponentHandDisplay(OpponentHandDisplay.values[i]),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            settings.opponentHandDisplay == OpponentHandDisplay.cards
+                ? 'Their cards sit face down across the table from yours.'
+                : 'Just how many cards they have left, on one chip.',
+            style: TextStyle(
+              color: colors.textTertiary,
+              fontSize: 12.5,
+              height: 1.35,
+            ),
           ),
           const SizedBox(height: 18),
           const _SectionCaption('Animation speed'),

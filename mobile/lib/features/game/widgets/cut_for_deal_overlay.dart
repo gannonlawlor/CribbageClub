@@ -53,6 +53,10 @@ class _CutForDealOverlayState extends ConsumerState<CutForDealOverlay> {
   /// grid.
   static const double _rowStagger = 0.5;
 
+  /// One line of the 10pt slot label. The label sits outside the card's own
+  /// box, so the slot has to leave room for it.
+  static const double _labelHeight = 13;
+
   late final PlayingCard _playerCard;
   late final PlayingCard _opponentCard;
   late int _opponentPick;
@@ -190,7 +194,12 @@ class _CutForDealOverlayState extends ConsumerState<CutForDealOverlay> {
                     ribbonY + spreadH + 46,
                     h - cardH - 86,
                   );
-                  final opponentSlotY = math.max(ribbonY - cardH - 46, 68.0);
+                  // Both slots are the card's own top edge; the name sits in
+                  // the gap above (opponent) or below (player).
+                  final opponentSlotY = math.max(
+                    ribbonY - cardH - 46,
+                    68.0 + _labelHeight + 5,
+                  );
 
                   return Stack(
                     children: [
@@ -364,38 +373,37 @@ class _CutForDealOverlayState extends ConsumerState<CutForDealOverlay> {
       ),
     );
 
-    return Positioned(
-      left: toX,
-      top: toY,
+    // The card and its label are laid out apart, not stacked in a Column: a
+    // name wider than the card would otherwise set the Column's width and
+    // push the card off the slot it shares with the other player's cut.
+    return Positioned.fill(
       child: TweenAnimationBuilder<double>(
         // Drive the slide from the ribbon by hand so the first frame renders
         // at the ribbon position rather than popping in at the slot.
         tween: Tween(begin: 0, end: 1),
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeOutCubic,
-        // The label belongs to the slot, not the card, so it fades in where
-        // the card is headed rather than travelling with it.
-        builder: (context, t, _) => Transform.translate(
-          offset: Offset((fromX - toX) * (1 - t), (fromY - toY) * (1 - t)),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (!labelBelow) ...[
-                Opacity(opacity: t, child: labelText),
-                const SizedBox(height: 5),
-              ],
-              FlippableCardWidget(
+        builder: (context, t, _) => Stack(
+          children: [
+            // The label belongs to the slot, not the card, so it fades in
+            // where the card is headed rather than travelling with it.
+            Positioned(
+              left: 0,
+              right: 0,
+              top: labelBelow ? toY + cardH + 5 : toY - _labelHeight - 5,
+              child: Opacity(opacity: t, child: labelText),
+            ),
+            Positioned(
+              left: toX + (fromX - toX) * (1 - t),
+              top: toY + (fromY - toY) * (1 - t),
+              child: FlippableCardWidget(
                 card: card,
                 faceUp: faceUp,
                 width: cardW,
                 height: cardH,
               ),
-              if (labelBelow) ...[
-                const SizedBox(height: 5),
-                Opacity(opacity: t, child: labelText),
-              ],
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

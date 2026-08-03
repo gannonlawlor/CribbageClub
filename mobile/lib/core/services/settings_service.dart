@@ -99,6 +99,16 @@ class SettingsService {
     await prefs.setBool(AppConstants.autoPlayPeggingKey, enabled);
   }
 
+  Future<String?> getOpponentHandDisplay() async {
+    final prefs = await _preferences;
+    return prefs.getString(AppConstants.opponentHandDisplayKey);
+  }
+
+  Future<void> setOpponentHandDisplay(String key) async {
+    final prefs = await _preferences;
+    await prefs.setString(AppConstants.opponentHandDisplayKey, key);
+  }
+
   Future<double> getAnimationSpeed() async {
     final prefs = await _preferences;
     return prefs.getDouble(AppConstants.animationSpeedKey) ?? 1.0;
@@ -122,6 +132,7 @@ class SettingsService {
       bool autoPlayPegging,
       double animationSpeed,
       bool puzzlePickDiscards,
+      String? opponentHandDisplay,
     })
   >
   loadAll() async {
@@ -138,6 +149,7 @@ class SettingsService {
       animationSpeed: prefs.getDouble(AppConstants.animationSpeedKey) ?? 1.0,
       puzzlePickDiscards:
           prefs.getBool(AppConstants.puzzlePickDiscardsKey) ?? false,
+      opponentHandDisplay: prefs.getString(AppConstants.opponentHandDisplayKey),
     );
   }
 }

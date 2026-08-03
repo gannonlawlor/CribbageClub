@@ -828,6 +828,32 @@ class GameScreen extends ConsumerWidget {
 
           final tableCardW = math.min(56.0, handWidth * 0.175);
 
+          // The opponent's cards, face down under their bar, at the same size
+          // as your own so the two hands mirror each other. Capped against the
+          // screen height as well, so on a short phone the row gives the table
+          // back the room it needs rather than squeezing it flat.
+          // Their count is always on their bar; the fan of cards under it is
+          // what the setting turns on and off.
+          final showOppCards =
+              settings.opponentHandDisplay == OpponentHandDisplay.cards;
+          final oppCardW = math.min(handCardW, height * 0.085);
+          final oppCardH = oppCardW / AppConstants.cardAspectRatio;
+          final oppHandTop = contentTop + PlayerBar.height + 6;
+          // Where the opponent's half of the table ends, and where a dealt
+          // card is headed — their hand when it's shown, their bar when it
+          // isn't.
+          final oppBlockBottom = showOppCards
+              ? oppHandTop + oppCardH
+              : contentTop + PlayerBar.height;
+          final oppLandingY = showOppCards
+              ? oppHandTop + oppCardH / 2
+              : contentTop + PlayerBar.height / 2;
+          final oppCardCount = showCutForDeal
+              ? 0
+              : opponent.hand.isEmpty
+              ? _estimateOpponentCards(gs, opponent.id)
+              : opponent.hand.length;
+
           return Stack(
             key: anchors.stack,
             children: [
@@ -851,8 +877,24 @@ class GameScreen extends ConsumerWidget {
                       isSelf: false,
                       isDealer: !isDealer,
                       isActive: gs.currentPlayerId == opponent.id,
+                      handCount: oppCardCount,
                     ),
                   ),
+                  if (showOppCards) ...[
+                    const SizedBox(height: 6),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: _sideInset,
+                      ),
+                      child: OpponentHand(
+                        cardCount: oppCardCount,
+                        receiveFirst: isDealer,
+                        cardWidth: oppCardW,
+                        fanned: true,
+                        dealDelay: OpponentDealFlight.flightDuration,
+                      ),
+                    ),
+                  ],
                   buildConnectionBanners(),
                   buildTimers(),
                   Expanded(
@@ -920,7 +962,7 @@ class GameScreen extends ConsumerWidget {
                 Positioned(
                   left: _sideInset,
                   right: _sideInset,
-                  top: contentTop + PlayerBar.height + 6,
+                  top: oppBlockBottom + 6,
                   child: _ErrorChip(
                     message: gameNotifier.error!,
                     onDismiss: () {
@@ -937,7 +979,7 @@ class GameScreen extends ConsumerWidget {
                   handCount: showCutForDeal ? 0 : player.hand.length,
                   receiveFirst: isDealer,
                   from: Offset(width / 2, height * 0.45),
-                  to: Offset(width / 2, contentTop + PlayerBar.height / 2),
+                  to: Offset(width / 2, oppLandingY),
                   cardWidth: tableCardW * 0.85,
                 ),
               ),
