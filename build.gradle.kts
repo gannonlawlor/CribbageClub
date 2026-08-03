@@ -63,8 +63,15 @@ val cargoReleaseBuild by tasks.registering(Exec::class) {
     val cargoPath = File(System.getProperty("user.home"), ".cargo/bin/cargo").absolutePath
     // The server only calls the ungated c_api; without this flag the default
     // `frb` feature links the whole flutter_rust_bridge runtime into the
-    // server's dylib for nothing.
-    commandLine(cargoPath, "build", "--release", "--no-default-features")
+    // server's dylib for nothing. Built into its own target dir because the
+    // Flutter test host loads engine/target/release and needs the frb symbols
+    // a default build puts there — the two artifacts must not clobber each
+    // other.
+    commandLine(
+        cargoPath, "build", "--release",
+        "--no-default-features",
+        "--target-dir", "target/server",
+    )
 }
 
 tasks.named("compileKotlin") {
@@ -73,12 +80,12 @@ tasks.named("compileKotlin") {
 
 tasks.withType<Test> {
     // Make the Rust native library available to JNA during tests
-    val libDir = file("engine/target/release").absolutePath
+    val libDir = file("engine/target/server/release").absolutePath
     systemProperty("jna.library.path", libDir)
     useJUnitPlatform()
 }
 
 tasks.named<org.springframework.boot.gradle.tasks.run.BootRun>("bootRun") {
-    val libDir = file("engine/target/release").absolutePath
+    val libDir = file("engine/target/server/release").absolutePath
     systemProperty("jna.library.path", libDir)
 }
