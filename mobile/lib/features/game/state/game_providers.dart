@@ -158,6 +158,11 @@ class GameNotifier extends StateNotifier<GameNotifierState> {
 
   void _applyWsMessage(GameStateUpdateMessage msg) {
     if (_actionInFlight) return;
+    // The game topic carries a spectator view with ALL hands hidden — including
+    // ours. Our own view arrives on the user queue, so applying the spectator
+    // frame (which the server sends last) would wipe our hand from the screen.
+    // Null view means an older server that doesn't tag frames; apply as before.
+    if (msg.view == 'SPECTATOR') return;
     final gs = msg.gameState;
     // Determine which player we are to map player1/player2 banks to my/opponent
     final isPlayer1 = gs.players.isNotEmpty && gs.players[0].id == _playerId;

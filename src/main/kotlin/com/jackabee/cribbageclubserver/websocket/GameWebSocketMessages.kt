@@ -32,7 +32,14 @@ data class GameStateUpdateMessage(
     val player2TimeBankMs: Long = 120000,
     val isTimed: Boolean = false,
     val timeControl: String = "RAPID",
-    val timestamp: Long = System.currentTimeMillis()
+    val timestamp: Long = System.currentTimeMillis(),
+    /**
+     * Which filtered view [gameState] is: "PLAYER" (a participant's own view,
+     * sent on their user queue) or "SPECTATOR" (all hands hidden, sent on the
+     * game topic). Participants must ignore SPECTATOR frames — the topic frame
+     * arrives after their queue frame and would wipe their own hand from the UI.
+     */
+    val view: String = "PLAYER"
 )
 
 data class PlayerJoinedMessage(

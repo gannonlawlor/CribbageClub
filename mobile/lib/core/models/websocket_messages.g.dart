@@ -17,6 +17,7 @@ _$GameStateUpdateMessageImpl _$$GameStateUpdateMessageImplFromJson(
   player2TimeBankMs: (json['player2TimeBankMs'] as num?)?.toInt() ?? 120000,
   isTimed: json['isTimed'] as bool? ?? false,
   timestamp: (json['timestamp'] as num?)?.toInt(),
+  view: json['view'] as String?,
 );
 
 Map<String, dynamic> _$$GameStateUpdateMessageImplToJson(
@@ -30,6 +31,7 @@ Map<String, dynamic> _$$GameStateUpdateMessageImplToJson(
   'player2TimeBankMs': instance.player2TimeBankMs,
   'isTimed': instance.isTimed,
   'timestamp': instance.timestamp,
+  'view': instance.view,
 };
 
 _$GameErrorMessageImpl _$$GameErrorMessageImplFromJson(
