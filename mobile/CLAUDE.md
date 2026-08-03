@@ -13,11 +13,11 @@ flutter test                      # run tests
 flutter analyze                   # static analysis
 dart run build_runner build       # regenerate freezed/json_serializable code
 
-# Development (local backend)
-flutter run --flavor dev                                              # connected device
-
-# Alpha flavor (public staging backend via Tailscale Funnel)
+# Alpha flavor (public staging backend via Tailscale Funnel) — default for QA
 flutter run --flavor alpha --dart-define-from-file=dart_define/alpha.json
+
+# Development (local backend) — only when testing local backend changes
+flutter run --flavor dev                                              # connected device
 
 # Release builds
 flutter build apk --flavor alpha --dart-define-from-file=dart_define/alpha.json
@@ -42,6 +42,8 @@ Convenience scripts that can be run from anywhere (they `cd` to the mobile dir a
 | `scripts/clean.sh` | Clean build artifacts and restore deps |
 
 The staging backend is public via Tailscale Funnel (https://cribbage-staging.tail0b042f.ts.net) -- your device does not need to be on the tailnet.
+
+**Default backend:** use the staging backend (`cribbage-staging`, alpha flavor) for QA and manual testing, and it is the backend baked into TestFlight/alpha release builds (`dart_define/alpha.json`). Only use the dev flavor (localhost:8080) when testing local backend changes that aren't deployed to staging yet.
 
 ## Project Structure
 

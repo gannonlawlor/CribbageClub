@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -17,12 +16,8 @@ class LoginScreen extends ConsumerStatefulWidget {
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _usernameController = TextEditingController(
-    text: kDebugMode ? 'gannon' : null,
-  );
-  final _passwordController = TextEditingController(
-    text: kDebugMode ? 'password' : null,
-  );
+  final _usernameController = TextEditingController();
+  final _passwordController = TextEditingController();
   bool _isRegister = false;
   bool _autovalidate = false;
 
