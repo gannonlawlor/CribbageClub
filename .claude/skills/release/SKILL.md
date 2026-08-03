@@ -132,8 +132,8 @@ xcodebuild -exportArchive \
   -allowProvisioningUpdates
 ```
 
-**Alpha backend.** The build points at the Tailscale alpha server
-(`mobile/dart_define/alpha.json`). Testers need to be on the tailnet for
-anything online to work; local AI games work regardless. If the alpha server is
-also behind, it deploys separately — see the alpha deployment notes, not this
-skill.
+**Staging backend.** The build points at the public staging server
+(`mobile/dart_define/alpha.json` → `https://cribbage-staging.tail0b042f.ts.net`),
+exposed via Tailscale Funnel. Testers do **not** need to be on the tailnet — it's
+publicly reachable; local AI games work regardless. The backend runs on the titan
+host (`/opt/cribbage-staging`) and deploys separately from this skill.
