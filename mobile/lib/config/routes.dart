@@ -14,7 +14,6 @@ import '../features/daily_puzzle/screens/daily_puzzle_screen.dart';
 import '../features/daily_puzzle/screens/practice_puzzle_screen.dart';
 import '../features/lobby/screens/lobby_browser_screen.dart';
 import '../features/lobby/screens/lobby_waiting_screen.dart';
-import '../features/puzzle/screens/puzzle_screen.dart';
 import '../features/profile/screens/my_profile_screen.dart';
 import '../features/profile/screens/profile_screen.dart';
 import '../features/replay/screens/replay_screen.dart';
@@ -36,8 +35,16 @@ final routerProvider = Provider<GoRouter>((ref) {
       return null;
     },
     routes: [
-      GoRoute(path: '/login', pageBuilder: (context, state) => const NoTransitionPage(child: LoginScreen())),
-      GoRoute(path: '/', pageBuilder: (context, state) => const NoTransitionPage(child: HomeScreen())),
+      GoRoute(
+        path: '/login',
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: LoginScreen()),
+      ),
+      GoRoute(
+        path: '/',
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: HomeScreen()),
+      ),
       GoRoute(
         path: '/game/:gameId',
         pageBuilder: (context, state) {
@@ -47,23 +54,28 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/upgrade',
-        pageBuilder: (context, state) => const NoTransitionPage(child: UpgradeScreen()),
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: UpgradeScreen()),
       ),
       GoRoute(
         path: '/history',
-        pageBuilder: (context, state) => const NoTransitionPage(child: GameHistoryScreen()),
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: GameHistoryScreen()),
       ),
       GoRoute(
         path: '/leaderboard',
-        pageBuilder: (context, state) => const NoTransitionPage(child: LeaderboardScreen()),
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: LeaderboardScreen()),
       ),
       GoRoute(
         path: '/friends',
-        pageBuilder: (context, state) => const NoTransitionPage(child: FriendsScreen()),
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: FriendsScreen()),
       ),
       GoRoute(
         path: '/lobbies',
-        pageBuilder: (context, state) => const NoTransitionPage(child: LobbyBrowserScreen()),
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: LobbyBrowserScreen()),
       ),
       GoRoute(
         path: '/lobby/:lobbyId',
@@ -74,7 +86,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/me',
-        pageBuilder: (context, state) => const NoTransitionPage(child: MyProfileScreen()),
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: MyProfileScreen()),
       ),
       GoRoute(
         path: '/profile/:userId',
@@ -98,20 +111,19 @@ final routerProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(
-        path: '/puzzle',
-        pageBuilder: (context, state) => const NoTransitionPage(child: PuzzleScreen()),
-      ),
-      GoRoute(
         path: '/daily-puzzle',
-        pageBuilder: (context, state) => const NoTransitionPage(child: DailyPuzzleScreen()),
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: DailyPuzzleScreen()),
       ),
       GoRoute(
         path: '/practice-puzzle',
-        pageBuilder: (context, state) => const NoTransitionPage(child: PracticePuzzleScreen()),
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: PracticePuzzleScreen()),
       ),
       GoRoute(
         path: '/settings',
-        pageBuilder: (context, state) => const NoTransitionPage(child: SettingsScreen()),
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: SettingsScreen()),
       ),
     ],
     errorBuilder: (context, state) =>
