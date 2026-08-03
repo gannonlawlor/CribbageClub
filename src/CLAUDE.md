@@ -33,8 +33,7 @@ src/main/kotlin/com/jackabee/cribbageclubserver/
 ├── model/            # Domain: GameState, GameAction (sealed), GameHistoryEvent (sealed),
 │                     # Card/Rank/Suit, GameAnalysis, Player, Lobby, etc.
 ├── bridge/           # RustEngineAdapter (JNA FFI to Rust crate), RustEngineConfig
-├── websocket/        # STOMP controllers, broadcast service, session registry
-└── utils/            # HandCounting, ScoreBreakdownCalculator
+└── websocket/        # STOMP controllers, broadcast service, session registry
 ```
 
 ## Key Architecture Decisions
@@ -47,7 +46,7 @@ src/main/kotlin/com/jackabee/cribbageclubserver/
 - **Rate limiting**: Sliding-window `RateLimitFilter` on `/api/auth/*` (10 req/60s).
 - **GameStateFilter**: Hides opponent hands, deck, and crib per player. Applied in all controllers before returning state.
 - **Optimistic locking**: `@Version` on all mutable entities.
-- **Flyway**: 11 migrations (V1–V11). `ddl-auto=validate` in production.
+- **Flyway**: 12 migrations (V1–V12). `ddl-auto=validate` in production.
 - **Turn timers & forfeit**: Named time controls (BLITZ/RAPID/CASUAL/UNLIMITED) chosen per lobby and frozen onto the game at creation (V11), so config changes never alter a live game. `TurnTimerService` runs a **per-player** clock — `DISCARDING_TO_CRIB` lets both players act concurrently, so a single shared clock charged the wrong player. `TimeoutCheckService` sweeps every 5s; `ForfeitService` handles timeouts and resignations and publishes `GameEndedEvent` so `GameService` drops its cached engine handle.
 - **Push notifications**: FCM HTTP v1 via `PushNotificationService`; `FcmConfig` holds credentials (no-op when unconfigured). Sent only when `WebSocketSessionRegistry.isUserOnline()` is false. Events: friend request, challenge received, game found. Device tokens registered via `/api/device-tokens`.
 
@@ -66,6 +65,7 @@ src/main/kotlin/com/jackabee/cribbageclubserver/
 | V9 | (alters users, player_stats) | Avatar index, AI-vs-human split stats |
 | V10 | device_tokens | Push notification device tokens |
 | V11 | (alters games, lobbies) | Configurable time controls (preset + frozen turn limit) |
+| V12 | player_achievements, achievement_progress | Achievements (unlocks + fresh-start counters) |
 
 ## Serialization
 
