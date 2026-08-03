@@ -116,10 +116,6 @@ impl Suit {
             Suit::Spades => "\u{2660}",
         }
     }
-
-    pub fn is_red(self) -> bool {
-        matches!(self, Suit::Diamonds | Suit::Hearts)
-    }
 }
 
 impl fmt::Display for Suit {

@@ -33,13 +33,6 @@ impl Deck {
         Deck { cards }
     }
 
-    /// Draw the top card from the deck.
-    pub fn draw(&mut self) -> Result<Card, EngineError> {
-        if self.cards.is_empty() {
-            return Err(EngineError::EmptyDeck);
-        }
-        Ok(self.cards.remove(0))
-    }
 
     /// Draw n cards from the top of the deck.
     pub fn draw_n(&mut self, n: usize) -> Result<Vec<Card>, EngineError> {
