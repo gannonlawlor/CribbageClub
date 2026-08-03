@@ -39,7 +39,8 @@ class FriendService(
     private val userRepository: UserRepository,
     private val sessionRegistry: WebSocketSessionRegistry,
     private val notificationService: NotificationWebSocketService,
-    private val pushNotificationService: PushNotificationService
+    private val pushNotificationService: PushNotificationService,
+    private val achievementService: AchievementService
 ) {
     private val logger = LoggerFactory.getLogger(FriendService::class.java)
 
@@ -146,6 +147,12 @@ class FriendService(
                 displayName = accepter.displayName
             )
         )
+
+        try {
+            achievementService.evaluateFriendAccepted(userId, entity.requesterId)
+        } catch (e: Exception) {
+            logger.warn("Achievement evaluation failed for friendship {}: {}", friendshipId, e.message)
+        }
 
         return FriendInfo(
             friendshipId = entity.id,
