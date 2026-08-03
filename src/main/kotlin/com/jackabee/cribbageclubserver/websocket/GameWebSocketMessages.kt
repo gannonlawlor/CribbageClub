@@ -53,16 +53,3 @@ data class GameErrorMessage(
     val error: String,
     val timestamp: Long = System.currentTimeMillis()
 )
-
-// Connection management
-data class GameConnectionEvent(
-    val gameId: String,
-    val playerId: String,
-    val eventType: ConnectionEventType,
-    val timestamp: Long = System.currentTimeMillis()
-)
-
-enum class ConnectionEventType {
-    CONNECTED,
-    DISCONNECTED
-}

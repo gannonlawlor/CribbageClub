@@ -109,7 +109,4 @@ class UserService(
         return userRepository.findById(userId).orElse(null)
     }
 
-    fun getUserByUsername(username: String): UserEntity? {
-        return userRepository.findByUsername(username)
-    }
 }

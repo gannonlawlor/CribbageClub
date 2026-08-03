@@ -51,7 +51,6 @@ interface CribbageEngineLib : Library {
     fun cribbage_engine_dev_set_next_hands(engine: Pointer, handsJson: String): Int
 
     // ── Standalone scoring / analysis ───────────────────────────────
-    fun cribbage_calculate_hand_score(handJson: String, cutCardJson: String, isCrib: Boolean): Int
     fun cribbage_analyze_discards(handJson: String, isDealer: Boolean): Pointer?
     fun cribbage_glicko2_calculate(
         playerRating: Double, playerDeviation: Double, playerVolatility: Double,

@@ -324,20 +324,6 @@ class GameService(
     }
 
     /**
-     * Lists all game records from the database.
-     */
-    fun listAllGameRecords(): List<GameEntity> {
-        return gameRepository?.findAll() ?: emptyList()
-    }
-
-    /**
-     * Finds games by player ID.
-     */
-    fun findGamesByPlayer(playerId: String): List<GameEntity> {
-        return gameRepository?.findByPlayer1IdOrPlayer2Id(playerId, playerId) ?: emptyList()
-    }
-
-    /**
      * Finds active (in-progress) games for a player.
      */
     fun findActiveGamesByPlayer(playerId: String): List<GameState> {
