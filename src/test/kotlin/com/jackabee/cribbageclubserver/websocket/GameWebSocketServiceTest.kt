@@ -53,6 +53,44 @@ class GameWebSocketServiceTest {
     }
 
     @Test
+    fun `tags player queue frames PLAYER and topic frames SPECTATOR`() {
+        val players = listOf(
+            Player("player1", "Player 1"),
+            Player("player2", "Player 2")
+        )
+        val objectMapper = jacksonObjectMapper()
+        val adapter = RustEngineAdapter(lib, objectMapper)
+        val gameService = GameService(objectMapper = objectMapper, rustEngineAdapter = adapter)
+        val gameState = gameService.createGame(players)
+        val gameId = gameState.gameId
+        sessionRegistry.register("session1", "player1", "Player 1", gameId)
+        sessionRegistry.register("session2", "player2", "Player 2", gameId)
+
+        webSocketService.broadcastGameStateUpdate(gameId, gameState)
+
+        // Each participant's queue frame keeps their own hand and is tagged PLAYER.
+        for ((sessionId, playerId) in listOf("session1" to "player1", "session2" to "player2")) {
+            val captor = org.mockito.kotlin.argumentCaptor<GameStateUpdateMessage>()
+            verify(messagingTemplate).convertAndSendToUser(
+                eq(sessionId), eq("/queue/game-state"), captor.capture()
+            )
+            val frame = captor.firstValue
+            kotlin.test.assertEquals("PLAYER", frame.view)
+            kotlin.test.assertTrue(
+                frame.gameState.players.first { it.id == playerId }.hand.isNotEmpty()
+            )
+        }
+
+        // The topic frame hides every hand and is tagged SPECTATOR — clients that
+        // are participants must skip it or it wipes their own hand from the UI.
+        val topicCaptor = org.mockito.kotlin.argumentCaptor<Any>()
+        verify(messagingTemplate).convertAndSend(eq("/topic/game/$gameId"), topicCaptor.capture())
+        val spectatorFrame = topicCaptor.firstValue as GameStateUpdateMessage
+        kotlin.test.assertEquals("SPECTATOR", spectatorFrame.view)
+        kotlin.test.assertTrue(spectatorFrame.gameState.players.all { it.hand.isEmpty() })
+    }
+
+    @Test
     fun `should broadcast player joined message`() {
         // Given
         val gameId = "test-game"

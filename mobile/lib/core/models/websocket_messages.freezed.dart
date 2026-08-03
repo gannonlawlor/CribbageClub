@@ -32,6 +32,11 @@ mixin _$GameStateUpdateMessage {
   bool get isTimed => throw _privateConstructorUsedError;
   int? get timestamp => throw _privateConstructorUsedError;
 
+  /// Which filtered view [gameState] is: "PLAYER" (our own view, from the
+  /// user queue) or "SPECTATOR" (all hands hidden, from the game topic).
+  /// Null on servers that predate the field.
+  String? get view => throw _privateConstructorUsedError;
+
   /// Serializes this GameStateUpdateMessage to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
 
@@ -58,6 +63,7 @@ abstract class $GameStateUpdateMessageCopyWith<$Res> {
     int player2TimeBankMs,
     bool isTimed,
     int? timestamp,
+    String? view,
   });
 
   $GameStateCopyWith<$Res> get gameState;
@@ -89,6 +95,7 @@ class _$GameStateUpdateMessageCopyWithImpl<
     Object? player2TimeBankMs = null,
     Object? isTimed = null,
     Object? timestamp = freezed,
+    Object? view = freezed,
   }) {
     return _then(
       _value.copyWith(
@@ -124,6 +131,10 @@ class _$GameStateUpdateMessageCopyWithImpl<
                 ? _value.timestamp
                 : timestamp // ignore: cast_nullable_to_non_nullable
                       as int?,
+            view: freezed == view
+                ? _value.view
+                : view // ignore: cast_nullable_to_non_nullable
+                      as String?,
           )
           as $Val,
     );
@@ -158,6 +169,7 @@ abstract class _$$GameStateUpdateMessageImplCopyWith<$Res>
     int player2TimeBankMs,
     bool isTimed,
     int? timestamp,
+    String? view,
   });
 
   @override
@@ -187,6 +199,7 @@ class __$$GameStateUpdateMessageImplCopyWithImpl<$Res>
     Object? player2TimeBankMs = null,
     Object? isTimed = null,
     Object? timestamp = freezed,
+    Object? view = freezed,
   }) {
     return _then(
       _$GameStateUpdateMessageImpl(
@@ -222,6 +235,10 @@ class __$$GameStateUpdateMessageImplCopyWithImpl<$Res>
             ? _value.timestamp
             : timestamp // ignore: cast_nullable_to_non_nullable
                   as int?,
+        view: freezed == view
+            ? _value.view
+            : view // ignore: cast_nullable_to_non_nullable
+                  as String?,
       ),
     );
   }
@@ -239,6 +256,7 @@ class _$GameStateUpdateMessageImpl implements _GameStateUpdateMessage {
     this.player2TimeBankMs = 120000,
     this.isTimed = false,
     this.timestamp,
+    this.view,
   });
 
   factory _$GameStateUpdateMessageImpl.fromJson(Map<String, dynamic> json) =>
@@ -265,9 +283,15 @@ class _$GameStateUpdateMessageImpl implements _GameStateUpdateMessage {
   @override
   final int? timestamp;
 
+  /// Which filtered view [gameState] is: "PLAYER" (our own view, from the
+  /// user queue) or "SPECTATOR" (all hands hidden, from the game topic).
+  /// Null on servers that predate the field.
+  @override
+  final String? view;
+
   @override
   String toString() {
-    return 'GameStateUpdateMessage(gameId: $gameId, gameState: $gameState, turnStartedAt: $turnStartedAt, turnTimeLimitMs: $turnTimeLimitMs, player1TimeBankMs: $player1TimeBankMs, player2TimeBankMs: $player2TimeBankMs, isTimed: $isTimed, timestamp: $timestamp)';
+    return 'GameStateUpdateMessage(gameId: $gameId, gameState: $gameState, turnStartedAt: $turnStartedAt, turnTimeLimitMs: $turnTimeLimitMs, player1TimeBankMs: $player1TimeBankMs, player2TimeBankMs: $player2TimeBankMs, isTimed: $isTimed, timestamp: $timestamp, view: $view)';
   }
 
   @override
@@ -288,7 +312,8 @@ class _$GameStateUpdateMessageImpl implements _GameStateUpdateMessage {
                 other.player2TimeBankMs == player2TimeBankMs) &&
             (identical(other.isTimed, isTimed) || other.isTimed == isTimed) &&
             (identical(other.timestamp, timestamp) ||
-                other.timestamp == timestamp));
+                other.timestamp == timestamp) &&
+            (identical(other.view, view) || other.view == view));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -303,6 +328,7 @@ class _$GameStateUpdateMessageImpl implements _GameStateUpdateMessage {
     player2TimeBankMs,
     isTimed,
     timestamp,
+    view,
   );
 
   /// Create a copy of GameStateUpdateMessage
@@ -333,6 +359,7 @@ abstract class _GameStateUpdateMessage implements GameStateUpdateMessage {
     final int player2TimeBankMs,
     final bool isTimed,
     final int? timestamp,
+    final String? view,
   }) = _$GameStateUpdateMessageImpl;
 
   factory _GameStateUpdateMessage.fromJson(Map<String, dynamic> json) =
@@ -354,6 +381,12 @@ abstract class _GameStateUpdateMessage implements GameStateUpdateMessage {
   bool get isTimed;
   @override
   int? get timestamp;
+
+  /// Which filtered view [gameState] is: "PLAYER" (our own view, from the
+  /// user queue) or "SPECTATOR" (all hands hidden, from the game topic).
+  /// Null on servers that predate the field.
+  @override
+  String? get view;
 
   /// Create a copy of GameStateUpdateMessage
   /// with the given fields replaced by the non-null parameter values.

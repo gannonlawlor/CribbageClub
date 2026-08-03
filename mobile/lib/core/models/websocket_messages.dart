@@ -15,6 +15,11 @@ class GameStateUpdateMessage with _$GameStateUpdateMessage {
     @Default(120000) int player2TimeBankMs,
     @Default(false) bool isTimed,
     int? timestamp,
+
+    /// Which filtered view [gameState] is: "PLAYER" (our own view, from the
+    /// user queue) or "SPECTATOR" (all hands hidden, from the game topic).
+    /// Null on servers that predate the field.
+    String? view,
   }) = _GameStateUpdateMessage;
 
   factory GameStateUpdateMessage.fromJson(Map<String, dynamic> json) =>

@@ -31,7 +31,8 @@ class GameWebSocketService(
                     player1TimeBankMs = timing?.player1TimeBankMs ?: 120000,
                     player2TimeBankMs = timing?.player2TimeBankMs ?: 120000,
                     isTimed = timing?.isTimed ?: false,
-                    timeControl = timing?.timeControl ?: "RAPID"
+                    timeControl = timing?.timeControl ?: "RAPID",
+                    view = "PLAYER"
                 )
                 messagingTemplate.convertAndSendToUser(
                     session.sessionId,
@@ -51,7 +52,8 @@ class GameWebSocketService(
             player1TimeBankMs = timing?.player1TimeBankMs ?: 120000,
             player2TimeBankMs = timing?.player2TimeBankMs ?: 120000,
             isTimed = timing?.isTimed ?: false,
-            timeControl = timing?.timeControl ?: "RAPID"
+            timeControl = timing?.timeControl ?: "RAPID",
+            view = "SPECTATOR"
         )
         messagingTemplate.convertAndSend("/topic/game/$gameId", spectatorMessage)
     }
@@ -65,7 +67,8 @@ class GameWebSocketService(
         val filtered = GameStateFilter.forPlayer(gameState, playerId)
         val updateMessage = GameStateUpdateMessage(
             gameId = gameId,
-            gameState = filtered
+            gameState = filtered,
+            view = if (playerId.isBlank()) "SPECTATOR" else "PLAYER"
         )
 
         messagingTemplate.convertAndSendToUser(
