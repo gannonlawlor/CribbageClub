@@ -25,7 +25,7 @@ flutter run                          # run on connected device or simulator
 # Development (local backend at localhost:8080)
 flutter run --flavor dev
 
-# Alpha (Tailscale backend)
+# Alpha flavor (public staging backend)
 flutter run --flavor alpha --dart-define-from-file=dart_define/alpha.json
 
 # Release builds

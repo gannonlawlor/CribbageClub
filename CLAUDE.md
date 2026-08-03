@@ -23,7 +23,7 @@ CribbageClub/
 ├── FRONTEND.md                   # Frontend plan and phased roadmap
 ├── build.gradle.kts              # Backend + engine build
 ├── docker-compose.yml            # Dev: PostgreSQL + app
-├── docker-compose.alpha.yml      # Alpha: Tailscale + PostgreSQL + app
+├── docker-compose.alpha.yml      # Staging/QA: app behind Tailscale Funnel + PostgreSQL
 ├── Dockerfile                    # Multi-stage backend container
 └── .github/workflows/ci.yml     # CI: backend build+test, mobile analyze+test, web build+test
 ```
@@ -36,7 +36,7 @@ CribbageClub/
 | Mobile | Flutter/Dart 3.11+, Riverpod, GoRouter, Dio, freezed, flutter_rust_bridge |
 | Web | React 19, TypeScript, Zustand, React Router, Tailwind CSS, Vite |
 | Engine | Rust, serde, flutter_rust_bridge (FFI to Flutter), JNA (FFI to JVM), wasm-bindgen (WASM for web) |
-| Infra | Docker, GitHub Actions CI, Tailscale (alpha networking) |
+| Infra | Docker, GitHub Actions CI, Tailscale Funnel (public staging) |
 
 ## Build & Run
 

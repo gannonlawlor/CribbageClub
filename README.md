@@ -155,13 +155,18 @@ docker compose up -d
 
 Starts PostgreSQL and the Spring Boot app on port 8080. Requires `JWT_SECRET` environment variable.
 
-### Docker (Alpha)
+### Docker (Staging / QA)
 
 ```bash
 docker compose -f docker-compose.alpha.yml up -d
 ```
 
-Uses Tailscale for private networking. Requires `TS_AUTHKEY`, `TS_HOSTNAME`, `TS_FQDN`, `DB_PASSWORD`, and `JWT_SECRET` environment variables.
+Runs the app behind a Tailscale sidecar that exposes it publicly via **Funnel**
+at `https://cribbage-staging.tail0b042f.ts.net` — reachable by anyone (no tailnet
+membership required), so friends can QA from any device. Requires `TS_AUTHKEY`
+(tagged `tag:cribbage`), `TS_HOSTNAME`, `TS_FQDN`, `DB_PASSWORD`, and `JWT_SECRET`.
+The live instance runs on the titan host under `/opt/cribbage-staging` and pulls
+its image from GHCR.
 
 ## CI
 
