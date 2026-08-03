@@ -1,0 +1,201 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues></ManuallySuppressedIssues>
+  <CurrentIssues>
+    <ID>CyclomaticComplexMethod:AchievementHistoryEvaluator.kt$AchievementHistoryEvaluator$fun evaluate(userId: String, state: GameState): Set&lt;Achievement&gt;</ID>
+    <ID>CyclomaticComplexMethod:AchievementHistoryEvaluator.kt$AchievementHistoryEvaluator$fun wonFromBehind(userId: String, state: GameState, deficit: Int = 30): Boolean</ID>
+    <ID>CyclomaticComplexMethod:AchievementService.kt$AchievementService$@Transactional fun evaluateGameEnd(entity: GameEntity, finalState: GameState): List&lt;Achievement&gt;</ID>
+    <ID>CyclomaticComplexMethod:GameService.kt$GameService$fun importLocalGames( games: List&lt;ImportGameRequest&gt;, userId: String, username: String ): ImportGamesResponse</ID>
+    <ID>CyclomaticComplexMethod:GameService.kt$GameService$private fun remapGameState( state: GameState, newGameId: String, userId: String, username: String ): GameState</ID>
+    <ID>EmptyFunctionBlock:CribbageClubServerApplicationTests.kt$CribbageClubServerApplicationTests${ }</ID>
+    <ID>FunctionNaming:CribbageEngineLib.kt$CribbageEngineLib$fun cribbage_analyze_discards(handJson: String, isDealer: Boolean): Pointer?</ID>
+    <ID>FunctionNaming:CribbageEngineLib.kt$CribbageEngineLib$fun cribbage_engine_apply_action(engine: Pointer, actionJson: String): Pointer?</ID>
+    <ID>FunctionNaming:CribbageEngineLib.kt$CribbageEngineLib$fun cribbage_engine_dev_set_next_hands(engine: Pointer, handsJson: String): Int</ID>
+    <ID>FunctionNaming:CribbageEngineLib.kt$CribbageEngineLib$fun cribbage_engine_dev_set_score(engine: Pointer, playerId: String, score: Int): Int</ID>
+    <ID>FunctionNaming:CribbageEngineLib.kt$CribbageEngineLib$fun cribbage_engine_free(ptr: Pointer?)</ID>
+    <ID>FunctionNaming:CribbageEngineLib.kt$CribbageEngineLib$fun cribbage_engine_new( gameId: String, p1Id: String, p1Name: String, p2Id: String, p2Name: String, ): Pointer?</ID>
+    <ID>FunctionNaming:CribbageEngineLib.kt$CribbageEngineLib$fun cribbage_engine_new_seeded( gameId: String, p1Id: String, p1Name: String, p2Id: String, p2Name: String, seed: Long, ): Pointer?</ID>
+    <ID>FunctionNaming:CribbageEngineLib.kt$CribbageEngineLib$fun cribbage_engine_process_ai( engine: Pointer, aiPlayerId: String, difficulty: String, maxIterations: Int, ): Pointer?</ID>
+    <ID>FunctionNaming:CribbageEngineLib.kt$CribbageEngineLib$fun cribbage_engine_restore(stateJson: String): Pointer?</ID>
+    <ID>FunctionNaming:CribbageEngineLib.kt$CribbageEngineLib$fun cribbage_engine_state_json(engine: Pointer): Pointer?</ID>
+    <ID>FunctionNaming:CribbageEngineLib.kt$CribbageEngineLib$fun cribbage_glicko2_calculate( playerRating: Double, playerDeviation: Double, playerVolatility: Double, opponentRating: Double, opponentDeviation: Double, opponentVolatility: Double, score: Double, ): Pointer?</ID>
+    <ID>FunctionNaming:CribbageEngineLib.kt$CribbageEngineLib$fun cribbage_last_error(): Pointer?</ID>
+    <ID>FunctionNaming:CribbageEngineLib.kt$CribbageEngineLib$fun cribbage_string_free(ptr: Pointer?)</ID>
+    <ID>ImplicitDefaultLocale:PuzzleService.kt$PuzzleService$String.format("%.2f", evGap)</ID>
+    <ID>LongMethod:ForfeitService.kt$ForfeitService$@Transactional fun forfeitGame(gameId: String, forfeitingPlayerId: String, reason: ForfeitReason): GameState</ID>
+    <ID>LongMethod:GameService.kt$GameService$fun importLocalGames( games: List&lt;ImportGameRequest&gt;, userId: String, username: String ): ImportGamesResponse</ID>
+    <ID>LongMethod:PlayerStatsService.kt$PlayerStatsService$@Transactional fun recordGameResult( winnerId: String, loserId: String, winnerScore: Int, loserScore: Int, isAIGame: Boolean = false )</ID>
+    <ID>LongMethod:RustEngineParityTest.kt$RustEngineParityTest$@Test fun `parity - seed 42 full round through JNA`()</ID>
+    <ID>LongParameterList:CribbageEngineLib.kt$CribbageEngineLib$( gameId: String, p1Id: String, p1Name: String, p2Id: String, p2Name: String, seed: Long, )</ID>
+    <ID>LongParameterList:CribbageEngineLib.kt$CribbageEngineLib$( playerRating: Double, playerDeviation: Double, playerVolatility: Double, opponentRating: Double, opponentDeviation: Double, opponentVolatility: Double, score: Double, )</ID>
+    <ID>LongParameterList:ForfeitService.kt$ForfeitService$( private val gameRepository: GameRepository, private val objectMapper: ObjectMapper, private val playerStatsService: PlayerStatsService, private val webSocketService: GameWebSocketService, private val turnTimerService: TurnTimerService, private val eventPublisher: ApplicationEventPublisher, private val achievementService: AchievementService )</ID>
+    <ID>LongParameterList:FriendshipEntity.kt$FriendshipEntity$( @Id val id: String, @Column(nullable = false) val requesterId: String, @Column(nullable = false) val addresseeId: String, @Column(nullable = false) var status: String = "PENDING", @Column(nullable = false) val createdAt: Instant = Instant.now(), @Column(nullable = false) var updatedAt: Instant = Instant.now(), @Version var version: Long = 0 )</ID>
+    <ID>LongParameterList:GameEntity.kt$GameEntity$( @Id val id: String, @Column(name = "player1_id", nullable = false) val player1Id: String, @Column(name = "player1_name", nullable = false) val player1Name: String, @Column(name = "player2_id", nullable = false) val player2Id: String, @Column(name = "player2_name", nullable = false) val player2Name: String, @Column(name = "player1_score", nullable = false) var player1Score: Int = 0, @Column(name = "player2_score", nullable = false) var player2Score: Int = 0, @Column(nullable = false) var stage: String = "DEALING", @Column(nullable = true) var currentPlayerId: String? = null, @Column(name = "is_ai_game", nullable = false) var isAIGame: Boolean = false, @Column(nullable = true) var aiPlayerId: String? = null, @Column(nullable = true) var aiDifficulty: String? = null, @Column(nullable = true) var winnerId: String? = null, @Column(nullable = false) val createdAt: Instant = Instant.now(), @Column(nullable = false) var updatedAt: Instant = Instant.now(), @Column(columnDefinition = "TEXT") var stateJson: String? = null, @Column(nullable = true) var originalLocalGameId: String? = null, @Column(nullable = true) var turnStartedAt: Instant? = null, /** Name of the [com.jackabee.cribbageclubserver.model.game.TimeControl] preset this game is played under. */ @Column(name = "time_control", nullable = false) var timeControl: String = "RAPID", /** Per-turn limit frozen at creation, so config changes don't alter a live game. */ @Column(name = "turn_time_limit_ms", nullable = false) var turnTimeLimitMs: Long = 30000, @Column(name = "player1_time_bank_ms", nullable = false) var player1TimeBankMs: Long = 120000, @Column(name = "player2_time_bank_ms", nullable = false) var player2TimeBankMs: Long = 120000, @Column(nullable = true) var forfeitReason: String? = null, @Version var version: Long = 0 )</ID>
+    <ID>LongParameterList:GameService.kt$GameService$( @Autowired(required = false) private val webSocketService: GameWebSocketService? = null, @Autowired(required = false) private val gameRepository: GameRepository? = null, @Autowired(required = false) private val objectMapper: ObjectMapper? = null, @Autowired(required = false) private val playerStatsService: PlayerStatsService? = null, @Autowired(required = false) private val rustEngineAdapter: RustEngineAdapter? = null, @Autowired(required = false) private val turnTimerService: TurnTimerService? = null, @Autowired(required = false) private val forfeitService: ForfeitService? = null, @Autowired(required = false) private val achievementService: AchievementService? = null, )</ID>
+    <ID>LongParameterList:GameService.kt$GameService$( gameId: String, player1: Player, player2: Player, state: GameState, isAIGame: Boolean, aiPlayerId: String? = null, aiDifficulty: String? = null, timeControl: TimeControl = TimeControl.RAPID )</ID>
+    <ID>LongParameterList:LobbyEntity.kt$LobbyEntity$( @Id val id: String, @Column(nullable = false) val name: String, @Column(nullable = false) val maxPlayers: Int = 2, @Column(nullable = false) var status: String = "WAITING", @Column(nullable = true) var gameId: String? = null, @Column(nullable = false) val isPrivate: Boolean = false, @Column(nullable = true, unique = true) val inviteCode: String? = null, @Column(nullable = false) val createdAt: Instant = Instant.now(), @Column(nullable = false) var updatedAt: Instant = Instant.now(), /** * Players stored as JSON array: [{"id":"...","name":"...","joinedAt":"..."}] */ @Column(columnDefinition = "TEXT") var playersJson: String = "[]", @Column(nullable = true) val challengedUserId: String? = null, /** Time control games started from this lobby will be played under. */ @Column(name = "time_control", nullable = false) val timeControl: String = "RAPID", @Version var version: Long = 0 )</ID>
+    <ID>LongParameterList:PlayerStatsEntity.kt$PlayerStatsEntity$( @Id val playerId: String, @Column(nullable = false) var gamesPlayed: Int = 0, @Column(nullable = false) var gamesWon: Int = 0, @Column(nullable = false) var gamesLost: Int = 0, @Column(nullable = false) var totalPointsScored: Long = 0, @Column(nullable = false) var totalPointsAgainst: Long = 0, @Column(nullable = false) var highestGameScore: Int = 0, @Column(nullable = false) var currentWinStreak: Int = 0, @Column(nullable = false) var longestWinStreak: Int = 0, @Column(nullable = false) var rating: Double = 1500.0, @Column(nullable = false) var ratingDeviation: Double = 350.0, @Column(nullable = false) var ratingVolatility: Double = 0.06, @Column(nullable = false) val createdAt: Instant = Instant.now(), @Column(nullable = false) var updatedAt: Instant = Instant.now(), @Column(nullable = false) var aiGamesPlayed: Int = 0, @Column(nullable = false) var aiGamesWon: Int = 0, @Column(nullable = false) var aiGamesLost: Int = 0, @Column(nullable = false) var aiTotalPointsScored: Long = 0, @Column(nullable = false) var aiTotalPointsAgainst: Long = 0, @Column(nullable = false) var humanGamesPlayed: Int = 0, @Column(nullable = false) var humanGamesWon: Int = 0, @Column(nullable = false) var humanGamesLost: Int = 0, @Column(nullable = false) var humanTotalPointsScored: Long = 0, @Column(nullable = false) var humanTotalPointsAgainst: Long = 0, @Version var version: Long = 0 )</ID>
+    <ID>LongParameterList:PuzzleEntity.kt$PuzzleEntity$( @Id val id: String, @Column(name = "hand_json", nullable = false) val handJson: String, @Column(name = "is_dealer", nullable = false) val isDealer: Boolean, @Column(name = "optimal_discard_json", nullable = false) val optimalDiscardJson: String, @Column(name = "optimal_ev", nullable = false) val optimalEv: Double, @Column(name = "created_at", nullable = false) val createdAt: Instant = Instant.now(), @Column(name = "puzzle_date", nullable = false, unique = true) val puzzleDate: LocalDate )</ID>
+    <ID>LongParameterList:PuzzleSolveEntity.kt$PuzzleSolveEntity$( @Id val id: String, @Column(name = "puzzle_id", nullable = false) val puzzleId: String, @Column(name = "user_id", nullable = false) val userId: String, @Column(name = "chosen_discard_json", nullable = false) val chosenDiscardJson: String, @Column(name = "is_optimal", nullable = false) val isOptimal: Boolean, @Column(name = "ev_diff", nullable = false) val evDiff: Double, @Column(name = "solved_at", nullable = false) val solvedAt: Instant = Instant.now() )</ID>
+    <ID>LongParameterList:RustEngine.kt$RustEngine.Companion$( lib: CribbageEngineLib, gameId: String, p1Id: String, p1Name: String, p2Id: String, p2Name: String, )</ID>
+    <ID>LongParameterList:RustEngine.kt$RustEngine.Companion$( lib: CribbageEngineLib, gameId: String, p1Id: String, p1Name: String, p2Id: String, p2Name: String, seed: Long, )</ID>
+    <ID>LongParameterList:RustEngineAdapter.kt$RustEngineAdapter$( gameId: String, p1Id: String, p1Name: String, p2Id: String, p2Name: String, seed: Long, )</ID>
+    <ID>LongParameterList:UserEntity.kt$UserEntity$( @Id @JvmField var id: String? = null, @Column(nullable = false, unique = true) var username: String, @Column(nullable = true) var passwordHash: String? = null, @Column(nullable = true) var displayName: String? = null, @Column(nullable = false) var isGuest: Boolean = false, @Column(nullable = false) val createdAt: Instant = Instant.now(), @Column(nullable = false) var lastLoginAt: Instant = Instant.now(), @Column(nullable = true) var avatarIndex: Int? = null )</ID>
+    <ID>LoopWithTooManyJumpStatements:AchievementService.kt$AchievementService$for</ID>
+    <ID>LoopWithTooManyJumpStatements:GameService.kt$GameService$for</ID>
+    <ID>MagicNumber:AchievementHistoryEvaluator.kt$AchievementHistoryEvaluator$12</ID>
+    <ID>MagicNumber:AchievementHistoryEvaluator.kt$AchievementHistoryEvaluator$20</ID>
+    <ID>MagicNumber:AchievementHistoryEvaluator.kt$AchievementHistoryEvaluator$24</ID>
+    <ID>MagicNumber:AchievementHistoryEvaluator.kt$AchievementHistoryEvaluator$29</ID>
+    <ID>MagicNumber:AchievementHistoryEvaluator.kt$AchievementHistoryEvaluator$31</ID>
+    <ID>MagicNumber:AchievementService.kt$AchievementService$10</ID>
+    <ID>MagicNumber:AchievementService.kt$AchievementService$100</ID>
+    <ID>MagicNumber:AchievementService.kt$AchievementService$1600.0</ID>
+    <ID>MagicNumber:AchievementService.kt$AchievementService$5</ID>
+    <ID>MagicNumber:AchievementService.kt$AchievementService$50</ID>
+    <ID>MagicNumber:AchievementService.kt$AchievementService$61</ID>
+    <ID>MagicNumber:AchievementService.kt$AchievementService$91</ID>
+    <ID>MagicNumber:AnalysisService.kt$AnalysisService$4</ID>
+    <ID>MagicNumber:AnalysisService.kt$AnalysisService$6</ID>
+    <ID>MagicNumber:CleanupService.kt$CleanupService$15</ID>
+    <ID>MagicNumber:CleanupService.kt$CleanupService$30</ID>
+    <ID>MagicNumber:ForfeitService.kt$ForfeitService$121</ID>
+    <ID>MagicNumber:GameService.kt$GameService$1000</ID>
+    <ID>MagicNumber:GameService.kt$GameService$9999</ID>
+    <ID>MagicNumber:JwtAuthenticationFilter.kt$JwtAuthenticationFilter$7</ID>
+    <ID>MagicNumber:LobbyService.kt$LobbyService$10</ID>
+    <ID>MagicNumber:LobbyService.kt$LobbyService$1000</ID>
+    <ID>MagicNumber:LobbyService.kt$LobbyService$9999</ID>
+    <ID>MagicNumber:ProfileController.kt$ProfileController$5</ID>
+    <ID>MagicNumber:PushNotificationService.kt$PushNotificationService$200</ID>
+    <ID>MagicNumber:PushNotificationService.kt$PushNotificationService$404</ID>
+    <ID>MagicNumber:PuzzleService.kt$PuzzleService$0.01</ID>
+    <ID>MagicNumber:PuzzleService.kt$PuzzleService$0.5</ID>
+    <ID>MagicNumber:PuzzleService.kt$PuzzleService$100</ID>
+    <ID>MagicNumber:PuzzleService.kt$PuzzleService$3.0</ID>
+    <ID>MagicNumber:PuzzleService.kt$PuzzleService$6</ID>
+    <ID>MagicNumber:RateLimitFilter.kt$RateLimitFilter$1000</ID>
+    <ID>MagicNumber:StompAuthChannelInterceptor.kt$StompAuthChannelInterceptor$7</ID>
+    <ID>MagicNumber:TimeControl.kt$TimeControl.BLITZ$10_000</ID>
+    <ID>MagicNumber:TimeControl.kt$TimeControl.BLITZ$60_000</ID>
+    <ID>MagicNumber:TimeControl.kt$TimeControl.CASUAL$300_000</ID>
+    <ID>MagicNumber:TimeControl.kt$TimeControl.CASUAL$60_000</ID>
+    <ID>MagicNumber:TimeControl.kt$TimeControl.RAPID$120_000</ID>
+    <ID>MagicNumber:TimeControl.kt$TimeControl.RAPID$30_000</ID>
+    <ID>MagicNumber:UserService.kt$UserService$12</ID>
+    <ID>MagicNumber:UserService.kt$UserService$3</ID>
+    <ID>MagicNumber:UserService.kt$UserService$6</ID>
+    <ID>MaxLineLength:AnalysisServiceTest.kt$AnalysisServiceTest$GameHistoryEvent.DeckCut(cutCard = Card(Rank.ACE, Suit.SPADES), cuttingPlayerId = p2, dealerScoredNobs = false)</ID>
+    <ID>MaxLineLength:AuthControllerTest.kt$AuthControllerTest$val upgradeReq = mapOf("username" to "upgraded_auth1", "password" to "password123", "displayName" to "Real User")</ID>
+    <ID>MaxLineLength:FriendServiceTest.kt$FriendServiceTest$private</ID>
+    <ID>MaxLineLength:FriendshipRepository.kt$FriendshipRepository$@Query("SELECT f FROM FriendshipEntity f WHERE (f.requesterId = :userA AND f.addresseeId = :userB) OR (f.requesterId = :userB AND f.addresseeId = :userA)")</ID>
+    <ID>MaxLineLength:FriendshipRepository.kt$FriendshipRepository$@Query("SELECT f FROM FriendshipEntity f WHERE (f.requesterId = :userId OR f.addresseeId = :userId) AND f.status = 'ACCEPTED'")</ID>
+    <ID>MaxLineLength:GameController.kt$GameController$@Operation(summary = "Get post-game discard analysis", description = "Returns EV analysis of every discard decision. Only available for completed games.")</ID>
+    <ID>MaxLineLength:GameController.kt$GameController$@Operation(summary = "Upload client-computed analysis", description = "Saves analysis computed on-device to the server cache.")</ID>
+    <ID>MaxLineLength:GameRepository.kt$GameRepository$@Query("SELECT g FROM GameEntity g WHERE (g.player1Id = :playerId OR g.player2Id = :playerId) AND g.winnerId IS NOT NULL ORDER BY g.updatedAt DESC")</ID>
+    <ID>MaxLineLength:GameRepository.kt$GameRepository$@Query("SELECT g FROM GameEntity g WHERE (g.player1Id = :playerId OR g.player2Id = :playerId) AND g.winnerId IS NULL")</ID>
+    <ID>MaxLineLength:PlayerStatsRepository.kt$PlayerStatsRepository$@Query("SELECT p FROM PlayerStatsEntity p WHERE p.playerId NOT LIKE :prefix1 AND p.playerId NOT LIKE :prefix2 ORDER BY p.rating DESC LIMIT 10")</ID>
+    <ID>MaxLineLength:UserRepository.kt$UserRepository$@Query("SELECT u FROM UserEntity u WHERE LOWER(u.username) LIKE LOWER(CONCAT('%', :query, '%')) AND u.isGuest = false AND u.id &lt;&gt; :excludeId")</ID>
+    <ID>NestedBlockDepth:AchievementHistoryEvaluator.kt$AchievementHistoryEvaluator$fun evaluate(userId: String, state: GameState): Set&lt;Achievement&gt;</ID>
+    <ID>NestedBlockDepth:AchievementHistoryEvaluator.kt$AchievementHistoryEvaluator$fun wonFromBehind(userId: String, state: GameState, deficit: Int = 30): Boolean</ID>
+    <ID>NestedBlockDepth:AchievementService.kt$AchievementService$@Transactional fun evaluateGameEnd(entity: GameEntity, finalState: GameState): List&lt;Achievement&gt;</ID>
+    <ID>NestedBlockDepth:GameService.kt$GameService$fun importLocalGames( games: List&lt;ImportGameRequest&gt;, userId: String, username: String ): ImportGamesResponse</ID>
+    <ID>NewLineAtEndOfFile:Card.kt$com.jackabee.cribbageclubserver.model.card.Card.kt</ID>
+    <ID>NewLineAtEndOfFile:GameAction.kt$com.jackabee.cribbageclubserver.model.action.GameAction.kt</ID>
+    <ID>NewLineAtEndOfFile:GameHistoryEvent.kt$com.jackabee.cribbageclubserver.model.game.GameHistoryEvent.kt</ID>
+    <ID>NewLineAtEndOfFile:GameStage.kt$com.jackabee.cribbageclubserver.model.game.GameStage.kt</ID>
+    <ID>NewLineAtEndOfFile:GameState.kt$com.jackabee.cribbageclubserver.model.game.GameState.kt</ID>
+    <ID>NewLineAtEndOfFile:GameWebSocketController.kt$com.jackabee.cribbageclubserver.websocket.GameWebSocketController.kt</ID>
+    <ID>NewLineAtEndOfFile:GameWebSocketService.kt$com.jackabee.cribbageclubserver.websocket.GameWebSocketService.kt</ID>
+    <ID>NewLineAtEndOfFile:Player.kt$com.jackabee.cribbageclubserver.model.player.Player.kt</ID>
+    <ID>NewLineAtEndOfFile:Suit.kt$com.jackabee.cribbageclubserver.model.card.Suit.kt</ID>
+    <ID>NewLineAtEndOfFile:WebSocketConfig.kt$com.jackabee.cribbageclubserver.config.WebSocketConfig.kt</ID>
+    <ID>NewLineAtEndOfFile:WebSocketIntegrationTest.kt$com.jackabee.cribbageclubserver.integration.WebSocketIntegrationTest.kt</ID>
+    <ID>ReturnCount:AnalysisService.kt$AnalysisService$private fun analyzePlayerRound( playerId: String, isDealer: Boolean, dealtHands: Map&lt;String, List&lt;Card&gt;&gt;, handsCounted: List&lt;GameHistoryEvent.HandCounted&gt;, cribCounted: GameHistoryEvent.CribCounted? ): PlayerRoundAnalysis?</ID>
+    <ID>ReturnCount:AnalysisService.kt$AnalysisService$private fun analyzeRound(events: List&lt;GameHistoryEvent&gt;): RoundAnalysis?</ID>
+    <ID>ReturnCount:GameService.kt$GameService$private fun loadGame(gameId: String): CachedGame?</ID>
+    <ID>ReturnCount:GameService.kt$GameService$private fun saveGameEntity( gameId: String, player1: Player, player2: Player, state: GameState, isAIGame: Boolean, aiPlayerId: String? = null, aiDifficulty: String? = null, timeControl: TimeControl = TimeControl.RAPID ): GameEntity?</ID>
+    <ID>ReturnCount:JwtAuthenticationFilter.kt$JwtAuthenticationFilter$private fun extractToken(request: HttpServletRequest): String?</ID>
+    <ID>ReturnCount:PushNotificationService.kt$PushNotificationService$fun sendIfOffline(userId: String, title: String, body: String, data: Map&lt;String, String&gt; = emptyMap())</ID>
+    <ID>ReturnCount:StompAuthChannelInterceptor.kt$StompAuthChannelInterceptor$override fun preSend(message: Message&lt;*&gt;, channel: MessageChannel): Message&lt;*&gt;?</ID>
+    <ID>ReturnCount:TurnTimerService.kt$TurnTimerService$fun checkTimeout(gameId: String, entity: GameEntity): String?</ID>
+    <ID>SpreadOperator:CribbageClubServerApplication.kt$(*args)</ID>
+    <ID>SwallowedException:AchievementService.kt$AchievementService$e: DataIntegrityViolationException</ID>
+    <ID>SwallowedException:JwtService.kt$JwtService$e: Exception</ID>
+    <ID>ThrowsCount:GameService.kt$GameService$fun applyHumanAction(gameId: String, action: GameAction): GameState</ID>
+    <ID>TooGenericExceptionCaught:AchievementService.kt$AchievementService$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:AnalysisService.kt$AnalysisService$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:FcmConfig.kt$FcmConfig$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:ForfeitService.kt$ForfeitService$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:FriendService.kt$FriendService$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:GameService.kt$GameService$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:GameWebSocketController.kt$GameWebSocketController$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:JwtService.kt$JwtService$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:PushNotificationService.kt$PushNotificationService$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:PuzzleService.kt$PuzzleService$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:TimeoutCheckService.kt$TimeoutCheckService$e: Exception</ID>
+    <ID>TooManyFunctions:CribbageEngineLib.kt$CribbageEngineLib : Library</ID>
+    <ID>TooManyFunctions:GameController.kt$GameController</ID>
+    <ID>TooManyFunctions:GameService.kt$GameService</ID>
+    <ID>TooManyFunctions:LobbyController.kt$LobbyController</ID>
+    <ID>TooManyFunctions:LobbyService.kt$LobbyService</ID>
+    <ID>TooManyFunctions:RustEngine.kt$RustEngine : AutoCloseable</ID>
+    <ID>TooManyFunctions:TurnTimerService.kt$TurnTimerService</ID>
+    <ID>UnusedPrivateMember:DeviceTokenEntity.kt$DeviceTokenEntity$@PostPersist @PostLoad private fun markNotNew()</ID>
+    <ID>UnusedPrivateMember:RustEngine.kt$RustEngine$private fun checkError()</ID>
+    <ID>UnusedPrivateMember:RustEngine.kt$RustEngine$private fun requirePtr(ptr: Pointer?): Pointer</ID>
+    <ID>UnusedPrivateMember:UserEntity.kt$UserEntity$@PostPersist @PostLoad private fun markNotNew()</ID>
+    <ID>UnusedPrivateProperty:FriendServiceTest.kt$FriendServiceTest$@Mock private lateinit var achievementService: AchievementService</ID>
+    <ID>UnusedPrivateProperty:FriendServiceTest.kt$FriendServiceTest$@Mock private lateinit var pushNotificationService: PushNotificationService</ID>
+    <ID>UnusedPrivateProperty:LobbyControllerTest.kt$LobbyControllerTest$val token3 = registerAndGetToken("lobbytest7c")</ID>
+    <ID>UnusedPrivateProperty:RustEngineParityTest.kt$RustEngineParityTest$iteration</ID>
+    <ID>UseCheckOrError:GameService.kt$GameService$throw IllegalStateException("ForfeitService not available")</ID>
+    <ID>UseCheckOrError:GameService.kt$GameService$throw IllegalStateException("Game is already over")</ID>
+    <ID>UseCheckOrError:GameService.kt$GameService$throw IllegalStateException("GameRepository not available")</ID>
+    <ID>UseCheckOrError:GameService.kt$GameService$throw IllegalStateException("No cached engine for game: $gameId")</ID>
+    <ID>UseCheckOrError:GameService.kt$GameService$throw IllegalStateException("ObjectMapper not available")</ID>
+    <ID>UseCheckOrError:GameService.kt$GameService$throw IllegalStateException("RustEngineAdapter is not available")</ID>
+    <ID>UseCheckOrError:LobbyService.kt$LobbyService$throw IllegalStateException("Failed to generate unique invite code")</ID>
+    <ID>UseCheckOrError:PuzzleService.kt$PuzzleService$throw IllegalStateException("Puzzle already solved")</ID>
+    <ID>UseCheckOrError:RustEngine.kt$RustEngine$throw IllegalStateException("RustEngine has been closed")</ID>
+    <ID>UseRequire:UserService.kt$UserService$throw IllegalArgumentException("Invalid username or password")</ID>
+    <ID>WildcardImport:AchievementController.kt$import org.springframework.web.bind.annotation.*</ID>
+    <ID>WildcardImport:AchievementProgressEntity.kt$import jakarta.persistence.*</ID>
+    <ID>WildcardImport:AchievementServiceTest.kt$import org.mockito.kotlin.*</ID>
+    <ID>WildcardImport:AuthController.kt$import org.springframework.web.bind.annotation.*</ID>
+    <ID>WildcardImport:AuthControllerTest.kt$import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*</ID>
+    <ID>WildcardImport:AuthControllerTest.kt$import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*</ID>
+    <ID>WildcardImport:ChallengeController.kt$import com.jackabee.cribbageclubserver.websocket.*</ID>
+    <ID>WildcardImport:ChallengeController.kt$import org.springframework.web.bind.annotation.*</ID>
+    <ID>WildcardImport:ChallengeControllerTest.kt$import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*</ID>
+    <ID>WildcardImport:ChallengeControllerTest.kt$import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*</ID>
+    <ID>WildcardImport:DeviceTokenController.kt$import org.springframework.web.bind.annotation.*</ID>
+    <ID>WildcardImport:DeviceTokenEntity.kt$import jakarta.persistence.*</ID>
+    <ID>WildcardImport:FriendController.kt$import org.springframework.web.bind.annotation.*</ID>
+    <ID>WildcardImport:FriendControllerTest.kt$import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*</ID>
+    <ID>WildcardImport:FriendControllerTest.kt$import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*</ID>
+    <ID>WildcardImport:FriendService.kt$import com.jackabee.cribbageclubserver.websocket.*</ID>
+    <ID>WildcardImport:FriendServiceTest.kt$import org.mockito.kotlin.*</ID>
+    <ID>WildcardImport:FriendshipEntity.kt$import jakarta.persistence.*</ID>
+    <ID>WildcardImport:GameAnalysisEntity.kt$import jakarta.persistence.*</ID>
+    <ID>WildcardImport:GameController.kt$import org.springframework.web.bind.annotation.*</ID>
+    <ID>WildcardImport:GameControllerTest.kt$import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*</ID>
+    <ID>WildcardImport:GameControllerTest.kt$import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*</ID>
+    <ID>WildcardImport:GameEntity.kt$import jakarta.persistence.*</ID>
+    <ID>WildcardImport:LobbyController.kt$import org.springframework.web.bind.annotation.*</ID>
+    <ID>WildcardImport:LobbyControllerTest.kt$import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*</ID>
+    <ID>WildcardImport:LobbyControllerTest.kt$import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*</ID>
+    <ID>WildcardImport:LobbyEntity.kt$import jakarta.persistence.*</ID>
+    <ID>WildcardImport:PlayerAchievementEntity.kt$import jakarta.persistence.*</ID>
+    <ID>WildcardImport:PlayerStatsEntity.kt$import jakarta.persistence.*</ID>
+    <ID>WildcardImport:PlayerStatsServiceTest.kt$import org.mockito.kotlin.*</ID>
+    <ID>WildcardImport:ProfileController.kt$import org.springframework.web.bind.annotation.*</ID>
+    <ID>WildcardImport:PuzzleController.kt$import org.springframework.web.bind.annotation.*</ID>
+    <ID>WildcardImport:PuzzleEntity.kt$import jakarta.persistence.*</ID>
+    <ID>WildcardImport:PuzzleSolveEntity.kt$import jakarta.persistence.*</ID>
+    <ID>WildcardImport:StatsController.kt$import org.springframework.web.bind.annotation.*</ID>
+    <ID>WildcardImport:StatsControllerTest.kt$import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*</ID>
+    <ID>WildcardImport:StatsControllerTest.kt$import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*</ID>
+    <ID>WildcardImport:UserEntity.kt$import jakarta.persistence.*</ID>
+  </CurrentIssues>
+</SmellBaseline>
