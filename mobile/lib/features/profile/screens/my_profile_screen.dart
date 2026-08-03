@@ -138,8 +138,11 @@ class MyProfileScreen extends ConsumerWidget {
                         ? 'You\'re playing as a guest. Create an account to keep a rating and your game history.'
                         : 'Sign in to keep a rating and your game history.',
                     actionLabel: auth.isLoggedIn ? 'Upgrade' : 'Sign in',
-                    onTap: () =>
-                        context.go(auth.isLoggedIn ? '/upgrade' : '/login'),
+                    // Upgrade is a detour you come back from; signing in
+                    // replaces this screen outright.
+                    onTap: () => auth.isLoggedIn
+                        ? context.push('/upgrade')
+                        : context.go('/login'),
                   ),
                   const SizedBox(height: 14),
                 ],
@@ -211,13 +214,13 @@ class MyProfileScreen extends ConsumerWidget {
                   badge: ref
                       .watch(notificationCountProvider)
                       .whenOrNull(data: (n) => n.total),
-                  onTap: () => context.go('/friends'),
+                  onTap: () => context.push('/friends'),
                 ),
                 const SizedBox(height: 8),
                 _LinkRow(
                   icon: Icons.leaderboard_outlined,
                   label: 'Leaderboard',
-                  onTap: () => context.go('/leaderboard'),
+                  onTap: () => context.push('/leaderboard'),
                 ),
                 const SizedBox(height: 18),
 
@@ -255,7 +258,7 @@ class MyProfileScreen extends ConsumerWidget {
                       ),
                       const Spacer(),
                       GestureDetector(
-                        onTap: () => context.go('/history'),
+                        onTap: () => context.push('/history'),
                         child: Text(
                           'See all',
                           style: TextStyle(

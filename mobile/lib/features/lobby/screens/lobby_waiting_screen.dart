@@ -10,6 +10,7 @@ import '../../../core/models/lobby.dart';
 import '../../../shared/widgets/cc_buttons.dart';
 import '../../../shared/widgets/cc_screen.dart';
 import '../../../shared/widgets/cc_swipe_back.dart';
+import '../../../shared/utils/navigation.dart';
 
 class LobbyWaitingScreen extends ConsumerStatefulWidget {
   final String lobbyId;
@@ -59,7 +60,7 @@ class _LobbyWaitingScreenState extends ConsumerState<LobbyWaitingScreen> {
       });
       if (lobby.status == LobbyStatus.inGame && lobby.gameId != null) {
         _pollTimer?.cancel();
-        context.go('/game/${lobby.gameId}');
+        context.pushReplacement('/game/${lobby.gameId}');
       }
     } catch (e) {
       debugPrint('[Lobby] Failed to fetch lobby ${widget.lobbyId}: $e');
@@ -78,7 +79,7 @@ class _LobbyWaitingScreenState extends ConsumerState<LobbyWaitingScreen> {
     } catch (e) {
       debugPrint('[Lobby] Failed to leave lobby ${widget.lobbyId}: $e');
     }
-    if (mounted) context.go('/');
+    if (mounted) context.backOrHome();
   }
 
   void _copyCode(String code) {
@@ -118,7 +119,7 @@ class _LobbyWaitingScreenState extends ConsumerState<LobbyWaitingScreen> {
                             title: 'This lobby is unavailable',
                             detail: _error,
                             action: 'Back to home',
-                            onAction: () => context.go('/'),
+                            onAction: () => context.backOrHome(),
                           )
                         : _buildLobbyContent(lobby!),
                   ),

@@ -169,7 +169,7 @@ class GameHistoryRow extends StatelessWidget {
     final resultColor = game.isWin ? colors.success : colors.error;
 
     return InkWell(
-      onTap: () => context.go('/replay/${game.gameId}'),
+      onTap: () => context.push('/replay/${game.gameId}'),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         child: Row(
@@ -230,7 +230,7 @@ class GameHistoryRow extends StatelessWidget {
             ),
             const SizedBox(width: 10),
             InkWell(
-              onTap: () => context.go('/analysis/${game.gameId}'),
+              onTap: () => context.push('/analysis/${game.gameId}'),
               borderRadius: BorderRadius.circular(6),
               child: Padding(
                 padding: const EdgeInsets.all(4),

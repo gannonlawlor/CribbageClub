@@ -8,6 +8,7 @@ import '../../../shared/utils/responsive.dart';
 import '../../../shared/utils/text_utils.dart';
 import '../../../shared/widgets/loading_overlay.dart';
 import '../../../shared/widgets/cc_swipe_back.dart';
+import '../../../shared/utils/navigation.dart';
 
 final _publicLobbiesProvider = FutureProvider.autoDispose<List<Lobby>>((
   ref,
@@ -28,13 +29,13 @@ class LobbyBrowserScreen extends ConsumerWidget {
     final isJoining = ref.watch(_isJoiningProvider);
 
     return CcSwipeBack(
-      onBack: () => context.go('/'),
+      onBack: () => context.backOrHome(),
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Browse Lobbies'),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
-            onPressed: () => context.go('/'),
+            onPressed: () => context.backOrHome(),
           ),
           actions: [
             IconButton(
@@ -197,9 +198,9 @@ class LobbyBrowserScreen extends ConsumerWidget {
       final result = await restClient.joinLobby(lobbyId);
       if (context.mounted) {
         if (result.gameState != null) {
-          context.go('/game/${result.gameState!.gameId}');
+          context.push('/game/${result.gameState!.gameId}');
         } else {
-          context.go('/lobby/${result.lobby.id}');
+          context.push('/lobby/${result.lobby.id}');
         }
       }
     } catch (e) {
@@ -224,7 +225,7 @@ class LobbyBrowserScreen extends ConsumerWidget {
         isPrivate: false,
       );
       if (context.mounted) {
-        context.go('/lobby/${lobby.id}');
+        context.push('/lobby/${lobby.id}');
       }
     } catch (e) {
       debugPrint('[Lobby] Failed to create lobby: $e');

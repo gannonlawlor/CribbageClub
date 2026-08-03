@@ -25,6 +25,7 @@ import '../../game/widgets/player_bar.dart';
 import '../../game/widgets/starter_crib.dart';
 import '../state/replay_snapshot_builder.dart';
 import '../../../shared/widgets/cc_swipe_back.dart';
+import '../../../shared/utils/navigation.dart';
 
 /// Horizontal inset that keeps the table clear of the perimeter track —
 /// matches the game screen so a replay reads as the same board.
@@ -238,8 +239,8 @@ class ReplayScreen extends ConsumerWidget {
                   SizedBox(
                     width: 200,
                     child: CcSecondaryButton(
-                      label: 'Back to home',
-                      onPressed: () => context.go('/'),
+                      label: 'Go back',
+                      onPressed: () => context.backOrHome(),
                     ),
                   ),
                 ],
@@ -303,7 +304,7 @@ class _ReplayContent extends ConsumerWidget {
         : (snapshot.scores[opponentId] ?? 0);
 
     return CcSwipeBack(
-      onBack: () => context.go('/'),
+      onBack: () => context.backOrHome(),
       // Keep clear of the scrubber, which takes horizontal drags of its own.
       bottomInset: _transportHeight + MediaQuery.of(context).padding.bottom,
       child: Scaffold(
@@ -382,8 +383,8 @@ class _ReplayContent extends ConsumerWidget {
                           opponentName: opponentName,
                           isDealer: isDealer,
                           cardWidth: tableCardW,
-                          onClose: () => context.go('/'),
-                          onAnalyze: () => context.go('/analysis/$gameId'),
+                          onClose: () => context.backOrHome(),
+                          onAnalyze: () => context.push('/analysis/$gameId'),
                         ),
                       ),
                     ),

@@ -52,36 +52,41 @@ final routerProvider = Provider<GoRouter>((ref) {
           return NoTransitionPage(child: GameScreen(gameId: gameId));
         },
       ),
+      // Everything below is pushed onto the tab root, so it gets a MaterialPage
+      // rather than a NoTransitionPage: the page transition is what carries the
+      // interactive pop gesture (edge swipe on iOS, predictive back on
+      // Android). A NoTransitionPage has no transition to drive, so there's no
+      // gesture either.
       GoRoute(
         path: '/upgrade',
         pageBuilder: (context, state) =>
-            const NoTransitionPage(child: UpgradeScreen()),
+            const MaterialPage(child: UpgradeScreen()),
       ),
       GoRoute(
         path: '/history',
         pageBuilder: (context, state) =>
-            const NoTransitionPage(child: GameHistoryScreen()),
+            const MaterialPage(child: GameHistoryScreen()),
       ),
       GoRoute(
         path: '/leaderboard',
         pageBuilder: (context, state) =>
-            const NoTransitionPage(child: LeaderboardScreen()),
+            const MaterialPage(child: LeaderboardScreen()),
       ),
       GoRoute(
         path: '/friends',
         pageBuilder: (context, state) =>
-            const NoTransitionPage(child: FriendsScreen()),
+            const MaterialPage(child: FriendsScreen()),
       ),
       GoRoute(
         path: '/lobbies',
         pageBuilder: (context, state) =>
-            const NoTransitionPage(child: LobbyBrowserScreen()),
+            const MaterialPage(child: LobbyBrowserScreen()),
       ),
       GoRoute(
         path: '/lobby/:lobbyId',
         pageBuilder: (context, state) {
           final lobbyId = state.pathParameters['lobbyId']!;
-          return NoTransitionPage(child: LobbyWaitingScreen(lobbyId: lobbyId));
+          return MaterialPage(child: LobbyWaitingScreen(lobbyId: lobbyId));
         },
       ),
       GoRoute(
@@ -93,32 +98,32 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/profile/:userId',
         pageBuilder: (context, state) {
           final userId = state.pathParameters['userId']!;
-          return NoTransitionPage(child: ProfileScreen(userId: userId));
+          return MaterialPage(child: ProfileScreen(userId: userId));
         },
       ),
       GoRoute(
         path: '/analysis/:gameId',
         pageBuilder: (context, state) {
           final gameId = state.pathParameters['gameId']!;
-          return NoTransitionPage(child: AnalysisScreen(gameId: gameId));
+          return MaterialPage(child: AnalysisScreen(gameId: gameId));
         },
       ),
       GoRoute(
         path: '/replay/:gameId',
         pageBuilder: (context, state) {
           final gameId = state.pathParameters['gameId']!;
-          return NoTransitionPage(child: ReplayScreen(gameId: gameId));
+          return MaterialPage(child: ReplayScreen(gameId: gameId));
         },
       ),
       GoRoute(
         path: '/daily-puzzle',
         pageBuilder: (context, state) =>
-            const NoTransitionPage(child: DailyPuzzleScreen()),
+            const MaterialPage(child: DailyPuzzleScreen()),
       ),
       GoRoute(
         path: '/practice-puzzle',
         pageBuilder: (context, state) =>
-            const NoTransitionPage(child: PracticePuzzleScreen()),
+            const MaterialPage(child: PracticePuzzleScreen()),
       ),
       GoRoute(
         path: '/settings',

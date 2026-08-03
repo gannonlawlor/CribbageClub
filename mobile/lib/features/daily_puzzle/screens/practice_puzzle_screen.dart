@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../config/theme/app_colors.dart';
 import '../../../shared/widgets/cc_buttons.dart';
@@ -15,6 +14,7 @@ import '../widgets/keep_rank_tile.dart';
 import '../widgets/puzzle_hand.dart';
 import '../widgets/puzzle_prompt.dart';
 import '../../../shared/widgets/cc_swipe_back.dart';
+import '../../../shared/utils/navigation.dart';
 
 class PracticePuzzleScreen extends ConsumerStatefulWidget {
   const PracticePuzzleScreen({super.key});
@@ -43,7 +43,7 @@ class _PracticePuzzleScreenState extends ConsumerState<PracticePuzzleScreen> {
     final puzzle = state.puzzle;
 
     return CcSwipeBack(
-      onBack: () => context.go('/'),
+      onBack: () => context.backOrHome(),
       child: Scaffold(
         body: Container(
           decoration: BoxDecoration(gradient: colors.gameGradient),
@@ -88,7 +88,7 @@ class _PlayingView extends ConsumerWidget {
         CcScreenHeader(
           title: 'Puzzle mode',
           subtitle: 'Puzzle ${state.puzzleNumber}',
-          onBack: () => context.go('/'),
+          onBack: () => context.backOrHome(),
           actions: [
             if (state.totalSolved > 0)
               _StatsBadge(
@@ -157,7 +157,7 @@ class _RevealedView extends ConsumerWidget {
         CcScreenHeader(
           title: 'Puzzle mode',
           subtitle: 'Puzzle ${state.puzzleNumber}',
-          onBack: () => context.go('/'),
+          onBack: () => context.backOrHome(),
           actions: [
             if (state.totalSolved > 0)
               _StatsBadge(
@@ -235,7 +235,7 @@ class _RevealedView extends ConsumerWidget {
                 child: CcSecondaryButton(
                   label: 'Done',
                   height: 48,
-                  onPressed: () => context.go('/'),
+                  onPressed: () => context.backOrHome(),
                 ),
               ),
               const SizedBox(width: 12),

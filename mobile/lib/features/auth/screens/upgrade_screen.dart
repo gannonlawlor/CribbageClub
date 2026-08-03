@@ -7,6 +7,7 @@ import '../../../shared/widgets/cc_buttons.dart';
 import '../../../shared/widgets/cc_field.dart';
 import '../../../shared/widgets/loading_overlay.dart';
 import '../../../shared/widgets/cc_swipe_back.dart';
+import '../../../shared/utils/navigation.dart';
 
 /// Guest → full account. Mirrors the login screen's layout so the two auth
 /// forms read as one flow; the copy is the design language's guest upsell
@@ -97,7 +98,7 @@ class _UpgradeScreenState extends ConsumerState<UpgradeScreen> {
     });
 
     return CcSwipeBack(
-      onBack: () => context.go('/'),
+      onBack: () => context.backOrHome(),
       child: Scaffold(
         body: LoadingOverlay(
           isLoading: auth.isLoading,
@@ -108,7 +109,7 @@ class _UpgradeScreenState extends ConsumerState<UpgradeScreen> {
                   alignment: Alignment.topLeft,
                   child: IconButton(
                     icon: Icon(Icons.arrow_back, color: colors.textSecondary),
-                    onPressed: () => context.go('/'),
+                    onPressed: () => context.backOrHome(),
                   ),
                 ),
                 Center(
@@ -203,7 +204,7 @@ class _UpgradeScreenState extends ConsumerState<UpgradeScreen> {
                             ),
                             const SizedBox(height: 12),
                             TextButton(
-                              onPressed: () => context.go('/'),
+                              onPressed: () => context.backOrHome(),
                               child: Text(
                                 'Not now',
                                 style: TextStyle(
