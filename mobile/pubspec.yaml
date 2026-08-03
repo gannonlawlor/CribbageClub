@@ -68,11 +68,21 @@ dev_dependencies:
   flutter_launcher_icons: ^0.14.3
 
 
+# App icon. app_icon.png is the same peg-in-hole mark iOS ships, so both
+# platforms render from one source. Regenerate with:
+#   dart run flutter_launcher_icons
 flutter_launcher_icons:
   ios: true
   android: true
   image_path: "assets/icon/app_icon.png"
   remove_alpha_ios: true
+  # Android 8+ masks the icon to the launcher's shape, so the mark can't be
+  # baked into the artwork — it's split into a background (the same vertical
+  # gradient as the iOS icon) and the peg on its own layer. The peg is already
+  # scaled to sit inside the mask's safe zone, hence inset 0.
+  adaptive_icon_background: "assets/icon/app_icon_background.png"
+  adaptive_icon_foreground: "assets/icon/app_icon_foreground.png"
+  adaptive_icon_foreground_inset: 0
 
 # Native launch screen (design language surfaces: dark = --surface-0,
 # light = --surface-1 "warm paper"). The peg mark carries its own dark hole
