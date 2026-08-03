@@ -19,15 +19,3 @@ pub enum GameAction {
     CountCrib { player_id: String },
 }
 
-impl GameAction {
-    pub fn player_id(&self) -> &str {
-        match self {
-            GameAction::DiscardToCrib { player_id, .. } => player_id,
-            GameAction::PlayCard { player_id, .. } => player_id,
-            GameAction::CutDeck { player_id } => player_id,
-            GameAction::Go { player_id } => player_id,
-            GameAction::CountHand { player_id } => player_id,
-            GameAction::CountCrib { player_id } => player_id,
-        }
-    }
-}

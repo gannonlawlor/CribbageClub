@@ -16,8 +16,6 @@ const KEEP_CARDS: usize = 4;
 const WIN_SCORE: i32 = 121;
 
 pub struct GameEngine {
-    #[allow(dead_code)]
-    id: String,
     deck: Deck,
     history: Vec<GameHistoryEvent>,
     state: GameState,
@@ -40,7 +38,6 @@ impl GameEngine {
 
         let id = id.into();
         let mut engine = GameEngine {
-            id: id.clone(),
             deck: deck.unwrap_or_default(),
             history: Vec::new(),
             state: GameState::new(&id, players),
@@ -69,7 +66,6 @@ impl GameEngine {
         };
 
         Ok(GameEngine {
-            id: restored_state.game_id.clone(),
             deck,
             history,
             state: restored_state,
