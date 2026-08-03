@@ -16,7 +16,7 @@ dart run build_runner build       # regenerate freezed/json_serializable code
 # Development (local backend)
 flutter run --flavor dev                                              # connected device
 
-# Alpha (Tailscale backend)
+# Alpha flavor (public staging backend via Tailscale Funnel)
 flutter run --flavor alpha --dart-define-from-file=dart_define/alpha.json
 
 # Release builds
@@ -31,9 +31,9 @@ Convenience scripts that can be run from anywhere (they `cd` to the mobile dir a
 | Script | Description |
 |--------|-------------|
 | `scripts/ios-dev.sh` | Run iOS debug against local backend (localhost:8080) |
-| `scripts/ios-alpha.sh` | Run iOS debug against alpha server (Tailscale) |
+| `scripts/ios-alpha.sh` | Run iOS debug against the public staging backend |
 | `scripts/android-dev.sh` | Run Android debug against local backend |
-| `scripts/android-alpha.sh` | Run Android debug against alpha server (Tailscale) |
+| `scripts/android-alpha.sh` | Run Android debug against the public staging backend |
 | `scripts/build-ios-alpha.sh` | Build iOS release IPA for TestFlight/archive |
 | `scripts/build-android-alpha.sh` | Build Android release APK + App Bundle |
 | `scripts/release-ios.sh` | Full iOS release: version bump → build → commit → tag → push → TestFlight upload. Flags: `--patch`, `--dry-run`, `--skip-upload` |
@@ -41,7 +41,7 @@ Convenience scripts that can be run from anywhere (they `cd` to the mobile dir a
 | `scripts/test.sh` | Run static analysis + tests |
 | `scripts/clean.sh` | Clean build artifacts and restore deps |
 
-Alpha scripts require your device to be on the Tailscale network.
+The staging backend is public via Tailscale Funnel (https://cribbage-staging.tail0b042f.ts.net) -- your device does not need to be on the tailnet.
 
 ## Project Structure
 
