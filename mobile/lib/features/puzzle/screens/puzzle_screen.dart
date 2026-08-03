@@ -6,6 +6,7 @@ import '../../../core/auth/auth_provider.dart';
 import '../../../core/models/card.dart';
 import '../../../core/models/game_analysis.dart';
 import '../../../core/models/puzzle.dart';
+import '../../../core/services/achievement_service.dart';
 import '../../game/widgets/card_widget.dart';
 import '../../../shared/widgets/cc_swipe_back.dart';
 
@@ -228,6 +229,8 @@ class _PuzzleScreenState extends ConsumerState<PuzzleScreen> {
         _result = result;
         _submitting = false;
       });
+      // The solve can unlock Daily Habit / Optimizer server-side.
+      ref.read(achievementSyncServiceProvider).sync();
     } catch (e) {
       debugPrint('[Puzzle] Failed to submit puzzle solution: $e');
       setState(() => _submitting = false);

@@ -9,6 +9,8 @@ import '../../../core/models/profile_response.dart';
 import '../../../shared/widgets/cc_screen.dart';
 import '../../../shared/widgets/game_history_row.dart';
 import '../../../shared/widgets/cc_swipe_back.dart';
+import '../../../core/services/achievement_service.dart';
+import '../widgets/achievements_section.dart';
 
 final _profileProvider = FutureProvider.autoDispose
     .family<ProfileResponse, String>((ref, userId) async {
@@ -166,6 +168,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       _buildStats(_categoryStats(p)),
 
                       const SizedBox(height: 24),
+
+                      // Achievements
+                      ref
+                              .watch(achievementsForUserProvider(widget.userId))
+                              .whenOrNull(
+                                data: (achievements) => Column(
+                                  children: [
+                                    AchievementsSection(response: achievements),
+                                    const SizedBox(height: 24),
+                                  ],
+                                ),
+                              ) ??
+                          const SizedBox.shrink(),
 
                       // Head-to-head (other users only)
                       if (!isOwnProfile) _buildHeadToHead(),

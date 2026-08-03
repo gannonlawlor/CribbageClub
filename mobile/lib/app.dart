@@ -8,6 +8,7 @@ import 'core/services/auth_game_sync_provider.dart';
 import 'core/services/connectivity_sync_provider.dart';
 import 'features/game/state/game_providers.dart';
 import 'shared/utils/responsive.dart';
+import 'shared/widgets/achievement_banner.dart';
 
 class App extends ConsumerStatefulWidget {
   const App({super.key});
@@ -38,9 +39,7 @@ class _AppState extends ConsumerState<App> with WidgetsBindingObserver {
         DeviceOrientation.landscapeRight,
       ]);
     } else {
-      SystemChrome.setPreferredOrientations([
-        DeviceOrientation.portraitUp,
-      ]);
+      SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
     }
   }
 
@@ -68,7 +67,13 @@ class _AppState extends ConsumerState<App> with WidgetsBindingObserver {
       debugShowCheckedModeBanner: false,
       builder: (context, child) {
         _enforceOrientationPolicy(context);
-        return child ?? const SizedBox.shrink();
+        // Achievement banners overlay the whole app, above navigation.
+        return Stack(
+          children: [
+            child ?? const SizedBox.shrink(),
+            const AchievementBannerHost(),
+          ],
+        );
       },
     );
   }

@@ -15,6 +15,7 @@ import '../models/leaderboard_entry.dart';
 import '../models/lobby.dart';
 import '../models/puzzle.dart';
 import '../models/head_to_head_response.dart';
+import '../models/achievement.dart';
 import '../models/profile_response.dart';
 import '../models/stats_response.dart';
 
@@ -46,7 +47,9 @@ class RestClient {
           }
           if (kDebugMode) {
             final hasAuth = token != null ? ' [auth]' : '';
-            debugPrint('[REST] → ${options.method} ${options.baseUrl}${options.path}$hasAuth');
+            debugPrint(
+              '[REST] → ${options.method} ${options.baseUrl}${options.path}$hasAuth',
+            );
             if (options.data != null) {
               debugPrint('[REST]   body: ${options.data}');
             }
@@ -55,22 +58,28 @@ class RestClient {
         },
         onResponse: (response, handler) {
           if (kDebugMode) {
-            debugPrint('[REST] ← ${response.statusCode} ${response.requestOptions.method} '
-                '${response.requestOptions.path} (${response.data.toString().length} chars)');
+            debugPrint(
+              '[REST] ← ${response.statusCode} ${response.requestOptions.method} '
+              '${response.requestOptions.path} (${response.data.toString().length} chars)',
+            );
           }
           handler.next(response);
         },
         onError: (error, handler) {
           if (kDebugMode) {
-            debugPrint('[REST] ✗ ${error.requestOptions.method} ${error.requestOptions.path} '
-                '→ ${error.response?.statusCode ?? 'no response'}');
+            debugPrint(
+              '[REST] ✗ ${error.requestOptions.method} ${error.requestOptions.path} '
+              '→ ${error.response?.statusCode ?? 'no response'}',
+            );
             debugPrint('[REST]   error: ${error.message}');
             if (error.response?.data != null) {
               debugPrint('[REST]   response body: ${error.response?.data}');
             }
             if (error.type == DioExceptionType.connectionTimeout ||
                 error.type == DioExceptionType.receiveTimeout) {
-              debugPrint('[REST]   timeout after ${error.requestOptions.connectTimeout}ms');
+              debugPrint(
+                '[REST]   timeout after ${error.requestOptions.connectTimeout}ms',
+              );
             }
             if (error.type == DioExceptionType.connectionError) {
               debugPrint('[REST]   connection failed — is the server running?');
@@ -378,6 +387,18 @@ class RestClient {
     return ProfileResponse.fromJson(response.data as Map<String, dynamic>);
   }
 
+  Future<AchievementsResponse> getAchievements(String userId) async {
+    final response = await _dio.get('/api/profiles/$userId/achievements');
+    return AchievementsResponse.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  Future<List<AchievementStatus>> getAchievementCatalog() async {
+    final response = await _dio.get('/api/achievements');
+    return (response.data as List<dynamic>)
+        .map((e) => AchievementStatus.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
   Future<HeadToHeadResponse> getHeadToHead(String userId) async {
     final response = await _dio.get('/api/profiles/$userId/head-to-head');
     return HeadToHeadResponse.fromJson(response.data as Map<String, dynamic>);
@@ -393,7 +414,10 @@ class RestClient {
   // Device Tokens
 
   Future<void> registerDeviceToken(String token, String platform) async {
-    await _dio.post('/api/device-tokens', data: {'token': token, 'platform': platform});
+    await _dio.post(
+      '/api/device-tokens',
+      data: {'token': token, 'platform': platform},
+    );
   }
 
   Future<void> unregisterDeviceToken(String token) async {

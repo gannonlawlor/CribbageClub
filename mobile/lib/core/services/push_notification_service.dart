@@ -13,8 +13,8 @@ class PushNotificationService {
   PushNotificationService({
     required RestClient restClient,
     required GoRouter Function() routerGetter,
-  })  : _restClient = restClient,
-        _routerGetter = routerGetter;
+  }) : _restClient = restClient,
+       _routerGetter = routerGetter;
 
   Future<void> initialize() async {
     final messaging = FirebaseMessaging.instance;
@@ -90,6 +90,8 @@ class PushNotificationService {
         if (gameId != null) {
           router.go('/game/$gameId');
         }
+      case 'ACHIEVEMENT_UNLOCKED':
+        router.go('/me');
     }
   }
 }
