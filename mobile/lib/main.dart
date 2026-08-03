@@ -1,6 +1,5 @@
 import 'dart:io' show Platform;
 
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
@@ -12,6 +11,7 @@ import 'config/theme/theme_provider.dart';
 import 'core/auth/auth_provider.dart';
 import 'core/auth/auth_service.dart';
 import 'core/providers/push_notification_provider.dart';
+import 'core/services/firebase_availability.dart';
 import 'core/services/local_game_history_provider.dart';
 import 'core/services/settings_provider.dart';
 import 'core/services/settings_service.dart';
@@ -23,7 +23,7 @@ Future<void> main() async {
   // engine, saved auth and settings) so there's no blank frame before the
   // first screen is ready.
   FlutterNativeSplash.preserve(widgetsBinding: binding);
-  await Firebase.initializeApp();
+  await initializeFirebase();
   await RustLib.init(
     externalLibrary: Platform.isIOS
         ? ExternalLibrary.process(iKnowHowToUseIt: true)
