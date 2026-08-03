@@ -15,6 +15,7 @@ import '../../daily_puzzle/widgets/explain_dialog.dart';
 import '../../game/state/game_providers.dart';
 import '../../game/widgets/card_widget.dart';
 import '../../../shared/widgets/cc_swipe_back.dart';
+import '../../../shared/utils/navigation.dart';
 
 /// Provider: checks local cache → server cache → computes on-device → caches everywhere.
 final analysisProvider = FutureProvider.family.autoDispose<GameAnalysis, String>((
@@ -97,7 +98,7 @@ class AnalysisScreen extends ConsumerWidget {
     final playerId = auth.userId ?? '';
 
     return CcSwipeBack(
-      onBack: () => context.go('/'),
+      onBack: () => context.backOrHome(),
       child: Scaffold(
         backgroundColor: colors.scaffoldBg,
         body: SafeArea(
@@ -108,8 +109,8 @@ class AnalysisScreen extends ConsumerWidget {
               child: Column(
                 children: [
                   _Header(
-                    onBack: () => context.go('/'),
-                    onReplay: () => context.go('/replay/$gameId'),
+                    onBack: () => context.backOrHome(),
+                    onReplay: () => context.push('/replay/$gameId'),
                   ),
                   Expanded(
                     child: analysis.when(
@@ -137,8 +138,8 @@ class AnalysisScreen extends ConsumerWidget {
                       error: (error, _) => _Message(
                         title: 'Analysis unavailable',
                         detail: '$error',
-                        action: 'Back to home',
-                        onAction: () => context.go('/'),
+                        action: 'Go back',
+                        onAction: () => context.backOrHome(),
                       ),
                     ),
                   ),

@@ -6,6 +6,7 @@ import '../../../core/auth/auth_provider.dart';
 import '../../../core/models/leaderboard_entry.dart';
 import '../../../shared/widgets/cc_screen.dart';
 import '../../../shared/widgets/cc_swipe_back.dart';
+import '../../../shared/utils/navigation.dart';
 
 final _leaderboardProvider = FutureProvider.autoDispose<List<LeaderboardEntry>>(
   (ref) async {
@@ -78,14 +79,14 @@ class LeaderboardScreen extends ConsumerWidget {
         error: (error, _) => CcMessage(
           title: 'Leaderboard unavailable',
           detail: '$error',
-          action: 'Back to home',
-          onAction: () => context.go('/'),
+          action: 'Go back',
+          onAction: () => context.backOrHome(),
         ),
       );
     }
 
     return CcSwipeBack(
-      onBack: () => context.go('/'),
+      onBack: () => context.backOrHome(),
       child: Scaffold(
         backgroundColor: colors.scaffoldBg,
         body: SafeArea(
@@ -97,7 +98,7 @@ class LeaderboardScreen extends ConsumerWidget {
                 children: [
                   CcScreenHeader(
                     title: 'Leaderboard',
-                    onBack: () => context.go('/'),
+                    onBack: () => context.backOrHome(),
                   ),
                   Expanded(child: body),
                 ],

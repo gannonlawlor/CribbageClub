@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import '../../../config/theme/app_colors.dart';
 import '../../../core/auth/auth_provider.dart';
 import '../../../core/models/game_state.dart';
@@ -8,6 +7,7 @@ import '../../../core/services/local_game_history_provider.dart';
 import '../../../shared/widgets/cc_screen.dart';
 import '../../../shared/widgets/game_history_row.dart';
 import '../../../shared/widgets/cc_swipe_back.dart';
+import '../../../shared/utils/navigation.dart';
 
 class GameHistoryScreen extends ConsumerWidget {
   const GameHistoryScreen({super.key});
@@ -51,7 +51,7 @@ class GameHistoryScreen extends ConsumerWidget {
     ];
 
     return CcSwipeBack(
-      onBack: () => context.go('/'),
+      onBack: () => context.backOrHome(),
       child: Scaffold(
         backgroundColor: colors.scaffoldBg,
         body: SafeArea(
@@ -66,7 +66,7 @@ class GameHistoryScreen extends ConsumerWidget {
                     subtitle: loading
                         ? null
                         : '$total game${total == 1 ? '' : 's'}',
-                    onBack: () => context.go('/'),
+                    onBack: () => context.backOrHome(),
                   ),
                   Expanded(
                     child: RefreshIndicator(

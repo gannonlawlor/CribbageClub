@@ -48,6 +48,7 @@ import '../widgets/stage_indicator.dart';
 import '../widgets/starter_crib.dart';
 import '../widgets/turn_timer.dart';
 import '../widgets/vertical_cribbage_board.dart';
+import '../../../shared/utils/navigation.dart';
 
 /// Tracks which local game IDs have already been saved to history (prevents duplicate saves on rebuild).
 final _savedLocalGamesProvider = StateProvider<Set<String>>((ref) => {});
@@ -156,7 +157,7 @@ class GameScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 16),
                   ElevatedButton(
-                    onPressed: () => context.go('/'),
+                    onPressed: () => context.backOrHome(),
                     child: const Text('Back to Home'),
                   ),
                 ],
@@ -253,7 +254,7 @@ class GameScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 16),
                   ElevatedButton(
-                    onPressed: () => context.go('/'),
+                    onPressed: () => context.backOrHome(),
                     child: const Text('Back to Home'),
                   ),
                 ],
@@ -703,7 +704,7 @@ class GameScreen extends ConsumerWidget {
                           onPressed: () {
                             ref.invalidate(activeLocalGameProvider);
                             ref.invalidate(localGameHistoryProvider);
-                            context.go('/');
+                            context.backOrHome();
                           },
                         ),
                       ),
@@ -950,7 +951,7 @@ class GameScreen extends ConsumerWidget {
                           onLeave: () {
                             ref.invalidate(activeLocalGameProvider);
                             ref.invalidate(localGameHistoryProvider);
-                            context.go('/');
+                            context.backOrHome();
                           },
                         ),
                         onHistory: () =>
@@ -1327,7 +1328,7 @@ class GameScreen extends ConsumerWidget {
                     height: 40,
                     fontSize: 13,
                     filled: false,
-                    onPressed: () => context.go('/analysis/${gs.gameId}'),
+                    onPressed: () => context.push('/analysis/${gs.gameId}'),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -1337,13 +1338,13 @@ class GameScreen extends ConsumerWidget {
                     height: 40,
                     fontSize: 13,
                     filled: false,
-                    onPressed: () => context.go('/replay/${gs.gameId}'),
+                    onPressed: () => context.push('/replay/${gs.gameId}'),
                   ),
                 ),
               ],
             ),
             TextButton(
-              onPressed: () => context.go('/'),
+              onPressed: () => context.backOrHome(),
               child: Text(
                 'Home',
                 style: TextStyle(
@@ -1388,14 +1389,14 @@ class GameScreen extends ConsumerWidget {
         difficulty: difficulty,
       );
       if (context.mounted) {
-        context.go('/game/${newState.gameId}');
+        context.pushReplacement('/game/${newState.gameId}');
       }
     } else {
       try {
         final restClient = ref.read(restClientProvider);
         final gameState = await restClient.createAIGame();
         if (context.mounted) {
-          context.go('/game/${gameState.gameId}');
+          context.pushReplacement('/game/${gameState.gameId}');
         }
       } catch (e) {
         debugPrint('[Game] Failed to create AI game: $e');

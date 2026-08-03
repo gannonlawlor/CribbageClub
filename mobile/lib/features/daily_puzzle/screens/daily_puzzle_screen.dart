@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../config/theme/app_colors.dart';
 import '../../../core/models/card.dart';
@@ -14,6 +13,7 @@ import '../widgets/puzzle_hand.dart';
 import '../widgets/puzzle_prompt.dart';
 import '../widgets/streak_badge.dart';
 import '../../../shared/widgets/cc_swipe_back.dart';
+import '../../../shared/utils/navigation.dart';
 
 const _months = [
   'Jan',
@@ -55,7 +55,7 @@ class _DailyPuzzleScreenState extends ConsumerState<DailyPuzzleScreen> {
     final puzzleSet = state.puzzleSet;
 
     return CcSwipeBack(
-      onBack: () => context.go('/'),
+      onBack: () => context.backOrHome(),
       child: Scaffold(
         body: Container(
           decoration: BoxDecoration(gradient: colors.gameGradient),
@@ -82,7 +82,7 @@ class _DailyPuzzleScreenState extends ConsumerState<DailyPuzzleScreen> {
                             allResults: state.allResults,
                             playerKeeps: state.playerKeeps,
                             streak: state.streak,
-                            onBackToHome: () => context.go('/'),
+                            onBackToHome: () => context.backOrHome(),
                           ),
                         },
                       ),
@@ -153,7 +153,7 @@ class _PlayingView extends ConsumerWidget {
         CcScreenHeader(
           title: 'Daily puzzle',
           subtitle: '${_formatDate(puzzle.date)} · $puzzleNum of $total',
-          onBack: () => context.go('/'),
+          onBack: () => context.backOrHome(),
           actions: [if (state.streak > 0) StreakBadge(streak: state.streak)],
         ),
         const SizedBox(height: 4),

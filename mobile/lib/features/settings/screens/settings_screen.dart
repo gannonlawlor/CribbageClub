@@ -52,7 +52,7 @@ class SettingsScreen extends ConsumerWidget {
                           label: 'Account',
                           value: 'Guest — upgrade',
                           valueColor: colors.accent,
-                          onTap: () => context.go('/upgrade'),
+                          onTap: () => context.push('/upgrade'),
                         ),
                     ] else
                       _ValueRow(

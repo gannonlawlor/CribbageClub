@@ -13,6 +13,7 @@ import '../../../shared/widgets/cc_dialog.dart';
 import '../../../shared/widgets/cc_field.dart';
 import '../../../shared/widgets/cc_screen.dart';
 import '../../../shared/widgets/cc_swipe_back.dart';
+import '../../../shared/utils/navigation.dart';
 
 // Providers
 final _friendsProvider = FutureProvider.autoDispose<List<FriendInfo>>((
@@ -68,7 +69,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
     final total = notifCount.whenOrNull(data: (n) => n.total) ?? 0;
 
     return CcSwipeBack(
-      onBack: () => context.go('/'),
+      onBack: () => context.backOrHome(),
       child: Scaffold(
         backgroundColor: colors.scaffoldBg,
         body: SafeArea(
@@ -80,7 +81,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
                 children: [
                   CcScreenHeader(
                     title: 'Friends',
-                    onBack: () => context.go('/'),
+                    onBack: () => context.backOrHome(),
                   ),
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
@@ -285,7 +286,7 @@ class _FriendRow extends ConsumerWidget {
     try {
       final restClient = ref.read(restClientProvider);
       final lobby = await restClient.createChallenge(friend.userId);
-      if (context.mounted) context.go('/lobby/${lobby.id}');
+      if (context.mounted) context.push('/lobby/${lobby.id}');
     } catch (e) {
       debugPrint('[Friends] Failed to create challenge: $e');
       if (context.mounted) {
@@ -426,9 +427,9 @@ class _ChallengeRow extends ConsumerWidget {
       final result = await restClient.acceptChallenge(challenge.id);
       if (context.mounted) {
         if (result.gameState != null) {
-          context.go('/game/${result.gameState!.gameId}');
+          context.push('/game/${result.gameState!.gameId}');
         } else {
-          context.go('/lobby/${result.lobby.id}');
+          context.push('/lobby/${result.lobby.id}');
         }
       }
     } catch (e) {

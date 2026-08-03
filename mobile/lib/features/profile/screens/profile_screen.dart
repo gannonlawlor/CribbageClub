@@ -459,7 +459,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             const SizedBox(height: 8),
             Center(
               child: TextButton(
-                onPressed: () => context.go('/history'),
+                onPressed: () => context.push('/history'),
                 child: Text(
                   'View All History',
                   style: TextStyle(color: colors.accent),
@@ -482,7 +482,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       final restClient = ref.read(restClientProvider);
       final lobby = await restClient.createChallenge(p.userId);
       if (mounted) {
-        context.go('/lobby/${lobby.id}');
+        context.push('/lobby/${lobby.id}');
       }
     } catch (e) {
       debugPrint('[Profile] Failed to challenge ${p.username}: $e');

@@ -190,7 +190,7 @@ class HomeScreen extends ConsumerWidget {
               subtitle: 'Pick someone from your friends',
               onTap: () {
                 Navigator.pop(dialogContext);
-                context.go('/friends');
+                context.push('/friends');
               },
             ),
             const SizedBox(height: 8),
@@ -223,7 +223,7 @@ class HomeScreen extends ConsumerWidget {
     );
     ref.invalidate(activeLocalGameProvider);
     if (context.mounted) {
-      context.go('/game/${state.gameId}');
+      context.push('/game/${state.gameId}');
     }
   }
 
@@ -237,9 +237,9 @@ class HomeScreen extends ConsumerWidget {
       final result = await restClient.quickMatch();
       if (context.mounted) {
         if (result.gameState != null) {
-          context.go('/game/${result.gameState!.gameId}');
+          context.push('/game/${result.gameState!.gameId}');
         } else {
-          context.go('/lobby/${result.lobby.id}');
+          context.push('/lobby/${result.lobby.id}');
         }
       }
     } catch (e) {
@@ -257,7 +257,7 @@ class HomeScreen extends ConsumerWidget {
   Future<void> _browseLobbies(BuildContext context, WidgetRef ref) async {
     final authed = await AuthRequired.ensureAuthenticated(context, ref);
     if (!authed || !context.mounted) return;
-    context.go('/lobbies');
+    context.push('/lobbies');
   }
 
   Future<void> _createPrivateGame(BuildContext context, WidgetRef ref) async {
@@ -273,7 +273,7 @@ class HomeScreen extends ConsumerWidget {
         isPrivate: true,
       );
       if (context.mounted) {
-        context.go('/lobby/${lobby.id}');
+        context.push('/lobby/${lobby.id}');
       }
     } catch (e) {
       debugPrint('[Home] Failed to create lobby: $e');
@@ -368,9 +368,9 @@ class HomeScreen extends ConsumerWidget {
       final result = await restClient.joinByCode(code);
       if (homeContext.mounted) {
         if (result.gameState != null) {
-          homeContext.go('/game/${result.gameState!.gameId}');
+          homeContext.push('/game/${result.gameState!.gameId}');
         } else {
-          homeContext.go('/lobby/${result.lobby.id}');
+          homeContext.push('/lobby/${result.lobby.id}');
         }
       }
     } catch (e) {
@@ -565,7 +565,7 @@ class _GuestBanner extends ConsumerWidget {
             ),
           ),
           TextButton(
-            onPressed: () => context.go('/upgrade'),
+            onPressed: () => context.push('/upgrade'),
             child: Text(
               'Upgrade',
               style: TextStyle(
@@ -724,19 +724,25 @@ class _OnlineCard extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          _PlayButton(onTap: onPlay),
+          _RowAction(label: 'Play', icon: Icons.play_arrow, onTap: onPlay),
         ],
       ),
     );
   }
 }
 
-/// The compact filled Play action shared by the online and bot cards, so the
-/// two rows read as the same weight of thing.
-class _PlayButton extends StatelessWidget {
+/// The compact filled action that ends a row on the Play tab — both Play
+/// buttons and Resume. One size for all of them: rows are peers, so their
+/// actions shouldn't differ in weight just because the labels differ.
+class _RowAction extends StatelessWidget {
+  final String label;
+  final IconData? icon;
   final VoidCallback? onTap;
 
-  const _PlayButton({required this.onTap});
+  static const double _width = 86;
+  static const double _height = 40;
+
+  const _RowAction({required this.label, this.icon, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -750,19 +756,25 @@ class _PlayButton extends StatelessWidget {
           onTap: onTap,
           borderRadius: BorderRadius.circular(8),
           child: SizedBox(
-            width: 86,
-            height: 40,
+            width: _width,
+            height: _height,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.play_arrow, size: 16, color: colors.accentOnSurface),
-                const SizedBox(width: 4),
-                Text(
-                  'Play',
-                  style: TextStyle(
-                    color: colors.accentOnSurface,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
+                if (icon != null) ...[
+                  Icon(icon, size: 16, color: colors.accentOnSurface),
+                  const SizedBox(width: 4),
+                ],
+                Flexible(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: colors.accentOnSurface,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ],
@@ -856,7 +868,9 @@ class _BotCard extends ConsumerWidget {
                   ),
                 ),
               const SizedBox(width: 2),
-              _PlayButton(
+              _RowAction(
+                label: 'Play',
+                icon: Icons.play_arrow,
                 onTap: onPlay == null ? null : () => onPlay!(selected),
               ),
             ],
@@ -1010,7 +1024,7 @@ class _DailyPuzzleCard extends ConsumerWidget {
 
     return _Card(
       padding: const EdgeInsets.all(14),
-      onTap: () => context.go('/daily-puzzle'),
+      onTap: () => context.push('/daily-puzzle'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1131,7 +1145,7 @@ class _PuzzleModeCard extends StatelessWidget {
     final colors = context.appColors;
     return _Card(
       padding: const EdgeInsets.all(14),
-      onTap: () => context.go('/practice-puzzle'),
+      onTap: () => context.push('/practice-puzzle'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1264,7 +1278,7 @@ class _RecentGamesSection extends ConsumerWidget {
               const _Caption('Recent games'),
               const Spacer(),
               GestureDetector(
-                onTap: () => context.go('/history'),
+                onTap: () => context.push('/history'),
                 child: Text(
                   'See all',
                   style: TextStyle(
@@ -1318,7 +1332,7 @@ class _RecentGameRow extends StatelessWidget {
     final resultColor = record.isWin ? colors.success : colors.error;
 
     return InkWell(
-      onTap: () => context.go('/replay/${record.gameId}'),
+      onTap: () => context.push('/replay/${record.gameId}'),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
         child: Row(
@@ -1421,7 +1435,7 @@ class _ResumeCard extends ConsumerWidget {
 
     return _Card(
       color: colors.boardPrimary,
-      onTap: () => context.go('/game/${game.gameId}'),
+      onTap: () => context.push('/game/${game.gameId}'),
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
       child: Row(
         children: [
@@ -1456,11 +1470,9 @@ class _ResumeCard extends ConsumerWidget {
             ),
           ),
           const SizedBox(width: 12),
-          CcPrimaryButton(
+          _RowAction(
             label: 'Resume',
-            height: 36,
-            fontSize: 13,
-            onPressed: () => context.go('/game/${game.gameId}'),
+            onTap: () => context.push('/game/${game.gameId}'),
           ),
         ],
       ),
