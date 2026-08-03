@@ -832,8 +832,8 @@ class GameScreen extends ConsumerWidget {
           // as your own so the two hands mirror each other. Capped against the
           // screen height as well, so on a short phone the row gives the table
           // back the room it needs rather than squeezing it flat.
-          // Their count is always on their bar; the fan of cards under it is
-          // what the setting turns on and off.
+          // One or the other: a fan of card backs under their bar, or a count
+          // chip on the bar itself.
           final showOppCards =
               settings.opponentHandDisplay == OpponentHandDisplay.cards;
           final oppCardW = math.min(handCardW, height * 0.085);
@@ -877,7 +877,9 @@ class GameScreen extends ConsumerWidget {
                       isSelf: false,
                       isDealer: !isDealer,
                       isActive: gs.currentPlayerId == opponent.id,
-                      handCount: oppCardCount,
+                      // One or the other: when their cards are on the table
+                      // you can count them, so the chip would only repeat it.
+                      handCount: showOppCards ? null : oppCardCount,
                     ),
                   ),
                   if (showOppCards) ...[
