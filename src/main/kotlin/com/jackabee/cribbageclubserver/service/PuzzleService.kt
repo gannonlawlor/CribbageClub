@@ -8,6 +8,7 @@ import com.jackabee.cribbageclubserver.model.analysis.DiscardOption
 import com.jackabee.cribbageclubserver.model.card.Card
 import com.jackabee.cribbageclubserver.model.card.Rank
 import com.jackabee.cribbageclubserver.model.card.Suit
+import com.jackabee.cribbageclubserver.controller.AchievementDto
 import com.jackabee.cribbageclubserver.repository.PuzzleRepository
 import com.jackabee.cribbageclubserver.repository.PuzzleSolveRepository
 import org.slf4j.LoggerFactory
@@ -22,7 +23,8 @@ class PuzzleService(
     private val puzzleRepository: PuzzleRepository,
     private val puzzleSolveRepository: PuzzleSolveRepository,
     private val objectMapper: ObjectMapper,
-    private val rustEngineAdapter: RustEngineAdapter
+    private val rustEngineAdapter: RustEngineAdapter,
+    private val achievementService: AchievementService
 ) {
     private val logger = LoggerFactory.getLogger(PuzzleService::class.java)
 
@@ -83,12 +85,20 @@ class PuzzleService(
         )
         puzzleSolveRepository.save(solve)
 
+        val unlocked = try {
+            achievementService.evaluatePuzzleSolve(userId, isOptimal)
+        } catch (e: Exception) {
+            logger.warn("Achievement evaluation failed for puzzle solve by {}: {}", userId, e.message)
+            emptyList()
+        }
+
         return PuzzleSolveResponse(
             isOptimal = isOptimal,
             evDifference = evDifference,
             yourOption = playerOption,
             optimalOption = optimalOption,
-            allOptions = allOptions
+            allOptions = allOptions,
+            unlockedAchievements = unlocked.map { AchievementDto.from(it) }
         )
     }
 
@@ -154,5 +164,6 @@ data class PuzzleSolveResponse(
     val evDifference: Double,
     val yourOption: DiscardOption,
     val optimalOption: DiscardOption,
-    val allOptions: List<DiscardOption>
+    val allOptions: List<DiscardOption>,
+    val unlockedAchievements: List<AchievementDto> = emptyList()
 )

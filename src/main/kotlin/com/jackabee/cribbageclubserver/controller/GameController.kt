@@ -183,5 +183,6 @@ data class ImportedGameMapping(
 data class ImportGamesResponse(
     val imported: List<ImportedGameMapping>,
     val duplicates: List<String>,
-    val errors: List<String>
+    val errors: List<String>,
+    val unlockedAchievements: List<AchievementDto> = emptyList()
 )

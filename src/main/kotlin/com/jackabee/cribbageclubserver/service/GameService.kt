@@ -2,10 +2,12 @@ package com.jackabee.cribbageclubserver.service
 
 import com.jackabee.cribbageclubserver.bridge.RustEngine
 import com.jackabee.cribbageclubserver.bridge.RustEngineAdapter
+import com.jackabee.cribbageclubserver.controller.AchievementDto
 import com.jackabee.cribbageclubserver.controller.ImportGameRequest
 import com.jackabee.cribbageclubserver.controller.ImportGamesResponse
 import com.jackabee.cribbageclubserver.controller.ImportedGameMapping
 import com.jackabee.cribbageclubserver.entity.GameEntity
+import com.jackabee.cribbageclubserver.model.achievement.Achievement
 import com.jackabee.cribbageclubserver.model.action.ForfeitReason
 import com.jackabee.cribbageclubserver.model.action.GameAction
 import com.jackabee.cribbageclubserver.model.game.GameHistoryEvent
@@ -47,6 +49,7 @@ class GameService(
     @Autowired(required = false) private val rustEngineAdapter: RustEngineAdapter? = null,
     @Autowired(required = false) private val turnTimerService: TurnTimerService? = null,
     @Autowired(required = false) private val forfeitService: ForfeitService? = null,
+    @Autowired(required = false) private val achievementService: AchievementService? = null,
 ) {
     private val logger = LoggerFactory.getLogger(GameService::class.java)
 
@@ -412,6 +415,7 @@ class GameService(
         val imported = mutableListOf<ImportedGameMapping>()
         val duplicates = mutableListOf<String>()
         val errors = mutableListOf<String>()
+        val unlockedAchievements = mutableListOf<Achievement>()
 
         for (game in games) {
             try {
@@ -487,6 +491,18 @@ class GameService(
                     )
                 }
 
+                // Offline feats unlock on import — the stateJson carries the
+                // full history. Never let evaluation fail the import loop.
+                try {
+                    achievementService?.evaluateGameEnd(entity, remapped)
+                        ?.let { unlockedAchievements.addAll(it) }
+                } catch (e: Exception) {
+                    logger.warn(
+                        "Achievement evaluation failed for imported game {}: {}",
+                        game.localGameId, e.message
+                    )
+                }
+
                 imported.add(ImportedGameMapping(game.localGameId, newGameId))
                 logger.info("Imported local game {} as server game {}", game.localGameId, newGameId)
             } catch (e: Exception) {
@@ -495,7 +511,12 @@ class GameService(
             }
         }
 
-        return ImportGamesResponse(imported, duplicates, errors)
+        return ImportGamesResponse(
+            imported,
+            duplicates,
+            errors,
+            unlockedAchievements.distinct().map { AchievementDto.from(it) }
+        )
     }
 
     /**
@@ -691,6 +712,12 @@ class GameService(
                     loserScore = loser.score,
                     isAIGame = entity.isAIGame
                 )
+                try {
+                    achievementService?.evaluateGameEnd(entity, state)
+                } catch (e: Exception) {
+                    // Achievements must never take down a finishing game.
+                    logger.warn("Achievement evaluation failed for game {}: {}", entity.id, e.message)
+                }
             }
         }
     }

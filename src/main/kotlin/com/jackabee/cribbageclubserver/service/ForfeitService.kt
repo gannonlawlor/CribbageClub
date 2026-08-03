@@ -22,7 +22,8 @@ class ForfeitService(
     private val playerStatsService: PlayerStatsService,
     private val webSocketService: GameWebSocketService,
     private val turnTimerService: TurnTimerService,
-    private val eventPublisher: ApplicationEventPublisher
+    private val eventPublisher: ApplicationEventPublisher,
+    private val achievementService: AchievementService
 ) {
     private val logger = LoggerFactory.getLogger(ForfeitService::class.java)
 
@@ -90,6 +91,14 @@ class ForfeitService(
             loserScore = loserPlayer.score,
             isAIGame = entity.isAIGame
         )
+
+        // Win/streak counters still move on a forfeit; the terminal history
+        // carries a GameForfeited event, which excludes skunks and comebacks.
+        try {
+            achievementService.evaluateGameEnd(entity, terminalState)
+        } catch (e: Exception) {
+            logger.warn("Achievement evaluation failed for forfeited game {}: {}", gameId, e.message)
+        }
 
         // Broadcast final state with timing info
         val timing = turnTimerService.getTimingFields(gameId, entity)

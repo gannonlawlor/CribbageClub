@@ -33,6 +33,9 @@ class SecurityConfig(
                     // Public auth endpoints (register, login, guest)
                     .requestMatchers("/api/auth/register", "/api/auth/login", "/api/auth/guest").permitAll()
                     .requestMatchers("/api/stats/leaderboard").permitAll()
+                    // Catalog is public like profiles; /api/profiles/** already
+                    // covers the per-player achievements endpoint.
+                    .requestMatchers("/api/achievements").permitAll()
                     .requestMatchers("/api/profiles/**").permitAll()
                     .requestMatchers("/ws/**").permitAll()
                     .requestMatchers("/actuator/**").permitAll()

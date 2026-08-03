@@ -53,6 +53,19 @@ data class GameFoundNotification(
     val timestamp: Long = System.currentTimeMillis()
 )
 
+data class AchievementSummary(
+    val key: String,
+    val name: String,
+    val description: String,
+    val tier: String
+)
+
+data class AchievementUnlockedNotification(
+    val type: String = "ACHIEVEMENT_UNLOCKED",
+    val achievements: List<AchievementSummary>,
+    val timestamp: Long = System.currentTimeMillis()
+)
+
 @Service
 class NotificationWebSocketService(
     private val messagingTemplate: SimpMessagingTemplate
@@ -87,5 +100,10 @@ class NotificationWebSocketService(
     fun sendChallengeDeclinedNotification(toUserId: String, notification: ChallengeDeclinedNotification) {
         messagingTemplate.convertAndSendToUser(toUserId, "/queue/notifications", notification)
         logger.debug("Sent challenge declined notification to {}", toUserId)
+    }
+
+    fun sendAchievementUnlockedNotification(toUserId: String, notification: AchievementUnlockedNotification) {
+        messagingTemplate.convertAndSendToUser(toUserId, "/queue/notifications", notification)
+        logger.debug("Sent achievement unlocked notification to {}", toUserId)
     }
 }
