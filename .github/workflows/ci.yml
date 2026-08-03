@@ -9,11 +9,46 @@ on:
 permissions:
   contents: read
   packages: write
+  pull-requests: read
 
 jobs:
+  # Detect which parts of the monorepo changed so we only run the relevant
+  # jobs. A docs-only or web-only change runs nothing heavy; a mobile-only
+  # change skips the backend + image build, and vice versa.
+  changes:
+    name: Detect changes
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      mobile: ${{ steps.filter.outputs.mobile }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            backend:
+              - 'src/**'
+              - 'engine/**'
+              - 'build.gradle.kts'
+              - 'settings.gradle.kts'
+              - 'gradle/**'
+              - 'gradlew'
+              - 'gradlew.bat'
+              - 'Dockerfile'
+              - '.dockerignore'
+              - 'detekt-baseline.xml'
+              - '.github/workflows/ci.yml'
+            mobile:
+              - 'mobile/**'
+              - 'engine/**'
+              - '.github/workflows/ci.yml'
+
   backend:
     name: Backend (Build + Test)
     runs-on: ubuntu-latest
+    needs: changes
+    if: ${{ needs.changes.outputs.backend == 'true' }}
 
     services:
       postgres:
@@ -55,6 +90,8 @@ jobs:
   lint:
     name: Backend (Detekt)
     runs-on: ubuntu-latest
+    needs: changes
+    if: ${{ needs.changes.outputs.backend == 'true' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -80,6 +117,8 @@ jobs:
   mobile:
     name: Mobile (Analyze + Test)
     runs-on: ubuntu-latest
+    needs: changes
+    if: ${{ needs.changes.outputs.mobile == 'true' }}
 
     defaults:
       run:
@@ -102,14 +141,21 @@ jobs:
       - name: Analyze
         run: flutter analyze --no-fatal-infos
 
+      # The FFI tests call RustLib.init(), which loads
+      # ../engine/target/release/libcribbage_engine.so (frb loader stem
+      # 'cribbage_engine'). Build the engine for the host so those tests run.
+      - name: Build Rust engine (native lib for FFI tests)
+        working-directory: ${{ github.workspace }}
+        run: cargo build --release --manifest-path engine/Cargo.toml
+
       - name: Run tests
         run: flutter test
 
   image:
     name: Build + Push Image (GHCR)
     runs-on: ubuntu-latest
-    needs: backend
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    needs: [changes, backend]
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' && needs.changes.outputs.backend == 'true' }}
     permissions:
       contents: read
       packages: write
