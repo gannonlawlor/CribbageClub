@@ -81,16 +81,16 @@ class ForfeitService(
         entity.turnStartedAt = null
         entity.updatedAt = Instant.now()
         entity.stateJson = objectMapper.writeValueAsString(terminalState)
-        gameRepository.save(entity)
 
-        // Record stats
+        // Record stats before the save so the rating outcome lands on this row.
         playerStatsService.recordGameResult(
             winnerId = winnerPlayer.id,
             loserId = loserPlayer.id,
             winnerScore = winnerPlayer.score,
             loserScore = loserPlayer.score,
             isAIGame = entity.isAIGame
-        )
+        )?.applyTo(entity, winnerPlayer.id)
+        gameRepository.save(entity)
 
         // Win/streak counters still move on a forfeit; the terminal history
         // carries a GameForfeited event, which excludes skunks and comebacks.

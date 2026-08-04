@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../config/theme/app_colors.dart';
 import '../../../core/auth/auth_provider.dart';
-import '../../../core/models/game_state.dart';
+import '../../../core/models/server_history_game.dart';
 import '../../../core/services/local_game_history_provider.dart';
 import '../../../shared/widgets/cc_screen.dart';
 import '../../../shared/widgets/game_history_row.dart';
@@ -29,7 +29,7 @@ class GameHistoryScreen extends ConsumerWidget {
     final localHistory = ref.watch(localGameHistoryProvider);
     final serverHistory = auth.isLoggedIn
         ? ref.watch(serverGameHistoryProvider)
-        : const AsyncValue<List<GameState>>.data([]);
+        : const AsyncValue<List<ServerHistoryGame>>.data([]);
 
     final local = localHistory.valueOrNull ?? const [];
     final server = serverHistory.valueOrNull ?? const [];
@@ -45,7 +45,7 @@ class GameHistoryScreen extends ConsumerWidget {
           ]
         : const <GameSummary>[];
     final played = [
-      for (final g in server) GameSummary.fromGameState(g, auth.userId ?? ''),
+      for (final g in server) GameSummary.fromServer(g, auth.userId ?? ''),
       if (!auth.isLoggedIn)
         for (final r in local) GameSummary.fromLocal(r),
     ];

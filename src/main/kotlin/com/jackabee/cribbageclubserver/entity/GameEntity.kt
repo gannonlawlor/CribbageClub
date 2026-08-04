@@ -96,6 +96,24 @@ class GameEntity(
     @Column(name = "bot_difficulty", nullable = true)
     var botDifficulty: String? = null,
 
+    /**
+     * Rating outcome of a rated game, frozen at game end: each player's
+     * post-game rating and how much this game moved it. Null for unrated
+     * games. Explicit column names — the naming strategy doesn't put an
+     * underscore after a digit.
+     */
+    @Column(name = "player1_rating_after", nullable = true)
+    var player1RatingAfter: Double? = null,
+
+    @Column(name = "player1_rating_delta", nullable = true)
+    var player1RatingDelta: Double? = null,
+
+    @Column(name = "player2_rating_after", nullable = true)
+    var player2RatingAfter: Double? = null,
+
+    @Column(name = "player2_rating_delta", nullable = true)
+    var player2RatingDelta: Double? = null,
+
     @Version
     var version: Long = 0
 )

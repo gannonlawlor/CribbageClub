@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../config/theme/app_colors.dart';
 import '../../../core/auth/auth_provider.dart';
-import '../../../core/models/game_state.dart';
 import '../../../core/models/head_to_head_response.dart';
+import '../../../core/models/server_history_game.dart';
 import '../../../core/models/profile_response.dart';
 import '../../../shared/widgets/cc_screen.dart';
 import '../../../shared/widgets/game_history_row.dart';
@@ -18,14 +18,13 @@ final _profileProvider = FutureProvider.autoDispose
       return restClient.getProfile(userId);
     });
 
-final _gameHistoryProvider = FutureProvider.autoDispose<List<GameState>>((
-  ref,
-) async {
-  final auth = ref.read(authProvider);
-  if (!auth.isLoggedIn) return [];
-  final restClient = ref.read(restClientProvider);
-  return restClient.getMyGameHistory();
-});
+final _gameHistoryProvider =
+    FutureProvider.autoDispose<List<ServerHistoryGame>>((ref) async {
+      final auth = ref.read(authProvider);
+      if (!auth.isLoggedIn) return [];
+      final restClient = ref.read(restClientProvider);
+      return restClient.getMyGameHistory();
+    });
 
 final _headToHeadProvider = FutureProvider.autoDispose
     .family<HeadToHeadResponse?, String>((ref, userId) async {
@@ -453,7 +452,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             GameHistoryList(
               games: [
                 for (final game in recent)
-                  GameSummary.fromGameState(game, playerId),
+                  GameSummary.fromServer(game, playerId),
               ],
             ),
             const SizedBox(height: 8),

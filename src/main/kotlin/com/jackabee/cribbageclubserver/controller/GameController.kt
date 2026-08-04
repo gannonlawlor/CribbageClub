@@ -143,9 +143,14 @@ class GameController(
 
     @Operation(summary = "Get completed game history for the authenticated user")
     @GetMapping("/me/history")
-    fun getMyGameHistory(@RequestAttribute("userId") userId: String): List<GameState> {
-        return gameService.findCompletedGamesByPlayer(userId).map { state ->
-            GameStateFilter.forPlayer(state, userId)
+    fun getMyGameHistory(@RequestAttribute("userId") userId: String): List<GameHistoryEntryResponse> {
+        return gameService.findCompletedGameEntriesByPlayer(userId).map { (entity, state) ->
+            val viewerIsPlayer1 = userId == entity.player1Id
+            GameHistoryEntryResponse(
+                gameState = GameStateFilter.forPlayer(state, userId),
+                myRatingDelta = if (viewerIsPlayer1) entity.player1RatingDelta else entity.player2RatingDelta,
+                opponentRating = if (viewerIsPlayer1) entity.player2RatingAfter else entity.player1RatingAfter,
+            )
         }
     }
 
@@ -159,6 +164,19 @@ class GameController(
         return gameService.importLocalGames(request.games, userId, username)
     }
 }
+
+/**
+ * One history entry: the game state's fields flattened at the top level (via
+ * @JsonUnwrapped, so pre-existing clients that parse a plain GameState keep
+ * working) plus the viewer's rating outcome. Rating fields are null for
+ * unrated games and games that predate rating history.
+ */
+class GameHistoryEntryResponse(
+    @field:com.fasterxml.jackson.annotation.JsonUnwrapped
+    val gameState: GameState,
+    val myRatingDelta: Double?,
+    val opponentRating: Double?,
+)
 
 data class CreateAIGameRequest(
     val playerName: String? = null,

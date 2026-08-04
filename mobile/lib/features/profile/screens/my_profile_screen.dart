@@ -278,7 +278,7 @@ class MyProfileScreen extends ConsumerWidget {
                     // device hasn't made it there yet. Both are your history.
                     for (final r in records) GameSummary.fromLocal(r),
                     for (final g in serverGames)
-                      GameSummary.fromGameState(g, auth.userId ?? ''),
+                      GameSummary.fromServer(g, auth.userId ?? ''),
                   ].take(8).toList(),
                 ),
               ],

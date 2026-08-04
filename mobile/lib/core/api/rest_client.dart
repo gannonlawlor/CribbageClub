@@ -7,6 +7,7 @@ import '../models/friend.dart';
 import '../models/game_action.dart';
 import '../models/game_analysis.dart';
 import '../models/game_response.dart';
+import '../models/server_history_game.dart';
 import '../models/game_state.dart';
 import '../models/import_games.dart';
 import '../models/join_by_code_result.dart';
@@ -180,11 +181,11 @@ class RestClient {
         .toList();
   }
 
-  Future<List<GameState>> getMyGameHistory() async {
+  Future<List<ServerHistoryGame>> getMyGameHistory() async {
     final response = await _dio.get('/api/games/me/history');
     final list = response.data as List<dynamic>;
     return list
-        .map((json) => GameState.fromJson(json as Map<String, dynamic>))
+        .map((json) => ServerHistoryGame.fromJson(json as Map<String, dynamic>))
         .toList();
   }
 

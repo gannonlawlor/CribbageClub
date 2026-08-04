@@ -470,6 +470,16 @@ class GameService(
     }
 
     /**
+     * Completed games with their rows, for callers that also need entity-only
+     * data (rating outcomes) alongside the game state.
+     */
+    fun findCompletedGameEntriesByPlayer(playerId: String): List<Pair<GameEntity, GameState>> {
+        return gameRepository?.findCompletedGamesByPlayer(playerId)
+            ?.map { it to deserializeGameState(it) }
+            ?: emptyList()
+    }
+
+    /**
      * Removes games that have been inactive for longer than the given duration.
      * Finished games (GAME_OVER) are always eligible for removal.
      */
@@ -837,7 +847,7 @@ class GameService(
                     winnerScore = winner.score,
                     loserScore = loser.score,
                     isAIGame = entity.isAIGame
-                )
+                )?.applyTo(entity, winner.id)
                 try {
                     achievementService?.evaluateGameEnd(entity, state)
                 } catch (e: Exception) {

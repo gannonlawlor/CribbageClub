@@ -86,6 +86,7 @@ src/main/kotlin/com/jackabee/cribbageclubserver/
 | V11 | (alters games, lobbies) | Configurable time controls (preset + frozen turn limit) |
 | V12 | player_achievements, achievement_progress | Achievements (unlocks + fresh-start counters) |
 | V13 | (alters users, games, lobbies) | Bot fallback matchmaking (is_bot flag, bot game columns, quick-match discriminator, 16 seeded bot personas) |
+| V14 | (alters games) | Per-game rating outcomes (each player's post-game rating + delta, frozen at game end for history) |
 
 ## Serialization
 

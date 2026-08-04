@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../auth/auth_provider.dart';
 import '../models/game_state.dart';
+import '../models/server_history_game.dart';
 import '../models/local_game_record.dart';
 import 'game_upload_service.dart';
 import 'local_game_history_service.dart';
@@ -44,11 +45,10 @@ final gameUploadServiceProvider = Provider<GameUploadService>((ref) {
 
 /// Completed games the server knows about. Empty when signed out — those
 /// players only have on-device history.
-final serverGameHistoryProvider = FutureProvider.autoDispose<List<GameState>>((
-  ref,
-) async {
-  final auth = ref.watch(authProvider);
-  if (!auth.isLoggedIn) return [];
-  final restClient = ref.read(restClientProvider);
-  return restClient.getMyGameHistory();
-});
+final serverGameHistoryProvider =
+    FutureProvider.autoDispose<List<ServerHistoryGame>>((ref) async {
+      final auth = ref.watch(authProvider);
+      if (!auth.isLoggedIn) return [];
+      final restClient = ref.read(restClientProvider);
+      return restClient.getMyGameHistory();
+    });

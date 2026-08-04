@@ -1262,8 +1262,7 @@ class _RecentGamesSection extends ConsumerWidget {
     // On-device records clear once they upload, so the server holds the rest.
     final recent = [
       for (final r in records) GameSummary.fromLocal(r),
-      for (final g in serverGames)
-        GameSummary.fromGameState(g, auth.userId ?? ''),
+      for (final g in serverGames) GameSummary.fromServer(g, auth.userId ?? ''),
     ].take(3).toList();
 
     return Column(
@@ -1357,14 +1356,26 @@ class _RecentGameRow extends StatelessWidget {
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: Text(
-                record.opponentName,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: colors.textPrimary,
-                  fontSize: 13.5,
-                  fontWeight: FontWeight.w600,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: GestureDetector(
+                  onTap: record.opponentId == null
+                      ? null
+                      : () => context.push('/profile/${record.opponentId}'),
+                  child: Text(
+                    record.opponentName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: colors.textPrimary,
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w600,
+                      decoration: record.opponentId == null
+                          ? null
+                          : TextDecoration.underline,
+                      decorationColor: colors.textDisabled,
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -1376,6 +1387,20 @@ class _RecentGameRow extends StatelessWidget {
                 fontFeatures: const [FontFeature.tabularFigures()],
               ),
             ),
+            if (record.ratingDelta != null) ...[
+              const SizedBox(width: 8),
+              Text(
+                formatRatingDelta(record.ratingDelta!),
+                style: TextStyle(
+                  color: record.ratingDelta! >= 0
+                      ? colors.success
+                      : colors.error,
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w600,
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                ),
+              ),
+            ],
           ],
         ),
       ),
