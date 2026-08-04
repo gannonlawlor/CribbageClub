@@ -105,9 +105,7 @@ class InsightGenerator {
     final isDealer = explanation.isDealer;
 
     if (isDealer) {
-      insights.add(
-        'Your crib gains avg ${avgCrib.toStringAsFixed(1)} pts',
-      );
+      insights.add('Your crib gains avg ${avgCrib.toStringAsFixed(1)} pts');
     } else {
       insights.add(
         "Opponent's crib gets avg ${avgCrib.toStringAsFixed(1)} pts",
@@ -138,17 +136,11 @@ class InsightGenerator {
     final descs = <String>[];
     for (final entry in rankCounts.entries) {
       if (entry.value == 2) {
-        descs.add(
-          'Pair of ${entry.key.display}s (2 pts guaranteed)',
-        );
+        descs.add('Pair of ${entry.key.display}s (2 pts guaranteed)');
       } else if (entry.value == 3) {
-        descs.add(
-          'Three ${entry.key.display}s (6 pts guaranteed)',
-        );
+        descs.add('Three ${entry.key.display}s (6 pts guaranteed)');
       } else if (entry.value == 4) {
-        descs.add(
-          'Four ${entry.key.display}s (12 pts guaranteed)',
-        );
+        descs.add('Four ${entry.key.display}s (12 pts guaranteed)');
       }
     }
     return descs;

@@ -45,9 +45,8 @@ sealed class GameHistoryEvent with _$GameHistoryEvent {
   }) = GoAnnounced;
 
   @FreezedUnionValue('PeggingEnded')
-  const factory GameHistoryEvent.peggingEnded({
-    @Default('') String timestamp,
-  }) = PeggingEnded;
+  const factory GameHistoryEvent.peggingEnded({@Default('') String timestamp}) =
+      PeggingEnded;
 
   @FreezedUnionValue('HandCounted')
   const factory GameHistoryEvent.handCounted({

@@ -48,9 +48,7 @@ class PuzzlePersistence {
 
     await prefs.setString(
       _keepsKey(dateStr),
-      jsonEncode(
-        keeps.map((k) => k?.map((c) => c.toJson()).toList()).toList(),
-      ),
+      jsonEncode(keeps.map((k) => k?.map((c) => c.toJson()).toList()).toList()),
     );
   }
 
@@ -81,7 +79,9 @@ class PuzzlePersistence {
     await prefs.setString(_scoresKey(dateStr), jsonEncode(scores));
     await prefs.setString(
       _resultsKey(dateStr),
-      jsonEncode(allResults.map((r) => r?.map((o) => o.toJson()).toList()).toList()),
+      jsonEncode(
+        allResults.map((r) => r?.map((o) => o.toJson()).toList()).toList(),
+      ),
     );
   }
 

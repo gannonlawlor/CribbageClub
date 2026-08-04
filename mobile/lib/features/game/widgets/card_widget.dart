@@ -179,7 +179,11 @@ class _CardBackPainter extends CustomPainter {
     // 45° hairlines on a 6px perpendicular pitch.
     const pitch = 6 * math.sqrt2;
     for (double d = 0; d < size.width + size.height; d += pitch) {
-      canvas.drawLine(Offset(d, 0), Offset(d - size.height, size.height), paint);
+      canvas.drawLine(
+        Offset(d, 0),
+        Offset(d - size.height, size.height),
+        paint,
+      );
     }
     canvas.restore();
 

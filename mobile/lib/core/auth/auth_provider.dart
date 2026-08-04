@@ -59,16 +59,16 @@ class AuthNotifier extends StateNotifier<AuthState> {
   final RestClient _restClient;
 
   AuthNotifier(this._authService, this._restClient, {AuthData? initialAuth})
-      : super(
-          initialAuth != null
-              ? AuthState(
-                  isLoggedIn: true,
-                  userId: initialAuth.userId,
-                  username: initialAuth.username,
-                  isGuest: initialAuth.isGuest,
-                )
-              : const AuthState(),
-        ) {
+    : super(
+        initialAuth != null
+            ? AuthState(
+                isLoggedIn: true,
+                userId: initialAuth.userId,
+                username: initialAuth.username,
+                isGuest: initialAuth.isGuest,
+              )
+            : const AuthState(),
+      ) {
     _restClient.setOnAuthExpired(() {
       _authService.clearAuth();
       state = const AuthState();

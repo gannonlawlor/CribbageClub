@@ -92,9 +92,7 @@ class _ExplainDialogState extends State<ExplainDialog> {
     final front = CcDialog(
       cardKey: _frontCardKey,
       title: 'Why #${widget.rank}?',
-      headerActions: [
-        _HelpButton(active: false, onTap: _toggleHelp),
-      ],
+      headerActions: [_HelpButton(active: false, onTap: _toggleHelp)],
       child: _FrontContent(
         keep: widget.keep,
         discard: widget.discard,
@@ -106,9 +104,7 @@ class _ExplainDialogState extends State<ExplainDialog> {
     final back = CcDialog(
       height: _cardHeight,
       title: 'Reading the numbers',
-      headerActions: [
-        _HelpButton(active: true, onTap: _toggleHelp),
-      ],
+      headerActions: [_HelpButton(active: true, onTap: _toggleHelp)],
       child: _HelpContent(
         rank: widget.rank,
         isDealer: widget.isDealer,
@@ -333,9 +329,9 @@ class _FrontContent extends StatelessWidget {
                 'Net',
                 (explanation!.isDealer
                         ? explanation!.averageHandScore +
-                            explanation!.averageCribScore
+                              explanation!.averageCribScore
                         : explanation!.averageHandScore -
-                            explanation!.averageCribScore)
+                              explanation!.averageCribScore)
                     .toStringAsFixed(1),
                 true,
               ),
@@ -460,15 +456,40 @@ class _CutScoreTable extends StatelessWidget {
         ),
         const SizedBox(height: 10),
         if (great > 0)
-          _CutBucket(label: '12+', count: great, total: total, color: colors.evOptimal),
+          _CutBucket(
+            label: '12+',
+            count: great,
+            total: total,
+            color: colors.evOptimal,
+          ),
         if (good > 0)
-          _CutBucket(label: '8-11', count: good, total: total, color: colors.evGood),
+          _CutBucket(
+            label: '8-11',
+            count: good,
+            total: total,
+            color: colors.evGood,
+          ),
         if (mid > 0)
-          _CutBucket(label: '4-7', count: mid, total: total, color: colors.warning),
+          _CutBucket(
+            label: '4-7',
+            count: mid,
+            total: total,
+            color: colors.warning,
+          ),
         if (low > 0)
-          _CutBucket(label: '1-3', count: low, total: total, color: colors.textSecondary),
+          _CutBucket(
+            label: '1-3',
+            count: low,
+            total: total,
+            color: colors.textSecondary,
+          ),
         if (zeroCount > 0)
-          _CutBucket(label: '0', count: zeroCount, total: total, color: colors.textDisabled),
+          _CutBucket(
+            label: '0',
+            count: zeroCount,
+            total: total,
+            color: colors.textDisabled,
+          ),
       ],
     );
   }
@@ -572,9 +593,9 @@ class _HelpContent extends StatelessWidget {
     final net = e == null
         ? null
         : (isDealer
-                ? e.averageHandScore + e.averageCribScore
-                : e.averageHandScore - e.averageCribScore)
-            .toStringAsFixed(1);
+                  ? e.averageHandScore + e.averageCribScore
+                  : e.averageHandScore - e.averageCribScore)
+              .toStringAsFixed(1);
 
     String? cutExample;
     if (e != null && e.cutScores.isNotEmpty) {
@@ -588,16 +609,16 @@ class _HelpContent extends StatelessWidget {
 
     final cribBody = isDealer
         ? 'Points your two discards add to the crib. The crib is yours this '
-            'hand, so this is added to your total (+).'
+              'hand, so this is added to your total (+).'
         : 'Points your two discards give away to the crib. The crib is your '
-            'opponent\'s this hand, so this counts against you (−).';
+              'opponent\'s this hand, so this counts against you (−).';
     final cribExample = e == null
         ? null
         : isDealer
-            ? 'Here: +$crib — your discards feed your own crib about '
-                '$crib points.'
-            : 'Here: −$crib — your discards hand the opponent about '
-                '$crib points per hand.';
+        ? 'Here: +$crib — your discards feed your own crib about '
+              '$crib points.'
+        : 'Here: −$crib — your discards hand the opponent about '
+              '$crib points per hand.';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -605,44 +626,49 @@ class _HelpContent extends StatelessWidget {
       children: [
         _HelpEntry(
           term: 'The ranking',
-          body: 'All 15 ways to keep 4 of your 6 cards, ordered by expected '
+          body:
+              'All 15 ways to keep 4 of your 6 cards, ordered by expected '
               'points. #1 is the strongest keep on average.',
           example: 'This keep ranks #$rank of 15.',
         ),
         _HelpEntry(
           term: 'Hand avg',
-          body: 'Points your kept cards score at the show, averaged across '
+          body:
+              'Points your kept cards score at the show, averaged across '
               'all 46 possible cut cards.',
           example: e == null
               ? null
               : 'Here: $hand — over many hands this keep scores about '
-                  '$hand points.',
+                    '$hand points.',
         ),
         _HelpEntry(term: 'Crib avg', body: cribBody, example: cribExample),
         _HelpEntry(
           term: 'Net',
-          body: 'Hand average ${isDealer ? 'plus' : 'minus'} the crib '
+          body:
+              'Hand average ${isDealer ? 'plus' : 'minus'} the crib '
               'average — what the keep is really worth. Keeps are ranked '
               'by this number.',
           example: e == null
               ? null
               : 'Here: $hand ${isDealer ? '+' : '−'} $crib = $net points '
-                  'per hand.',
+                    'per hand.',
         ),
         _HelpEntry(
           term: 'Guaranteed',
-          body: 'Points already in your kept cards that score no matter '
+          body:
+              'Points already in your kept cards that score no matter '
               'which card is cut — fifteens, pairs, and runs you hold now.',
           example: guaranteed == null
               ? null
               : guaranteed > 0
-                  ? 'This keep banks $guaranteed '
-                      'point${guaranteed == 1 ? '' : 's'} before the cut.'
-                  : 'This keep has no points until the cut.',
+              ? 'This keep banks $guaranteed '
+                    'point${guaranteed == 1 ? '' : 's'} before the cut.'
+              : 'This keep has no points until the cut.',
         ),
         _HelpEntry(
           term: 'Score by cut card',
-          body: 'How your hand score lands across the 46 possible cuts: the '
+          body:
+              'How your hand score lands across the 46 possible cuts: the '
               'worst case, the average, the best case, and how many cuts '
               'fall in each range.',
           example: cutExample,

@@ -50,7 +50,8 @@ class CcDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.appColors;
     final size = MediaQuery.of(context).size;
-    final hasHeader = title != null ||
+    final hasHeader =
+        title != null ||
         titleWidget != null ||
         headerActions != null ||
         showCloseButton;
@@ -81,8 +82,9 @@ class CcDialog extends StatelessWidget {
                 ],
               ),
               child: Column(
-                mainAxisSize:
-                    height != null ? MainAxisSize.max : MainAxisSize.min,
+                mainAxisSize: height != null
+                    ? MainAxisSize.max
+                    : MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   if (hasHeader)
@@ -92,7 +94,8 @@ class CcDialog extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Expanded(
-                            child: titleWidget ??
+                            child:
+                                titleWidget ??
                                 (title != null
                                     ? Padding(
                                         padding: const EdgeInsets.only(top: 4),

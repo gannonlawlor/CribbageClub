@@ -138,11 +138,10 @@ class _VerticalBoardPainter extends CustomPainter {
       Radius.circular(_cornerRadius),
     );
     final paint = Paint()
-      ..shader = ui.Gradient.linear(
-        Offset.zero,
-        Offset(size.width, 0),
-        [colors.boardPrimary, colors.boardSecondary],
-      );
+      ..shader = ui.Gradient.linear(Offset.zero, Offset(size.width, 0), [
+        colors.boardPrimary,
+        colors.boardSecondary,
+      ]);
     canvas.drawRRect(rect, paint);
   }
 

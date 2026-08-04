@@ -26,17 +26,12 @@ class AnalysisCacheService {
     final prefs = await _preferences;
     final json = prefs.getString('$_keyPrefix$gameId');
     if (json == null) return null;
-    return GameAnalysis.fromJson(
-      jsonDecode(json) as Map<String, dynamic>,
-    );
+    return GameAnalysis.fromJson(jsonDecode(json) as Map<String, dynamic>);
   }
 
   Future<void> cacheAnalysis(String gameId, GameAnalysis analysis) async {
     final prefs = await _preferences;
-    await prefs.setString(
-      '$_keyPrefix$gameId',
-      jsonEncode(analysis.toJson()),
-    );
+    await prefs.setString('$_keyPrefix$gameId', jsonEncode(analysis.toJson()));
   }
 
   Future<List<String>> getPendingUploads() async {
