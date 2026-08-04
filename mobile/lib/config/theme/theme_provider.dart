@@ -1,3 +1,7 @@
+// cupertino.dart: newer Flutter stables moved CupertinoPageTransitionsBuilder
+// out of material (see the "page transition builders reorganization" breaking
+// change); importing both resolves it on either side of the move.
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'app_colors.dart';
