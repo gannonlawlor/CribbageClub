@@ -168,20 +168,19 @@ membership required), so friends can QA from any device. Requires `TS_AUTHKEY`
 The live instance runs on the titan host under `/opt/cribbage-staging` and pulls
 its image from GHCR.
 
-**The backend image is built remotely by GitHub Actions — never build it
-locally for staging.** Every push to `main` that touches backend files runs
-the CI `image` job, which builds and pushes
-`ghcr.io/gannonlawlor/cribbage:main` (plus a `sha-<short>` tag). Updating
-staging is just a pull + restart on titan once CI is green:
+**Staging deploys itself — never build the image locally.** Every push to
+`main` that touches backend files runs the CI `image` job, which builds and
+pushes `ghcr.io/gannonlawlor/cribbage:main` (plus a `sha-<short>` tag). A
+Watchtower container on titan polls GHCR every 2 minutes and restarts the app
+on the new image; Flyway applies any new migrations on boot. Verify with
+`https://cribbage-staging.tail0b042f.ts.net/actuator/health`. To deploy
+immediately instead of waiting for the poll:
 
 ```bash
 ssh titan "cd /opt/cribbage-staging \
   && docker compose -f docker-compose.staging.yml pull app \
   && docker compose -f docker-compose.staging.yml up -d app"
 ```
-
-Flyway applies any new migrations on boot; verify with
-`https://cribbage-staging.tail0b042f.ts.net/actuator/health`.
 
 ## CI
 
