@@ -5,10 +5,15 @@ import 'app_colors.dart';
 enum AppThemeMode { classicLight, classicDark, system }
 
 // Dark theme is primary (design language v1.0); light is the opt-in mapping.
-final themeProvider = StateProvider<AppThemeMode>((_) => AppThemeMode.classicDark);
+final themeProvider = StateProvider<AppThemeMode>(
+  (_) => AppThemeMode.classicDark,
+);
 
 /// Resolve system mode to concrete light/dark based on platform brightness.
-AppThemeMode resolveThemeMode(AppThemeMode mode, Brightness platformBrightness) {
+AppThemeMode resolveThemeMode(
+  AppThemeMode mode,
+  Brightness platformBrightness,
+) {
   if (mode == AppThemeMode.system) {
     return platformBrightness == Brightness.dark
         ? AppThemeMode.classicDark
@@ -21,17 +26,29 @@ ThemeData buildThemeData(AppThemeMode mode) {
   final colors = switch (mode) {
     AppThemeMode.classicLight => AppColors.classicLight,
     AppThemeMode.classicDark => AppColors.classicDark,
-    AppThemeMode.system => AppColors.classicLight, // fallback, should be resolved first
+    AppThemeMode.system =>
+      AppColors.classicLight, // fallback, should be resolved first
   };
 
-  final brightness =
-      mode == AppThemeMode.classicLight ? Brightness.light : Brightness.dark;
+  final brightness = mode == AppThemeMode.classicLight
+      ? Brightness.light
+      : Brightness.dark;
 
   return ThemeData(
     brightness: brightness,
     colorScheme: ColorScheme.fromSeed(
       seedColor: colors.accent,
       brightness: brightness,
+    ),
+    // Slide pushed pages in from the right on every platform (Material 3's
+    // Android default is a zoom/fade, which reads oddly on back swipes). The
+    // Cupertino builder also carries the interactive edge swipe-back gesture.
+    pageTransitionsTheme: const PageTransitionsTheme(
+      builders: {
+        TargetPlatform.android: CupertinoPageTransitionsBuilder(),
+        TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+        TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
+      },
     ),
     scaffoldBackgroundColor: colors.scaffoldBg,
     appBarTheme: AppBarTheme(
@@ -53,9 +70,7 @@ ThemeData buildThemeData(AppThemeMode mode) {
       ),
     ),
     textButtonTheme: TextButtonThemeData(
-      style: TextButton.styleFrom(
-        foregroundColor: colors.accent,
-      ),
+      style: TextButton.styleFrom(foregroundColor: colors.accent),
     ),
     cardTheme: CardThemeData(color: colors.cardFace, elevation: 2),
     dialogTheme: DialogThemeData(
@@ -65,10 +80,7 @@ ThemeData buildThemeData(AppThemeMode mode) {
         fontSize: 20,
         fontWeight: FontWeight.bold,
       ),
-      contentTextStyle: TextStyle(
-        color: colors.textSecondary,
-        fontSize: 14,
-      ),
+      contentTextStyle: TextStyle(color: colors.textSecondary, fontSize: 14),
     ),
     bottomSheetTheme: BottomSheetThemeData(
       backgroundColor: colors.surfacePrimary,

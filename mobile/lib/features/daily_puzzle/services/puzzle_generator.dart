@@ -1,9 +1,15 @@
 import 'dart:convert';
+import 'dart:io' show Platform;
+import 'dart:isolate';
 import 'dart:math';
+
+import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart'
+    show ExternalLibrary;
 
 import '../../../core/models/card.dart';
 import '../../../core/models/game_analysis.dart';
 import '../../../src/rust/api/simple.dart' as rust;
+import '../../../src/rust/frb_generated.dart';
 import '../models/daily_puzzle.dart';
 
 class PuzzleGenerator {
@@ -50,6 +56,23 @@ class PuzzleGenerator {
   }
 
   /// Evaluate all 15 possible keeps and return them ranked best-to-worst.
+  /// [evaluateAllKeeps] off the UI isolate. The exhaustive analysis blocks
+  /// for long enough to freeze animation frames (the Rust FFI is synchronous),
+  /// so it runs in a short-lived isolate with its own RustLib handle.
+  static Future<List<KeepOption>> evaluateAllKeepsAsync(
+    List<PlayingCard> hand,
+    bool isDealer,
+  ) {
+    return Isolate.run(() async {
+      await RustLib.init(
+        externalLibrary: Platform.isIOS
+            ? ExternalLibrary.process(iKnowHowToUseIt: true)
+            : null,
+      );
+      return evaluateAllKeeps(hand, isDealer);
+    });
+  }
+
   static List<KeepOption> evaluateAllKeeps(
     List<PlayingCard> hand,
     bool isDealer,

@@ -68,7 +68,11 @@ class _DailyPuzzleScreenState extends ConsumerState<DailyPuzzleScreen> {
                     : AnimatedSwitcher(
                         duration: const Duration(milliseconds: 400),
                         child: switch (state.phase) {
-                          PuzzlePhase.playing => _PlayingView(
+                          // The daily flow never pauses on solving — analysis
+                          // runs behind the next puzzle — but the phase enum
+                          // is shared with practice mode.
+                          PuzzlePhase.playing ||
+                          PuzzlePhase.solving => _PlayingView(
                             key: ValueKey(
                               'playing_${state.currentPuzzleIndex}',
                             ),

@@ -109,21 +109,30 @@ class PracticePuzzleNotifier extends StateNotifier<PracticePuzzleState> {
 
   /// [pickedDiscards] flips what the taps meant: the keep is then the four
   /// cards the player left alone.
-  void submitKeep({bool pickedDiscards = false}) {
+  ///
+  /// The reveal is two-step: the screen flips to a solving state immediately,
+  /// then fills in when the exhaustive analysis (run off the UI isolate)
+  /// completes. The player can move on to the next puzzle mid-solve — their
+  /// stats still count, only the reveal is dropped.
+  Future<void> submitKeep({bool pickedDiscards = false}) async {
     final needed = pickedDiscards ? 2 : 4;
     if (state.selectedCards.length != needed || state.puzzle == null) return;
+    if (state.phase != PuzzlePhase.playing) return;
 
     final puzzle = state.puzzle!;
-    final results = PuzzleGenerator.evaluateAllKeeps(
+    final number = state.puzzleNumber;
+    final playerKeep = pickedDiscards
+        ? puzzle.hand.where((c) => !state.selectedCards.contains(c)).toSet()
+        : Set<PlayingCard>.from(state.selectedCards);
+
+    state = state.copyWith(phase: PuzzlePhase.solving);
+
+    final results = await PuzzleGenerator.evaluateAllKeepsAsync(
       puzzle.hand,
       puzzle.isDealer,
     );
-    puzzle.results = results;
 
     // Find player's rank
-    final playerKeep = pickedDiscards
-        ? puzzle.hand.where((c) => !state.selectedCards.contains(c)).toSet()
-        : state.selectedCards;
     int? playerRank;
     for (final option in results) {
       if (option.keep.toSet().containsAll(playerKeep) &&
@@ -133,9 +142,14 @@ class PracticePuzzleNotifier extends StateNotifier<PracticePuzzleState> {
       }
     }
 
+    if (!mounted) return;
+    // The reveal only lands if the player is still waiting on this puzzle.
+    final stillHere =
+        state.puzzleNumber == number && state.phase == PuzzlePhase.solving;
+    if (stillHere) puzzle.results = results;
     state = state.copyWith(
-      phase: PuzzlePhase.revealed,
-      playerRank: playerRank,
+      phase: stillHere ? PuzzlePhase.revealed : null,
+      playerRank: stillHere ? playerRank : null,
       totalSolved: state.totalSolved + 1,
       optimalCount: state.optimalCount + (playerRank == 1 ? 1 : 0),
     );

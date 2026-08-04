@@ -66,13 +66,20 @@ class SettingsScreen extends ConsumerWidget {
                 const SizedBox(height: 18),
 
                 const _SectionCaption('Gameplay'),
+                const AutoPlayToggles(),
+                const SizedBox(height: 18),
+
+                const _SectionCaption("Opponent's hand"),
+                const OpponentHandSelector(),
+                const SizedBox(height: 18),
+
+                const _SectionCaption('Animation speed'),
+                const AnimationSpeedSlider(),
+                const SizedBox(height: 18),
+
+                const _SectionCaption('Sound & feel'),
                 _Group(
                   children: [
-                    _ValueRow(
-                      label: 'Game settings',
-                      value: gameSettingsSummary(settings),
-                      onTap: () => showGameSettingsDialog(context),
-                    ),
                     _ToggleRow(
                       label: 'Sounds',
                       value: settings.soundEnabled,

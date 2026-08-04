@@ -1032,7 +1032,10 @@ class GameScreen extends ConsumerWidget {
                   receiveFirst: isDealer,
                   from: Offset(width / 2, height * 0.45),
                   to: Offset(width / 2, oppLandingY),
-                  cardWidth: tableCardW * 0.85,
+                  // Landing in a visible hand: fly at the hand's card size so
+                  // the delivered card doesn't pop bigger than the flight.
+                  cardWidth: showOppCards ? oppCardW : tableCardW * 0.85,
+                  shrinkOnArrival: !showOppCards,
                 ),
               ),
               // Anchored to the two score bars: just below the opponent's,

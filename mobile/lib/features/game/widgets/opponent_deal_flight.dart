@@ -35,6 +35,12 @@ class OpponentDealFlight extends ConsumerStatefulWidget {
   final Offset to;
   final double cardWidth;
 
+  /// Shrink the card as it arrives. True when it lands on the opponent's bar
+  /// (reads as tucked away); false when it lands in a visible hand, where the
+  /// flying card should match the hand's card size the whole way — shrinking
+  /// and then having the full-size hand card appear reads as a glitch.
+  final bool shrinkOnArrival;
+
   const OpponentDealFlight({
     super.key,
     required this.handCount,
@@ -43,6 +49,7 @@ class OpponentDealFlight extends ConsumerStatefulWidget {
     required this.to,
     required this.cardWidth,
     this.cardCount = 6,
+    this.shrinkOnArrival = true,
   });
 
   @override
@@ -135,9 +142,8 @@ class _OpponentDealFlightState extends ConsumerState<OpponentDealFlight> {
               onEnd: () => setState(() => _landed.add(i)),
               builder: (context, t, _) {
                 final pos = Offset.lerp(widget.from, widget.to, t)!;
-                // Shrink toward the bar and fade out on arrival so the card
-                // reads as tucked into the opponent's hand.
-                final scale = 1 - 0.35 * t;
+                final scale = widget.shrinkOnArrival ? 1 - 0.35 * t : 1.0;
+                // Fade out on arrival as the real hand card appears in place.
                 final opacity = t > 0.75 ? (1 - t) / 0.25 : 1.0;
                 return Positioned(
                   left: pos.dx - cardW / 2,

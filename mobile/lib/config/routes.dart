@@ -35,10 +35,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       return null;
     },
     routes: [
+      // MaterialPage (not NoTransitionPage) so the login screen slides and
+      // carries the interactive back-swipe gesture when it's pushed.
       GoRoute(
         path: '/login',
         pageBuilder: (context, state) =>
-            const NoTransitionPage(child: LoginScreen()),
+            const MaterialPage(child: LoginScreen()),
       ),
       GoRoute(
         path: '/',

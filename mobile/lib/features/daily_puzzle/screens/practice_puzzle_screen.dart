@@ -30,7 +30,7 @@ class _PracticePuzzleScreenState extends ConsumerState<PracticePuzzleScreen> {
     super.initState();
     Future.microtask(() {
       final state = ref.read(practicePuzzleProvider);
-      if (state.puzzle == null || state.phase == PuzzlePhase.revealed) {
+      if (state.puzzle == null || state.phase != PuzzlePhase.playing) {
         ref.read(practicePuzzleProvider.notifier).loadPuzzle();
       }
     });
@@ -148,7 +148,10 @@ class _RevealedView extends ConsumerWidget {
     final colors = context.appColors;
     final state = ref.watch(practicePuzzleProvider);
     final puzzle = state.puzzle!;
-    final results = puzzle.results!;
+    // Solving: the answer is in, the exhaustive analysis is still running in
+    // the background. Both exits below stay live the whole time.
+    final solving = state.phase == PuzzlePhase.solving;
+    final results = solving ? null : puzzle.results;
     final playerRank = state.playerRank;
     final foundBest = playerRank == 1;
 
@@ -172,9 +175,15 @@ class _RevealedView extends ConsumerWidget {
           child: Column(
             children: [
               Text(
-                foundBest ? 'Best keep' : 'Rank $playerRank of 15',
+                solving
+                    ? 'Checking your keep…'
+                    : foundBest
+                    ? 'Best keep'
+                    : 'Rank $playerRank of 15',
                 style: TextStyle(
-                  color: foundBest ? colors.evOptimal : colors.textPrimary,
+                  color: !solving && foundBest
+                      ? colors.evOptimal
+                      : colors.textPrimary,
                   fontSize: 22,
                   fontWeight: FontWeight.w700,
                   fontFeatures: const [FontFeature.tabularFigures()],
@@ -203,29 +212,46 @@ class _RevealedView extends ConsumerWidget {
           ),
         ),
         Expanded(
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
-            children: [
-              CcPanel(
-                rows: [
-                  for (final option in results)
-                    KeepRankTile(
-                      option: option,
-                      isPlayerPick:
-                          playerRank != null && option.rank == playerRank,
-                      isOptimal: option.rank == 1,
-                      isDealer: puzzle.isDealer,
-                      onExplain: () => _showExplain(
-                        context,
-                        puzzle.hand,
-                        option,
-                        puzzle.isDealer,
+          child: results == null
+              ? Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      CircularProgressIndicator(color: colors.accent),
+                      const SizedBox(height: 14),
+                      Text(
+                        'Scoring all 15 keeps across every cut…',
+                        style: TextStyle(
+                          color: colors.textTertiary,
+                          fontSize: 12.5,
+                        ),
                       ),
+                    ],
+                  ),
+                )
+              : ListView(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+                  children: [
+                    CcPanel(
+                      rows: [
+                        for (final option in results)
+                          KeepRankTile(
+                            option: option,
+                            isPlayerPick:
+                                playerRank != null && option.rank == playerRank,
+                            isOptimal: option.rank == 1,
+                            isDealer: puzzle.isDealer,
+                            onExplain: () => _showExplain(
+                              context,
+                              puzzle.hand,
+                              option,
+                              puzzle.isDealer,
+                            ),
+                          ),
+                      ],
                     ),
-                ],
-              ),
-            ],
-          ),
+                  ],
+                ),
         ),
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),

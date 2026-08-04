@@ -34,8 +34,6 @@ class GameSettingsDialog extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.appColors;
-    final settings = ref.watch(settingsProvider);
-    final notifier = ref.read(settingsProvider.notifier);
 
     // In-game exits lead the dialog: they act on this game, everything below
     // is app-wide preferences.
@@ -97,106 +95,178 @@ class GameSettingsDialog extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 14),
-          CcGroup(
-            children: [
-              CcToggleRow(
-                title: 'Auto-deal',
-                value: settings.autoDeal,
-                onChanged: notifier.setAutoDeal,
-              ),
-              CcToggleRow(
-                title: 'Auto-cut deck',
-                value: settings.autoCut,
-                onChanged: notifier.setAutoCut,
-              ),
-              CcToggleRow(
-                title: 'Auto-go',
-                value: settings.autoGo,
-                onChanged: notifier.setAutoGo,
-              ),
-              CcToggleRow(
-                title: 'Auto-play all',
-                value: settings.autoPlayAll,
-                onChanged: notifier.setAutoPlayAll,
-              ),
-              CcToggleRow(
-                title: 'Auto-play pegging',
-                value: settings.autoPlayPegging,
-                onChanged: settings.autoPlayAll
-                    ? null
-                    : notifier.setAutoPlayPegging,
-              ),
-            ],
-          ),
+          const AutoPlayToggles(),
           const SizedBox(height: 18),
           const _SectionCaption("Opponent's hand"),
           const SizedBox(height: 8),
-          CcSegmented(
-            labels: const ['Cards', 'Card count'],
-            selected: settings.opponentHandDisplay.index,
-            onChanged: (i) =>
-                notifier.setOpponentHandDisplay(OpponentHandDisplay.values[i]),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            settings.opponentHandDisplay == OpponentHandDisplay.cards
-                ? 'Their cards sit face down across the table from yours.'
-                : 'Just how many cards they have left, on one chip.',
-            style: TextStyle(
-              color: colors.textTertiary,
-              fontSize: 12.5,
-              height: 1.35,
-            ),
-          ),
+          const OpponentHandSelector(),
           const SizedBox(height: 18),
           const _SectionCaption('Animation speed'),
           const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.fromLTRB(14, 8, 14, 10),
-            decoration: BoxDecoration(
-              color: colors.surfaceDim,
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: colors.border),
+          const AnimationSpeedSlider(),
+          const SizedBox(height: 18),
+          const _SectionCaption('Sound'),
+          const SizedBox(height: 8),
+          const SoundToggles(),
+        ],
+      ),
+    );
+  }
+}
+
+/// Auto-play preference toggles — shared by the in-game dialog and the
+/// settings screen's Gameplay section.
+class AutoPlayToggles extends ConsumerWidget {
+  const AutoPlayToggles({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settings = ref.watch(settingsProvider);
+    final notifier = ref.read(settingsProvider.notifier);
+    return CcGroup(
+      children: [
+        CcToggleRow(
+          title: 'Auto-deal',
+          value: settings.autoDeal,
+          onChanged: notifier.setAutoDeal,
+        ),
+        CcToggleRow(
+          title: 'Auto-cut deck',
+          value: settings.autoCut,
+          onChanged: notifier.setAutoCut,
+        ),
+        CcToggleRow(
+          title: 'Auto-go',
+          value: settings.autoGo,
+          onChanged: notifier.setAutoGo,
+        ),
+        CcToggleRow(
+          title: 'Auto-play all',
+          value: settings.autoPlayAll,
+          onChanged: notifier.setAutoPlayAll,
+        ),
+        CcToggleRow(
+          title: 'Auto-play pegging',
+          value: settings.autoPlayPegging,
+          onChanged: settings.autoPlayAll ? null : notifier.setAutoPlayPegging,
+        ),
+      ],
+    );
+  }
+}
+
+/// Cards-vs-count selector for the opponent's hand, with its explainer line.
+class OpponentHandSelector extends ConsumerWidget {
+  const OpponentHandSelector({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.appColors;
+    final settings = ref.watch(settingsProvider);
+    final notifier = ref.read(settingsProvider.notifier);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        CcSegmented(
+          labels: const ['Cards', 'Card count'],
+          selected: settings.opponentHandDisplay.index,
+          onChanged: (i) =>
+              notifier.setOpponentHandDisplay(OpponentHandDisplay.values[i]),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          settings.opponentHandDisplay == OpponentHandDisplay.cards
+              ? 'Their cards sit face down across the table from yours.'
+              : 'Just how many cards they have left, on one chip.',
+          style: TextStyle(
+            color: colors.textTertiary,
+            fontSize: 12.5,
+            height: 1.35,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Animation speed slider (0.5x–2.0x), shared by the dialog and settings.
+class AnimationSpeedSlider extends ConsumerWidget {
+  const AnimationSpeedSlider({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.appColors;
+    final settings = ref.watch(settingsProvider);
+    final notifier = ref.read(settingsProvider.notifier);
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 8, 14, 10),
+      decoration: BoxDecoration(
+        color: colors.surfaceDim,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: colors.border),
+      ),
+      child: Row(
+        children: [
+          Text(
+            '0.5x',
+            style: TextStyle(color: colors.textTertiary, fontSize: 11),
+          ),
+          Expanded(
+            child: Slider(
+              value: settings.animationSpeed,
+              min: 0.5,
+              max: 2.0,
+              divisions: 6,
+              activeColor: colors.accent,
+              onChanged: notifier.setAnimationSpeed,
             ),
-            child: Row(
-              children: [
-                Text(
-                  '0.5x',
-                  style: TextStyle(color: colors.textTertiary, fontSize: 11),
-                ),
-                Expanded(
-                  child: Slider(
-                    value: settings.animationSpeed,
-                    min: 0.5,
-                    max: 2.0,
-                    divisions: 6,
-                    activeColor: colors.accent,
-                    onChanged: notifier.setAnimationSpeed,
-                  ),
-                ),
-                Text(
-                  '2.0x',
-                  style: TextStyle(color: colors.textTertiary, fontSize: 11),
-                ),
-                const SizedBox(width: 8),
-                SizedBox(
-                  width: 34,
-                  child: Text(
-                    '${settings.animationSpeed.toStringAsFixed(1)}x',
-                    textAlign: TextAlign.right,
-                    style: TextStyle(
-                      color: colors.textPrimary,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      fontFeatures: const [FontFeature.tabularFigures()],
-                    ),
-                  ),
-                ),
-              ],
+          ),
+          Text(
+            '2.0x',
+            style: TextStyle(color: colors.textTertiary, fontSize: 11),
+          ),
+          const SizedBox(width: 8),
+          SizedBox(
+            width: 34,
+            child: Text(
+              '${settings.animationSpeed.toStringAsFixed(1)}x',
+              textAlign: TextAlign.right,
+              style: TextStyle(
+                color: colors.textPrimary,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                fontFeatures: const [FontFeature.tabularFigures()],
+              ),
             ),
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Sound and haptics switches — in the dialog so they're reachable mid-game.
+class SoundToggles extends ConsumerWidget {
+  const SoundToggles({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settings = ref.watch(settingsProvider);
+    final notifier = ref.read(settingsProvider.notifier);
+    return CcGroup(
+      children: [
+        CcToggleRow(
+          title: 'Sounds',
+          value: settings.soundEnabled,
+          onChanged: notifier.setSoundEnabled,
+        ),
+        CcToggleRow(
+          title: 'Haptics',
+          value: settings.hapticsEnabled,
+          onChanged: notifier.setHapticsEnabled,
+        ),
+      ],
     );
   }
 }
@@ -291,17 +361,4 @@ class _SectionCaption extends StatelessWidget {
       ),
     );
   }
-}
-
-/// One-line summary of the enabled auto-play options, for settings rows.
-String gameSettingsSummary(SettingsState s) {
-  final parts = <String>[
-    if (s.autoDeal) 'Auto deal',
-    if (s.autoCut) 'auto cut',
-    if (s.autoGo) 'auto go',
-    if (s.autoPlayAll) 'auto play',
-  ];
-  if (parts.isEmpty) return 'All manual';
-  final joined = parts.join(', ');
-  return joined[0].toUpperCase() + joined.substring(1);
 }

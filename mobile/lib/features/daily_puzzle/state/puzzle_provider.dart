@@ -7,7 +7,7 @@ import '../models/daily_puzzle.dart';
 import '../services/puzzle_generator.dart';
 import '../services/puzzle_persistence.dart';
 
-enum PuzzlePhase { playing, revealed, summary }
+enum PuzzlePhase { playing, solving, revealed, summary }
 
 class DailyPuzzleState {
   final DailyPuzzleSet? puzzleSet;
@@ -219,7 +219,9 @@ class DailyPuzzleNotifier extends StateNotifier<DailyPuzzleState> {
     bool report = false,
   }) {
     Future(() async {
-      final results = PuzzleGenerator.evaluateAllKeeps(
+      // Off the UI isolate — the player is already on the next puzzle, and
+      // this must not freeze their taps or animations while it grinds.
+      final results = await PuzzleGenerator.evaluateAllKeepsAsync(
         puzzle.hand,
         puzzle.isDealer,
       );
