@@ -70,6 +70,31 @@ cargo test               # run Rust tests
 docker compose up -d     # start PostgreSQL + app (dev)
 ```
 
+## Checks Before Committing
+
+Run only the checks for the directories that changed. They can run in parallel.
+
+| Changed | Check |
+|---------|-------|
+| `mobile/` | `cd mobile && flutter analyze lib` |
+| `src/` | `JAVA_HOME=/Users/gannon/Library/Java/JavaVirtualMachines/openjdk-22.0.2/Contents/Home ./gradlew compileKotlin` |
+| `web/` | `cd web && npx tsc -b --noEmit` |
+| `engine/` | `cd engine && cargo check` |
+
+- **Scope Flutter analysis to `lib`.** Bare `flutter analyze` reports about 90 pre-existing errors from vendored `rust_builder/cargokit/` and `test_driver/integration_test.dart`. That's also why `mobile/scripts/test.sh` fails at its analyze step.
+- **`flutter test` has 2 known failures.** `local_game_service_test.dart` and `local_game_notifier_test.dart` can't load the Rust FFI library in the test host. If you're unsure whether another failure is yours, compare against `main`.
+- **Format Dart files you touched** with `dart format` before committing.
+
+## Commits and Branches
+
+- **Commit style:** plain capitalized imperative summaries with no type prefix, such as "Persist and resume in-progress local AI games". This repo doesn't use conventional commits. A semicolon can join two coupled changes. For multi-file changes, add a body wrapped at about 72 columns that explains why.
+- **Never stage:**
+  - `mobile/dart_define/*.json` if it has gained anything beyond the API URL
+  - Any credential, keystore, `.p12` or `.mobileprovision`, or an `ExportOptions.plist` change that embeds a team ID you didn't mean to publish
+  - Generated files whose source didn't change: `*.freezed.dart`, `*.g.dart`, `engine/pkg/` and `mobile/lib/src/rust/frb_generated*.dart`. Stage these only with the model or Rust change that regenerated them
+- **Branches:** `main` is checked out at the repo root, and feature work usually lives on a `claude/*` branch in `.claude/worktrees/<name>`.
+- **Releases:** if a shipped change is mobile-facing, offer `/release`. It doesn't run automatically.
+
 ## Game Flow
 
 1. **DEALING** — 6 cards dealt to each player
