@@ -1,0 +1,15 @@
+[extend]
+useDefault = true
+
+[[rules]]
+id = "runtime-secret-fallback"
+description = "Runtime signing keys and database passwords must not have fallback values"
+regex = '''\$\{(?:JWT_SECRET|jwt\.secret|DATABASE_PASSWORD|DB_PASSWORD):(?:-[^}\r\n]+|[^?}\r\n][^}\r\n]*)'''
+path = '''(^|/)(application[^/]*\.properties|docker-compose[^/]*\.ya?ml|JwtService\.kt)$'''
+
+[[rules]]
+id = "hardcoded-runtime-secret"
+description = "Runtime signing keys and database passwords must come from environment variables"
+regex = '''(?im)^[ \t]*(?:jwt\.secret|JWT_SECRET|spring\.datasource\.password|DATABASE_PASSWORD|POSTGRES_PASSWORD)[ \t]*[:=][ \t]*["']?([A-Za-z0-9][A-Za-z0-9_+/=.-]{3,})'''
+secretGroup = 1
+path = '''(^|/)(application[^/]*\.properties|docker-compose[^/]*\.ya?ml)$'''

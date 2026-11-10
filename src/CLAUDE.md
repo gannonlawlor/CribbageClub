@@ -102,7 +102,7 @@ src/main/kotlin/com/jackabee/cribbageclubserver/
 
 ## Configuration
 
-- `application.properties`: DB, JWT secret, CORS origins, rate limits — all from env vars with safe dev defaults
+- `application.properties`: DB, JWT secret, CORS origins, rate limits — database password and JWT secret are required environment variables, including locally
 - `application-prod.properties`: Strict — requires env vars, no defaults
 - `application-alpha.properties`: Flyway-managed schema, Hibernate ddl-auto=none
 - Docker: Multi-stage Dockerfile, non-root user, health check via actuator

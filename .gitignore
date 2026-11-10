@@ -44,6 +44,21 @@ out/
 .env.*
 !.env.*.example
 
+### Private credentials and signing material ###
+*.pem
+*.key
+*.p8
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.mobileprovision
+service-account*.json
+*-service-account.json
+*firebase-adminsdk*.json
+.release-env
+credentials.json
+
 ### Build artifacts ###
 engine/pkg/
 engine/target/

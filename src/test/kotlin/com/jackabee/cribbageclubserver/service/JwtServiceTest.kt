@@ -1,13 +1,37 @@
 package com.jackabee.cribbageclubserver.service
 
+import io.jsonwebtoken.security.WeakKeyException
 import org.junit.jupiter.api.Test
+import org.springframework.boot.autoconfigure.AutoConfigurations
+import org.springframework.boot.autoconfigure.context.PropertyPlaceholderAutoConfiguration
+import org.springframework.boot.test.context.runner.ApplicationContextRunner
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class JwtServiceTest {
+
+    @Test
+    fun `should reject a weak key during initialization`() {
+        assertFailsWith<WeakKeyException> {
+            JwtService(secret = "too-short", expirationMs = 3600000)
+        }
+    }
+
+    @Test
+    fun `should fail startup when signing secret is missing`() {
+        ApplicationContextRunner()
+            .withConfiguration(AutoConfigurations.of(PropertyPlaceholderAutoConfiguration::class.java))
+            .withUserConfiguration(JwtService::class.java)
+            .run { context ->
+                assertNotNull(context.startupFailure)
+                val rootCause = generateSequence(context.startupFailure) { it.cause }.last()
+                assertTrue(rootCause.message.orEmpty().contains("jwt.secret"))
+            }
+    }
 
     private val jwtService = JwtService(
         secret = "test-secret-key-that-is-at-least-256-bits-long-for-hs256!!",

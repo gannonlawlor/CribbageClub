@@ -65,6 +65,11 @@ Cargo feature flags (`frb` default, `wasm-web`) control which FFI layer is compi
 ### Backend
 
 ```bash
+# Create credentials for your local database and server (keep them private).
+export DB_PASSWORD="$(openssl rand -hex 24)"
+export DATABASE_PASSWORD="$DB_PASSWORD"
+export JWT_SECRET="$(openssl rand -hex 32)"
+
 # Start PostgreSQL (via Docker or local install)
 docker compose up -d postgres
 
@@ -153,7 +158,11 @@ wasm-pack build --target web --release -- --no-default-features --features wasm-
 docker compose up -d
 ```
 
-Starts PostgreSQL and the Spring Boot app on port 8080. Requires `JWT_SECRET` environment variable.
+Starts PostgreSQL and the Spring Boot app on port 8080. Requires `DB_PASSWORD`
+and `JWT_SECRET` (at least 32 random bytes). Store them in your shell or an
+ignored `.env` file. Reuse the database password when restarting an existing
+database volume; changing the variable does not update the database role.
+The server fails at startup if its JWT secret is missing or too short.
 
 ### Docker (Staging / QA)
 
@@ -183,6 +192,12 @@ ssh titan "cd /opt/cribbage-staging \
 ```
 
 ## CI
+
+Secret scanning runs on every push and pull request. Install the local commit
+check with `uvx pre-commit install --install-hooks` (or `pre-commit install
+--install-hooks` if already installed). It blocks known credential patterns and
+hardcoded runtime secrets. Private keys, service-account files, and local
+environment files must stay out of Git.
 
 GitHub Actions runs on push/PR to `main`:
 
