@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useMemo, useEffect, useRef } from 'react'
 import { CardWidget } from '@/features/game/components/CardWidget'
 import type { PlayingCard } from '@/models'
 import { isEngineReady, getEngine } from '@/engine/wasm-engine'
@@ -22,37 +22,27 @@ export function ExplainBottomSheet({
   isDealer,
   onClose,
 }: ExplainBottomSheetProps) {
-  const [explanation, setExplanation] = useState<KeepExplanation | null>(null)
-  const [insights, setInsights] = useState<string[] | null>(null)
-  const [error, setError] = useState<string | null>(null)
-
+  const dialog = useRef<HTMLDialogElement>(null)
   useEffect(() => {
-    if (!isEngineReady()) {
-      setError('WASM engine not loaded. Explain feature requires the engine.')
-      return
-    }
-
+    const previous = document.activeElement as HTMLElement | null
+    dialog.current?.showModal()
+    return () => { previous?.focus() }
+  }, [])
+  const { explanation, insights, error } = useMemo(() => {
     try {
-      const engine = getEngine()
-      const handJson = JSON.stringify(hand)
-      const keepJson = JSON.stringify(keep)
-      const resultJson = (engine as unknown as { explain_keep_json: (h: string, k: string, d: boolean) => string })
-        .explain_keep_json(handJson, keepJson, isDealer)
-      const data = JSON.parse(resultJson) as KeepExplanation
-      setExplanation(data)
-      setInsights(generateInsights(data, keep, discard))
+      if (!isEngineReady()) throw new Error('Engine unavailable')
+      const data = JSON.parse(getEngine().explain_keep_json(JSON.stringify(hand), JSON.stringify(keep), isDealer)) as KeepExplanation
+      return { explanation: data, insights: generateInsights(data, keep, discard), error: null }
     } catch {
-      setError('Could not compute explanation')
+      return { explanation: null, insights: null, error: 'Analysis is unavailable. Close this panel and try again shortly.' }
     }
   }, [hand, keep, discard, isDealer])
 
   return (
     <>
-      {/* Backdrop */}
-      <div className="fixed inset-0 bg-black/50 z-40" onClick={onClose} />
-
       {/* Sheet */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#1B3A1E] rounded-t-2xl p-5 max-w-lg mx-auto">
+      <dialog ref={dialog} onCancel={onClose} aria-label="Keep explanation" className="fixed inset-x-0 bottom-0 top-auto z-50 bg-[var(--surface-1)] text-white rounded-t-2xl p-5 w-full max-w-lg max-h-[85dvh] overflow-y-auto backdrop:bg-black/60">
+        <button autoFocus onClick={onClose} className="float-right min-h-11 px-3 text-white">Close</button>
         {/* Drag handle */}
         <div className="flex justify-center mb-4">
           <div className="w-10 h-1 bg-white/20 rounded-full" />
@@ -92,7 +82,7 @@ export function ExplainBottomSheet({
             <CutScoreTable cutScores={explanation.cutScores} />
           </div>
         )}
-      </div>
+      </dialog>
     </>
   )
 }

@@ -1,3 +1,6 @@
+import { useState } from 'react'
+import { CardWidget } from '@/features/game/components/CardWidget'
+import { Rank, Suit } from '@/models/card'
 import { useNavigate } from 'react-router'
 import { motion } from 'motion/react'
 import { useAuthStore } from '@/auth/auth-store'
@@ -12,17 +15,21 @@ const fadeUp = {
 export function LandingPage() {
   const navigate = useNavigate()
   const loginAsGuest = useAuthStore((s) => s.loginAsGuest)
-  const leaderboard = useAsync(() => api.getLeaderboard().catch(() => []))
+  const leaderboard = useAsync(() => api.getLeaderboard())
+  const [pending, setPending] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  async function handlePlayNow() {
-    await loginAsGuest()
-    navigate('/')
+  async function handlePlayNow(mode = 'online') {
+    if (pending) return
+    setPending(true); setError(null)
+    try { await loginAsGuest(); navigate('/?play=' + mode) }
+    catch { setError('Could not start your session. Please try again.'); setPending(false) }
   }
 
   return (
     <div>
       {/* ── Hero: one centered column, the proof is the ladder ── */}
-      <section className="min-h-[calc(100vh-52px)] lg:min-h-screen flex items-center bg-[var(--surface-1)]">
+      <section className="min-h-[calc(100vh-52px)] flex items-center bg-[var(--surface-1)]">
         <div className="max-w-[720px] mx-auto px-6 py-16 w-full text-center">
           <h1 className="text-[40px] leading-[44px] lg:text-5xl font-bold text-[var(--text-1)] mb-4">
             Play Cribbage Online<br />on the Rated Ladder
@@ -33,14 +40,14 @@ export function LandingPage() {
           </p>
           <div className="flex flex-col gap-3 max-w-sm mx-auto">
             <BigCta
-              onClick={handlePlayNow}
+              onClick={() => handlePlayNow()}
               title="Play Online"
-              subtitle="Rated matchmaking against real players"
+              subtitle="Matchmaking with real players · guests play unrated"
               variant="accent"
               icon={<BoltIcon />}
             />
             <BigCta
-              onClick={handlePlayNow}
+              onClick={() => handlePlayNow("ai")}
               title="Play Computer"
               subtitle="Three engine difficulties, instant start"
               variant="surface"
@@ -53,6 +60,11 @@ export function LandingPage() {
               Already have an account? <span className="text-[var(--green-500)] font-semibold">Log In</span>
             </button>
           </div>
+          <div aria-live="polite" className="mt-4 text-sm text-[var(--text-2)]">{pending && 'Starting your session…'}{error && <span role="alert">{error}</span>}</div>
+          <div className="mt-8 flex justify-center gap-2" aria-label="Example cribbage hand">
+            {[Rank.FIVE, Rank.FIVE, Rank.TEN, Rank.JACK].map((rank, i) => <CardWidget key={i} card={{ rank, suit: [Suit.HEARTS, Suit.SPADES, Suit.DIAMONDS, Suit.CLUBS][i] }} width={64} height={90} />)}
+          </div>
+          <p className="mt-3 text-sm text-[var(--text-2)]">Play a hand. Learn from every discard.</p>
           <p className="text-[var(--text-3)] text-xs uppercase tracking-[0.06em] mt-8 tnum">
             Free &middot; Rated ladder &middot; iOS, Android &amp; web
           </p>
@@ -103,7 +115,7 @@ export function LandingPage() {
             ))}
             {!leaderboard.data?.length && (
               <div className="px-4 py-6 text-white/40 text-sm text-center">
-                The ladder is waiting. Be the first to climb it.
+                {leaderboard.error ? "Leaderboard unavailable. Please try again later." : "The ladder is waiting. Be the first to climb it."}
               </div>
             )}
           </motion.div>
@@ -190,13 +202,13 @@ export function LandingPage() {
             className="flex flex-wrap justify-center gap-3"
           >
             <button
-              onClick={handlePlayNow}
+              onClick={() => handlePlayNow()}
               className="bg-[var(--green-500)] hover:bg-[var(--green-400)] text-[var(--on-green)] font-bold text-lg px-10 py-3 rounded-lg active:translate-y-[2px] transition-all duration-100 shadow-[inset_0_-4px_0_var(--green-600)] border-none cursor-pointer"
             >
               Play Now
             </button>
             <button
-              onClick={() => navigate('/login')}
+              onClick={() => navigate('/login?mode=register')}
               className="bg-[var(--surface)] hover:bg-[var(--surface-hover)] text-white font-semibold text-lg px-8 py-3 rounded-md transition-colors border border-[var(--border)] cursor-pointer"
             >
               Create Account

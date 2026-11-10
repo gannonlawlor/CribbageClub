@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router'
+import { Link, useNavigate, useSearchParams } from 'react-router'
 import { useAuthStore } from '@/auth/auth-store'
 import { useAsync } from '@/shared/hooks'
 import * as api from '@/api/rest-client'
@@ -11,7 +11,9 @@ export function HomePage() {
   const navigate = useNavigate()
   const [isCreating, setIsCreating] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
-  const [expanded, setExpanded] = useState<'online' | 'ai' | null>(null)
+  const [params] = useSearchParams()
+  const [menuChoice, setExpanded] = useState<'online' | 'ai' | null | undefined>(undefined)
+  const expanded = menuChoice === undefined ? (params.get('play') === 'ai' ? 'ai' : params.get('play') === 'online' ? 'online' : null) : menuChoice
 
   const activeGames = useAsync(
     () => isLoggedIn ? api.getMyActiveGames() : Promise.resolve([]),
@@ -100,7 +102,7 @@ export function HomePage() {
             {/* Play Online */}
             <PlayMenuButton
               title="Play Online"
-              subtitle="Rated matchmaking against real players"
+              subtitle="Matchmaking · guests play unrated"
               icon={<BoltIcon />}
               variant="accent"
               disabled={isCreating}
@@ -123,7 +125,7 @@ export function HomePage() {
               expanded={expanded === 'ai'}
               onClick={() => setExpanded(expanded === 'ai' ? null : 'ai')}
             >
-              <SubOption label="Easy" desc="Casual heuristics" onClick={() => createAIGame('basic')} />
+              <SubOption label="Easy" desc="Relaxed play for learning" onClick={() => createAIGame('basic')} />
               <SubOption label="Medium" desc="Optimizes hand scoring" onClick={() => createAIGame('medium')} />
               <SubOption label="Hard" desc="Full hand + crib optimization" onClick={() => createAIGame('hard')} />
             </PlayMenuButton>

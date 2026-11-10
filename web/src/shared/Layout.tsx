@@ -6,11 +6,11 @@ import * as api from '@/api/rest-client'
 export function Layout() {
   const { isLoggedIn, username, isGuest, userId, logout } = useAuthStore()
   const navigate = useNavigate()
-  const [notifCount, setNotifCount] = useState(0)
+  const [storedNotifCount, setNotifCount] = useState(0)
+  const notifCount = isLoggedIn && !isGuest ? storedNotifCount : 0
 
   useEffect(() => {
     if (!isLoggedIn || isGuest) {
-      setNotifCount(0)
       return
     }
 
@@ -83,7 +83,7 @@ export function Layout() {
           ) : (
             <>
               <Link
-                to="/login"
+                to="/login?mode=register"
                 className="mx-1 mb-1 bg-[var(--green-500)] hover:bg-[var(--green-400)] text-[var(--on-green)] text-sm font-bold text-center py-2 rounded-md no-underline transition-colors shadow-[inset_0_-3px_0_var(--green-600)]"
               >
                 Sign Up
@@ -109,7 +109,13 @@ export function Layout() {
             </span>
           </Link>
 
-          <div className="flex items-center gap-4 text-sm">
+          <details className="relative text-sm">
+            <summary className="cursor-pointer py-2 px-3 text-white">Menu</summary>
+            <div onClick={(event) => { if ((event.target as HTMLElement).closest("a, button")) event.currentTarget.closest("details")?.removeAttribute("open") }} className="absolute right-0 top-full min-w-48 p-4 flex flex-col gap-4 bg-[var(--bg-deep)] border border-[var(--border)] rounded-lg shadow-lg">
+            <Link to="/" className="text-white">Play</Link>
+            <Link to="/puzzle" className="text-white">Practice Puzzles</Link>
+            {isLoggedIn && <Link to="/history" className="text-white">Archive</Link>}
+            {isLoggedIn && !isGuest && <Link to={`/profile/${userId}`} className="text-white">Profile</Link>}
             <Link to="/daily-puzzle" className="text-white/70 hover:text-white no-underline">Daily</Link>
             <Link to="/leaderboard" className="text-white/70 hover:text-white no-underline">Ranks</Link>
             {isLoggedIn ? (
@@ -141,7 +147,8 @@ export function Layout() {
                 Log In
               </Link>
             )}
-          </div>
+            </div>
+          </details>
         </div>
       </nav>
 

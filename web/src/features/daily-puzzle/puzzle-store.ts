@@ -17,6 +17,7 @@ interface DailyPuzzleState {
   playerRanks: (number | null)[]
   playerScores: (number | null)[]
   allResults: (KeepOption[] | null)[]
+  error: string | null
   isSubmitting: boolean
 
   loadPuzzle: () => void
@@ -49,6 +50,7 @@ export const usePuzzleStore = create<DailyPuzzleState>((set, get) => ({
   playerRanks: [null, null, null, null, null],
   playerScores: [null, null, null, null, null],
   allResults: [null, null, null, null, null],
+  error: null,
   isSubmitting: false,
 
   loadPuzzle() {
@@ -109,7 +111,14 @@ export const usePuzzleStore = create<DailyPuzzleState>((set, get) => ({
 
     set({ isSubmitting: true })
 
-    const results = evaluateAllKeeps(puzzle.hand, puzzle.isDealer)
+    let results: KeepOption[]
+    try {
+      results = evaluateAllKeeps(puzzle.hand, puzzle.isDealer)
+      if (results.length !== 15) throw new Error('Analysis unavailable')
+    } catch {
+      set({ isSubmitting: false, error: 'Analysis is unavailable. Your attempt is safe. Try Submit again, or reload if this continues.' })
+      return null
+    }
 
     // Find player's rank and score
     let playerRank: number | null = null
@@ -147,6 +156,7 @@ export const usePuzzleStore = create<DailyPuzzleState>((set, get) => ({
         playerRanks: ranks,
         playerScores: scores,
         allResults,
+        error: null,
         isSubmitting: false,
       })
     } else {
@@ -157,6 +167,7 @@ export const usePuzzleStore = create<DailyPuzzleState>((set, get) => ({
         playerRanks: ranks,
         playerScores: scores,
         allResults,
+        error: null,
         isSubmitting: false,
       })
     }
@@ -175,6 +186,7 @@ export const usePuzzleStore = create<DailyPuzzleState>((set, get) => ({
       playerRanks: [null, null, null, null, null],
       playerScores: [null, null, null, null, null],
       allResults: [null, null, null, null, null],
+      error: null,
       isSubmitting: false,
     })
   },

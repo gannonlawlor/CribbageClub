@@ -20,6 +20,7 @@ interface PracticePuzzleState {
   puzzleNumber: number
   totalSolved: number
   optimalCount: number
+  error: string | null
   isSubmitting: boolean
 
   loadPuzzle: () => void
@@ -62,6 +63,7 @@ export const usePracticePuzzleStore = create<PracticePuzzleState>((set, get) => 
   puzzleNumber: 1,
   totalSolved: 0,
   optimalCount: 0,
+  error: null,
   isSubmitting: false,
 
   loadPuzzle() {
@@ -71,6 +73,7 @@ export const usePracticePuzzleStore = create<PracticePuzzleState>((set, get) => 
       phase: 'playing',
       playerRank: null,
       results: [],
+      error: null,
       isSubmitting: false,
     })
   },
@@ -93,7 +96,14 @@ export const usePracticePuzzleStore = create<PracticePuzzleState>((set, get) => 
 
     set({ isSubmitting: true })
 
-    const results = evaluateAllKeeps(puzzle.hand, puzzle.isDealer)
+    let results: KeepOption[]
+    try {
+      results = evaluateAllKeeps(puzzle.hand, puzzle.isDealer)
+      if (results.length !== 15) throw new Error('Analysis unavailable')
+    } catch {
+      set({ isSubmitting: false, error: 'Analysis is unavailable. Your attempt is safe. Try Submit again, or reload if this continues.' })
+      return
+    }
 
     let playerRank: number | null = null
     for (const option of results) {
@@ -110,6 +120,7 @@ export const usePracticePuzzleStore = create<PracticePuzzleState>((set, get) => 
       results,
       playerRank,
       phase: 'revealed',
+      error: null,
       isSubmitting: false,
       totalSolved: totalSolved + 1,
       optimalCount: playerRank === 1 ? optimalCount + 1 : optimalCount,
@@ -132,6 +143,7 @@ export const usePracticePuzzleStore = create<PracticePuzzleState>((set, get) => 
       puzzleNumber: 1,
       totalSolved: 0,
       optimalCount: 0,
+      error: null,
       isSubmitting: false,
     })
   },

@@ -23,13 +23,19 @@ export function CardWidget({
   height = 84,
   className = '',
 }: CardWidgetProps) {
+  const Card = onClick ? motion.button : motion.div
   return (
-    <motion.div
+    <Card
+      type={onClick ? "button" : undefined}
+      disabled={onClick ? !enabled : undefined}
+      aria-label={card && faceUp ? `${card.rank.toLowerCase()} of ${card.suit.toLowerCase()}` : "Face-down card"}
+      aria-pressed={onClick ? selected : undefined}
+      tabIndex={onClick ? 0 : -1}
       onClick={enabled && onClick ? onClick : undefined}
       animate={{ y: selected ? -8 : 0 }}
       transition={{ duration: 0.15, ease: [0.2, 0, 0, 1] }}
       style={{ width, height, borderRadius: width * 0.08 }}
-      className={`relative overflow-hidden select-none ${
+      className={`relative overflow-hidden select-none p-0 border-0 shrink-0 bg-transparent focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--green-300)] ${
         enabled && onClick ? 'cursor-pointer' : ''
       } ${className}`}
       whileHover={enabled && onClick ? { y: -2, transition: { duration: 0.1 } } : undefined}
@@ -44,13 +50,14 @@ export function CardWidget({
         }}
       />
 
+      <span aria-hidden="true" className="absolute inset-0 z-10 pointer-events-none" style={{ borderRadius: width * 0.08, border: selected ? "3px solid var(--green-300)" : "1px solid rgba(0,0,0,.4)" }} />
       {/* Card content */}
       {faceUp && card ? (
         <CardFace card={card} width={width} />
       ) : (
         <CardBack width={width} />
       )}
-    </motion.div>
+    </Card>
   )
 }
 
