@@ -1,9 +1,10 @@
 import { type FormEvent, useState } from 'react'
-import { useNavigate } from 'react-router'
+import { useNavigate, useSearchParams } from 'react-router'
 import { useAuthStore } from '@/auth/auth-store'
 
 export function LoginPage() {
-  const [isRegister, setIsRegister] = useState(false)
+  const [params, setParams] = useSearchParams()
+  const isRegister = params.get("mode") === "register"
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const { login, register, loginAsGuest, isLoading, error } = useAuthStore()
@@ -39,7 +40,9 @@ export function LoginPage() {
       </h1>
 
       <form onSubmit={handleSubmit} className="space-y-4">
+        <label htmlFor="username" className="block text-sm text-[var(--text-2)]">Username</label>
         <input
+          id="username" autoComplete="username"
           type="text"
           placeholder="Username"
           value={username}
@@ -47,7 +50,9 @@ export function LoginPage() {
           className="w-full bg-white/10 border border-white/20 rounded px-4 py-2 text-white placeholder-white/40 outline-none focus:border-[var(--green-300)]"
           required
         />
+        <label htmlFor="password" className="block text-sm text-[var(--text-2)]">Password</label>
         <input
+          id="password" autoComplete={isRegister ? "new-password" : "current-password"}
           type="password"
           placeholder="Password"
           value={password}
@@ -61,7 +66,7 @@ export function LoginPage() {
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full bg-[var(--gold)] text-black font-semibold py-2 rounded hover:bg-[var(--gold-light)] disabled:opacity-50"
+          className="w-full bg-[var(--green-500)] text-[var(--on-green)] font-semibold py-2 rounded hover:bg-[var(--green-400)] disabled:opacity-50"
         >
           {isLoading ? 'Loading...' : isRegister ? 'Register' : 'Login'}
         </button>
@@ -69,7 +74,7 @@ export function LoginPage() {
 
       <div className="mt-4 text-center space-y-2">
         <button
-          onClick={() => setIsRegister(!isRegister)}
+          onClick={() => setParams(isRegister ? {} : { mode: "register" })}
           className="text-[var(--green-500)] text-sm bg-transparent border-none cursor-pointer hover:underline"
         >
           {isRegister ? 'Already have an account? Login' : "Don't have an account? Register"}

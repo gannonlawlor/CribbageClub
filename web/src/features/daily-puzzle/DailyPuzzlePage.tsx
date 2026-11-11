@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router'
 import { usePuzzleStore, totalScore } from './puzzle-store'
 import { PUZZLES_PER_DAY } from './puzzle-generator'
 import { CardWidget } from '@/features/game/components/CardWidget'
-import { cardsEqual, cardKey } from '@/models/card'
+import { cardsEqual, cardKey, RANK_DISPLAY, SUIT_SYMBOL } from '@/models/card'
 import type { PlayingCard } from '@/models'
 import { StreakBadge } from './components/StreakBadge'
 import { PuzzleSummary } from './components/PuzzleSummary'
@@ -26,6 +26,7 @@ export function DailyPuzzlePage() {
     playerScores,
     allResults,
     isSubmitting,
+    error,
     loadPuzzle,
     toggleCard,
     submitKeep,
@@ -66,6 +67,7 @@ export function DailyPuzzlePage() {
 
   return (
     <div className="max-w-lg mx-auto flex flex-col min-h-[calc(100vh-4rem)]">
+      {error && <p role="alert" className="m-4 p-3 border border-red-400 rounded-lg text-red-200">{error}</p>}
       {/* Header */}
       <div className="p-4 flex items-center">
         <button
@@ -111,12 +113,12 @@ export function DailyPuzzlePage() {
 
       {/* Instruction */}
       <div className="text-white/70 text-center px-6 mb-2">
-        You are {puzzle.isDealer ? 'the dealer' : 'not the dealer'}.
+        {puzzle.isDealer ? "The crib is yours." : "The crib belongs to your opponent."}
         Choose the best 4 cards to keep.
       </div>
 
       {/* Selection counter */}
-      <div className={`text-center text-sm mb-4 ${canSubmit ? 'text-[var(--green-400)]' : 'text-white/40'}`}>
+      <div aria-live="polite" className={`text-center text-sm mb-4 ${canSubmit ? 'text-[var(--green-400)]' : 'text-white/40'}`}>
         {selectedCards.length}/4 selected
       </div>
 
@@ -146,12 +148,13 @@ export function DailyPuzzlePage() {
 
       <div className="flex-1" />
 
+      <p aria-live="polite" className="px-6 text-center text-sm text-[var(--text-2)]">Keep: {selectedCards.map(c => RANK_DISPLAY[c.rank] + SUIT_SYMBOL[c.suit]).join(' ') || 'Select four cards'}{selectedCards.length === 4 && <> · To crib: {puzzle.hand.filter(c => !selectedCards.some(s => cardsEqual(s, c))).map(c => RANK_DISPLAY[c.rank] + SUIT_SYMBOL[c.suit]).join(' ')}</>}</p>
       {/* Submit button */}
       <div className="p-6">
         <button
           onClick={submitKeep}
           disabled={!canSubmit || isSubmitting}
-          className="w-full py-3.5 rounded-lg font-semibold text-lg bg-[var(--gold)] text-black hover:bg-[var(--gold-light)] disabled:opacity-40 disabled:cursor-not-allowed border-none cursor-pointer"
+          className="w-full py-3.5 rounded-lg font-semibold text-lg bg-[var(--green-500)] text-[var(--on-green)] hover:bg-[var(--green-400)] disabled:opacity-40 disabled:cursor-not-allowed border-none cursor-pointer"
         >
           {isSubmitting ? 'Evaluating...' : 'Submit'}
         </button>
@@ -175,8 +178,8 @@ function PuzzleCard({
         card={card}
         selected={selected}
         onClick={onTap}
-        width={100}
-        height={140}
+        width={Math.min(100, (window.innerWidth - 64) / 3)}
+        height={Math.min(100, (window.innerWidth - 64) / 3) * 1.4}
       />
     </div>
   )

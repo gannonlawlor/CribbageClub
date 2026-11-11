@@ -44,7 +44,7 @@ export function StageIndicator({ stage, isMyTurn, isDealer, selectedCardCount }:
   const activeIndex = STAGES.findIndex((s) => s.key === stage)
 
   return (
-    <div className="flex flex-col items-center gap-1.5">
+    <div aria-live="polite" aria-atomic="true" className="flex flex-col items-center gap-1.5">
       <div className="flex items-center gap-1 bg-[var(--surface-0)] border border-[var(--border)] rounded-full p-1">
         {STAGES.map((s, i) => {
           const isActive = s.key === stage

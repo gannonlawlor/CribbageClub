@@ -4,7 +4,7 @@ import { usePracticePuzzleStore } from './practice-puzzle-store'
 import { CardWidget } from '@/features/game/components/CardWidget'
 import { KeepRankTile } from '@/features/daily-puzzle/components/KeepRankTile'
 import { ExplainBottomSheet } from '@/features/daily-puzzle/components/ExplainBottomSheet'
-import { cardsEqual, cardKey } from '@/models/card'
+import { cardsEqual, cardKey, RANK_DISPLAY, SUIT_SYMBOL } from '@/models/card'
 import type { PlayingCard } from '@/models'
 import type { KeepOption } from '@/features/daily-puzzle/models'
 
@@ -20,6 +20,7 @@ export function PuzzlePage() {
     totalSolved,
     optimalCount,
     isSubmitting,
+    error,
     loadPuzzle,
     toggleCard,
     submitKeep,
@@ -52,6 +53,7 @@ export function PuzzlePage() {
 
   return (
     <div className="max-w-lg mx-auto flex flex-col min-h-[calc(100vh-4rem)]">
+      {error && <p role="alert" className="m-4 p-3 border border-red-400 rounded-lg text-red-200">{error}</p>}
       {/* Header */}
       <div className="p-4 flex items-center">
         <button
@@ -136,12 +138,12 @@ function PlayingPhase({
 
       {/* Instruction */}
       <div className="text-white/70 text-center px-6 mb-2">
-        You are {puzzle.isDealer ? 'the dealer' : 'not the dealer'}.
+        {puzzle.isDealer ? "The crib is yours." : "The crib belongs to your opponent."}
         Choose the best 4 cards to keep.
       </div>
 
       {/* Selection counter */}
-      <div className={`text-center text-sm mb-4 ${canSubmit ? 'text-[var(--green-400)]' : 'text-white/40'}`}>
+      <div aria-live="polite" className={`text-center text-sm mb-4 ${canSubmit ? 'text-[var(--green-400)]' : 'text-white/40'}`}>
         {selectedCards.length}/4 selected
       </div>
 
@@ -171,12 +173,13 @@ function PlayingPhase({
 
       <div className="flex-1" />
 
+      <p aria-live="polite" className="px-6 text-center text-sm text-[var(--text-2)]">Keep: {selectedCards.map(c => RANK_DISPLAY[c.rank] + SUIT_SYMBOL[c.suit]).join(' ') || 'Select four cards'}{selectedCards.length === 4 && <> · To crib: {puzzle.hand.filter(c => !selectedCards.some(s => cardsEqual(s, c))).map(c => RANK_DISPLAY[c.rank] + SUIT_SYMBOL[c.suit]).join(' ')}</>}</p>
       {/* Submit button */}
       <div className="p-6">
         <button
           onClick={onSubmit}
           disabled={!canSubmit || isSubmitting}
-          className="w-full py-3.5 rounded-lg font-semibold text-lg bg-[var(--gold)] text-black hover:bg-[var(--gold-light)] disabled:opacity-40 disabled:cursor-not-allowed border-none cursor-pointer"
+          className="w-full py-3.5 rounded-lg font-semibold text-lg bg-[var(--green-500)] text-[var(--on-green)] hover:bg-[var(--green-400)] disabled:opacity-40 disabled:cursor-not-allowed border-none cursor-pointer"
         >
           {isSubmitting ? 'Evaluating...' : 'Submit'}
         </button>
@@ -207,6 +210,10 @@ function RevealedPhase({
   onHome: () => void
 }) {
   const isOptimal = playerRank === 1
+  const [showAll, setShowAll] = useState(false)
+  const player = results.find(o => o.rank === playerRank)
+  const best = results[0]
+  const visible = showAll ? results : results.filter(o => o.rank === 1 || o.rank === playerRank)
 
   return (
     <>
@@ -237,9 +244,11 @@ function RevealedPhase({
         {puzzle.isDealer ? "Dealer (crib is yours)" : "Non-dealer (crib is opponent's)"}
       </div>
 
-      {/* All 15 keeps */}
+      {best && player && <p className="px-6 pb-3 text-center text-[var(--text-2)]">{isOptimal ? 'You found the strongest keep.' : "The best keep averages " + (best.netScore - player.netScore).toFixed(1) + " more points. Compare the hands below and open an explanation to see why."}</p>}
+      <div className="px-6 pb-2 flex justify-between text-sm text-[var(--text-2)]"><span>Bright cards: keep</span><span>Dim cards: to crib</span></div>
+      {/* Best and your keep first */}
       <div className="flex-1 overflow-y-auto px-4 pb-2">
-        {results.map((option) => (
+        {visible.map((option) => (
           <KeepRankTile
             key={option.rank}
             option={option}
@@ -251,6 +260,7 @@ function RevealedPhase({
         ))}
       </div>
 
+      <button className="py-3 text-[var(--green-300)]" onClick={() => setShowAll(!showAll)}>{showAll ? "Show comparison" : "Show all 15 keeps"}</button>
       {/* Bottom buttons */}
       <div className="p-4 flex gap-3">
         <button
@@ -261,7 +271,7 @@ function RevealedPhase({
         </button>
         <button
           onClick={onNext}
-          className="flex-1 py-3 rounded-lg bg-[var(--gold)] text-black border-none cursor-pointer hover:bg-[var(--gold-light)] font-semibold"
+          className="flex-1 py-3 rounded-lg bg-[var(--green-500)] text-[var(--on-green)] border-none cursor-pointer hover:bg-[var(--green-400)] font-semibold"
         >
           Next Puzzle
         </button>
@@ -285,8 +295,8 @@ function PuzzleCard({
         card={card}
         selected={selected}
         onClick={onTap}
-        width={100}
-        height={140}
+        width={Math.min(100, (window.innerWidth - 64) / 3)}
+        height={Math.min(100, (window.innerWidth - 64) / 3) * 1.4}
       />
     </div>
   )

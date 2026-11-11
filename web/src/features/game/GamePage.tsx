@@ -351,7 +351,7 @@ function DesktopGameBoard({
           />
 
           {/* Center area: cut card + play area */}
-          <div className="flex items-center justify-center gap-8 min-h-[140px] py-2">
+          <div className="flex items-center justify-center gap-8 min-h-[96px] py-2">
             <CutCard cutCard={gameState.cutCard} width={88} height={123} />
 
             {stage === GameStage.PEGGING && (
